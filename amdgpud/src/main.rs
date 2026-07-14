@@ -22,11 +22,11 @@
 
 extern crate alloc;
 
-use core::panic::PanicInfo;
 use ath_abi::syscall as abi;
 #[cfg(feature = "real_amdgpu_init")]
 use ath_amdgpu::bringup::GpuOps;
 use ath_drm::kms;
+use core::panic::PanicInfo;
 
 const _: () = assert!(ath_abi::ABI_VERSION == 4);
 
@@ -356,8 +356,7 @@ impl LkpiGpuOps {
             ),
         ] {
             if let Some(b) = self.request_firmware_bytes(name) {
-                if let Some((ucode, data)) = ath_amdgpu::rlc_autoload::extract_mes_ucode_data(&b)
-                {
+                if let Some((ucode, data)) = ath_amdgpu::rlc_autoload::extract_mes_ucode_data(&b) {
                     out.push((ucode_ty, ucode.to_vec()));
                     out.push((data_ty, data.to_vec()));
                 }

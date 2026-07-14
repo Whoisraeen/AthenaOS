@@ -20,8 +20,8 @@
 #![no_std]
 #![no_main]
 
-use core::panic::PanicInfo;
 use ath_abi::syscall as abi;
+use core::panic::PanicInfo;
 
 const _: () = assert!(ath_abi::ABI_VERSION == 4);
 

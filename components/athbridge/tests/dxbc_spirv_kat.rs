@@ -220,7 +220,10 @@ fn try_spirv_val(spirv: &[u8], label: &str) {
     let mut tmp = std::env::temp_dir();
     // Per-process unique temp path so concurrent test binaries / re-runs can
     // never race on a shared .spv (a flaky-FAIL source — CLAUDE.md rule 16).
-    tmp.push(format!("athena_dxbc_kat_{label}_{}.spv", std::process::id()));
+    tmp.push(format!(
+        "athena_dxbc_kat_{label}_{}.spv",
+        std::process::id()
+    ));
     {
         let mut f = match std::fs::File::create(&tmp) {
             Ok(f) => f,

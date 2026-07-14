@@ -28,10 +28,10 @@
 
 extern crate alloc;
 
+use ath_abi::syscall as abi;
 use core::alloc::{GlobalAlloc, Layout};
 use core::panic::PanicInfo;
 use core::sync::atomic::{AtomicUsize, Ordering};
-use ath_abi::syscall as abi;
 
 const _: () = assert!(ath_abi::ABI_VERSION == 4);
 

@@ -9167,7 +9167,7 @@ mod tests {
             "/home/athena/notes.txt",
             "/home/athena/photo.png",
             "/home/athena/report.pdf",
-            "/system/apps/files",    // a native app, no extension
+            "/system/apps/files",     // a native app, no extension
             "/home/athena/exe",       // bare word, not a .exe
             "/home/athena/myexe.txt", // .exe is not the suffix
             "/home/athena/archive.zip",
