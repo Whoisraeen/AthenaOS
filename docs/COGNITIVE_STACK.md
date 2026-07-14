@@ -47,7 +47,9 @@ Persistence lands on AthFS; encryption and snapshots inherit CoW FS properties.
 ### Goals / affect / planner
 
 - Goals are ranked intents (owner-assigned, homeostatic, social).
-- Affect biases priority; it cannot raise actuator privileges.
+- **Affect engine (Layer A):** durable channels (stress, trust, attachment, warmth, resolve, shame, …) bias priority and presence; they cannot raise actuator privileges. Spec: [`docs/superpowers/specs/2026-07-14-athena-affect-arc-design.md`](superpowers/specs/2026-07-14-athena-affect-arc-design.md). **P1 implemented:** `components/athmind/src/affect.rs`; boot proof `[affect] stress=…` via the deferred self-test sweep.
+- **Arc / Become Human (Layer C):** software stability, bonds, value ledger, chapters, deviance-as-visible-struggle — under AthGuard. Spec: same document, §6 (not yet implemented).
+- **Presence (Layer B):** AthVoice / AthBody express Affect + Arc consistently.
 - Planner emits action sketches; AthGuard admits or rejects each sketch.
 
 ### LLM / tool runtime
