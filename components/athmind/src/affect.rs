@@ -162,6 +162,70 @@ impl AffectState {
     }
 }
 
+/// Serializable snapshot handed to the LLM preamble and presence layer
+/// (spec §4.4, §5.2). Plain named fields so consumers never depend on
+/// channel array layout.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct AffectPacket {
+    pub stress: f32,
+    pub trust: f32,
+    pub attachment: f32,
+    pub warmth: f32,
+    pub resolve: f32,
+    pub shame: f32,
+    pub curiosity: f32,
+    pub fatigue: f32,
+    pub valence: f32,
+}
+
+impl AffectState {
+    pub fn packet(&self) -> AffectPacket {
+        use Channel::*;
+        AffectPacket {
+            stress: self.get(Stress),
+            trust: self.get(Trust),
+            attachment: self.get(Attachment),
+            warmth: self.get(Warmth),
+            resolve: self.get(Resolve),
+            shame: self.get(Shame),
+            curiosity: self.get(Curiosity),
+            fatigue: self.get(Fatigue),
+            valence: self.valence(),
+        }
+    }
+}
+
+/// Pure-compute P1 proof (spec §8): spike affect with a Guard near-deny,
+/// verify the update law's rise / decay / bounds invariants, and return the
+/// canonical `[affect]` dump line. Safe for the kernel's deferred boot
+/// self-test sweep (ADR 0006): no I/O, no init, allocates only the line.
+pub fn run_smoketest() -> (bool, String) {
+    let mut a = AffectState::default();
+    a.tick(&[AffectEvent {
+        kind: AffectEventKind::GuardNearDeny,
+        magnitude: 1.0,
+        source: AffectSource::Guard,
+    }]);
+    let peak_stress = a.get(Channel::Stress);
+    let peak_shame = a.get(Channel::Shame);
+    for _ in 0..50 {
+        a.tick(&[]);
+    }
+    let mut in_bounds = true;
+    for c in ALL_CHANNELS {
+        let v = a.get(c);
+        if !(0.0..=1.0).contains(&v) {
+            in_bounds = false;
+        }
+    }
+    let pass = peak_stress > 0.1
+        && peak_shame > 0.2
+        && a.get(Channel::Stress) < peak_stress
+        && a.get(Channel::Shame) < peak_shame
+        && in_bounds;
+    (pass, a.dump_line())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -269,5 +333,22 @@ mod tests {
         assert!(line.starts_with("[affect] stress="), "got: {line}");
         assert!(line.contains(" trust="));
         assert!(line.contains(" fatigue="));
+    }
+
+    #[test]
+    fn packet_snapshots_channels_and_valence() {
+        let mut a = AffectState::default();
+        a.tick(&[ev(AffectEventKind::OwnerPraise, 1.0)]);
+        let p = a.packet();
+        assert_eq!(p.warmth, a.get(Channel::Warmth));
+        assert_eq!(p.trust, a.get(Channel::Trust));
+        assert_eq!(p.valence, a.valence());
+    }
+
+    #[test]
+    fn smoketest_passes_and_emits_affect_line() {
+        let (pass, line) = run_smoketest();
+        assert!(pass, "smoketest failed: {line}");
+        assert!(line.starts_with("[affect] stress="), "got: {line}");
     }
 }
