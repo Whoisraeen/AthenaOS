@@ -7,6 +7,8 @@
 
 extern crate alloc;
 
+pub mod affect;
+
 use alloc::string::String;
 use alloc::vec::Vec;
 use athbody::{AthBody, BodyCommandBatch};
