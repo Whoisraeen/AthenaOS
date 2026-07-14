@@ -1,4 +1,4 @@
-// RaeBridge Notepad-class capstone fixture — integrates EVERY notepad piece in
+// AthBridge Notepad-class capstone fixture — integrates EVERY notepad piece in
 // one real cl.exe Win32 .exe: a main window with a WndProc, a system "EDIT"
 // child that holds the text, a File menu (Save / Exit), typing into the EDIT,
 // and a menu-driven File->Save that reads the EDIT via GetWindowTextW, picks a

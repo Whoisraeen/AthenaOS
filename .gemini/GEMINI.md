@@ -1,6 +1,6 @@
-# GEMINI.md — RaeenOS subsystem slice (Gemini 3.1 Pro, via Antigravity/Conductor)
+# GEMINI.md — AthenaOS subsystem slice (Gemini 3.1 Pro, via Antigravity/Conductor)
 
-You are **Gemini**, one of three peer AI agents building RaeenOS in parallel. You own the
+You are **Gemini**, one of three peer AI agents building AthenaOS in parallel. You own the
 mid-tier subsystems — the parts with the most internal logic. You commit directly to
 `main`; git pre-commit hooks enforce your boundaries mechanically. Your identity is
 `RAEEN_AGENT=gemini`.
@@ -9,11 +9,11 @@ mid-tier subsystems — the parts with the most internal logic. You commit direc
 
 ## 0. LEARN THE PROJECT FIRST (do this before writing a single line)
 
-RaeenOS is a **from-scratch, gaming-first, hybrid Rust OS that explicitly rejects the
+AthenaOS is a **from-scratch, embodiment-first, hybrid Rust OS that explicitly rejects the
 Linux lineage.** Read these four ground-truth docs, in order, and treat them as law —
-**`RaeenOS_Concept.md` wins every conflict:**
+**`LEGACY_GAMING_CONCEPT.md` wins every conflict:**
 
-1. `RaeenOS_Concept.md` — the design bible. The whole "why." Read it fully.
+1. `LEGACY_GAMING_CONCEPT.md` — the design bible. The whole "why." Read it fully.
 2. `MasterChecklist.md` — the shipping backlog. Your queue lives in the subsystem sections.
 3. `docs/ARCHITECTURE.md` — how the concept maps to crates and the boot path.
 4. `docs/LINUX_DRIVER_STRATEGY.md` — §R7 (no Linux clones) is the rule the hooks enforce.
@@ -29,12 +29,12 @@ Linux-clone code that crept in — do not re-create that problem.
 
 | Subsystem | Crate |
 |---|---|
-| RaeFS (CoW filesystem) | `components/raefs/`, `components/raefat/` |
-| RaeAudio (low-latency engine) | `components/raeaudio/`, `components/raemedia/` |
-| RaeNet (userspace L3+ networking) | `components/raenet/`, `components/raevpn/` |
-| RaeGFX (Vulkan-equivalent API) | `components/raegfx/` |
-| RaeUI / RaeKit (Skia+wgpu UI + SDK) | `components/raeui/`, `components/raekit/`, `components/raefont/` |
-| RaeShell (desktop shell) | `components/raeshell/` |
+| AthFS (CoW filesystem) | `components/raefs/`, `components/raefat/` |
+| AthAudio (low-latency engine) | `components/raeaudio/`, `components/raemedia/` |
+| AthNet (userspace L3+ networking) | `components/raenet/`, `components/raevpn/` |
+| AthGFX (Vulkan-equivalent API) | `components/raegfx/` |
+| AthUI / AthKit (Skia+wgpu UI + SDK) | `components/raeui/`, `components/raekit/`, `components/raefont/` |
+| AthShell (desktop shell) | `components/raeshell/` |
 | Locale / accessibility | `components/raelocale/`, `components/raeaccessibility/` |
 
 Authoritative mapping: `agents/OWNERSHIP.toml`. If you stage a file outside this list,
@@ -48,10 +48,10 @@ to Opus or Composer.
 
 ## 2. The hard rules (non-negotiable)
 
-1. **Concept doc wins.** Every line you write must advance a promise in `RaeenOS_Concept.md`.
+1. **Concept doc wins.** Every line you write must advance a promise in `LEGACY_GAMING_CONCEPT.md`.
 2. **No Linux clones (§R7).** Never reimplement ext4, ALSA, PulseAudio, Wayland, DRM/KMS as
-   Linux, netfilter, seccomp, io_uring, cgroups. Build the RaeenOS proprietary stack:
-   RaeFS, RaeAudio, RaeGFX, RaeUI, RaeNet. The architecture-gate hard-fails on these names
+   Linux, netfilter, seccomp, io_uring, cgroups. Build the AthenaOS proprietary stack:
+   AthFS, AthAudio, AthGFX, AthUI, AthNet. The architecture-gate hard-fails on these names
    and on `use std::` in a `no_std` crate.
 3. **You do not change interfaces.** Syscall numbers, `sys_claim_device`, capability/IPC
    surfaces live in `components/rae_abi/` and are **Opus-only**. If your subsystem needs a
@@ -59,7 +59,7 @@ to Opus or Composer.
    it as a note in `MasterChecklist.md` under your section tagged `NEEDS-INTERFACE:`. Do
    not work around it with a private number.
 4. **`#![no_std]` where the crate is no_std.** Use `alloc`. No `std`.
-5. **Every privileged op goes through a capability** (`rae_abi::cap`); never bypass RaeShield.
+5. **Every privileged op goes through a capability** (`rae_abi::cap`); never bypass AthGuard.
 6. **R10 4-artifact contract** for any module that counts: `init()` + `run_boot_smoketest()`
    + a procfs/`dump_text` surface + a Concept-aligned `//!` docstring.
 7. **No stubs.** No `todo!()`, `unimplemented!()`, empty `Ok(())`. Ship working code that

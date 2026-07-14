@@ -1,4 +1,4 @@
-//! Core logic for RaeFS consistency checking (fsck).
+//! Core logic for AthFS consistency checking (fsck).
 //!
 //! MasterChecklist Phase 5.8: "raefsck userspace utility".
 //! This module provides the logic to validate superblock, inode bitmaps,

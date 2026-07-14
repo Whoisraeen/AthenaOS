@@ -1,7 +1,7 @@
 //! glass — the Liquid Glass identity primitives (IDENTITY.md §2-§4).
 //!
-//! *"Built for people who care about how things feel."* — `RaeenOS_Concept.md`
-//! §RaeUI. The owner's verdict on the old build was "no native theme or identity
+//! *"Built for people who care about how things feel."* — `LEGACY_GAMING_CONCEPT.md`
+//! §AthUI. The owner's verdict on the old build was "no native theme or identity
 //! that is clean and stunning." IDENTITY.md names the three systemic fixes:
 //! a **signature aurora backdrop** for glass to refract (§3, kills the flat
 //! void), **tiered translucent glass** (§2, the backdrop reads through), and the

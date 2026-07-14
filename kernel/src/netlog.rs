@@ -1,4 +1,4 @@
-//! Netlog — UDP-broadcast the boot log over the LAN (Concept §RaeNet:
+//! Netlog — UDP-broadcast the boot log over the LAN (Concept §AthNet:
 //! first-class diagnostics; a gaming OS must be debuggable on real hardware
 //! without a serial cable).
 //!

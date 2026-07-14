@@ -341,7 +341,7 @@ pub fn dump_text() -> String {
         (e.frames_skipped * 100) / e.frames_total
     };
     out.push_str(&alloc::format!(
-        "# RaeenOS live wallpaper engine ({} wallpapers, occluded={}, frames {}/{} skipped, {}% saved)\n",
+        "# AthenaOS live wallpaper engine ({} wallpapers, occluded={}, frames {}/{} skipped, {}% saved)\n",
         e.wallpapers.len(), e.occluded,
         e.frames_skipped, e.frames_total, pct_skipped,
     ));

@@ -1,4 +1,4 @@
-//! Snapshot retention + quota policy (Concept §RaeFS: "Time-machine snapshots
+//! Snapshot retention + quota policy (Concept §AthFS: "Time-machine snapshots
 //! you never have to think about" — automatic thinning so snapshots stay
 //! useful without eating the drive).
 //!
@@ -12,7 +12,7 @@
 //!   * keep the newest snapshot of each day for the last 7 days;
 //!   * keep the newest snapshot of each week for the last 4 weeks;
 //!   * everything older is deleted.
-//! On top of that, a hard COUNT quota (default 12 of RaeFS's 16 slots) deletes
+//! On top of that, a hard COUNT quota (default 12 of AthFS's 16 slots) deletes
 //! oldest-first so snapshot creation can never run the table full — the
 //! remaining 4 slots stay free for explicit user snapshots.
 //!

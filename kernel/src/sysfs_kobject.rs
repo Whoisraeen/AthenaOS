@@ -61,19 +61,19 @@ impl KObject {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 fn sys_kernel_hostname() -> String {
-    String::from("raeenos\n")
+    String::from("athenaos\n")
 }
 
 fn sys_kernel_ostype() -> String {
-    String::from("RaeenOS\n")
+    String::from("AthenaOS\n")
 }
 
 fn sys_kernel_osrelease() -> String {
-    String::from("0.0.1-raeenos\n")
+    String::from("0.0.1-athenaos\n")
 }
 
 fn sys_kernel_version() -> String {
-    String::from("#1 SMP RaeenOS 0.0.1\n")
+    String::from("#1 SMP AthenaOS 0.0.1\n")
 }
 
 fn sys_kernel_domainname() -> String {

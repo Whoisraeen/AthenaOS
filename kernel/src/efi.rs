@@ -1,4 +1,4 @@
-//! UEFI/EFI Runtime Services for RaeenOS.
+//! UEFI/EFI Runtime Services for AthenaOS.
 //!
 //! Provides EFI system table access, runtime service wrappers, variable storage,
 //! secure boot chain, memory map management, device path construction, SMBIOS

@@ -1,4 +1,4 @@
-//! KVM-equivalent Type-1 hypervisor for RaeenOS.
+//! KVM-equivalent Type-1 hypervisor for AthenaOS.
 //!
 //! Provides full hardware-assisted virtualization using Intel VT-x (VMX):
 //! - VMX root/non-root mode transitions via VMCS
@@ -1463,7 +1463,7 @@ fn handle_cpuid(vcpu: &mut VCpu, exit_info: &VmExitInfo) -> VmExitAction {
             ecx |= 1 << 31; // announce hypervisor presence
         }
         0x4000_0000 => {
-            // Hypervisor CPUID leaf — return "RaeenOSHyp".
+            // Hypervisor CPUID leaf — return "AthenaOSHyp".
             eax = 0x4000_0001;
             ebx = u32::from_le_bytes(*b"Raee");
             ecx = u32::from_le_bytes(*b"nOSH");

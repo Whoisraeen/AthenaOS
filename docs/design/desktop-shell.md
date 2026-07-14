@@ -1,6 +1,6 @@
 # Design Spec: Desktop Shell
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > The shell is the first thing the user sees after login and the surface they
 > touch most. It must clear: **the familiarity of Windows 11's taskbar+Start,
@@ -31,7 +31,7 @@ state-completeness (hover/active/focus/disabled, dark/light, reduced-motion).
 ## 1. Taskbar (bottom, Windows-familiar layout)
 
 **Bar to clear:** Windows 11 taskbar (centered-or-left apps, Start, tray) +
-macOS Dock magnification feel. RaeenOS keeps Windows' *spatial* model (bottom,
+macOS Dock magnification feel. AthenaOS keeps Windows' *spatial* model (bottom,
 Start left, tray right) and macOS's *materiality* (glass/mica, rounded).
 
 ### Geometry
@@ -142,7 +142,7 @@ Spotlight's instant fuzzy search feel.
 ## 4. Window chrome (titlebar + controls)
 
 **Bar to clear:** macOS title bar cleanness + Windows 11 snap affordances.
-RaeenOS uses **macOS control placement** (left) on a clean bar, accent only on
+AthenaOS uses **macOS control placement** (left) on a clean bar, accent only on
 focus.
 
 ### Geometry
@@ -265,7 +265,7 @@ Because incoherence is the top risk, the shell ships only when:
   assert taskbar/chrome/start all read the new `accent.base`.
 
 ### Unblocks (MasterChecklist)
-- Phase 8 (RaeUI/RaeKit): shared token module, glass material API.
+- Phase 8 (AthUI/AthKit): shared token module, glass material API.
 - Phase 13 (Customization): accent-derivation makes Vibe Mode coherent end-to-end.
-- Phase 14 (RaeShell + apps): taskbar/Start/quick-settings/chrome polish,
+- Phase 14 (AthShell + apps): taskbar/Start/quick-settings/chrome polish,
   notification material, snap-preview (the tiling resize-to-fill delta).

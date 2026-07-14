@@ -1,7 +1,7 @@
 //! # RaeImage — the unified "open any image" dispatcher (the cohesion seam).
 //!
-//! RaeenOS_Concept.md criterion #5 (cohesion — every part of the OS agrees on
-//! what a file *is* and consumes it through one model): RaeenOS already ships five
+//! LEGACY_GAMING_CONCEPT.md criterion #5 (cohesion — every part of the OS agrees on
+//! what a file *is* and consumes it through one model): AthenaOS already ships five
 //! from-scratch still-image decoders ([`rae_png`], [`rae_jpeg`], [`rae_bmp`],
 //! [`rae_gif`], [`rae_webp`]), each producing the **identical** ARGB8888
 //! `Vec<u32>` pixel model. What was missing was the single front door. This crate
@@ -60,7 +60,7 @@ use alloc::vec::Vec;
 
 pub use rae_formats::FileKind;
 
-/// A decoded image in the one shared RaeenOS pixel model: a flat ARGB8888 buffer
+/// A decoded image in the one shared AthenaOS pixel model: a flat ARGB8888 buffer
 /// plus dimensions. Each `u32` is `0xAARRGGBB` — byte-identical to every
 /// underlying decoder's output, so re-homing one is a field move, never a convert.
 ///

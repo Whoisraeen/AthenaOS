@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cd ~/raeenos || exit 1
+cd ~/athenaos || exit 1
 V=./linuxkpi-drm/vendor/linux-7.0.12/drivers/gpu/drm/amd/amdgpu
 echo "===== UEFI_ACPI_VFCT + VFCT_IMAGE_HEADER struct defs ====="
 grep -rnA12 "UEFI_ACPI_VFCT {" "$V" 2>/dev/null | head -20

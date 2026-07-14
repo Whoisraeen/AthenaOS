@@ -5,7 +5,7 @@
 //! in the kernel.
 //!
 //! Today: clear-screen and fill-rect. Tomorrow: font rendering, then the
-//! handoff to RaeGFX.
+//! handoff to AthGFX.
 
 use bootloader_api::info::{FrameBuffer, FrameBufferInfo, PixelFormat};
 use spin::Mutex;
@@ -25,11 +25,11 @@ impl Rgb {
     }
 }
 
-/// RaeenOS brand palette — used by the boot fill so the user immediately knows
-/// they're looking at RaeKernel, not a "no signal" black screen.
-pub const RAEENOS_INK: Rgb = Rgb::new(0x0a, 0x0e, 0x1a); // deep blue-black bg
-pub const RAEENOS_GLOW: Rgb = Rgb::new(0x4e, 0x9c, 0xff); // electric blue accent
-pub const RAEENOS_PLASMA: Rgb = Rgb::new(0xff, 0x2e, 0x88); // magenta highlight
+/// AthenaOS brand palette — used by the boot fill so the user immediately knows
+/// they're looking at AthKernel, not a "no signal" black screen.
+pub const ATHENAOS_INK: Rgb = Rgb::new(0x0a, 0x0e, 0x1a); // deep blue-black bg
+pub const ATHENAOS_GLOW: Rgb = Rgb::new(0x4e, 0x9c, 0xff); // electric blue accent
+pub const ATHENAOS_PLASMA: Rgb = Rgb::new(0xff, 0x2e, 0x88); // magenta highlight
 
 struct State {
     /// Raw pointer to the start of the framebuffer's bytes.
@@ -297,10 +297,10 @@ pub fn draw_glyph_8x8(px: usize, py: usize, glyph: &[u8; 8], fg: Rgb, bg: Rgb) {
     }
 }
 
-/// Paint a recognizable RaeenOS boot image — deep background with an accent
+/// Paint a recognizable AthenaOS boot image — deep background with an accent
 /// stripe across the top. Cheap, runs in a few ms even at 1080p.
-pub fn fill_raeenos_palette() {
-    clear(RAEENOS_INK);
+pub fn fill_athenaos_palette() {
+    clear(ATHENAOS_INK);
     let (width, _height) = {
         let guard = FB.lock();
         match guard.as_ref() {
@@ -309,7 +309,7 @@ pub fn fill_raeenos_palette() {
         }
     };
     // 8-px accent stripe across the top.
-    fill_rect(0, 0, width, 8, RAEENOS_GLOW);
+    fill_rect(0, 0, width, 8, ATHENAOS_GLOW);
     // A small magenta plasma square in the top-right corner — the "we booted" marker.
     let size = 16;
     fill_rect(
@@ -317,7 +317,7 @@ pub fn fill_raeenos_palette() {
         size,
         size,
         size,
-        RAEENOS_PLASMA,
+        ATHENAOS_PLASMA,
     );
 }
 

@@ -11,7 +11,7 @@ These files were **duplicate orphans** (not `pub mod` in `main.rs`) with `TODO` 
 | `kernel/src/sleep_states.rs` | `kernel/src/suspend.rs` |
 | `kernel/src/ec.rs` | `kernel/src/acpi_full.rs` |
 | `kernel/src/x2apic_msr.rs` | `kernel/src/apic.rs` |
-| `kernel/src/fat32.rs` | MasterChecklist Phase 3 installer / future RaeFS bridge |
+| `kernel/src/fat32.rs` | MasterChecklist Phase 3 installer / future AthFS bridge |
 | `kernel/src/gpt.rs` | `kernel/src/block_io.rs` + `storage_mount.rs` |
 | `kernel/src/usb_hid.rs` | `kernel/src/xhci.rs` (the LIVE driver — `usb/xhci.rs` is scaffold), `input.rs`, `usb_core.rs` |
 | `components/raegfx/src/font.rs` (orphan — never `pub mod` in `raegfx/lib.rs`; a 2nd TrueType `FontEngine` twin) | `components/raefont` (the WIRED engine — hinting interpreter, COLR/CPAL, shaper, the crisp filled rasterizer + `builtin` faces). `Canvas::draw_text_aa` (raegfx `text.rs`) is the one text API. (typography-rendering.md §3.2) |

@@ -21,7 +21,7 @@ No guessing, no header-grind blind spots: if every symbol here resolves to a
 | **E** | misc kernel helpers (string/bitmap/math/printk/bsearch/sort/crc/hex/uuid…) | ~592 | mostly **small** pure functions; many are 1–5 line wrappers or libc-equivalents |
 | **C** | core LinuxKPI primitives (dma_fence / workqueue / xarray / idr / wait / timer / completion / kref) | 50 | **real work** — these get CALLED; extend the existing `raeen_linuxkpi` facades |
 | **D** | ttm / mm / buddy / sg / dma-buf / dma-resv | 71 | **real work** — GPU memory mgmt; MES-relevant |
-| **B** | display / DC (`drm_atomic_*`, `drm_dp_*`, crtc/plane/connector/encoder/bridge) | 223 | **link-only stubs** — the MES subset never calls these; an honest `-ENOSYS`/abort-if-called stub resolves the link (RaeenOS uses its own compositor, not DRM/KMS) |
+| **B** | display / DC (`drm_atomic_*`, `drm_dp_*`, crtc/plane/connector/encoder/bridge) | 223 | **link-only stubs** — the MES subset never calls these; an honest `-ENOSYS`/abort-if-called stub resolves the link (AthenaOS uses its own compositor, not DRM/KMS) |
 
 **Honest framing:** the extraction is the easy 10% — it *scopes* the work precisely. The
 90% is implementing buckets C/D (and the non-trivial parts of E) with **correct

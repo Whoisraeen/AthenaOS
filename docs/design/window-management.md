@@ -18,7 +18,7 @@ existing per-surface buffers — they never ask apps to re-render.**
 
 > "Your desktop, your rules — tiling, stacking, floating are POLICIES over the
 > compositor, not forks of it; switching is one call, not a different OS."
-> — `RaeenOS_Concept.md` §RaeUI (already quoted at the top of `wm_policy.rs`)
+> — `LEGACY_GAMING_CONCEPT.md` §AthUI (already quoted at the top of `wm_policy.rs`)
 
 > "Built for people who care about how things feel." — the thesis. Multitasking
 > *is* how the machine feels under load; expose/spaces is where "fast is a
@@ -81,7 +81,7 @@ Bar to clear, per surface:
 
 ---
 
-## RaeenOS design tokens (the canonical set this surface uses)
+## AthenaOS design tokens (the canonical set this surface uses)
 
 All names are from `docs/design/design-language.md` / `rae_tokens`. This surface
 introduces **no new color/spacing/radius/motion values**.

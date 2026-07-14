@@ -1,4 +1,4 @@
-# Boot-Time Breakdown — RaeenOS (2026-06-22)
+# Boot-Time Breakdown — AthenaOS (2026-06-22)
 
 **Investigator:** raeen-perf | **Item:** CLAUDE.md live-fix #1 / Concept "fast is a feature: boot <6s, target 3s"
 **Method:** parsed the saved integration-verify boot serial logs (measure-first; no boot-path code edited).

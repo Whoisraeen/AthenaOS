@@ -1,6 +1,6 @@
 //! # RaeDocx — a never-panic, `no_std` DOCX (Word) reader (Office Open XML / WordprocessingML).
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy ("how to actually win" — let people
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy ("how to actually win" — let people
 //! switch without conscious effort): a Windows/macOS switcher arrives with a folder
 //! of `.docx` files, and "open my Word documents" is core office-style productivity
 //! table stakes for a daily driver. This crate is the from-scratch reader the Files
@@ -1092,7 +1092,7 @@ fn decode_entities(s: &str) -> String {
 // ════════════════════════════════════════════════════════════════════════════
 // DOCX WRITER — serialize the in-memory [`Document`] back to a valid `.docx`.
 //
-// RaeenOS_Concept.md §Compatibility Strategy ("how to actually win" — let people
+// LEGACY_GAMING_CONCEPT.md §Compatibility Strategy ("how to actually win" — let people
 // switch without conscious effort) + the Switcher Production Gate criterion #5,
 // "edit AND SAVE my Word documents": a reader alone is read-only Quick Look; a
 // daily driver must round-trip — open, edit the model, and save a file Word (and

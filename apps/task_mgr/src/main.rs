@@ -29,7 +29,7 @@ const STATUS_BG: u32 = DARK.bg_base;
 fn theme_seed() -> u32 {
     raekit::sys::theme_accent()
 }
-/// Accent base (live ramp) — the SCHED_GAME class label.
+/// Accent base (live ramp) — the SCHED_BODY class label.
 fn accent() -> u32 {
     rae_tokens::derive_accent(theme_seed(), &DARK).base
 }

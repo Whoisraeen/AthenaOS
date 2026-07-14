@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeNet — userspace networking above L3 with WireGuard, QUIC priority, gaming traffic shaping."
+description = "AthNet — userspace networking above L3 with WireGuard, QUIC priority, gaming traffic shaping."
 
 [dependencies]
 x25519-dalek = { version = "2", default-features = false, features = ["static_secrets"] }
@@ -29,7 +29,7 @@ rae_encode = { path = "../rae_encode" }
 brotli-decompressor = { version = "5", default-features = false, optional = true }
 
 # ── TLS 1.3 building blocks (RustCrypto), behind the `tls13` feature ──────────
-# Optional so the kernel's no_std link of raenet is unaffected; the RaeNet
+# Optional so the kernel's no_std link of raenet is unaffected; the AthNet
 # userspace daemon (and `cargo test -p raenet --features tls13`) turns them on.
 # These take the TLS path from "handshake demo" to "validates a real cert chain":
 # HKDF key schedule, AES-GCM record cipher, X.509 parse + ECDSA/RSA verify.

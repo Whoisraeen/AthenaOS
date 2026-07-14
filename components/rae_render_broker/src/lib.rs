@@ -1,6 +1,6 @@
 //! `rae_render_broker` — kernel-side `/dev/dri/renderD128` broker policy.
 //!
-//! Concept §RaeShield: "the anti-cheat answer *without* giving vendors ring 0."
+//! Concept §AthGuard: "the anti-cheat answer *without* giving vendors ring 0."
 //! A game reaches the GPU through this capability-brokered render node, never
 //! through raw MMIO/DMA. This crate is the **fail-closed heart** of the broker's
 //! `ioctl()` forwarding: given a raw DRM ioctl request from an untrusted client,

@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS WebP decoder — "show my photos" / web images (RaeenOS_Concept.md
+# AthenaOS WebP decoder — "show my photos" / web images (LEGACY_GAMING_CONCEPT.md
 # §creators / media: criterion #5). WebP is the dominant MODERN web image format,
 # served everywhere; this completes the still-image decode stack
 # (BMP/GIF/PNG/JPEG + WebP). A from-scratch, zero-dependency VP8L (lossless)

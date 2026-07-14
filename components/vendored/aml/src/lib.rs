@@ -566,7 +566,7 @@ impl AmlContext {
         }
     }
 
-    /// RaeenOS addition (Phase 1.4 — IndexField/BankField support): write a
+    /// AthenaOS addition (Phase 1.4 — IndexField/BankField support): write a
     /// region from a SHARED (`&self`) context. Field reads only get
     /// `&AmlContext`, but an IndexField read must write the index selector and
     /// a BankField read must write the bank selector first. The [`Handler`]'s
@@ -746,12 +746,12 @@ impl AmlContext {
 
 /// Trait type used by [`AmlContext`] to handle reading and writing to various types of memory in the system.
 pub trait Handler: Send + Sync {
-    /// RaeenOS addition (Phase 1.4): back `Sleep(ms)` in AML method bodies.
+    /// AthenaOS addition (Phase 1.4): back `Sleep(ms)` in AML method bodies.
     /// Default no-op so existing handlers keep compiling; the OS should
     /// provide a real timer-backed delay (firmware uses Sleep for EC/device
     /// settle times).
     fn sleep(&self, _milliseconds: u64) {}
-    /// RaeenOS addition (Phase 1.4): back `Stall(µs)` (busy-wait ≤ 100 µs per
+    /// AthenaOS addition (Phase 1.4): back `Stall(µs)` (busy-wait ≤ 100 µs per
     /// spec). Default no-op; the OS should busy-wait for real.
     fn stall(&self, _microseconds: u64) {}
 
@@ -883,11 +883,11 @@ pub enum AmlError {
     FieldRegionIsNotOpRegion,
     FieldInvalidAddress,
     FieldInvalidAccessSize,
-    /// RaeenOS addition: a selector write needed by an IndexField/BankField
+    /// AthenaOS addition: a selector write needed by an IndexField/BankField
     /// read targets a region space whose handler writes require exclusive
     /// access (e.g. SystemMemory) — unsupported from a shared read context.
     FieldRegionAccessUnsupported,
-    /// RaeenOS addition: `Index` applied past the end of a Package/Buffer/String.
+    /// AthenaOS addition: `Index` applied past the end of a Package/Buffer/String.
     IndexOutOfBounds,
     TypeCannotBeCompared(AmlType),
     /// Produced when the `Mid` operator is applied to a value of a type other than `Buffer` or `String`.

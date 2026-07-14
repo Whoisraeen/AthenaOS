@@ -451,7 +451,7 @@ impl GpgKeyring {
     }
 
     /// Verify a detached Ed25519 signature over `message` (the package's
-    /// signed-data hash) under the named key. RaeenOS keys are Ed25519
+    /// signed-data hash) under the named key. AthenaOS keys are Ed25519
     /// (32-byte public key, 64-byte signature) — `public_key` shorter/longer
     /// is rejected. Fail-closed: the former stub ignored the signature entirely
     /// and returned `true` for any non-revoked key, accepting forged packages.

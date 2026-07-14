@@ -205,13 +205,13 @@ pub fn loopback(host_seed: &[u8; 32], host_pub: &[u8; 32]) -> Result<(), &'stati
     }
 
     // 5) Server sends shell output; the client decrypts it.
-    let wire = srv.channel_output(b"raeen@raeenos:~$ ");
+    let wire = srv.channel_output(b"raeen@athenaos:~$ ");
     let out = client_s2c
         .open(crx + 1, &wire)
         .map_err(|_| "shell output open")?;
     let (_ch, data) =
         crate::connection::parse_channel_data(&out).map_err(|_| "shell data parse")?;
-    if data != b"raeen@raeenos:~$ " {
+    if data != b"raeen@athenaos:~$ " {
         return Err("shell output payload mismatch");
     }
     Ok(())

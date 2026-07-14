@@ -1,10 +1,10 @@
 #![allow(dead_code)]
 
-//! Vulkan-compatible API surface mapped to RaeGFX internals.
+//! Vulkan-compatible API surface mapped to AthGFX internals.
 //!
 //! This module provides the Vulkan API types and entry points that game engines
 //! and renderers (including DXVK) target. Each Vulkan object type maps to the
-//! RaeGFX pipeline API, allowing transparent interception of draw calls, state
+//! AthGFX pipeline API, allowing transparent interception of draw calls, state
 //! changes, and resource management.
 
 extern crate alloc;
@@ -561,7 +561,7 @@ impl Default for VkPhysicalDeviceProperties {
             vendor_id: 0x8AEE_u32.wrapping_mul(1),
             device_id: 0x0001,
             device_type: VkPhysicalDeviceType::DiscreteGpu,
-            device_name: String::from("RaeGFX Virtual GPU"),
+            device_name: String::from("AthGFX Virtual GPU"),
             limits: VkPhysicalDeviceLimits::default(),
         }
     }
@@ -2510,6 +2510,6 @@ pub fn vk_enumerate_instance_layer_properties() -> Vec<VkLayerProperties> {
         layer_name: String::from("VK_LAYER_RAEGFX_validation"),
         spec_version: VK_API_VERSION_1_3,
         implementation_version: 1,
-        description: String::from("RaeGFX Vulkan validation layer"),
+        description: String::from("AthGFX Vulkan validation layer"),
     }])
 }

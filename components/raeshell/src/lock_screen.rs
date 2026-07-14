@@ -1,4 +1,4 @@
-//! Lock screen for RaeenOS desktop shell.
+//! Lock screen for AthenaOS desktop shell.
 //!
 //! Provides a full lock screen with clock, notifications, media controls,
 //! multiple authentication methods (password, PIN, pattern, biometric),
@@ -1887,7 +1887,7 @@ impl LockScreenManager {
     }
 }
 
-// ── Passkey / RaeID Integration ──────────────────────────────────────────
+// ── Passkey / AthID Integration ──────────────────────────────────────────
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PasskeyStatus {

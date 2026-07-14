@@ -6,14 +6,14 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, Ordering};
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Control Panel / Settings UI — Comprehensive system settings for RaeenOS
+// Control Panel / Settings UI — Comprehensive system settings for AthenaOS
 // ═══════════════════════════════════════════════════════════════════════════
 
 static PANEL_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 // ── Categories ───────────────────────────────────────────────────────────
 
-/// The 10 RaeenOS-native top-level Settings categories (docs/design/settings-redesign.md
+/// The 10 AthenaOS-native top-level Settings categories (docs/design/settings-redesign.md
 /// §1 IA). This re-groups the prior 11 Windows-clone categories into the macOS/Win11
 /// "one searchable app" IA; the per-page `SubPage` identity is preserved and each
 /// page's `category` field is re-homed in `populate_pages` (no settings dropped).
@@ -1049,7 +1049,7 @@ pub fn parse_system_info(
     let ver_line = first_meaningful_line(version);
     if !is_unknown(&ver_line) {
         info.os_version = ver_line.clone();
-        // The same line names the kernel (RaeKernel + build hash); show it whole
+        // The same line names the kernel (AthKernel + build hash); show it whole
         // rather than mis-splitting an unknown format.
         info.kernel = ver_line;
     }
@@ -2058,7 +2058,7 @@ impl ControlPanel {
         ));
         gmode.add_setting(SettingItem::toggle(
             "game.sched_game",
-            "SCHED_GAME",
+            "SCHED_BODY",
             "Real-time priority for games",
             true,
         ));
@@ -2278,7 +2278,7 @@ impl ControlPanel {
     fn add_update_security_pages(&mut self) {
         let mut update = SettingsPage::new(
             "upd.windows_update",
-            "RaeenOS Update",
+            "AthenaOS Update",
             '\u{1F504}',
             SettingsCategory::PrivacySecurity,
         )
@@ -2325,7 +2325,7 @@ impl ControlPanel {
         recovery.add_setting(SettingItem::button(
             "upd.reset_pc",
             "Reset this PC",
-            "Reinstall RaeenOS",
+            "Reinstall AthenaOS",
             "Get started",
             2002,
         ));
@@ -3234,11 +3234,11 @@ impl ControlPanel {
         let info = &self.system_info;
         let inner = SPACE_4 as usize;
 
-        // ── Card 1 — Device hero (OS line + RaeenOS mark) ──────────────────
+        // ── Card 1 — Device hero (OS line + AthenaOS mark) ──────────────────
         let hero_h = 64usize;
         if cy + hero_h <= cy + ch {
             draw_content_card(canvas, cx, cy, cw, hero_h, rae_tokens::ELEV_2);
-            // RaeenOS mark glyph in accent.
+            // AthenaOS mark glyph in accent.
             // Device mark — REAL Gear line-icon (no tofu info glyph), accent-tinted.
             canvas.draw_icon(
                 raegfx::icon::Icon::Gear,
@@ -3335,7 +3335,7 @@ impl ControlPanel {
 
     /// Storage panel (docs/design/settings-redesign.md §4): a used/free capacity
     /// bar + a small by-category breakdown from `/proc/raeen/storage`. When no
-    /// RaeFS volume is mounted (the QEMU virtio case / safe boot media), renders a
+    /// AthFS volume is mounted (the QEMU virtio case / safe boot media), renders a
     /// clean empty-state `InfoBar` instead of a fake 0/0 bar — so the panel always
     /// renders and the smoketest can FAIL-test BOTH states.
     fn render_storage_panel(
@@ -3380,7 +3380,7 @@ impl ControlPanel {
                 (cx + inner + info_sz + SPACE_3 as usize) as i32,
                 (cy + (bar_h.saturating_sub(rae_tokens::TYPE_BODY.line_height as usize)) / 2)
                     as i32,
-                "No RaeFS volume mounted - running from boot media",
+                "No AthFS volume mounted - running from boot media",
                 rae_tokens::TYPE_BODY,
                 p.text_primary,
                 raegfx::text::FontFamily::Sans,
@@ -4696,7 +4696,7 @@ pub struct SettingsLayoutProof {
     /// Count of About fields that read live (non-"(unknown)") from the pushed
     /// `/proc/raeen/*`. 0 ⇒ FAIL (the panel rendered nothing real).
     pub about_fields: u32,
-    /// True iff a RaeFS volume is mounted (the capacity bar path); false ⇒ the
+    /// True iff a AthFS volume is mounted (the capacity bar path); false ⇒ the
     /// Storage panel takes the empty-state InfoBar path. EITHER is a valid render.
     pub storage_mounted: bool,
     /// True iff: panes == 2, sidebar_cats == 10, about_fields > 0, and the
@@ -4802,12 +4802,12 @@ mod design_tests {
     fn parse_system_info_reads_live_proc_dumps() {
         // The exact procfs formats the kernel agent specified must parse to live
         // fields — and the proof must be FAIL-able (the all-unknown default fails).
-        let version = "# RaeenOS\nRaeKernel 0.1.0 (build abc123) x86_64\n";
+        let version = "# AthenaOS\nAthKernel 0.1.0 (build abc123) x86_64\n";
         // The real cpu_features dump format: `brand: "..."` (quoted) + `vendor:`.
-        let cpu = "# RaeenOS CPU feature detection\nvendor: AMD (AuthenticAMD)\n\
+        let cpu = "# AthenaOS CPU feature detection\nvendor: AMD (AuthenticAMD)\n\
             brand:  \"AMD Ryzen 5 7640HS\"\nfamily: 0x19   model: 0x74   stepping: 1\n";
         // The real /proc/raeen/smp format: one `cpuN: ...` row per online CPU.
-        let smp = "# RaeenOS SMP heartbeat (per-CPU timer IRQ counters)\n\
+        let smp = "# AthenaOS SMP heartbeat (per-CPU timer IRQ counters)\n\
             cpu0: ticks=100 task_picks=50 steals=0\ncpu1: ticks=90 task_picks=40 steals=0\n\
             cpu2: ticks=80 task_picks=30 steals=0\ncpu3: ticks=70 task_picks=20 steals=0\n\
             # 4 of 12 CPU slot(s) heartbeating, 4 actually running scheduler work\n";
@@ -4871,7 +4871,7 @@ mod design_tests {
         assert_eq!(unknown.about_live_fields(), 0);
         // And a populated info yields a passing about_fields.
         let info = parse_system_info(
-            "RaeKernel 0.1.0 x86_64",
+            "AthKernel 0.1.0 x86_64",
             "brand:  \"TestCPU\"",
             "cpu0: ticks=1 task_picks=1 steals=0",
             "board: TestBoard",

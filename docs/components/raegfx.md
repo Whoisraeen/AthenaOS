@@ -1,4 +1,4 @@
-# RaeGFX
+# AthGFX
 
 Native graphics API. Vulkan-equivalent capability, friendlier surface, first-class
 HDR and VRR.
@@ -9,7 +9,7 @@ HDR and VRR.
 - "Looks like Metal, performs like Vulkan" surface ergonomics
 - Compositor-aware path AND a zero-overhead direct-to-GPU path for exclusive fullscreen games
 - DirectX 11/12 translation at the driver level (DXVK / VKD3D-Proton lineage)
-- OS-level shader cache, shared across Vulkan and RaeGFX, persistent across reinstalls
+- OS-level shader cache, shared across Vulkan and AthGFX, persistent across reinstalls
 - First-class HDR (HDR10, Dolby Vision metadata pass-through where licensed)
 - First-class VRR (FreeSync, G-Sync compatible, per-window where the display supports it)
 

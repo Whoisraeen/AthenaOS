@@ -1,6 +1,6 @@
 //! SHA-256 (FIPS 180-4) + HMAC-SHA256 (RFC 2104) + HKDF-SHA256 (RFC 5869).
 //!
-//! The most-used primitives across RaeenOS: protocol key derivation (TLS 1.3,
+//! The most-used primitives across AthenaOS: protocol key derivation (TLS 1.3,
 //! WireGuard/Noise), signed-manifest content hashing, and integrity checks.
 //! Shared here so userspace components (`raenet`, `raeupdate`, `raestore`,
 //! `raeid`) get one implementation instead of each rolling its own. Validated

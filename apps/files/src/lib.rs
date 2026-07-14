@@ -1,4 +1,4 @@
-//! RaeenOS File Manager — *"the modern file manager"* (RaeenOS_Concept.md
+//! AthenaOS File Manager — *"the modern file manager"* (LEGACY_GAMING_CONCEPT.md
 //! §Windows Pain Points).
 //!
 //! Standalone userspace ELF launched from the start menu (`exec_path = "files"`).
@@ -36,7 +36,7 @@ use raekit;
 use rae_files::{batch_rename_target, restore_target, trash_dir_for_home, trash_target, TabSet};
 // File-association resolver (rae_mime, committed cf80811) + its persistence
 // format (rae_toml). This is the wiring of the "what is this file / what opens
-// it" infra into the live Files app — RaeenOS_Concept.md §Windows Pain Points
+// it" infra into the live Files app — LEGACY_GAMING_CONCEPT.md §Windows Pain Points
 // "the modern file manager" / the #1 daily-driver parity gap: double-clicking a
 // file opens it in the right app, with an "Open With" submenu and a persistent
 // "Set as default" override. `resolve` ties content-sniff + extension + the
@@ -67,7 +67,7 @@ use raemedia::exif::decode_jpeg_oriented;
 // back to the existing dims/hex summary.
 use rae_gif::decode_gif;
 // Document/preview open path (the WS4 "open documents" deliverable —
-// RaeenOS_Concept.md §Windows Pain Points "the modern file manager"). Dispatch is
+// LEGACY_GAMING_CONCEPT.md §Windows Pain Points "the modern file manager"). Dispatch is
 // by MAGIC BYTES via `rae_formats::detect` (never the extension): a PDF renders
 // its extracted text paginated, a DOCX its paragraphs/headings/tables as text, an
 // XLSX as a CSV-style grid (reusing the existing CSV table view), and any image
@@ -77,10 +77,10 @@ use rae_gif::decode_gif;
 // dispatch yields `DocPreview::None` and Quick Look falls back to the existing
 // text/hex summary.
 use rae_formats::{detect, FileKind};
-// Windows-app double-click launch (RaeenOS_Concept.md §Compatibility Strategy:
-// "RaeBridge runs Windows apps on day one… apps run naturally"). Activating a
-// `.exe` in Files writes its VFS path to the proven RaeBridge handoff channel and
-// spawns `raebridge_run`, which loads the PE as its OWN RaeenOS process (the
+// Windows-app double-click launch (LEGACY_GAMING_CONCEPT.md §Compatibility Strategy:
+// "AthBridge runs Windows apps on day one… apps run naturally"). Activating a
+// `.exe` in Files writes its VFS path to the proven AthBridge handoff channel and
+// spawns `raebridge_run`, which loads the PE as its OWN AthenaOS process (the
 // per-process isolation proven in commit d5db628). We consume the handoff codec
 // directly — `Target::Pe { path }` + `encode_record` — rather than replicating it.
 use raebridge::handoff::{self, Target};
@@ -373,7 +373,7 @@ fn geom_row(vis: usize) -> Rect {
 // content list (lifted off the bluish near-black to a neutral field so ftype icons
 // pop, kept opaque for row legibility — Finder/Explorer don't glassify the list),
 // and the iridescent perimeter rim around the window edge (`draw_iridescent_rim`,
-// the RaeenOS fingerprint). The chrome composites the SAME tint→frost order the
+// the AthenaOS fingerprint). The chrome composites the SAME tint→frost order the
 // Control Center uses, so over the aurora the chrome lands at/above the backdrop
 // luminance instead of punching a dark hole. No new tokens — every value is a
 // `rae_tokens::GLASS_*` tier or palette entry.
@@ -572,9 +572,9 @@ fn classify_name(name: &str) -> FType {
     FType::Neutral
 }
 
-// ── Windows .exe double-click → RaeBridge launch ──────────────────────────────
+// ── Windows .exe double-click → AthBridge launch ──────────────────────────────
 
-/// The bundled launcher ELF that loads a PE as its own RaeenOS process. Spawned
+/// The bundled launcher ELF that loads a PE as its own AthenaOS process. Spawned
 /// via the SAME app-launch syscall the start menu / other apps use
 /// (`raekit::sys::spawn`); it reads [`handoff::HANDOFF_PATH`] at startup to learn
 /// which PE to load. Lives in `/bundled` like the other bundled app crates.
@@ -593,11 +593,11 @@ struct ExeLaunch {
     spawn: &'static str,
 }
 
-/// Decide the RaeBridge launch for activating `path`, IFF it names a `.exe`
+/// Decide the AthBridge launch for activating `path`, IFF it names a `.exe`
 /// (case-insensitive). Returns `None` for any non-`.exe` path (so the caller
 /// keeps the normal document/image preview-open route) or when the path is too
 /// long for the interim handoff record (production length uses `SYS_SPAWN_ARGS`).
-/// PURE: builds the `Target::Pe { path }` handoff record via the proven RaeBridge
+/// PURE: builds the `Target::Pe { path }` handoff record via the proven AthBridge
 /// codec; performs no I/O. This is the host-testable core of the double-click flow.
 fn exe_launch_plan(path: &str) -> Option<ExeLaunch> {
     if !name_ends_with_ci(path, ".exe") {
@@ -1611,10 +1611,10 @@ impl App {
     /// Falls back to a text Quick Look for unknown/plain content so the user is
     /// never left with a dead double-click. Never panics.
     fn open_default_selected(&mut self) {
-        // Windows app double-click: a `.exe` LAUNCHES via RaeBridge (its own
-        // RaeenOS process) instead of routing to the doc/image preview path. Only
+        // Windows app double-click: a `.exe` LAUNCHES via AthBridge (its own
+        // AthenaOS process) instead of routing to the doc/image preview path. Only
         // `.exe` is intercepted here; every other type keeps the preview-open flow
-        // below. RaeenOS_Concept.md §Compatibility Strategy — "apps run naturally".
+        // below. LEGACY_GAMING_CONCEPT.md §Compatibility Strategy — "apps run naturally".
         {
             let entry = match self.entries().get(self.selected) {
                 Some(e) if e.kind == Kind::File => *e,
@@ -1655,7 +1655,7 @@ impl App {
     /// fresh writable inode must be created each launch (`handoff::HANDOFF_PATH`
     /// docstring). After the handoff is in place we spawn the launcher via the
     /// SAME app-launch syscall the start menu uses; `raebridge_run` then loads the
-    /// PE as its own RaeenOS process and the session reaps its exit. Never panics;
+    /// PE as its own AthenaOS process and the session reaps its exit. Never panics;
     /// reports any failure via the status toast.
     fn launch_windows_exe(&mut self, plan: &ExeLaunch) {
         let path = match core::str::from_utf8(handoff::HANDOFF_PATH) {
@@ -2043,7 +2043,7 @@ impl App {
 
     // ── Extract here (.zip / .tar / .tar.gz / .tgz) ─────────────────────────
     //
-    // RaeenOS_Concept.md §"The user owns the machine": a daily driver lets you
+    // LEGACY_GAMING_CONCEPT.md §"The user owns the machine": a daily driver lets you
     // double-click a downloaded archive and get its contents without installing
     // a third-party tool (Windows Explorer and macOS Finder both extract natively).
     // `.zip` is the Windows-world shape; `.tar.gz`/`.tgz` is the POSIX-world shape
@@ -2191,7 +2191,7 @@ impl App {
 
     // ── Compress here (.zip / .gz) ──────────────────────────────────────────
     //
-    // RaeenOS_Concept.md §"The user owns the machine": the inverse of Extract — a
+    // LEGACY_GAMING_CONCEPT.md §"The user owns the machine": the inverse of Extract — a
     // daily driver lets you CREATE an archive (zip a project to email, gzip a log)
     // without a third-party tool (Windows Explorer "Send to > Compressed folder",
     // macOS Finder "Compress"). The compression core (LZ77 + fixed-Huffman DEFLATE,
@@ -2501,7 +2501,7 @@ impl App {
 
     // ── Checksum / Verify (download-integrity) ─────────────────────────────
     //
-    // RaeenOS_Concept.md §"the user owns the machine" / "security by default,
+    // LEGACY_GAMING_CONCEPT.md §"the user owns the machine" / "security by default,
     // not by friction": when you download an installer, an ISO, or a `.raepkg`
     // and the publisher posted a checksum, you should be able to verify the
     // file's integrity locally — no network round-trip, no third party. Press
@@ -4773,7 +4773,7 @@ fn read_whole_file(fd: u64, prefix: &[u8]) -> Option<Vec<u8>> {
 
 // ── Document / preview open dispatch (PDF · DOCX · XLSX · image) ───────────────
 //
-// RaeenOS_Concept.md §Windows Pain Points "the modern file manager": opening a
+// LEGACY_GAMING_CONCEPT.md §Windows Pain Points "the modern file manager": opening a
 // document should Just Work, in the right viewer, without a terminal. Files
 // already previews images/text/CSV; this is the path that turns the orphaned
 // document engines (rae_pdf / rae_docx / rae_xlsx) and the unified image decoder
@@ -5348,7 +5348,7 @@ fn read_file_bytes(path: &str) -> Option<Vec<u8>> {
 //
 // A user's "Set as default" overrides round-trip to `<home>/.config/file_assoc.toml`
 // so they survive relaunch (the rae_toml raison d'être: "remember my settings"
-// must be real — RaeenOS_Concept.md §"The user owns the machine"). The on-disk
+// must be real — LEGACY_GAMING_CONCEPT.md §"The user owns the machine"). The on-disk
 // shape is one `[[assoc]]` array-of-tables entry per overridden MIME type:
 //
 //     [[assoc]]
@@ -5611,7 +5611,7 @@ fn build_zip_basename(first_name: &str, out: &mut [u8]) -> usize {
 
 // ── Recursive folder compression (Compress here → folder → nested .zip) ─────────
 //
-// RaeenOS_Concept.md §"The user owns the machine": zipping a FOLDER is the common
+// LEGACY_GAMING_CONCEPT.md §"The user owns the machine": zipping a FOLDER is the common
 // case (you compress a project directory, not loose files). The walk reuses the
 // SAME directory-read mechanism the file list uses (`raekit::sys::readdir_at`,
 // decoding `[name_len:u16][size:u32][name…]` records) and the SAME `ZipWriter`,
@@ -7278,7 +7278,7 @@ fn compress_roundtrip_ok() -> bool {
     let compressible: Vec<u8> = {
         let mut v = Vec::new();
         for _ in 0..64 {
-            v.extend_from_slice(b"RaeenOS-Files-compress-roundtrip ");
+            v.extend_from_slice(b"AthenaOS-Files-compress-roundtrip ");
         }
         v
     };
@@ -8897,7 +8897,7 @@ mod tests {
 
     #[test]
     fn open_pdf_renders_extracted_text() {
-        let pdf = build_test_pdf("Hello, RaeenOS!");
+        let pdf = build_test_pdf("Hello, AthenaOS!");
         // Sanity: magic sniff must route to the PDF engine (content, not name).
         assert_eq!(detect(&pdf), FileKind::Pdf, "PDF magic must sniff to Pdf");
 
@@ -8905,7 +8905,7 @@ mod tests {
             DocPreview::Text { label, text } => {
                 assert_eq!(label, "PDF");
                 assert!(
-                    text.contains("Hello, RaeenOS!"),
+                    text.contains("Hello, AthenaOS!"),
                     "extracted PDF text must carry the shown string, got {:?}",
                     text
                 );
@@ -9109,7 +9109,7 @@ mod tests {
         }
     }
 
-    // ── Windows .exe double-click → RaeBridge launch (the new slice) ──────────
+    // ── Windows .exe double-click → AthBridge launch (the new slice) ──────────
     //
     // The literal Concept promise: double-click a Windows `.exe` in Files → it
     // runs as its own sandboxed process. `exe_launch_plan` is the pure decision
@@ -9174,7 +9174,7 @@ mod tests {
         ] {
             assert!(
                 exe_launch_plan(path).is_none(),
-                "non-.exe path {path:?} must NOT route to the RaeBridge launcher"
+                "non-.exe path {path:?} must NOT route to the AthBridge launcher"
             );
         }
     }

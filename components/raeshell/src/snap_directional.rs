@@ -2,7 +2,7 @@
 //!
 //! Concept §"Windows pain points -> our answer": the single most-used window
 //! shortcut on Windows is Win+←/→/↑/↓ (tile left/right, maximize, restore/
-//! minimize). RaeenOS had the Snap Layouts flyout ([`crate::snap_layouts`]) and
+//! minimize). AthenaOS had the Snap Layouts flyout ([`crate::snap_layouts`]) and
 //! edge-drag Aero snap, but not this keyboard path. This module is the pure
 //! state machine + geometry behind it: each window carries a [`SnapState`], and
 //! an arrow press transitions it (Win11-accurate: a side-snapped window snaps to

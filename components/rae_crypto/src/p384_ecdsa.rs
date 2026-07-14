@@ -3,14 +3,14 @@
 //!
 //! P-384/SHA-384 is the "high-assurance" ECDSA tier: the curve NSA Suite B /
 //! CNSA reserves for TOP SECRET, and — the reason it lands here now — DNSSEC
-//! algorithm **14** (`ECDSAP384SHA384`, RFC 6605). The Concept's RaeNet pitch
+//! algorithm **14** (`ECDSAP384SHA384`, RFC 6605). The Concept's AthNet pitch
 //! is a resolver that can *prove* an answer is authentic instead of trusting
 //! the wire; DNSSEC is how it does that, and a validator that silently skips an
 //! algorithm is a downgrade hole. The kernel's `dns::verify_rrsig` already
 //! covers algs 8/10/13/15; alg 14 was the last one it could not check and had
 //! to fail to `Indeterminate`. This module is the primitive that closes DNSSEC
 //! to algorithm-complete. It is equally the ES384 verifier for higher-assurance
-//! COSE/WebAuthn credentials and P-384 code-signing chains (RaeShield).
+//! COSE/WebAuthn credentials and P-384 code-signing chains (AthGuard).
 //!
 //! Implementation: wraps the vetted RustCrypto `p384` + `ecdsa` crates — the
 //! exact sibling of the `p256` stack `p256_ecdsa` uses. We do NOT hand-roll

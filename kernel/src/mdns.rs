@@ -1,5 +1,5 @@
-//! mDNS / DNS-SD responder (Concept §RaeNet: zero-config LAN discovery —
-//! RaeenOS machines find each other and advertise services without any
+//! mDNS / DNS-SD responder (Concept §AthNet: zero-config LAN discovery —
+//! AthenaOS machines find each other and advertise services without any
 //! server). MasterChecklist Phase 10.2 — "mDNS / DNS-SD for LAN discovery".
 //!
 //! The wire-format engine is `raenet::discovery::MdnsResponder` (RFC 6762/6763
@@ -32,7 +32,7 @@ const SERVICE_PORT: u16 = 7690;
 
 /// Register the machine's own service records and stand the responder up.
 pub fn init() {
-    let mut responder = MdnsResponder::new("raeenos");
+    let mut responder = MdnsResponder::new("athenaos");
     responder.register_service(
         MdnsService::new(SERVICE_NAME, SERVICE_TYPE, SERVICE_PORT).with_txt("os", "raeen"),
     );

@@ -1,4 +1,4 @@
-//! Full desktop file manager for RaeenOS.
+//! Full desktop file manager for AthenaOS.
 //!
 //! QUARANTINED / DEAD TWIN (CLAUDE.md rule 7, see docs/QUARANTINED_MODULES.md):
 //! this is NOT the live Files app. The live, launched Files is the `apps/files`

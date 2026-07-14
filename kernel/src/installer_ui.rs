@@ -1,4 +1,4 @@
-//! installer_ui — RaeenOS graphical install wizard (MasterChecklist Phase 3 / 16.1).
+//! installer_ui — AthenaOS graphical install wizard (MasterChecklist Phase 3 / 16.1).
 //!
 //! Concept: *"Built for people who care about how things feel."* — the very
 //! first thing a new user touches is the installer, so it must feel like a
@@ -9,7 +9,7 @@
 //! It is the *presentation layer* over the already-proven install pipeline:
 //!   * disk enumeration   -> `block_io::BLOCK_LAYER::list_devices`
 //!   * keep-data planning  -> `installer::plan_layout` (full-disk vs dual-boot)
-//!   * partition+format+boot-tree+RaeFS -> `installer::run_install`
+//!   * partition+format+boot-tree+AthFS -> `installer::run_install`
 //!   * account creation    -> `session::create_local_account`
 //!
 //! No new block-write path is introduced here — every byte still flows through
@@ -20,7 +20,7 @@
 //! before a single real install is ever attempted.
 //!
 //! Today it renders on the kernel's software framebuffer (same path as
-//! `login_ui`/`setup_ui`). When the RaeGFX GPU-submit path lands, the renderer
+//! `login_ui`/`setup_ui`). When the AthGFX GPU-submit path lands, the renderer
 //! upgrades to GPU-composited surfaces with the same state machine underneath —
 //! exactly how Windows Setup degrades to a basic display without a GPU driver.
 //!
@@ -138,7 +138,7 @@ const STAGE_LABELS: [&str; 5] = [
     "Partition table",
     "Format ESP",
     "Boot files",
-    "Format RaeFS",
+    "Format AthFS",
     "Verify",
 ];
 
@@ -490,12 +490,12 @@ impl InstallState {
 
     fn header_title(&self) -> &'static str {
         match self.step {
-            InstallStep::Welcome => "Install RaeenOS",
+            InstallStep::Welcome => "Install AthenaOS",
             InstallStep::DiskSelect => "Where do you want to install?",
             InstallStep::Layout => "Choose how to use this disk",
             InstallStep::Account => "Create your account",
             InstallStep::Review => "Review and install",
-            InstallStep::Installing => "Installing RaeenOS",
+            InstallStep::Installing => "Installing AthenaOS",
             InstallStep::Done => "Setup complete",
         }
     }
@@ -603,7 +603,7 @@ impl InstallState {
         let p: &Palette = PALETTE;
         let sans = FontFamily::Sans;
         let lines = [
-            "Welcome. This wizard will install RaeenOS on this computer.",
+            "Welcome. This wizard will install AthenaOS on this computer.",
             "",
             "You'll choose a disk, decide whether to keep an existing OS,",
             "and create your account. The install itself takes a minute.",
@@ -759,7 +759,7 @@ impl InstallState {
                     self.layout_sel == 0,
                     "Install alongside it  (recommended)",
                     &alloc::format!(
-                        "Keeps your OS and files. RaeenOS uses ~{} GB of free space.",
+                        "Keeps your OS and files. AthenaOS uses ~{} GB of free space.",
                         gb
                     ),
                 );
@@ -767,7 +767,7 @@ impl InstallState {
                     canvas,
                     y + 102,
                     self.layout_sel == 1,
-                    "Erase the entire disk and install RaeenOS",
+                    "Erase the entire disk and install AthenaOS",
                     if self.safe_mode {
                         "Everything on the disk is removed (dry run in safe mode)."
                     } else {
@@ -788,8 +788,8 @@ impl InstallState {
                     canvas,
                     y + 36,
                     true,
-                    "Install RaeenOS (uses the whole disk)",
-                    "Creates a GPT, an EFI partition, and a RaeFS root.",
+                    "Install AthenaOS (uses the whole disk)",
+                    "Creates a GPT, an EFI partition, and a AthFS root.",
                 );
             }
             Some(LayoutPlan::Refuse(why)) => {
@@ -813,7 +813,7 @@ impl InstallState {
                     canvas,
                     y + 64,
                     true,
-                    "Erase the entire disk and install RaeenOS",
+                    "Erase the entire disk and install AthenaOS",
                     if self.safe_mode {
                         "Everything on the disk is removed (dry run in safe mode)."
                     } else {
@@ -1091,7 +1091,7 @@ impl InstallState {
             canvas.draw_text_aa(
                 x as i32,
                 y as i32,
-                "RaeenOS is installed.",
+                "AthenaOS is installed.",
                 TYPE_SUBTITLE,
                 p.state_ok,
                 sans,
@@ -1406,7 +1406,7 @@ pub fn reboot() -> ! {
 /// The SAFE-MODE bare-metal auto-return safety net uses this: it must NEVER depend on the
 /// NVMe BOOTLOG.TXT write, because a live NVMe controller can block that write bare-metal
 /// (the live-controller-blocks pattern), and that exact stall stranded the Athena
-/// 2026-06-28 (RaeenOS running + ping-able, but no auto-reboot, no SSH). The netlog (UDP)
+/// 2026-06-28 (AthenaOS running + ping-able, but no auto-reboot, no SSH). The netlog (UDP)
 /// carries the capture instead; this only guarantees the box returns to Linux.
 pub fn reboot_no_flush() -> ! {
     use x86_64::instructions::tables::lidt;
@@ -1472,7 +1472,7 @@ pub fn dump_text() -> String {
         "Done",
     ];
     alloc::format!(
-        "# RaeenOS install wizard (UI)\nsmoketest: {}\nlast_step: {}\nlast_install_result: {:#07b}\nsafe_mode: {}\n",
+        "# AthenaOS install wizard (UI)\nsmoketest: {}\nlast_step: {}\nlast_install_result: {:#07b}\nsafe_mode: {}\n",
         match SMOKE_PASS.load(Ordering::Relaxed) {
             1 => "PASS",
             2 => "FAIL",

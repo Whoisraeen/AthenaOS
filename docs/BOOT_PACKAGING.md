@@ -1,6 +1,6 @@
 # Boot packaging (R01 — Redox extraction, no kernel swap)
 
-RaeenOS keeps **rust-osdev/bootloader 0.11** + `bootloader_api` in the kernel. We adopt Redox **artifact layout ideas**, not the Redox bootloader source.
+AthenaOS keeps **rust-osdev/bootloader 0.11** + `bootloader_api` in the kernel. We adopt Redox **artifact layout ideas**, not the Redox bootloader source.
 
 ## What `xtask build` produces
 
@@ -23,7 +23,7 @@ Redox stages:
 /EFI/BOOT/BOOTX64.EFI   # on ESP
 ```
 
-RaeenOS installer will lay down GPT + ESP + root; today smoketest embeds initramfs in the kernel ELF.
+AthenaOS installer will lay down GPT + ESP + root; today smoketest embeds initramfs in the kernel ELF.
 
 ## QEMU profiles
 

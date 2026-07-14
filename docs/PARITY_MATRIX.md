@@ -1,11 +1,11 @@
-# RaeenOS Parity Matrix — per-capability deep table
+# AthenaOS Parity Matrix — per-capability deep table
 
 Owner: raeen-parity. This is the EXTENSIVE per-capability companion to
 `PRODUCTION_CHECKLIST.md` (which holds the 3 Consumer Production Gates + the
 top-down summary). This file holds the deep "best-of-breed + improve" target per
-capability and the honest RaeenOS status.
+capability and the honest AthenaOS status.
 
-Precedence on any conflict: `RaeenOS_Concept.md` > `MasterChecklist.md` >
+Precedence on any conflict: `LEGACY_GAMING_CONCEPT.md` > `MasterChecklist.md` >
 `PRODUCTION_CHECKLIST.md` > this file. Status here MIRRORS MasterChecklist; it
 never invents a greener status than the code can prove.
 
@@ -13,7 +13,7 @@ Status ladder (identical to MasterChecklist): `[x]` iron-proven / `[~]` partial
 or QEMU-only / `[ ]` not started / `[N/A]` out of scope by Concept design.
 
 "Best" = the platform that does it best today + why. "Target" = best-of-breed
-then the RaeenOS improvement. "Status" = have / partial / missing with the code
+then the AthenaOS improvement. "Status" = have / partial / missing with the code
 evidence (crate or file) that justifies it.
 
 Last full pass: 2026-06-17 (PRODUCTION POLISH PUSH waves 3-7; iron paused, QEMU == [~]).
@@ -41,7 +41,7 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## A. Window management / multitasking
 
-| Capability | Best today + why | Target (best-of-breed + improve) | RaeenOS status | Evidence |
+| Capability | Best today + why | Target (best-of-breed + improve) | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Snap / tile layouts | Win11 Snap Layouts (hover-to-zone, named) | zone editor + tile/stack/float swap as POLICY over one compositor | `[~]` partial | `kernel/src/wm_policy.rs` computes origins; NO client resize (windows placed at cell origin, keep size); no zone editor, no hover UI |
 | Snap Groups / restore | Win11 Snap Groups | restore a saved window set per-display | `[ ]` missing | none |
@@ -52,7 +52,7 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## B. Search & launch
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Instant local search | macOS Spotlight (indexed, instant, math/units) | sub-100ms index across files+apps+settings | `[~]` partial | TWO indexes: (1) DEAD raeshell `search_indexer` (TF-IDF/trigram/calc, never instantiated); (2) LIVE kernel `search_index.rs` w/ full syscall surface (add/remove/query/stats, wired+smoketested) but NOTHING POPULATES IT and nothing QUERIES it yet. Live Start search = app-name substring only. THE GAP IS WIRING, not engine |
 | Command palette (run actions) | rofi / VSCode palette / mac Spotlight actions | one palette runs ACTIONS, not just finds files | `[~]` partial | `raeshell/command_palette.rs` LIVE (instantiated in `DesktopShell` line 1597, rendered line 1787; fuzzy match + command/app registry + seeded settings-actions). QEMU-booted `0b026f1`. GAP: not wired to `search_indexer` for file content; iron unproven |
@@ -60,21 +60,21 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## C. File management
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Tabs / split panes | Win11 Explorer tabs + mac Finder tabs | tabs + split + dual-pane | `[~]` partial | TABS LIVE: `apps/files` uses `rae_files::TabSet` (host-KAT'd tab/history model; up to 8 tabs, +/close, per-tab back/forward, line ~650/744/1870). GAP: no split / dual-pane yet; iron-unproven |
-| Fuzzy in-folder search | Finder / Explorer | wired to the shared index | `[~]` partial | TWO indexes exist: raeshell `search_indexer` is DEAD (declared, never instantiated) AND a LIVE kernel `kernel/src/search_index.rs` (init+smoketest in main.rs 1095; syscalls add/remove/query/stats wired in `syscall.rs` 1908-1926; procfs stats). GAP: nothing POPULATES the kernel index (no RaeFS crawler) and Files/palette don't QUERY it |
+| Fuzzy in-folder search | Finder / Explorer | wired to the shared index | `[~]` partial | TWO indexes exist: raeshell `search_indexer` is DEAD (declared, never instantiated) AND a LIVE kernel `kernel/src/search_index.rs` (init+smoketest in main.rs 1095; syscalls add/remove/query/stats wired in `syscall.rs` 1908-1926; procfs stats). GAP: nothing POPULATES the kernel index (no AthFS crawler) and Files/palette don't QUERY it |
 | Quick Look / preview | macOS Quick Look (spacebar) | spacebar preview for img/text/pdf/media | `[~]` partial | `apps/files` Quick Look renders REAL PNG pixels via `raemedia` (`8550989`); raemedia now also decodes JPEG (`461985e`) + EXIF orientation (`720e99e`) + WAV, so a wired QuickLook can show jpeg too. GAP: Files app not yet calling jpeg/EXIF path; no text/pdf/video; no spacebar gesture; iron-unproven |
 | Batch rename | macOS Finder rename | pattern + counter + find/replace | `[~]` partial | LIVE: `apps/files` batch-rename dialog over host-KAT'd `rae_files::batch_rename_target` (pattern + counter, line 1735/1768/1796). GAP: no find/replace mode; iron-unproven |
 | Trash / Recycle Bin | both | undoable delete + restore | `[~]` partial | LIVE: `apps/files` Trash = CoW move into `<home>/.Trash` bucket via `SYS_RENAME` (trash/restore/empty over host-KAT'd `rae_files::{trash_target,restore_target}`, line 995-1038). GAP: no global undo, no auto-purge policy; iron-unproven |
 | Tags / smart folders | macOS Finder | saved searches + tags | `[ ]` missing | none |
 | File associations / default apps | both | per-type default + open-with | `[ ]` missing | confirmed: no default-app/open-with registry in `apps/`, `raeshell`, `raestore`, or kernel. Files app has no "open with" path; double-click has no MIME->app resolution. Daily-driver blocker (can't open a downloaded file by clicking it) |
 | Removable media mount/eject | both | auto-mount + eject | `[~]` partial | USB-MSC enumerate blocked on iron |
-| Per-app data buckets | RaeFS (Concept differentiator) | isolation by default | `[~]` partial | `kernel/src/raefs.rs` buckets |
+| Per-app data buckets | AthFS (Concept differentiator) | isolation by default | `[~]` partial | `kernel/src/raefs.rs` buckets |
 
 ## D. Notifications & focus
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Toasts | both | grouped, glass, urgency | `[~]` partial | `kernel/src/notify.rs` (TTL toasts, MAX_VISIBLE=3) |
 | Notification center / history | macOS Notification Center | persistent grouped history panel | `[~]` partial | `notify.rs` now has a `HISTORY_CAP=64` retained ring (`record_history`), grouped, with `toggle_center` glass pull-down (dismiss-one / clear-all). QEMU-booted `e92d00c`. GAP: iron-unproven, no scroll/grouping-by-app UI polish |
@@ -84,7 +84,7 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## E. Clipboard
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Cross-app text copy/paste | both | session-wide text clipboard | `[~]` partial | `kernel/src/clipboard.rs` (64KiB text, syscalls 107/108) |
 | Clipboard history + pin | Win11 Win+V | history ring + pin + clear, privacy-aware | `[~]` partial | kernel `clipboard.rs` bounded newest-first history ring (CLIP_HIST_MAX_ENTRIES=64, pinned-safe eviction, de-dup) via `[interface]` syscalls 268-273 (`bbb3276`); `raeshell` Super+C glass flyout panel (pin/delete/clear/paste-on-select, `4f7fea8`). RAM-only/local by design. QEMU-booted. GAP: text-only (Image/Files/Url reserved), iron-unproven |
@@ -92,7 +92,7 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## F. Screenshots / recording / annotation
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Region/window/scroll capture | macOS screenshot + Flameshot | region+window+scroll, hotkey | `[~]` partial | Capture ABI 274-276 LANDED (`Cap::ScreenCapture`-gated, safe-mode-refused; `CaptureHeader` + pixels); raemedia PNG encoder saves real `.png` (`89cce24`); raeshell region-capture overlay Super+Shift+S (`0c4abb2`, concurrent-owned shell). GAP: no scroll capture, markup, or iron proof |
 | Markup / annotate | macOS + Flameshot | arrows/text/blur post-capture | `[ ]` missing | none |
@@ -100,14 +100,14 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## G. Continuity / cross-device
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
-| Handoff / file beam | macOS Handoff/AirDrop | RaeSync-backed handoff + beam | `[~]` partial | `components/raesync` compiles (E2E); no live transport |
+| Handoff / file beam | macOS Handoff/AirDrop | AthSync-backed handoff + beam | `[~]` partial | `components/raesync` compiles (E2E); no live transport |
 | Universal clipboard | macOS | cross-device clipboard | `[ ]` missing | none |
 
 ## H. Backup & recovery
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Snapshots + rollback | macOS Time Machine | CoW snapshots + one-click rollback | `[~]` partial (iron-proven engine, no UI) | `raefs.rs` snapshot/rollback iron-proven; no Settings UI |
 | Scheduled versioned backup | Time Machine | scheduled + external target | `[ ]` missing | none |
@@ -115,12 +115,12 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## I. Security & privacy
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Capability permissions | macOS TCC | Cap enum at syscall layer | `[x]` (enforced, iron) | `kernel/src/capability.rs` |
 | Per-app sandbox by default | macOS App Sandbox | manifest-driven, fail-closed | `[~]` partial | sandbox fail-OPEN for bring-up (Phase 9) |
 | Per-app permission prompts | both | consent prompt + real grant | `[~]` partial | `perm_prompt.rs` real grant; UI partial |
-| FDE | BitLocker / FileVault | TPM-backed FDE | `[~]` partial | RaeFS FDE; TPM not wired |
+| FDE | BitLocker / FileVault | TPM-backed FDE | `[~]` partial | AthFS FDE; TPM not wired |
 | Code signing / notarization | Gatekeeper / SmartScreen | Ed25519 bundle sign + unverified-dev UX | `[~]` partial | `raeshield` Ed25519 signing |
 | Driver claim/DMA cap-gate | DriverKit | syscalls 109-118 gated on held Cap | `[ ]` missing (HIGH) | flagged in work-log; needs daemon cap-plumbing |
 
@@ -136,9 +136,9 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 > `docs/research/accessibility-audit-2026-06-21.md` + `Audit.md` (Accessibility section). Leaving
 > the ladder cells for the lead to re-stamp; do not read the two flagged rows as current.
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
-| Screen reader | macOS VoiceOver | AccessKit tree + TTS | `[~]` partial | LIVE a11y tree (`kernel/src/a11y.rs`) + widget-tier names + screen-reader core: `announce_node`/`announce_focus` over a pluggable `SpeechSink` (`LogSpeechSink` QEMU-provable, `1569ed6` Phase 19.2); a11y ABI 277-278 (`SYS_A11Y_SNAPSHOT`/`ACTION`). GAP: no real TTS->RaeAudio `AudioSpeechSink`; no nav gestures; iron-unproven |
+| Screen reader | macOS VoiceOver | AccessKit tree + TTS | `[~]` partial | LIVE a11y tree (`kernel/src/a11y.rs`) + widget-tier names + screen-reader core: `announce_node`/`announce_focus` over a pluggable `SpeechSink` (`LogSpeechSink` QEMU-provable, `1569ed6` Phase 19.2); a11y ABI 277-278 (`SYS_A11Y_SNAPSHOT`/`ACTION`). GAP: no real TTS->AthAudio `AudioSpeechSink`; no nav gestures; iron-unproven |
 | Magnifier / zoom | both | compositor zoom + smooth follow | `[~]` partial | compositor magnifier = source-sampled scanout upscale (`magnifier_set_enabled`, `8b7b2f4` §3) + focus-follows pan to focused node (`30a577e` Phase 19.3). **UPDATE 2026-06-21: toggle HOTKEY now wired** (Super+Alt+M + Super+=/- in `shell_runner`, `a11y::toggle_magnifier`/`magnifier_zoom_in/out`). GAP: no smooth animation, iron-unproven |
 | High contrast / color filters | both | palette swap via tokens | `[~]` partial (was `[ ]`; SHIPPED 2026-06-21) | LIVE forced-colors swap: `a11y::toggle_high_contrast`/`set_high_contrast` -> `rae_tokens::active_palette() == HIGH_CONTRAST`; on-switch Super+Alt+H + Control Center tile; compositor color filters (`a11y_filter_set`, Super+Alt+C). Proven by `a11y::run_onswitch_smoketest` + host KAT. GAP: broaden surface coverage; iron-unproven |
 | Sticky/slow keys, key repeat | both | input-layer toggles | `[ ]` missing | none |
@@ -146,24 +146,24 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## K. Dev tools
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Terminal + shell | mac Terminal / Win Terminal | VT100/xterm, tabs, true-color | `[~]` partial | `apps/terminal` VT100, SGR color |
-| Package manager | brew / winget / apt | RaeStore CLI + repos | `[~]` partial | `raestore` compiles |
+| Package manager | brew / winget / apt | AthStore CLI + repos | `[~]` partial | `raestore` compiles |
 | Containers / VM | WSL / Hyper-V / Parallels | POSIX layer + a VM story | `[~]` partial | Linux syscall ABI runs relibc apps |
 
 ## L. Settings & management
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Unified searchable Settings | mac System Settings | one searchable app, no split | `[~]` partial | `apps/settings` + `control_panel.rs` model (2446 lines), tokenized; search/IA pending |
-| Storage management | both | per-app usage + cleanup | `[ ]` missing | RaeFS data exists; no UI |
+| Storage management | both | per-app usage + cleanup | `[ ]` missing | AthFS data exists; no UI |
 | System info / About | both | one panel from /proc/raeen | `[~]` partial | data exists; no UI |
 | Display/sound/network/power UIs | both | per-domain panels | `[~]/[ ]` mixed | backends exist; most UIs missing |
 
 ## M. Power & battery
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Battery health + reporting | both | fuel-gauge + health + per-app energy | `[~]` partial | fuel-gauge iron-proven; no UI |
 | Low-power / power modes | both | plans + auto | `[~]` partial | CPPC read iron; no plans UI |
@@ -171,9 +171,9 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## N. Gaming (the wedge)
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
-| Real-time game scheduling | none (Game Mode weak) | SCHED_GAME hard deadlines | `[~]` partial | EDF exists; deadline-miss telemetry missing |
+| Real-time game scheduling | none (Game Mode weak) | SCHED_BODY hard deadlines | `[~]` partial | EDF exists; deadline-miss telemetry missing |
 | Game bar / overlay | Win Game Bar | FPS/frametime/temps overlay | `[ ]` missing | none |
 | Per-game profiles | 3rd party | res/refresh/audio/GPU per game | `[~]` partial | profile struct exists |
 | GameOS / Big Picture | none | couch shell, controller-only | `[~]` partial | `raeshell/gameos.rs` |
@@ -181,7 +181,7 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## O. Input
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Keyboard / mouse | both | live HID end-to-end | `[~]` partial | HID armed iron; live-typing pending |
 | Keyboard remapping | Win PowerToys / kanata | system remap + layers | `[~]` partial | `components/kanata_daemon` vendored; wiring pending |
@@ -191,20 +191,20 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## P. Automation & scripting
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Visual + scriptable automation | mac Shortcuts / Win Power Automate | visual flows + scriptable | `[ ]` missing | none |
 
 ## Q. App distribution
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
-| App store + sideload + PWA | App Store / Store / Flatpak | RaeStore + sideload + PWA | `[~]` partial | `raestore` shell; rae_pwa parses W3C Web App Manifest (`1b67e01`, install-to-desktop foundation) but no install flow wired; sideload missing |
-| Windows app compat | none (the moat) | RaeBridge (Wine/Proton lineage) | `[~]` partial | `raebridge` LDR/SEH host-KAT'd; GPU/Steam blocked |
+| App store + sideload + PWA | App Store / Store / Flatpak | AthStore + sideload + PWA | `[~]` partial | `raestore` shell; rae_pwa parses W3C Web App Manifest (`1b67e01`, install-to-desktop foundation) but no install flow wired; sideload missing |
+| Windows app compat | none (the moat) | AthBridge (Wine/Proton lineage) | `[~]` partial | `raebridge` LDR/SEH host-KAT'd; GPU/Steam blocked |
 
 ## R. Customization (Vibe Mode differentiator)
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Themes / accent / one-tap reskin | none unified | one seed reskins whole desktop + running apps | `[~]` partial (proven) | `theme_engine::active_accent` + `SYS_THEME_GET` (266) reach apps; cohesion smoketest PASS |
 | Live wallpapers | 3rd party | GPU live wallpaper, paused when occluded | `[ ]` missing | none |
@@ -213,7 +213,7 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## S. Networking
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Wired + DHCP | both | DHCP to Bound | `[~]` partial | RTL8125 TX+RX iron; DHCP Bound pending |
 | Wi-Fi | both | scan/connect/WPA3 | `[ ]` missing | AX210 via LinuxKPI; not built |
@@ -223,7 +223,7 @@ Overview/Spaces (A): `virtual_desktops.rs` module still NOT instantiated in live
 
 ## T. Quick utilities
 
-| Capability | Best today + why | Target | RaeenOS status | Evidence |
+| Capability | Best today + why | Target | AthenaOS status | Evidence |
 |---|---|---|---|---|
 | Calculator | both | real f64 calc | `[~]` partial | `apps/calculator` + `rae_calc` (17 KATs) |
 | Notes | both | quick notes | `[~]` partial | LIVE: `apps/notes` real app — sidebar `.md`/`.txt` list in `<home>/Notes`, edit buffer + live `rae_markdown` preview (Tab toggle, Ctrl+S save, New/Delete), themed via `SYS_THEME_GET`. GAP: iron-unproven, no sync |

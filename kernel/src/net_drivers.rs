@@ -896,7 +896,7 @@ const RTL_IDR0: u32 = 0x00; // MAC address (IDR0..IDR5, 6 bytes)
 const RTL_TNPDS: u32 = 0x20; // Tx Normal-Priority Descriptor Start (64-bit)
 const RTL_CR: u32 = 0x37; // Command register (8-bit)
 const RTL_TPPOLL: u32 = 0x38; // Tx Poll (8-bit) — 8169/8168/8111 family
-/// RaeenOS fix (Phase 2.2): the RTL8125 moved the TX doorbell — writing the
+/// AthenaOS fix (Phase 2.2): the RTL8125 moved the TX doorbell — writing the
 /// legacy TPPoll (0x38) does NOTHING on it, so every queued frame sat in the
 /// ring forever ("emitted=true" on Athena while no frame reached the wire:
 /// DHCP stuck at Selecting, netlog silent). 8125 doorbell = 16-bit reg 0x90,
@@ -1160,7 +1160,7 @@ impl RtlDriver {
         let mut rcr =
             RTL_RCR_APM | RTL_RCR_AM | RTL_RCR_AB | RTL_RCR_MXDMA_UNLIMITED | RTL_RCR_RXFTH_NONE;
         if self.device_id == 0x8125 {
-            // RaeenOS fix (Phase 2.2): the 8125 repurposes RxConfig's high bits
+            // AthenaOS fix (Phase 2.2): the 8125 repurposes RxConfig's high bits
             // as the descriptor FETCH count — without it the NIC never fetches
             // RX descriptors, so nothing is ever received (TX worked, DHCP
             // OFFERs never arrived on Athena). Linux r8169 `rtl_init_rxcfg`:

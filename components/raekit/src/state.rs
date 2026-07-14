@@ -1,4 +1,4 @@
-//! Reactive state management for RaeKit.
+//! Reactive state management for AthKit.
 //!
 //! Provides `State<T>` for single-value reactive state, `Binding<T>` for
 //! two-way data flow, `ObservableObject` for multi-field models, and

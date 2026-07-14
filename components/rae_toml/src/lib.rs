@@ -1,6 +1,6 @@
 //! # RaeTOML — a never-panic, `no_std` TOML parser + serializer (TOML v1.0 subset).
 //!
-//! RaeenOS_Concept.md §"The user owns the machine": no forced updates, no
+//! LEGACY_GAMING_CONCEPT.md §"The user owns the machine": no forced updates, no
 //! telemetry, no ads — the machine, *and its configuration*, belong to the user.
 //! That promise is only real if "remember my settings" is real: themes, app
 //! preferences, service config, and the OS's own `config/base.toml` must read
@@ -1486,8 +1486,8 @@ mod tests {
     #[test]
     fn realistic_config_exact_values() {
         let src = r#"
-# RaeenOS-shaped config
-title = "RaeenOS"
+# AthenaOS-shaped config
+title = "AthenaOS"
 version = 1
 ratio = 3.5
 enabled = true
@@ -1509,7 +1509,7 @@ id = "alpha"
 id = "beta"
 "#;
         let v = parse(src).unwrap();
-        assert_eq!(v.get("title").and_then(Toml::as_str), Some("RaeenOS"));
+        assert_eq!(v.get("title").and_then(Toml::as_str), Some("AthenaOS"));
         assert_eq!(v.get("version").and_then(Toml::as_i64), Some(1));
         assert!(approx(v.get("ratio").and_then(Toml::as_f64).unwrap(), 3.5));
         assert_eq!(v.get("enabled").and_then(Toml::as_bool), Some(true));

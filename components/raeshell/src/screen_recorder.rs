@@ -1,4 +1,4 @@
-//! Full-featured screen recorder for the RaeenOS desktop shell.
+//! Full-featured screen recorder for the AthenaOS desktop shell.
 //!
 //! Supports recording full screen, windows, or regions with configurable
 //! video/audio settings, webcam overlay, cursor effects, live annotation,

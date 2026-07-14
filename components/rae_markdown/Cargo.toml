@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS Markdown render-model — a zero-dependency, never-panic CommonMark
-# SUBSET parser that produces a typed block/inline model (RaeenOS_Concept.md
+# AthenaOS Markdown render-model — a zero-dependency, never-panic CommonMark
+# SUBSET parser that produces a typed block/inline model (LEGACY_GAMING_CONCEPT.md
 # "Built for people who care about how things feel"). It is the foundation for
 # the Notes app, the docs viewer, README rendering, and chat message bodies:
 # turning untrusted Markdown text into a structured `Document` the UI layer can

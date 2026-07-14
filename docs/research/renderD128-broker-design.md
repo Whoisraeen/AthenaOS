@@ -5,7 +5,7 @@
 **Status:** DESIGN — host-testable foundation landing incrementally; Athena
 validation of the render-client lifecycle (step 1 of the owner's GPU plan) is a
 prerequisite for wiring the live path.
-**Concept line served:** §RaeGFX + §RaeShield — "the anti-cheat answer *without*
+**Concept line served:** §AthGFX + §AthGuard — "the anti-cheat answer *without*
 giving vendors ring 0": a game reaches the GPU through a capability-brokered
 render node, never through raw MMIO/DMA. Implements step 2 of the owner's
 2026-07-12 GPU vertical-slice plan; builds on the daemon-side render seam

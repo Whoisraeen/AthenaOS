@@ -1,4 +1,4 @@
-//! Kernel-side D-Bus message bus for RaeenOS.
+//! Kernel-side D-Bus message bus for AthenaOS.
 //!
 //! Implements the D-Bus wire protocol and bus semantics inside the kernel for
 //! minimal-overhead IPC: message types, header fields, type system, marshalling,

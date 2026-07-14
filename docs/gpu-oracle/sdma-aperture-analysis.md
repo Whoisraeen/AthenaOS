@@ -75,7 +75,7 @@ snapshot. RB_SIZE matches (10).
 ## The fix (already scoped in memory): the (C) RLC-backdoor autoload path
 
 The decisive fix is to load SDMA firmware the way amdgpu does on this part:
-switch RaeenOS's firmware load from the PSP individual-`LOAD_IP_FW` path to
+switch AthenaOS's firmware load from the PSP individual-`LOAD_IP_FW` path to
 **AMDGPU_FW_LOAD_RLC_BACKDOOR_AUTO**, where the IMU/RLC loads RLC+CP+SDMA+MES from
 the autoload buffer (which already includes SDMA — `rlc_autoload.rs::
 build_autoload_buffer` is host-KAT'd with TH0/TH1). The toggle is staged as

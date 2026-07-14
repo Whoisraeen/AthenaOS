@@ -1,7 +1,7 @@
 # ACPI table dump — Athena (Beelink EliteMini)
 
-Raw ACPI tables captured from the RaeenOS **target hardware**. These are the
-byte-for-byte firmware tables the RaeKernel ACPI parser (`kernel/src/acpi/`)
+Raw ACPI tables captured from the AthenaOS **target hardware**. These are the
+byte-for-byte firmware tables the AthKernel ACPI parser (`kernel/src/acpi/`)
 must consume without panicking on real silicon — see MasterChecklist Phase 1.4
 ("Athena DSDT without panic", `_PRT` packages, GPE `_Lxx`/`_Exx`, EC at 0x62/0x66).
 

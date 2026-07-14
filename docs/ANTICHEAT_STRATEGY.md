@@ -1,13 +1,20 @@
-# Anti-Cheat Strategy (RaeenOS)
+# Anti-Cheat Strategy (PARKED — not an AthenaOS product goal)
+
+> **Athena note:** Competitive-game anti-cheat partnerships are **abandoned** for
+> AthenaOS. See [`LEGACY_GAMING_CONCEPT.md`](../LEGACY_GAMING_CONCEPT.md) and
+> [`PARKED_GAMING.md`](PARKED_GAMING.md). Attestation primitives in
+> `kernel/src/anticheat.rs` may later feed **body/safety attestation**, not EAC/BattlEye.
+
+**Historical bootstrap text follows (do not treat as roadmap).**
 
 **Anti-cheat exists for the game publishers, not the user.** Its purpose is to let
 competitive titles — Fortnite, Valorant, Overwatch, Apex, Destiny 2, PUBG, R6
-Siege — run on RaeenOS *without* giving cheaters an easy exploit surface, so those
-publishers will certify the platform. A gaming-first OS that can't run these games
+Siege — run on AthenaOS *without* giving cheaters an easy exploit surface, so those
+publishers will certify the platform. A embodiment-first OS that can't run these games
 has failed at its one job. This is precisely where Linux loses: it refuses kernel
 anti-cheat, so the kernel-AC titles are blocked.
 
-RaeenOS solves it with **two tiers**. Tier 1 is the better primitive we offer
+AthenaOS solves it with **two tiers**. Tier 1 is the better primitive we offer
 everyone; Tier 2 is the pragmatic compatibility path for titles that mandate a
 kernel vantage point.
 
@@ -40,22 +47,22 @@ will not accept a userspace-only model — hence Tier 2.
 
 A **defined, signed, per-game kernel anti-cheat module slot** that a certified vendor
 ports their detection engine to. It is *not* arbitrary ring-0 code and *not*
-boot-resident. The design constraints are the whole point — RaeenOS gives the kernel
+boot-resident. The design constraints are the whole point — AthenaOS gives the kernel
 access the publisher demands while removing the things users (rightly) hate about
 Windows kernel anti-cheat:
 
-| Property | Windows (Vanguard/EAC-kernel) | RaeenOS Tier 2 |
+| Property | Windows (Vanguard/EAC-kernel) | AthenaOS Tier 2 |
 |---|---|---|
 | When it loads | At **boot**, always resident | **On game launch only**, unloaded on exit |
 | User awareness | Opaque; installs a driver silently | Explicit **consent prompt**, listed + revocable in Settings |
 | Scope | Full ring-0, persistent | Bounded kernel API surface, audited, non-persistent |
-| Trust chain | Vendor-signed only | Vendor-signed **and** RaeenOS-countersigned (approved-AC registry) |
+| Trust chain | Vendor-signed only | Vendor-signed **and** AthenaOS-countersigned (approved-AC registry) |
 | Removal | Often survives game uninstall | Uninstalls with the game |
 
 ### How it works
 1. A game's `RaeManifest` declares `requires_kernel_anticheat = "eac" | "battleye" |
    "vanguard" | …`.
-2. On launch, RaeShield raises a **distinct high-privilege consent prompt**
+2. On launch, AthGuard raises a **distinct high-privilege consent prompt**
    (`perm_prompt`): *"Fortnite requires Easy Anti-Cheat to run at kernel level. This
    grants it deep system access while the game is running. Allow / Don't run."*
 3. On consent, the kernel loads the **countersigned** AC module from the approved-AC
@@ -82,7 +89,7 @@ and gone when the game is uninstalled. "Ring-0 on a leash," not a permanent root
 
 ## Security posture (Tier 2 is a *deliberate, scoped* exception)
 
-RaeenOS's whole model is capabilities + sandboxing + no arbitrary ring-0. Tier 2 is a
+AthenaOS's whole model is capabilities + sandboxing + no arbitrary ring-0. Tier 2 is a
 consciously bounded exception, justified only by the game-compatibility need, and
 contained by: countersigning (only vetted vendor modules load), per-game + per-launch
 scoping, the fixed API surface, W^X/IOMMU enforced on the module, full audit, and

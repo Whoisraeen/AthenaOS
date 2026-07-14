@@ -15,7 +15,7 @@
 1954:[linuxkpi] [amdgpu] stage 6 MES KIQ ucode direct-loaded: ucode=104016 B @ 0x3d88c0000, data=131072 B @ 0x3d88e0000
 1964:[linuxkpi] [amdgpu] stage 6 SDMA ring: 9 dwords (CONSTANT_FILL 0xA5A5A5A5 + FENCE)
 1965:[linuxkpi] [amdgpu] stage 6 SMU DisallowGfxOff acked
-1967:[linuxkpi] [amdgpu] stage 6 SMU metrics table @ 0x3d8910000: SetDramAddrHi->Some(1) Lo->Some(1) TransferSmu2Dram->Some(1) (the pre-MES SMU step RaeenOS skipped)
+1967:[linuxkpi] [amdgpu] stage 6 SMU metrics table @ 0x3d8910000: SetDramAddrHi->Some(1) Lo->Some(1) TransferSmu2Dram->Some(1) (the pre-MES SMU step AthenaOS skipped)
 1968:[linuxkpi] [amdgpu] stage 6 RLC safe mode entered — GFX held writable for CP programming
 1973:[linuxkpi] [amdgpu] stage 6 config_gfx_rs64 SKIPPED — CP is F32 (v1 ucode) on this ASIC, RS64 N/A; or offsets unresolved (QEMU). Phoenix=F32: PSP loads ucode, CP enable
 1974:[linuxkpi] [amdgpu] stage 6 CP regs: SOC15 (discovery-resolved gfx11 offsets)

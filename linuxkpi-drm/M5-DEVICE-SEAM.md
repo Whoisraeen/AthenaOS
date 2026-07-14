@@ -25,10 +25,10 @@ linking the amdgpu `.o`s against it.
 
 Once `mes_v11_0.o` (+ its IP-block deps) links against `raeen_linuxkpi`, the real amdgpu
 C still needs **a populated `struct amdgpu_device` and every LinuxKPI call backed by real
-device access.** RaeenOS already has all of that — in the **`amdgpud` daemon's `GpuOps`
+device access.** AthenaOS already has all of that — in the **`amdgpud` daemon's `GpuOps`
 impl** and `raeen_linuxkpi`. Don't rebuild it; *wire to it.* The mapping:
 
-| What amdgpu C calls | RaeenOS backing (already exists) |
+| What amdgpu C calls | AthenaOS backing (already exists) |
 |---|---|
 | `request_firmware(&fw, name, dev)` | `amdgpud` `request_firmware_bytes()` — loads the blob set in `build_gfx_fw_blobs` |
 | `RREG32`/`WREG32` → `amdgpu_device_{r,w}reg` | BAR0 MMIO: `amdgpud` maps BAR0, `reg<<2` byte offset, `raeen_linuxkpi::pci::{readl,writel}` |
@@ -84,7 +84,7 @@ SMU/RLC/PMFW handshakes our hand-port couldn't replicate — get pipe0 **past 0x
 - **If yes** → the broader dynamic init state was the missing piece, and this path
   delivers the MES (and games). That is the entire bet of Strategy B.
 - **If it hits the same 0x7654 halt** → the gap is below the driver (SMU/PMFW power
-  state, or something the real code *also* doesn't do on RaeenOS's device backing), and
+  state, or something the real code *also* doesn't do on AthenaOS's device backing), and
   the next suspect is the **SMU power/handshake sequence**, not more amdgpu code.
 
 **How to verify when you get there** (GRBM-select me=3, pipe=0, read the CP_MES regs):
@@ -94,7 +94,7 @@ SMU/RLC/PMFW handshakes our hand-port couldn't replicate — get pipe0 **past 0x
 - `mcause`/`mepc`/`mbadaddr` (GC seg1 0x281a/0x2818/0x281c): all 0 = no fault.
 - Off-target umr on the working driver: `umr --pci 0000:c4:00.0 -RS mes_3.0.0` (un-GFXOFF
   first: `echo 0 | sudo tee /sys/kernel/debug/dri/0/amdgpu_gfxoff`). Athena auto-returns
-  to Linux between RaeenOS cold tests, so the live driver is always available as oracle.
+  to Linux between AthenaOS cold tests, so the live driver is always available as oracle.
 
 ---
 

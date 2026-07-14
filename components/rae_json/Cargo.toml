@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS JSON value model, parser, and serializer (RFC 8259) — the lingua
-# franca of web APIs and the RaeStore manifest format (RaeenOS_Concept.md §"web
+# AthenaOS JSON value model, parser, and serializer (RFC 8259) — the lingua
+# franca of web APIs and the AthStore manifest format (LEGACY_GAMING_CONCEPT.md §"web
 # apps via PWA support that actually feels native"). Foundational, zero-dep,
 # never-panic infrastructure: web fetch/JSON, package manifests, settings/config.
 #

@@ -19,13 +19,13 @@ doc and follows the pipeline; nothing here requires web access.
 > "A daily driver must 'play my movies' and 'play my music.' MP4 … (the ISO Base Media File
 > Format) is the dominant container for both — phone video, downloaded video, and AAC audio
 > (`.m4a`/`.mp4`) all ship as BMFF."
-> (RaeenOS_Concept.md §creators / media — the "it just works" media pillar; the same line
+> (LEGACY_GAMING_CONCEPT.md §creators / media — the "it just works" media pillar; the same line
 > `rae_mp4/src/lib.rs` and the AAC spec quote.)
 
 And the manifesto's first principle:
 
 > "Native everywhere. No Electron tax. No web wrappers. Native rendering, native input,
-> native audio." (RaeenOS_Concept.md §Core Principles 1)
+> native audio." (LEGACY_GAMING_CONCEPT.md §Core Principles 1)
 
 "Play my movies" is not true until a `.mp4` shows a real picture. H.264 baseline/constrained-
 baseline is the floor of "movies and downloaded video"; AAC (its usual audio partner) is
@@ -80,14 +80,14 @@ Do **not** rebuild these. The decoder body is the **only** delta.
   - The MP3/AAC bit-reader + "skip-and-flag a deferred tool, never emit wrong output" posture
     is the model for how this decoder degrades on CABAC/inter/multi-slice (see Honest scope).
 
-Status to flip when done: the H.264 / video rows under media / Phase-6 (RaeGFX/playback) in
+Status to flip when done: the H.264 / video rows under media / Phase-6 (AthGFX/playback) in
 `MasterChecklist.md` from `[~] decode pending (flat surface)` → `[~] first keyframe decoded
 (host/QEMU)` → `[x]` once an Athena boot shows a real-picture frame from a user `.mp4`.
 
 ## Prior art & OSS verdict
 
 Every algorithm and table below is **corroborated across ≥2 independent open decoders**. None
-is vendored or linked — they are read-only spec oracles; RaeenOS keeps its own `#![no_std]`,
+is vendored or linked — they are read-only spec oracles; AthenaOS keeps its own `#![no_std]`,
 no-libm, soft-float decoder (Concept §R7: H.264 is an ITU-T/MPEG codec, not a Linux subsystem;
 the implementation is original Rust over ITU data tables, no `libavcodec`/`openh264` link).
 
@@ -561,7 +561,7 @@ YUV reference**, both embedded as byte arrays in the test. Use a 16×16 (one mac
 32×32 (four MBs, exercises inter-MB intra prediction + a deblock edge) fixture. Resolution is
 tiny so the embedded reference YUV is a few hundred bytes, not megabytes.
 
-Run in WSL2 (`~/raeenos`, full toolchain per the dev-env memory). Generate a **deterministic
+Run in WSL2 (`~/athenaos`, full toolchain per the dev-env memory). Generate a **deterministic
 synthetic source** (a known gradient/pattern, no camera), encode one baseline I-frame, then
 decode it back to raw YUV with ffmpeg as the golden reference:
 

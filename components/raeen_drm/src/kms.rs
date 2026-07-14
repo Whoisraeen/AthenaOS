@@ -3,7 +3,7 @@
 //! amdgpu's `amdgpu_dm` (Display Manager) drives these to light up a display.
 //! The atomic-modeset commit path (`drm_atomic_commit`) is the choke point: the
 //! driver builds a `drm_atomic_state` describing the desired CRTC/plane config,
-//! and on commit we forward the final scanout buffer + mode to the RaeenOS
+//! and on commit we forward the final scanout buffer + mode to the AthenaOS
 //! compositor.
 
 extern crate alloc;

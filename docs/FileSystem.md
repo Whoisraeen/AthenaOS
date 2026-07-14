@@ -1,14 +1,14 @@
-# RaeFS Architecture and User-Experience Specification
+# AthFS Architecture and User-Experience Specification
 
-RaeenOS uses the custom **RaeFS** filesystem to deliver a tree that is
+AthenaOS uses the custom **AthFS** filesystem to deliver a tree that is
 human-readable, self-cleaning, crash-safe, and structurally enforces security
 and gaming priorities. This document is both the **UX contract** (what the user
-sees) and the **architecture plan** (how RaeFS delivers it), with an honest
+sees) and the **architecture plan** (how AthFS delivers it), with an honest
 **implementation-status** map to the code in `kernel/src/raefs.rs` and friends.
 
 > Conventions: `[x]` shipped + proven · `[~]` implemented, QEMU-verified ·
-> `[ ]` planned. RaeFS follows the no-Linux-clone rule (§CLAUDE.md R7): no ext4,
-> no FUSE; internal volumes are RaeFS-native, foreign media is handled by
+> `[ ]` planned. AthFS follows the no-Linux-clone rule (§CLAUDE.md R7): no ext4,
+> no FUSE; internal volumes are AthFS-native, foreign media is handled by
 > purpose-built read paths.
 
 ---
@@ -17,7 +17,7 @@ sees) and the **architecture plan** (how RaeFS delivers it), with an honest
 
 ### The Apex root
 
-RaeenOS abandons drive letters (`C:\`, `D:\`). The root is **`PC`** / **`Apex`**
+AthenaOS abandons drive letters (`C:\`, `D:\`). The root is **`PC`** / **`Apex`**
 (`/`). It contains exactly five canonical directories and **no** hidden system
 files or untracked dumps at the root:
 
@@ -27,7 +27,7 @@ files or untracked dumps at the root:
 | `/Apps` | `.app` bundles (drag-and-drop, zero-trace) | Per-bundle subtree |
 | `/Users` | Per-user `Documents/Downloads/Media/Projects` + `Configs` + `Data` | Encrypted subtree |
 | `/Games` | High-performance tier (game-aware extents, tiered routing) | Contiguous extents, tiered |
-| `/Vaults` | Dynamic mount point for secondary/external drives (by name, not letter) | RaeFS-native or foreign-FS bridge |
+| `/Vaults` | Dynamic mount point for secondary/external drives (by name, not letter) | AthFS-native or foreign-FS bridge |
 
 > **✅ Done:** `raefs::format()` now seeds exactly the Apex tree (`/System /Apps
 > /Users /Games /Vaults`, inodes 2–6) **and writes real named `DirEntry` records**
@@ -36,7 +36,7 @@ files or untracked dumps at the root:
 > apex_root=true -> PASS` (first entry confirmed `System→inode 2`, free-block
 > accounting correct). `/var/crash` + `/var/log` are flat-named artifacts, not a
 > root entry, so the "exactly five" rule holds. `[~]` *(Remaining: the in-RAM
-> bootstrap `RaeFS::format() -> Self` used at live mount doesn't seed the named
+> bootstrap `AthFS::format() -> Self` used at live mount doesn't seed the named
 > tree yet — separate, lower-risk follow-up.)*
 
 ### `/System` — the immutable core
@@ -75,7 +75,7 @@ files or untracked dumps at the root:
 
 `/Users/[User]/` holds `Documents`, `Downloads`, `Media`, `Projects`, plus:
 
-* **`/Users/[User]/Configs`** — versioned `.rcfg` files. RaeFS natively versions
+* **`/Users/[User]/Configs`** — versioned `.rcfg` files. AthFS natively versions
   every config write, so the Settings app exposes a **History slider** for
   one-click rollback (whole-snapshot **and** per-setting). Backed by the
   `config_registry` generation journal. `[~]`
@@ -97,18 +97,18 @@ files or untracked dumps at the root:
 
 Secondary/USB drives mount by **name**, not letter: drive "Archive" → `/Vaults/Archive`.
 
-* **RaeFS-native drives:** mounted directly, full feature set.
+* **AthFS-native drives:** mounted directly, full feature set.
 * **Foreign media (FAT32/exFAT, the common USB-stick case):** handled by a
   **purpose-built, read-first bridge** (`fatfs_esp.rs` already parses FAT32 BPB +
   directory + cluster chains and reads files). Plan: FAT32 read `[~]`; bounded
   FAT32 write to pre-existing files `[~]` (used by the bootlog); exFAT read `[ ]`;
   NTFS read `[ ]` (read-only, no driver port — translation shim only). This keeps
-  the no-Linux-clone rule while still letting RaeenOS read the user's existing
+  the no-Linux-clone rule while still letting AthenaOS read the user's existing
   sticks. USB enumeration via the in-kernel MSC driver (`usb_msc.rs`). `[~]`
 
 ---
 
-## Part II — RaeFS On-Disk Architecture (how the UX is delivered)
+## Part II — AthFS On-Disk Architecture (how the UX is delivered)
 
 The namespace above rides on these layers (all in `kernel/src/raefs.rs` unless noted):
 
@@ -255,8 +255,8 @@ history slider** because all config is versioned `.rcfg`.
 
 1. ~~Align the on-disk root with the spec~~ — **DONE**: `format()` writes the
    Apex tree with named entries (`format_smoketest … apex_root=true`). Follow-up:
-   seed the same named tree in the in-RAM bootstrap `RaeFS::format()`.
-2. **Longer + Unicode names** — RaeFS directory entries cap at 55 bytes with no
+   seed the same named tree in the in-RAM bootstrap `AthFS::format()`.
+2. **Longer + Unicode names** — AthFS directory entries cap at 55 bytes with no
    true long-filename support; human-readable paths (`Counter-Strike 2`,
    `My Résumé.rcfg`) need an LFN/UTF-8 name scheme. *(Foundational; touches every
    path-facing feature.)*

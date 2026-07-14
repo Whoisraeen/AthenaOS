@@ -6,9 +6,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS TOML value model, parser, and serializer (TOML v1.0 practical subset)
+# AthenaOS TOML value model, parser, and serializer (TOML v1.0 practical subset)
 # — the config foundation the OS itself uses (config/base.toml) and the format
-# app preferences / service config persist through (RaeenOS_Concept.md §"The user
+# app preferences / service config persist through (LEGACY_GAMING_CONCEPT.md §"The user
 # owns the machine": local config the user controls, read AND written robustly).
 # Foundational, zero-dep, never-panic infrastructure: settings/themes/app-data
 # buckets, "remember my settings".

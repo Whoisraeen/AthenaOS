@@ -1,4 +1,4 @@
-//! RaeenOS Init System — a systemd-class service manager.
+//! AthenaOS Init System — a systemd-class service manager.
 //!
 //! Manages service lifecycle, socket activation, timer units,
 //! dependency resolution with topological sort, and journal logging.
@@ -918,7 +918,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
 
     mgr.register_service(
         ServiceUnit::new("network.service", "/sbin/raenetd")
-            .with_description("RaeenOS Network Manager")
+            .with_description("AthenaOS Network Manager")
             .with_dependencies(&["udev.service", "dbus.service"])
             .with_wanted_by(&["multi-user.target"])
             .with_restart(RestartPolicy::OnFailure),
@@ -928,7 +928,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
 
     mgr.register_service(
         ServiceUnit::new("raeshield.service", "/usr/sbin/raeshieldd")
-            .with_description("RaeenOS Security Framework")
+            .with_description("AthenaOS Security Framework")
             .with_dependencies(&["basic.target"])
             .with_wanted_by(&["multi-user.target"])
             .with_restart(RestartPolicy::Always)
@@ -939,7 +939,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
 
     mgr.register_service(
         ServiceUnit::new("raesync.service", "/usr/sbin/raesyncd")
-            .with_description("RaeenOS Sync Daemon")
+            .with_description("AthenaOS Sync Daemon")
             .with_dependencies(&["network.service"])
             .with_wanted_by(&["multi-user.target"])
             .with_restart(RestartPolicy::OnFailure),
@@ -959,7 +959,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
 
     mgr.register_service(
         ServiceUnit::new("audio.service", "/usr/bin/raeaudiod")
-            .with_description("RaeenOS Audio Server")
+            .with_description("AthenaOS Audio Server")
             .with_dependencies(&["udev.service"])
             .with_wanted_by(&["graphical.target"])
             .with_restart(RestartPolicy::OnFailure),
@@ -979,7 +979,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
 
     mgr.register_service(
         ServiceUnit::new("compositor.service", "/usr/bin/rae-compositor")
-            .with_description("RaeenOS Wayland Compositor")
+            .with_description("AthenaOS Wayland Compositor")
             .with_dependencies(&["login.service", "udev.service"])
             .with_wanted_by(&["graphical.target"])
             .with_restart(RestartPolicy::Always),
@@ -989,7 +989,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
 
     mgr.register_service(
         ServiceUnit::new("raeshell.service", "/usr/bin/raeshell")
-            .with_description("RaeenOS Desktop Shell")
+            .with_description("AthenaOS Desktop Shell")
             .with_dependencies(&["compositor.service"])
             .with_wanted_by(&["graphical.target"])
             .with_restart(RestartPolicy::Always),
@@ -999,7 +999,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
 
     mgr.register_service(
         ServiceUnit::new("raestore.service", "/usr/sbin/raestored")
-            .with_description("RaeenOS App Store Daemon")
+            .with_description("AthenaOS App Store Daemon")
             .with_dependencies(&["network.service"])
             .with_wanted_by(&["graphical.target"])
             .with_restart(RestartPolicy::OnFailure),

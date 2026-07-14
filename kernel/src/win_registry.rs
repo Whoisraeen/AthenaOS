@@ -1,5 +1,5 @@
 //! Win32 registry shim backed by versioned config (Concept §Compatibility:
-//! "Windows apps see the registry they expect; RaeenOS stores it in ITS
+//! "Windows apps see the registry they expect; AthenaOS stores it in ITS
 //! config system — versioned, snapshottable, one-click-rollbackable like
 //! every other setting"). MasterChecklist Phase 11.2 — "Registry shim
 //! backed by versioned config".

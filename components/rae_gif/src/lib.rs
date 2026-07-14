@@ -1,9 +1,9 @@
 //! # RaeGIF — a never-panic, `no_std` animated GIF decoder (87a + 89a).
 //!
-//! RaeenOS_Concept.md (§creators / media): the OS must let people "play my
+//! LEGACY_GAMING_CONCEPT.md (§creators / media): the OS must let people "play my
 //! movies, show my photos." A daily-driver computer that can show a still photo
 //! but not an animated one — the GIFs that fill messaging, stickers, and the web
-//! — has a real consumer-format gap. RaeenOS already decodes PNG and JPEG; this
+//! — has a real consumer-format gap. AthenaOS already decodes PNG and JPEG; this
 //! module is the missing *animated* image path, and the engine a future Photos /
 //! Quick Look animated preview will sit on (that wiring is a separate follow-up).
 //!

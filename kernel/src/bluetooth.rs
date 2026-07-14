@@ -1,7 +1,7 @@
 //! Full Bluetooth stack — HCI transport, L2CAP, SDP, RFCOMM, GATT (BLE),
 //! pairing/bonding, and profiles (A2DP, HFP, HOGP, AVRCP, PAN).
 //!
-//! Provides a complete Bluetooth subsystem for RaeenOS supporting both
+//! Provides a complete Bluetooth subsystem for AthenaOS supporting both
 //! Classic (BR/EDR) and Low Energy (LE) operation.
 
 #![allow(dead_code)]
@@ -146,7 +146,7 @@ impl HciController {
         Self {
             transport,
             address: BtAddr::ZERO,
-            name: String::from("RaeenOS-BT"),
+            name: String::from("AthenaOS-BT"),
             manufacturer: 0xFFFF,
             hci_version: 0x0C, // BT 5.3
             hci_revision: 1,
@@ -1575,13 +1575,13 @@ impl BluetoothSubsystem {
             dev_info,
             GattUuid::Uuid16(0x2A29), // Manufacturer
             GattCharProps::read_only(),
-            b"RaeenOS Project".to_vec(),
+            b"AthenaOS Project".to_vec(),
         );
         self.gatt.add_characteristic(
             dev_info,
             GattUuid::Uuid16(0x2A24), // Model Number
             GattCharProps::read_only(),
-            b"RaeenOS-BT-1".to_vec(),
+            b"AthenaOS-BT-1".to_vec(),
         );
         self.gatt.add_characteristic(
             dev_info,

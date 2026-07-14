@@ -1,5 +1,5 @@
 //! winmm.dll — Windows Multimedia API: high-resolution timers, wave audio
-//! I/O, MIDI output stubs, and legacy joystick access for RaeBridge.
+//! I/O, MIDI output stubs, and legacy joystick access for AthBridge.
 
 #![allow(dead_code)]
 
@@ -195,7 +195,7 @@ impl WaveOutCaps {
             manufacturer_id: 1,
             product_id: 100,
             driver_version: 0x0500,
-            product_name: String::from("RaeenOS Audio Output"),
+            product_name: String::from("AthenaOS Audio Output"),
             formats: 0x00000FFF,
             channels: 2,
             support: 0x000F,
@@ -219,7 +219,7 @@ impl WaveInCaps {
             manufacturer_id: 1,
             product_id: 200,
             driver_version: 0x0500,
-            product_name: String::from("RaeenOS Audio Input"),
+            product_name: String::from("AthenaOS Audio Input"),
             formats: 0x00000FFF,
             channels: 2,
         }
@@ -245,7 +245,7 @@ impl MidiOutCaps {
             manufacturer_id: 1,
             product_id: 1,
             driver_version: 0x0100,
-            product_name: String::from("RaeenOS Software Synth"),
+            product_name: String::from("AthenaOS Software Synth"),
             technology: 0x0001, // MOD_MIDIPORT
             voices: 16,
             notes: 128,

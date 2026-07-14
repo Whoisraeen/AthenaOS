@@ -6,7 +6,7 @@
 # Handoff provenance (journalctl --list-boots on Athena):
 #   boot -1  Jul 05 01:07:26–01:09:10  cmdline: ...module_blacklist=amdgpu vfio-pci.ids=1002:15bf  (GPU DARK all boot)
 #   boot  0  Jul 05 01:09:28           cmdline: no blacklist -> amdgpu loads from the WARM-REBOOT-DARK handoff
-# This is byte-for-byte the handoff state RaeenOS's iron loop receives.
+# This is byte-for-byte the handoff state AthenaOS's iron loop receives.
 # Host: Arch, kernel 7.0.12-arch1-1, linux-firmware 20260519-1, amdgpu DRM 3.64.0
 #
 # VERDICT: full init, MES set_hw_resources acked (no timeout), gfx_0.0.0 mapped,

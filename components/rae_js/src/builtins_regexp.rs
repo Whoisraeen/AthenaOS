@@ -1,6 +1,6 @@
 //! # RaeJs `RegExp` execution — regex that actually MATCHES.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy (criterion #5 — "the web browser is the
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy (criterion #5 — "the web browser is the
 //! universal app runtime; PWAs that feel native"): real-world page script uses regular
 //! expressions *everywhere* — form/input validation (`/^\d+$/`), URL/route parsing,
 //! templating, search-and-replace. The [interpreter](crate::interp) parsed a regex literal

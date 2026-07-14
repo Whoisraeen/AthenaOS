@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeGFX — native graphics API. Vulkan-equivalent capabilities, friendlier surface, first-class HDR/VRR."
+description = "AthGFX — native graphics API. Vulkan-equivalent capabilities, friendlier surface, first-class HDR/VRR."
 
 [dependencies]
 font8x8 = { version = "0.3", default-features = false, features = ["unicode"] }
@@ -43,7 +43,7 @@ default = []
 gpu_userspace = ["wgpu-hal", "wgpu-core", "wgpu-types", "bytemuck", "naga"]
 # WGSL -> SPIR-V shader toolchain (Concept §Language Stack — extended). Pulls
 # only naga's wgsl-in + spv-out (NOT the heavy wgpu stack), so userspace
-# RaeGFX/RaeUI can compile effect/theme shaders without the full renderer.
+# AthGFX/AthUI can compile effect/theme shaders without the full renderer.
 # naga needs std, so the bare-metal kernel build leaves this off.
 wgsl = ["naga/wgsl-in", "naga/spv-out"]
 # Vector path tessellation (lyon). Userspace UI / SW-raster path.

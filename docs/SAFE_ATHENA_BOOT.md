@@ -1,7 +1,7 @@
-# Safe Athena Boot — test RaeenOS on real hardware WITHOUT touching the disk
+# Safe Athena Boot — test AthenaOS on real hardware WITHOUT touching the disk
 
 The last bare-metal **install** wiped a Windows partition. This procedure boots
-RaeenOS in a **guaranteed read-only** mode so it *physically cannot write to any
+AthenaOS in a **guaranteed read-only** mode so it *physically cannot write to any
 disk* — you can exercise the kernel, drivers, USB, networking, audio, and the
 desktop on real Athena hardware with zero risk to whatever is on the SSD.
 
@@ -47,7 +47,7 @@ You should see, early in boot:
 ```
 [safe-mode] ENABLED — sector writes will be refused at the BlockDevice trait
 [storage] *** SAFE IMAGE: storage is READ-ONLY for this entire boot — ...
-          RaeenOS cannot write any real disk ... Safe to run on real hardware. ***
+          AthenaOS cannot write any real disk ... Safe to run on real hardware. ***
 ```
 
 and, whenever anything attempts a write:

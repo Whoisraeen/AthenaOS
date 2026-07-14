@@ -1,6 +1,6 @@
 //! Arch-neutral memory-address types (Slice 1, sub-slice 1a) — aarch64 backend.
 //!
-//! Concept §Architecture Reach: *"RaeenOS refuses ISA lock-in: the kernel sits
+//! Concept §Architecture Reach: *"AthenaOS refuses ISA lock-in: the kernel sits
 //! on a clean `arch::` abstraction layer … so the same OS boots x86_64, aarch64
 //! (ARM 64-bit), and i686 (32-bit x86) — each proven independently."*
 //!

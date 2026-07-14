@@ -40,8 +40,8 @@ Prioritized resumption queue (build ON the committed Liquid Glass foundation):
 5. **Boot-time** — measurements are inflated by concurrent-build dev-box load (6.1→7.7s during the
    marathon; not a code regression). Re-measure on a quiet box; the next lever is gating the
    pre-marker procfs serial dump (ADR 0006) — kernel-contested now → wait.
-6. **Non-UI subsystem depth** (collision-free even now, host-KAT-able): RaeNet protocol
-   completeness (TLS 1.3 handshake, sockets API), RaeAudio engine, RaeFS hardening (criterion #2,
+6. **Non-UI subsystem depth** (collision-free even now, host-KAT-able): AthNet protocol
+   completeness (TLS 1.3 handshake, sockets API), AthAudio engine, AthFS hardening (criterion #2,
    but kernel-contested for boot proof), services/installer.
 7. **Library follow-ups surfaced this session**: rae_json shortest-float is done; raeshell
    inline-vector glyphs → the 13 new raegfx canonical icons (CC swap, kernel-contested);

@@ -193,7 +193,7 @@ pub enum AmlValue {
         offset: u64,
         length: u64,
     },
-    /// RaeenOS addition (Phase 1.4): a field unit accessed indirectly through
+    /// AthenaOS addition (Phase 1.4): a field unit accessed indirectly through
     /// an index/data register pair (`DefIndexField`, ExtOp 0x86). To access
     /// the unit at bit `offset`, the byte index is written to the `index`
     /// field and the byte is transferred through the `data` field. Standard
@@ -205,7 +205,7 @@ pub enum AmlValue {
         offset: u64,
         length: u64,
     },
-    /// RaeenOS addition (Phase 1.4): a field unit in a banked region
+    /// AthenaOS addition (Phase 1.4): a field unit in a banked region
     /// (`DefBankField`, ExtOp 0x87). `bank_value` is written to the `bank`
     /// field-unit to select the bank before accessing `region` like a normal
     /// field.
@@ -432,14 +432,14 @@ impl AmlValue {
 
     /// Reads from a field of an opregion, returning either a `AmlValue::Integer` or an `AmlValue::Buffer`,
     /// depending on the size of the field. Handles plain `Field`s, plus the
-    /// RaeenOS-added `IndexField` (index/data pair) and `BankField`
+    /// AthenaOS-added `IndexField` (index/data pair) and `BankField`
     /// (bank-selected) units.
     pub fn read_field(&self, context: &AmlContext) -> Result<AmlValue, AmlError> {
         match self {
             AmlValue::Field { region, flags, offset, length } => {
                 read_region_field(context, *region, *flags, *offset, *length)
             }
-            // RaeenOS addition (Phase 1.4): index/data-pair access. Each byte
+            // AthenaOS addition (Phase 1.4): index/data-pair access. Each byte
             // of the unit is selected by writing its byte index through the
             // index field-unit, then transferred through the data field-unit.
             AmlValue::IndexField { index, data, flags: _, offset, length } => {
@@ -455,7 +455,7 @@ impl AmlValue {
                 let value = raw >> bit_shift;
                 Ok(AmlValue::Integer(value.get_bits(0..(*length as usize).min(64))))
             }
-            // RaeenOS addition (Phase 1.4): bank-selected access — write the
+            // AthenaOS addition (Phase 1.4): bank-selected access — write the
             // bank value through the bank field-unit, then read the region
             // like a normal field.
             AmlValue::BankField { region, bank, bank_value, flags, offset, length } => {
@@ -472,7 +472,7 @@ impl AmlValue {
                 let (region, flags, offset, length) = (*region, *flags, *offset, *length);
                 write_region_field(context, region, flags, offset, length, value)
             }
-            // RaeenOS addition (Phase 1.4): byte-wise index/data write — the
+            // AthenaOS addition (Phase 1.4): byte-wise index/data write — the
             // data field-unit is a plain `Field`, so each byte goes through
             // the normal (mutable, all-region-space) write path.
             AmlValue::IndexField { index, data, flags: _, offset, length } => {
@@ -495,7 +495,7 @@ impl AmlValue {
                 }
                 Ok(())
             }
-            // RaeenOS addition (Phase 1.4): bank-select then a normal region
+            // AthenaOS addition (Phase 1.4): bank-select then a normal region
             // field write.
             AmlValue::BankField { region, bank, bank_value, flags, offset, length } => {
                 let (region, bank, bank_value, flags, offset, length) =
@@ -622,7 +622,7 @@ impl AmlValue {
     }
 }
 
-/// RaeenOS addition (Phase 1.4): the minimum access width a field's flags
+/// AthenaOS addition (Phase 1.4): the minimum access width a field's flags
 /// allow, in bits. Shared by the plain/index/bank field access paths.
 fn field_min_access_size(flags: &FieldFlags) -> Result<u64, AmlError> {
     Ok(match flags.access_type()? {
@@ -635,7 +635,7 @@ fn field_min_access_size(flags: &FieldFlags) -> Result<u64, AmlError> {
     })
 }
 
-/// RaeenOS addition (Phase 1.4): validate that `region` is an OpRegion of a
+/// AthenaOS addition (Phase 1.4): validate that `region` is an OpRegion of a
 /// space we can access (preserves the original `read_field` error behavior).
 fn validate_field_region(context: &AmlContext, region: AmlHandle) -> Result<(), AmlError> {
     if let AmlValue::OpRegion { region, .. } = context.namespace.get(region)? {
@@ -648,7 +648,7 @@ fn validate_field_region(context: &AmlContext, region: AmlHandle) -> Result<(), 
     }
 }
 
-/// RaeenOS addition (Phase 1.4): shared body for reading a field unit that
+/// AthenaOS addition (Phase 1.4): shared body for reading a field unit that
 /// directly overlays an operation region (`Field`, and `BankField` after its
 /// bank has been selected). Extracted unchanged from the original
 /// `read_field`.
@@ -675,7 +675,7 @@ fn read_region_field(
     Ok(AmlValue::Integer(context.read_region(region, offset, access_size)?.get_bits(0..(length as usize))))
 }
 
-/// RaeenOS addition (Phase 1.4): shared body for writing a field unit that
+/// AthenaOS addition (Phase 1.4): shared body for writing a field unit that
 /// directly overlays an operation region, honoring the field's update rule.
 /// Extracted unchanged from the original `write_field`.
 fn write_region_field(
@@ -699,7 +699,7 @@ fn write_region_field(
     context.write_region(region, offset, access_size, field_value)
 }
 
-/// RaeenOS addition (Phase 1.4): write `value` through a plain `Field` unit
+/// AthenaOS addition (Phase 1.4): write `value` through a plain `Field` unit
 /// from a SHARED (`&AmlContext`) context — the selector step of
 /// IndexField/BankField accesses, which must happen inside read paths. Routes
 /// through [`AmlContext::write_region_shared`], so only IO/PCI-config-backed

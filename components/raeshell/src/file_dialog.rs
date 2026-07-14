@@ -7,7 +7,7 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 // ═══════════════════════════════════════════════════════════════════════════
-// File Dialog System — Full open/save/browse dialog for RaeenOS
+// File Dialog System — Full open/save/browse dialog for AthenaOS
 // ═══════════════════════════════════════════════════════════════════════════
 
 static DIALOG_INITIALIZED: AtomicBool = AtomicBool::new(false);

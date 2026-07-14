@@ -1,8 +1,8 @@
-//! RaeenOS File Manager logic engine — *"the modern file manager"*
-//! (RaeenOS_Concept.md §Windows Pain Points). The pure, host-testable core
+//! AthenaOS File Manager logic engine — *"the modern file manager"*
+//! (LEGACY_GAMING_CONCEPT.md §Windows Pain Points). The pure, host-testable core
 //! behind the bundled Files app: tabs with back/forward history, an **undoable
 //! Trash** (delete = a CoW move into a session-home bucket, restorable instantly
-//! — RaeFS *"instant rollback / per-app data buckets"*), and **batch rename**
+//! — AthFS *"instant rollback / per-app data buckets"*), and **batch rename**
 //! (a `Name_###` pattern with a counter that preserves each file's extension).
 //!
 //! ## Why this is its own crate

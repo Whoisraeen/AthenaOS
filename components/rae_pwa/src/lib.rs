@@ -1,6 +1,6 @@
 //! # RaePWA — a never-panic W3C Web App Manifest parser (`no_std`).
 //!
-//! RaeenOS_Concept.md §"web apps via PWA support that actually feels native":
+//! LEGACY_GAMING_CONCEPT.md §"web apps via PWA support that actually feels native":
 //! the web is the universal app runtime, and a Progressive Web App identifies
 //! itself with a [W3C Web App Manifest](https://www.w3.org/TR/appmanifest/) — a
 //! JSON `manifest.json` carrying the app's name, icons, display mode, and theme.
@@ -269,7 +269,7 @@ pub struct AppEntry {
 /// without any further context.
 ///
 /// The `origin` + `scope` are the basis of the per-origin capability sandbox the
-/// security layer applies to the installed app (RaeenOS_Concept.md: "every web
+/// security layer applies to the installed app (LEGACY_GAMING_CONCEPT.md: "every web
 /// origin runs sandboxed") — this crate only *describes* them; enforcement is
 /// the security layer's job.
 #[derive(Debug, Clone, PartialEq, Eq)]

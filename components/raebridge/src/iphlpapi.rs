@@ -1,6 +1,6 @@
 //! iphlpapi.dll — IP Helper API: adapter enumeration, IP address management,
 //! route tables, ARP/neighbor tables, TCP/UDP connection tables, interface
-//! statistics, DNS configuration, and change notifications for RaeBridge.
+//! statistics, DNS configuration, and change notifications for AthBridge.
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;
@@ -266,7 +266,7 @@ impl IpAdapterAddresses {
         Self {
             adapter_name: String::from("eth0"),
             dns_suffix: String::from("localdomain"),
-            description: String::from("RaeenOS Virtual Ethernet Adapter"),
+            description: String::from("AthenaOS Virtual Ethernet Adapter"),
             friendly_name: String::from("Ethernet"),
             physical_address: [0x00, 0x15, 0x5D, 0xAA, 0xBB, 0xCC],
             physical_address_length: 6,
@@ -771,7 +771,7 @@ pub fn get_if_table2() -> Vec<MibIfRow2> {
             interface_index: 2,
             interface_guid: [0; 16],
             alias: String::from("Ethernet"),
-            description: String::from("RaeenOS Virtual Ethernet Adapter"),
+            description: String::from("AthenaOS Virtual Ethernet Adapter"),
             phys_address: [0x00, 0x15, 0x5D, 0xAA, 0xBB, 0xCC],
             phys_address_length: 6,
             if_type: IF_TYPE_ETHERNET_CSMACD,
@@ -817,7 +817,7 @@ pub struct NetworkParams {
 
 pub fn get_network_params() -> NetworkParams {
     NetworkParams {
-        host_name: String::from("RAEENOS"),
+        host_name: String::from("ATHENAOS"),
         domain_name: String::from("localdomain"),
         dns_server_list: alloc::vec![
             IpAddress::ipv4(8, 8, 8, 8, 32),

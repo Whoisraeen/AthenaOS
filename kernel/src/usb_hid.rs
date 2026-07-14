@@ -13,7 +13,7 @@
 //!
 //! Architectural pattern adapted from Redox OS `inputd` / `ps2d`
 //! (`gitlab.redox-os.org/redox-os/base.git`, MIT). Redox runs these as
-//! microkernel daemons that multiplex multiple input sources; RaeenOS
+//! microkernel daemons that multiplex multiple input sources; AthenaOS
 //! is hybrid and keeps the hot path in-kernel feeding the existing
 //! `crate::input` queue. **No Redox source code is copied here** —
 //! the byte-level report layout below is USB HID 1.11 Appendix B
@@ -444,7 +444,7 @@ pub fn dispatch_boot_report(device_id: InputDeviceId, raw: &[u8]) {
     // between the HID report diff and the input queue. With all filters off
     // (the default) `filter_key` is an exact passthrough, so this is invisible
     // until a user enables a feature from Settings. The `bridge_*` scancode path
-    // (RaeBridge/raw consumers) is intentionally NOT filtered — sticky keys is a
+    // (AthBridge/raw consumers) is intentionally NOT filtered — sticky keys is a
     // desktop affordance for input-queue consumers.
     let now_ms = crate::aurora::aurora_now_ms();
 

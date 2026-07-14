@@ -1,8 +1,8 @@
-# RaeenOS Update & Recovery Model
+# AthenaOS Update & Recovery Model
 
 A daily-driver OS lives or dies on whether updates are **safe**. The Windows/Linux
 failure mode — a half-applied update leaves an unbootable machine — is unacceptable.
-RaeenOS's rule: **an update can never brick the box.** A failed or bad update boots
+AthenaOS's rule: **an update can never brick the box.** A failed or bad update boots
 straight back into the last-known-good system, automatically, with no user action.
 
 This is the design for atomic kernel updates (A/B slots), signed update delivery, and
@@ -18,7 +18,7 @@ the recovery paths. Tracks MasterChecklist Phase 3.6.
    bootloader falls back to the previous slot on the next attempt, automatically.
 3. **Signed** — only an update whose signature verifies against the trust anchor is ever
    written or booted (no unsigned/forged kernel boots).
-4. **Reversible userspace** — system/app state changes are RaeFS snapshots, so "undo the
+4. **Reversible userspace** — system/app state changes are AthFS snapshots, so "undo the
    update" restores data too, not just the kernel.
 
 ---
@@ -43,7 +43,7 @@ update flow:
 bootloader can read AND write it (a small slot-state region, not inside either kernel).
 
 ### The current blocker (be honest)
-RaeenOS's bootloader today opens a **fixed path** (`kernel-x86_64` at the ESP root, no
+AthenaOS's bootloader today opens a **fixed path** (`kernel-x86_64` at the ESP root, no
 config file). A/B requires a bootloader that can (a) read slot state, (b) pick a slot,
 (c) decrement the attempt counter and revert on repeated failure. **So A/B is gated on a
 slot-aware bootloader** — that's the first real work item here, not the update daemon.
@@ -66,13 +66,13 @@ that blocks config-file boot.)
 
 ---
 
-## 4. Userspace / data rollback (the RaeFS half — already works)
+## 4. Userspace / data rollback (the AthFS half — already works)
 
-The system half (A/B) handles the kernel + base system. User/app data uses **RaeFS
+The system half (A/B) handles the kernel + base system. User/app data uses **AthFS
 snapshots**, which are **already proven** (Phase 5, one-click rollback round-trips in
 QEMU):
 
-- Before applying an update, raeupdate takes a RaeFS snapshot.
+- Before applying an update, raeupdate takes a AthFS snapshot.
 - "Roll back this update" = revert the boot slot **and** restore the pre-update snapshot —
   kernel and data both return to the known-good point.
 - Routine "system restore" points are the same mechanism, on a schedule.
@@ -90,7 +90,7 @@ instant, and atomic, not a background file copy.
 | Update fails to reach healthy boot | Bootloader auto-reverts after N attempts | ⬜ needs slot-aware bootloader |
 | Both slots bad / corrupt FS | Recovery USB: re-flash + preserve `/Users` `/Vaults` | 🟡 installer exists |
 | Secure-boot/anchor failure | Refuse to boot tampered kernel; recovery USB | 🟡 anchor verify done |
-| User data only | Restore a RaeFS snapshot from the recovery menu | 🟡 |
+| User data only | Restore a AthFS snapshot from the recovery menu | 🟡 |
 
 **Healthy-boot definition:** userspace reaches a defined "system good" checkpoint (the
 boot marker + a settle period) and writes the slot `good`. Anything short of that — panic,

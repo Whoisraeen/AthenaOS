@@ -1,4 +1,4 @@
-//! raepkg — the host-side packer for RaeenOS application bundles (the `raekit bundle`
+//! raepkg — the host-side packer for AthenaOS application bundles (the `raekit bundle`
 //! producer half).
 //!
 //! Produces the `REBP` ("RaeEnv Bundled Package") manifest the kernel's `app_bundle`

@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeVPN — VPN client and server for RaeenOS"
+description = "RaeVPN — VPN client and server for AthenaOS"
 
 [dependencies]
 # spin::Mutex guards the per-session anti-replay window (RFC 6479) — decrypt is

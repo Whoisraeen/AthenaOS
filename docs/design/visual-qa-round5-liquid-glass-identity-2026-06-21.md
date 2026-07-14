@@ -182,7 +182,7 @@ right split, matching macOS Finder / Win11 Explorer Mica:
      L45) so ftype icon colors pop. Keep it solid for row legibility, but lift it off
      near-black and de-tint it so it doesn't read as "dark mode from 2015."
 2. **Window edge → the iridescent rim + soft elev.2 shadow** (currently neither).
-   This is the fingerprint that makes it visibly a RaeenOS window. Without the rim the
+   This is the fingerprint that makes it visibly a AthenaOS window. Without the rim the
    window has no identity tell at all.
 3. **Titlebar close button** is a saturated solid red square (visible top-right) —
    off-system. Should be a `radius_pill`/circular control or the macOS-style traffic-

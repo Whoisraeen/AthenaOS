@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-shot VFIO amdgpu test — cap-delegation image (Claude, run: cap1).
-# Boots the RaeenOS real-amdgpu image with the AMD GPU (c4:00.0) passed through,
+# Boots the AthenaOS real-amdgpu image with the AMD GPU (c4:00.0) passed through,
 # preserves serial CONTINUOUSLY, then reboots back to the default desktop entry.
 set -u
 cd /home/whoisraeen/raeen-vm
@@ -17,7 +17,7 @@ systemctl disable raeen-vfio-test.service 2>/dev/null || true
     ( while :; do cp -f /tmp/raeen-serial.log "serial-vfio-${STAMP}.log" 2>/dev/null; sync -f .; sleep 5; done ) &
     COPIER=$!
     systemd-inhibit --what=handle-power-key --who=raeen-vfio-test \
-      --why="RaeenOS GPU test in progress — auto-reboots when done" \
+      --why="AthenaOS GPU test in progress — auto-reboots when done" \
       env IMG="$IMG" TIMEOUT=300 timeout 420 ./run-vfio.sh
     echo "[autotest] run-vfio.sh exit=$?"
     kill $COPIER 2>/dev/null

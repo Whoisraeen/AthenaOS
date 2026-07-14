@@ -1,5 +1,5 @@
 //! Tabs + per-tab back/forward history — the Explorer-tabs / Finder-tabs model
-//! (RaeenOS_Concept.md §Windows Pain Points: "the modern file manager").
+//! (LEGACY_GAMING_CONCEPT.md §Windows Pain Points: "the modern file manager").
 //!
 //! Each [`Tab`] is its own current directory plus a bounded history stack with a
 //! cursor: `navigate` truncates the forward history (a fresh branch, like a

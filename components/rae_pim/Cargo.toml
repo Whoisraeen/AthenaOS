@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS PIM (Personal Information Management) data layer — "import my calendar &
-# contacts from Google/Apple/Outlook" (RaeenOS_Concept.md §Compatibility Strategy:
+# AthenaOS PIM (Personal Information Management) data layer — "import my calendar &
+# contacts from Google/Apple/Outlook" (LEGACY_GAMING_CONCEPT.md §Compatibility Strategy:
 # "let people switch without conscious effort"). Every platform exports its
 # calendar as iCalendar (.ics, RFC 5545) and its contacts as vCard (.vcf, RFC 6350
 # / 3.0), so these two parsers ARE the switcher data on-ramp for criterion #5.

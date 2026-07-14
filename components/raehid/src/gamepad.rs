@@ -1,9 +1,9 @@
-//! RaeenOS gamepad / controller HID decoding (Concept §GameOS — "gaming isn't a
+//! AthenaOS gamepad / controller HID decoding (Concept §GameOS — "gaming isn't a
 //! mode": a controller that *just works* is core to the OS thesis, not a bolt-on).
 //!
 //! This module decodes the raw USB-HID *input* reports of the major controller
 //! lineages into one normalized [`GamepadState`] — the cross-controller
-//! abstraction the rest of RaeenOS (GameOS shell navigation, per-game profiles,
+//! abstraction the rest of AthenaOS (GameOS shell navigation, per-game profiles,
 //! in-game overlay) consumes without caring which pad is plugged in.
 //!
 //! Three layouts are decoded:

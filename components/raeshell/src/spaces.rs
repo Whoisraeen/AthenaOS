@@ -1,7 +1,7 @@
 //! Virtual desktops / Spaces — the shell-side membership policy that drives the
 //! compositor's per-surface visibility (`docs/design/window-management.md` §2).
 //!
-//! Concept §RaeUI: "your desktop, your rules — tiling, stacking, floating are
+//! Concept §AthUI: "your desktop, your rules — tiling, stacking, floating are
 //! POLICIES over the compositor, not forks of it; switching is one call, not a
 //! different OS." A Space is exactly that policy layer: it owns no surface
 //! mechanism, only *membership* — which surface ids belong to which space — plus

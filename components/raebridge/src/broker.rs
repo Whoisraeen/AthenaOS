@@ -62,7 +62,7 @@ pub enum BrokerCreate {
 }
 
 /// The broker's global named-object namespace. One instance lives in the
-/// `raebridge_server` daemon; every RaeBridge process talks to it on
+/// `raebridge_server` daemon; every AthBridge process talks to it on
 /// open/create only.
 pub struct BrokerNamespace {
     by_name: BTreeMap<String, u64>,
@@ -222,7 +222,7 @@ pub fn namespace_self_test_text() -> String {
     let _ = core::fmt::Write::write_fmt(
         &mut s,
         format_args!(
-            "RaeBridge cross-process sync broker (§6.1, Slice 1: namespace)\n\
+            "AthBridge cross-process sync broker (§6.1, Slice 1: namespace)\n\
              self_test: {}\n\
              model: name -> object-id -> shared page; refcounted across processes\n\
              invariants: same-name share ONE page, kind-collision rejected, free@0\n\

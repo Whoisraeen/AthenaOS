@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "RaeenOS DRM/KMS API island — the Linux DRM subsystem surface (drm/ttm/dma-fence/drm_sched) that GPU drivers like amdgpu link against, backed by the LinuxKPI host."
+description = "AthenaOS DRM/KMS API island — the Linux DRM subsystem surface (drm/ttm/dma-fence/drm_sched) that GPU drivers like amdgpu link against, backed by the LinuxKPI host."
 
 [dependencies]
 raeen_linuxkpi = { path = "../raeen_linuxkpi" }

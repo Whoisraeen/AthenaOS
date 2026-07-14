@@ -4,7 +4,7 @@
 //! > "Search is broken → Local-first, indexed, sub-100ms results."
 //!
 //! Windows Search routinely takes seconds to return results from a local
-//! file tree and silently falls back to web search. RaeenOS ships a real
+//! file tree and silently falls back to web search. AthenaOS ships a real
 //! inverted index that lives entirely in kernel memory: every registered
 //! item turns into a set of tokens, every token maps to a posting list of
 //! item ids, and a query is `O(tokens_in_query × avg_posting_len)` with a
@@ -360,7 +360,7 @@ pub fn init() {
         (Kind::App, "Calculator"),
         (Kind::App, "File Manager Files"),
         (Kind::App, "Settings"),
-        (Kind::App, "RaePlay games"),
+        (Kind::App, "AthPlay games"),
         (Kind::App, "Text Editor Notepad"),
         (Kind::App, "Hello Window"),
         (Kind::App, "Task Manager"),
@@ -378,7 +378,7 @@ pub fn init() {
         (Kind::Setting, "Sound Mute"),
         (Kind::Setting, "Network Wi-Fi"),
         (Kind::Setting, "Network DNS"),
-        (Kind::Setting, "Network RaeShield firewall"),
+        (Kind::Setting, "Network AthGuard firewall"),
         (Kind::Setting, "Network VPN WireGuard"),
         (Kind::Setting, "Personalization Theme"),
         (Kind::Setting, "Personalization Accent color"),
@@ -407,7 +407,7 @@ pub fn init() {
     );
 }
 
-/// Register an item directly from kernel code (the RaeFS crawler, the app
+/// Register an item directly from kernel code (the AthFS crawler, the app
 /// registry, etc.) without going through the user-pointer syscall path.
 /// Returns the assigned item id, or `u64::MAX` if the index isn't up yet.
 pub fn add_item(kind: Kind, display: &str) -> u64 {
@@ -542,7 +542,7 @@ pub fn serialize_resolved(query: &str, out_cap_bytes: usize) -> (Vec<u8>, usize)
     (out, count)
 }
 
-// ── RaeFS crawler ──────────────────────────────────────────────────────
+// ── AthFS crawler ──────────────────────────────────────────────────────
 //
 // Concept §Windows pain points:
 // > "Search is broken → Local-first, indexed, sub-100ms results."
@@ -829,7 +829,7 @@ pub fn run_boot_smoketest() {
     // ── FAIL-able crawl→query proof ────────────────────────────────────
     //
     // Seed a synthetic set of file entries through the SAME crawl path the
-    // RaeFS crawler uses (`add_item`), then query for a distinctive term and
+    // AthFS crawler uses (`add_item`), then query for a distinctive term and
     // assert the exact hit. An empty index or a broken query returns 0 hits →
     // FAIL. This proves the crawler→index→query pipe end-to-end without
     // depending on a logged-in session (the live home crawl runs post-login).

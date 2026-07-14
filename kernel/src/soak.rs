@@ -354,7 +354,7 @@ pub fn run_endurance() {}
 /// `/proc/raeen/soak` body.
 pub fn dump_text() -> alloc::string::String {
     let base = alloc::format!(
-        "# RaeenOS soak / leak harness (Phase 4.9)\n\
+        "# AthenaOS soak / leak harness (Phase 4.9)\n\
          runs:            {}\n\
          cpu_checksum:    {:#018x}\n\
          mem_cycles:      {}\n\

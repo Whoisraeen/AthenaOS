@@ -6,9 +6,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS SSH server — remote interactive access to a running RaeenOS
-# (RaeNet, Concept §"the user owns the machine" + real protocols above L3).
-# You SSH into the OS and get a RaeShell session; the transport is SSH-2.0
+# AthenaOS SSH server — remote interactive access to a running AthenaOS
+# (AthNet, Concept §"the user owns the machine" + real protocols above L3).
+# You SSH into the OS and get a AthShell session; the transport is SSH-2.0
 # (RFC 4251-4254) built ENTIRELY on rae_crypto — curve25519-sha256 key
 # exchange, ssh-ed25519 host key + publickey auth, chacha20-poly1305@openssh
 # packet cipher. No OpenSSL, no libssh; the protocol state machine is pure

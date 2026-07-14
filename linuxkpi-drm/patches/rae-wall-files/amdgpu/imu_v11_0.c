@@ -363,7 +363,7 @@ static void imu_v11_0_program_rlc_ram(struct amdgpu_device *adev)
 
 	switch (amdgpu_ip_version(adev, GC_HWIP, 0)) {
 	case IP_VERSION(11, 0, 0):
-	/* RaeenOS wall-5: Phoenix (GC 11.0.1) has no dedicated golden RLC RAM table
+	/* AthenaOS wall-5: Phoenix (GC 11.0.1) has no dedicated golden RLC RAM table
 	 * upstream (it normally boots via PSP, which programs this). Under RLC
 	 * backdoor autoload it reuses the 11.0.0 golden table — verified equivalent
 	 * for the shared gfx11 RLC RAM layout. Without this the default BUG()'d. */

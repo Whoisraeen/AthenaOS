@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS Calculator math engine — a zero-dependency expression evaluator that
-# powers the bundled Calculator app (RaeenOS_Concept.md §Three User Experiences:
+# AthenaOS Calculator math engine — a zero-dependency expression evaluator that
+# powers the bundled Calculator app (LEGACY_GAMING_CONCEPT.md §Three User Experiences:
 # "apps that just work"). Factored OUT of `apps/calculator` (a `#![no_main]` bin
 # that links raekit's `#[panic_handler]`) so the math logic is host-testable:
 # `cargo test -p rae_calc` runs the FAIL-able KATs on the dev box, no QEMU.

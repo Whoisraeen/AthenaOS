@@ -3,7 +3,7 @@
 //! Mesa's radeonsi (GL) / radv (Vulkan) drivers do NOT link the kernel-side DRM
 //! crate ([`raeen_drm`]). They are userspace apps that link **libdrm_amdgpu** and
 //! reach the driver through **DRM ioctls** on a render node. This module is the
-//! RaeenOS-side of that contract: the ioctl command ids, the `AMDGPU_INFO`
+//! AthenaOS-side of that contract: the ioctl command ids, the `AMDGPU_INFO`
 //! sub-queries, the HW-IP / GEM-domain constants, and the byte-exact
 //! `drm_amdgpu_info_device` struct — all taken verbatim from the upstream
 //! `include/uapi/drm/amdgpu_drm.h` (cited per item) so a real Mesa winsys reads

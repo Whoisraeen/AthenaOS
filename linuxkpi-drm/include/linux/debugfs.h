@@ -3,7 +3,7 @@
  * <linux/debugfs.h> shim (MPL-2.0, original work).
  *
  * Debug filesystem. amdgpu exposes RAS/ring/firmware diagnostics through it. Not
- * present in the RaeenOS model (the CONFIG_DEBUG_FS=n posture — a legitimate
+ * present in the AthenaOS model (the CONFIG_DEBUG_FS=n posture — a legitimate
  * config, not a fake): create returns NULL and remove is a no-op. amdgpu treats a
  * NULL debugfs handle as "unavailable" and skips, so no functional path breaks;
  * the real diagnostic surface is /proc/raeen instead. License boundary: surface.

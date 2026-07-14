@@ -40,7 +40,7 @@ where
     // TODO: why does this use still_parsing, instead of just taking the whole thing and parsing it til it's empty?
     move |mut input: &'a [u8], mut context: &'c mut AmlContext| {
         while list_length.still_parsing(input) {
-            // RaeenOS addition: remaining-length breadcrumb — lets a failure
+            // AthenaOS addition: remaining-length breadcrumb — lets a failure
             // be located in the raw table bytes (offset = table len − remaining).
             log::trace!("TermList item: {} bytes remaining, first byte {:#04x}", input.len(), input[0]);
             // TODO: currently, we ignore the value of the expression. We may need to propagate
@@ -107,7 +107,7 @@ where
             def_create_field(),
             def_op_region(),
             def_field(),
-            // RaeenOS addition (Phase 1.4): real AMI/AMD firmware constructs.
+            // AthenaOS addition (Phase 1.4): real AMI/AMD firmware constructs.
             def_index_field(),
             def_bank_field(),
             def_method(),
@@ -567,7 +567,7 @@ where
      * Reserved fields shouldn't actually be added to the namespace; they seem to show gaps in
      * the operation region that aren't used for anything.
      */
-    // RaeenOS fix (Phase 1.4): field offsets/widths reuse the PkgLength
+    // AthenaOS fix (Phase 1.4): field offsets/widths reuse the PkgLength
     // ENCODING but are raw bit counts, NOT stream-bounded packages — a huge
     // reserved gap (AMD fabric config skips megabits) must not be validated
     // against the remaining field-list bytes.
@@ -601,7 +601,7 @@ where
     choice!(reserved_field, named_field)
 }
 
-/// RaeenOS addition (MasterChecklist Phase 1.4): `DefIndexField`. Real AMI
+/// AthenaOS addition (MasterChecklist Phase 1.4): `DefIndexField`. Real AMI
 /// firmware (Athena's DSDT) declares SuperIO/EC register files this way; an
 /// unparsed IndexField aborted the whole DSDT → empty namespace.
 pub fn def_index_field<'a, 'c>() -> impl Parser<'a, 'c, ()>
@@ -645,7 +645,7 @@ where
         .discard_result()
 }
 
-/// RaeenOS addition (Phase 1.4): one element of an IndexField's field list —
+/// AthenaOS addition (Phase 1.4): one element of an IndexField's field list —
 /// same shape as [`field_element`] but produces `AmlValue::IndexField` units.
 pub fn index_field_element<'a, 'c>(
     index: AmlHandle,
@@ -656,7 +656,7 @@ pub fn index_field_element<'a, 'c>(
 where
     'c: 'a,
 {
-    // RaeenOS fix (Phase 1.4): field offsets/widths reuse the PkgLength
+    // AthenaOS fix (Phase 1.4): field offsets/widths reuse the PkgLength
     // ENCODING but are raw bit counts, NOT stream-bounded packages — a huge
     // reserved gap (AMD fabric config skips megabits) must not be validated
     // against the remaining field-list bytes.
@@ -685,7 +685,7 @@ where
     choice!(reserved_field, named_field)
 }
 
-/// RaeenOS addition (MasterChecklist Phase 1.4): `DefBankField`. Athena's
+/// AthenaOS addition (MasterChecklist Phase 1.4): `DefBankField`. Athena's
 /// SSDTs declare 42 of these (AMD GPU/NB register banks); an unparsed
 /// BankField aborted those tables.
 pub fn def_bank_field<'a, 'c>() -> impl Parser<'a, 'c, ()>
@@ -743,7 +743,7 @@ where
         .discard_result()
 }
 
-/// RaeenOS addition (Phase 1.4): one element of a BankField's field list —
+/// AthenaOS addition (Phase 1.4): one element of a BankField's field list —
 /// same shape as [`field_element`] but produces `AmlValue::BankField` units.
 pub fn bank_field_element<'a, 'c>(
     region: AmlHandle,
@@ -755,7 +755,7 @@ pub fn bank_field_element<'a, 'c>(
 where
     'c: 'a,
 {
-    // RaeenOS fix (Phase 1.4): field offsets/widths reuse the PkgLength
+    // AthenaOS fix (Phase 1.4): field offsets/widths reuse the PkgLength
     // ENCODING but are raw bit counts, NOT stream-bounded packages — a huge
     // reserved gap (AMD fabric config skips megabits) must not be validated
     // against the remaining field-list bytes.

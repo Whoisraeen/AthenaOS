@@ -18,7 +18,7 @@ generator-input-ready data, and flag anything single-sourced rather than guessin
 > "A daily driver must 'play my movies' and 'play my music.' MP4 … (the ISO Base Media File
 > Format) is the dominant container for both — phone video, downloaded video, and AAC audio
 > (`.m4a`/`.mp4`) all ship as BMFF."
-> (RaeenOS_Concept.md §creators / media — the same line `rae_mp4/src/lib.rs` quotes in its
+> (LEGACY_GAMING_CONCEPT.md §creators / media — the same line `rae_mp4/src/lib.rs` quotes in its
 > module docstring; the "it just works" media pillar.)
 
 AAC-LC is the dominant lossy audio format alongside MP3 — Apple Music, iTunes downloads,
@@ -67,7 +67,7 @@ from `[~] silent` → `[~] audible (QEMU/host)` → `[x]` once iron HDA plays an
 
 Every numeric table below is **corroborated across ≥2 independent decoders** and presented in a
 form the prefix-free generator re-validates. None of these projects is vendored or linked — they
-are read-only spec oracles; RaeenOS keeps its own `#![no_std]`, no-libm decoder.
+are read-only spec oracles; AthenaOS keeps its own `#![no_std]`, no-libm decoder.
 
 - **ISO/IEC 14496-3 (subpart 4) / ISO/IEC 13818-7** — the normative AAC source. §4.5 (decoder),
   §4.6.2 (scalefactors), §4.6.3 (spectral Huffman, Tables 4.A.x), §4.6.8 (TNS), §4.6.9

@@ -8,7 +8,7 @@
 //! manifests, redistributables, and "vc_redist.x64.exe" exist to paper
 //! over this and still don't really solve it.
 //!
-//! RaeenOS makes the dependency graph explicit and signed. Every installed
+//! AthenaOS makes the dependency graph explicit and signed. Every installed
 //! component (a shared library, a framework, a runtime) registers itself
 //! with a `(name, version, sha256)` triple. An app's `.raeapp` manifest
 //! declares its dependencies the same way. Before the kernel will let an
@@ -94,7 +94,7 @@ impl Registry {
     }
 
     fn seed(&mut self) {
-        // Pre-register the core RaeenOS frameworks so that any app whose
+        // Pre-register the core AthenaOS frameworks so that any app whose
         // manifest declares them as dependencies verifies cleanly out of
         // the box. SHA-256 values are deterministic deriv-from-name
         // placeholders — the real package server will replace these with
@@ -405,7 +405,7 @@ pub fn dump_text() -> String {
     let mut out = String::new();
     let total: usize = reg.by_name.values().map(|m| m.len()).sum();
     out.push_str(&alloc::format!(
-        "# RaeenOS installed components ({} unique, {} total versions, {} verifications, {} passed)\n",
+        "# AthenaOS installed components ({} unique, {} total versions, {} verifications, {} passed)\n",
         reg.by_name.len(), total,
         reg.verifications, reg.verifications_passed,
     ));

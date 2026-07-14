@@ -311,7 +311,7 @@ pub fn run_boot_smoketest() {
 /// Expose PCIe info via procfs.
 pub fn dump_text() -> alloc::string::String {
     let mut out = alloc::string::String::new();
-    out.push_str("# RaeenOS PCIe ECAM Status\n");
+    out.push_str("# AthenaOS PCIe ECAM Status\n");
     if let Some(b) = MCFG_BASE0.get() {
         out.push_str(&alloc::format!("ecam_base: {:#x}\n", b));
         out.push_str("status: enabled\n");

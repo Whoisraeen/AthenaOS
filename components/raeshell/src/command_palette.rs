@@ -1,4 +1,4 @@
-//! Command palette — the global launcher + action runner for RaeShell.
+//! Command palette — the global launcher + action runner for AthShell.
 //!
 //! A single keystroke (`Super+Space`) summons a floating glass field; you type
 //! and the OS answers instantly — launch an app, jump to a setting, open a
@@ -7,7 +7,7 @@
 //! inline calculator are ranked together and dispatched by one Enter.
 //!
 //! Concept: *"Familiar enough to switch from Windows or Mac in 10 minutes."*
-//! (RaeenOS_Concept.md §Three User Experiences) + *"Fast is a feature."*
+//! (LEGACY_GAMING_CONCEPT.md §Three User Experiences) + *"Fast is a feature."*
 //!
 //! This surface WIRES the (previously dead) `search_indexer::SearchEngine` to a
 //! window: it instantiates the engine, feeds it the app registry, a real
@@ -113,7 +113,7 @@ const SETTINGS_ACTIONS: &[SettingsAction] = &[
     SettingsAction {
         name: "Open Gaming Settings",
         target: "settings:gaming",
-        description: "SCHED_GAME, GPU power, shader cache",
+        description: "SCHED_BODY, GPU power, shader cache",
         keywords: &["gaming", "game", "fps", "gpu", "shader", "latency"],
     },
     SettingsAction {

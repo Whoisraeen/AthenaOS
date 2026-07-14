@@ -1,19 +1,19 @@
 //! WGSL → SPIR-V shader toolchain (Concept §Language Stack — extended:
 //! "WGSL → SPIR-V — the shader language for the theme engine and compositor
 //! effects (glassmorphism, live wallpapers, Vibe Mode). Authored in WGSL,
-//! compiled to SPIR-V for the RaeGFX submit path.").
+//! compiled to SPIR-V for the AthGFX submit path.").
 //!
-//! RaeGFX/RaeUI effect and theme shaders are authored in WGSL (see
+//! AthGFX/AthUI effect and theme shaders are authored in WGSL (see
 //! `raegfx/shaders/*.wgsl`) and compiled here to SPIR-V words for the submit
 //! path — this feeds Phase 6.3's "Loads SPIR-V shader on the live demo path".
 //!
 //! Like Skia/wgpu, the translator itself is a battle-tested library (naga, the
 //! same shader compiler wgpu uses) rather than a from-scratch reimplementation;
-//! this module is the thin RaeGFX-facing seam over it: parse → validate → emit,
+//! this module is the thin AthGFX-facing seam over it: parse → validate → emit,
 //! returning a typed [`WgslError`] instead of panicking on malformed input.
 //!
 //! Gated behind the `wgsl` feature: it links naga (which needs `std`), so the
-//! bare-metal kernel Canvas/font path never pulls it in. Userspace RaeGFX/RaeUI
+//! bare-metal kernel Canvas/font path never pulls it in. Userspace AthGFX/AthUI
 //! turn it on. The emitted SPIR-V is round-trip-parseable by
 //! [`crate::shader::SpirVModule`] and validates under `spirv-val`
 //! (see `tests/wgsl_spirv_kat.rs`).
@@ -108,7 +108,7 @@ pub fn compile_wgsl(
 }
 
 /// Same as [`compile_wgsl`] but returns the little-endian SPIR-V byte blob that
-/// the RaeGFX submit path / `vkCreateShaderModule` consumes.
+/// the AthGFX submit path / `vkCreateShaderModule` consumes.
 pub fn compile_wgsl_bytes(
     source: &str,
     entry_point: &str,
@@ -134,7 +134,7 @@ fn entry_point_list(module: &naga::Module) -> String {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Bundled RaeGFX effect / theme shaders (Concept §Language Stack — extended)
+// Bundled AthGFX effect / theme shaders (Concept §Language Stack — extended)
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// The fullscreen-triangle vertex stage every compositor effect pass shares.
@@ -162,7 +162,7 @@ pub struct EffectShader {
     pub stage: ShaderStage,
 }
 
-/// The built-in RaeGFX/RaeUI effect + theme shaders, in compile order
+/// The built-in AthGFX/AthUI effect + theme shaders, in compile order
 /// (vertex stage first). Compiling all of these is the toolchain smoketest.
 pub const EFFECT_SHADERS: &[EffectShader] = &[
     EffectShader {
@@ -301,7 +301,7 @@ fn from_naga_stage(s: naga::ShaderStage) -> ShaderStage {
 }
 
 /// Parse + validate WGSL and report its interface (entry points + bound
-/// resources) without emitting SPIR-V. The RaeGFX submit path uses this to build
+/// resources) without emitting SPIR-V. The AthGFX submit path uses this to build
 /// the descriptor-set / pipeline layout that matches the shader's `@group/@binding`s.
 pub fn reflect_wgsl(source: &str) -> Result<ShaderReflection, WgslError> {
     let module = naga::front::wgsl::parse_str(source).map_err(|e| WgslError {

@@ -1,4 +1,4 @@
-# RaeenOS Bug Report
+# AthenaOS Bug Report
 
 **Date:** 2026-06-13
 **Auditor:** Opus (Claude Code), static review — no build/boot was run (this box has no toolchain).
@@ -199,7 +199,7 @@ For each page of each PT_LOAD segment the loader does `core::ptr::write_bytes(fr
 
 Related: when `map_page_in_pml4_fallible` returns false the code frees the frame and falls through rather than early-returning; it's caught one step later by `pml4_page_ptr(...).ok_or(...)?`, so it's benign but reads oddly.
 
-**Why Low:** mainstream toolchains page-align PT_LOAD (`p_align = 0x1000`), and RaeenOS's own binaries are page-aligned, so this doesn't trigger today. It's a real latent correctness bug for any ELF with sub-page-aligned adjacent segments. **Fix:** only zero the BSS tail (`[file_end, page_end)`) rather than the whole page, or map/zero each page exactly once across all segments.
+**Why Low:** mainstream toolchains page-align PT_LOAD (`p_align = 0x1000`), and AthenaOS's own binaries are page-aligned, so this doesn't trigger today. It's a real latent correctness bug for any ELF with sub-page-aligned adjacent segments. **Fix:** only zero the BSS tail (`[file_end, page_end)`) rather than the whole page, or map/zero each page exactly once across all segments.
 
 ---
 
@@ -222,7 +222,7 @@ Note: [compositor.rs:3086](kernel/src/compositor.rs:3086) already uses `.max(1)`
 
 Listed so a future pass doesn't re-flag them:
 
-- **RaeFS `name_len: name.len() as u8`** ([raefs.rs:2507](kernel/src/raefs.rs:2507) et al.) — guarded everywhere by `name.len() > 55` before the cast (`DirEntry.name` is `[u8; 55]`). Safe.
+- **AthFS `name_len: name.len() as u8`** ([raefs.rs:2507](kernel/src/raefs.rs:2507) et al.) — guarded everywhere by `name.len() > 55` before the cast (`DirEntry.name` is `[u8; 55]`). Safe.
 - **Battery `time_remaining_minutes` div-by-zero** ([acpi_full.rs:2411](kernel/src/acpi_full.rs:2411)) — guarded by `if self.present_rate == 0 || !self.is_discharging() { return None; }` immediately above. `percentage()` likewise guards `full_capacity == 0`. Safe.
 - **ELF header / program-header table bounds** ([elf.rs:42-117](kernel/src/elf.rs:42)) — `checked_mul`/`checked_add` + `data.len()` bounds + entry-in-userspace. Well done.
 - **HDA audio single-page DMA allocs** ([audio.rs:533](kernel/src/audio.rs:533), 543, 756, 766) — each structure (CORB 1 KiB, RIRB 2 KiB, BDL, data) is ≤1 page, so single-frame `allocate_frame()` is correct (no contiguity requirement). Distinct from BUG-002.

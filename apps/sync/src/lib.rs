@@ -1,7 +1,7 @@
-//! RaeenOS Sync — a clickable, switcher-friendly front end for the LIVE
+//! AthenaOS Sync — a clickable, switcher-friendly front end for the LIVE
 //! zero-knowledge `raesync` cross-device sync engine.
 //!
-//! The Concept names "RaeSync: end-to-end-encrypted cross-device sync" as a
+//! The Concept names "AthSync: end-to-end-encrypted cross-device sync" as a
 //! proprietary-stack pillar, sitting under the user-ownership promise ("The user
 //! owns the machine" — sync is OPT-IN and the relay is ZERO-KNOWLEDGE). This app
 //! puts the iCloud/OneDrive-style experience — see this device's identity, pair
@@ -471,7 +471,7 @@ fn render(app: &SyncApp, canvas: &mut Canvas) {
     canvas.draw_text_scaled(
         (SPACE_4 + 8) as usize,
         (SPACE_4 + 4) as usize,
-        "RaeSync  -  end-to-end encrypted",
+        "AthSync  -  end-to-end encrypted",
         DARK.text_primary,
         2,
     );

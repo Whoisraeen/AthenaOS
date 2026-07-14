@@ -4,6 +4,6 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeLocale — internationalization and localization for RaeenOS"
+description = "RaeLocale — internationalization and localization for AthenaOS"
 
 [dependencies]

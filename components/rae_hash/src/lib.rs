@@ -1,6 +1,6 @@
 //! # RaeHash — never-panic, `no_std` file-integrity checksums.
 //!
-//! RaeenOS_Concept.md §"security by default, not by friction" / "the user owns
+//! LEGACY_GAMING_CONCEPT.md §"security by default, not by friction" / "the user owns
 //! the machine": when you download a kernel image, an installer, a `.raepkg`, or
 //! any artifact a publisher has posted a checksum for, you should be able to
 //! verify its integrity *locally*, on your own hardware, before trusting a single
@@ -8,7 +8,7 @@
 //! that capability: SHA-256 (the primary, modern checksum), SHA-1 and MD5 (still
 //! ubiquitous in published checksums — kept *integrity-only*, see below), and
 //! CRC32 (the zip/gzip frame checksum). One correct, dependency-free, hostile-byte
-//! core serves the RaeStore download path, a future Files "verify checksum"
+//! core serves the AthStore download path, a future Files "verify checksum"
 //! action, and `.raepkg` sideload verification — so it is deliberately wired into
 //! none this slice.
 //!

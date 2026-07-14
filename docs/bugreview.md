@@ -1,4 +1,4 @@
-# RaeenOS Logic Bug Review
+# AthenaOS Logic Bug Review
 
 > Reviewed: 2026-06-03  
 > Scope: Kernel core — scheduler, memory, context switch, syscalls, IPC, capabilities, VirtIO, interrupts, GDT/SMP, buddy allocator, futex
@@ -11,7 +11,7 @@ Each bug re-checked against current code. **Build-verified fixes this pass** are
 
 **FIXED this pass (commit `bugfix: NVMe bounce leak ...`):**
 - **BUG-37** 🔴 — NVMe `read_sector`/`write_sector` leaked a DMA frame + IOMMU mapping per I/O (OOM walking the FS). Now a persistent per-controller bounce buffer (`NvmeController::ensure_bounce`), one lock-hold per op. **The single most important fix for daily-driving.**
-- **BUG-24** 🔴 — RaeFS `cow_write_block` fresh-allocation path (`old_block == 0`) didn't `write_inode`, orphaning the block on reboot (silent data loss). Now persists the inode like the CoW path.
+- **BUG-24** 🔴 — AthFS `cow_write_block` fresh-allocation path (`old_block == 0`) didn't `write_inode`, orphaning the block on reboot (silent data loss). Now persists the inode like the CoW path.
 - **BUG-27** 🔴 — `RawSpinlock` now irqsave: disables local interrupts on `lock()`/`try_lock()`, restores on drop (the guard carries `restore_intr`). (Note: RawSpinlock has no live callers yet — this de-fuses a future footgun.)
 - **BUG-39** 🟡 — RTC `compute_yearday` `month - 1` underflow on a month-0 hardware read → `saturating_sub(1)`.
 - **BUG-41** 🔴 — WireGuard `add_tunnel` hardcoded `local_static = [0u8;32]`; now CSPRNG-generated per tunnel.
@@ -63,7 +63,7 @@ Re-checked the "still needs triage" set against current code.
 - **BUG-28** 🔴 dma_alloc_coherent needs a real pool allocator (not a bump pointer).
 - **BUG-29** 🔴 RwSemaphore waiter `AtomicBool` redesign (check live callers first).
 - **BUG-23** 🔵 IPC channel teardown/refcount, **BUG-18** 🟡 keyboard hardcoded channel 1.
-- **BUG-30** 🟠 compositor per-pixel HDR (needs GPU/LUT — ties to the RaeGFX submit gap).
+- **BUG-30** 🟠 compositor per-pixel HDR (needs GPU/LUT — ties to the AthGFX submit gap).
 - **BUG-07** 🟠 (rcx-=2 ordering, "likely works"), **BUG-11** 🟠 / **BUG-12** 🟠 (PML4 clear / GsBase asm — need iron to verify safely), **BUG-15** 🟡 (read_user_cstr page-at-a-time), **BUG-17** 🟡 (bounce 4032), **BUG-19/20/21** 🔵 (low).
 
 ---
@@ -90,7 +90,7 @@ Took on the "still open" set.
 - **BUG-11** 🟠 (PML4 PD[0..8] clear) / **BUG-12** 🟠 (GsBase on the non-canonical RCX path) — page-table / syscall-entry asm; a wrong change bricks boot. Verify on iron.
 - **BUG-07** 🟠 — `rcx -= 2` after `block_current_task` is benign with work-stealing OFF and the current ordering is proven (sys_wait daemon chain boots green); reorder needs iron to confirm it doesn't regress the proven path.
 - **BUG-17** 🟡 — virtio bounce caps I/O at 4032 B; QEMU-only path, currently working. Needs a 2-page bounce.
-- **BUG-30** 🟠 — per-pixel software HDR; ties to the RaeGFX GPU-submit gap (move tonemap to GPU/LUT).
+- **BUG-30** 🟠 — per-pixel software HDR; ties to the AthGFX GPU-submit gap (move tonemap to GPU/LUT).
 - **BUG-34 / BUG-35** 🔴 — vestigial `process.rs::FileDescriptorTable` (not the live I/O path); flagged for deletion.
 
 ---
@@ -101,7 +101,7 @@ Took on the "still open" set.
 
 ### BUG-01: `yield_task` double-enqueue of outgoing task
 
-**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/scheduler.rs#L506-L514)  
+**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/scheduler.rs#L506-L514)  
 **Severity:** 🔴 Critical
 
 After `switch_context` returns, `yield_task` calls `finish_task_switch()` at line 507, which already re-locks the scheduler and enqueues the stashed task (lines 843–849). Then, *immediately after*, lines 509–514 re-lock the scheduler *again* and enqueue the same `switch_stash[cpu_id]` task a second time:
@@ -125,7 +125,7 @@ Currently this is *benign* because `finish_task_switch` already `.take()`s the s
 
 ### BUG-02: `kill_task` marks current task Zombie but never reschedules it
 
-**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/scheduler.rs#L948-L954)  
+**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/scheduler.rs#L948-L954)  
 **Severity:** 🔴 Critical
 
 When `kill_task` targets a task that is currently running on some CPU:
@@ -148,7 +148,7 @@ The Zombie task continues executing. The next `yield_task` will pick it up, see 
 
 ### BUG-03: `exit_current_task` pushes Zombie to `blocked_tasks` — leaks forever
 
-**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/scheduler.rs#L670-L678)  
+**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/scheduler.rs#L670-L678)  
 **Severity:** 🔴 Critical (resource leak)
 
 ```rust
@@ -164,7 +164,7 @@ Zombie tasks accumulate in `blocked_tasks` and are only removed if someone calls
 
 ### BUG-04: `free_user_page_tables` frees shared kernel page-table pages
 
-**File:** [memory.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/memory.rs#L600-L652)  
+**File:** [memory.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/memory.rs#L600-L652)  
 **Severity:** 🔴 Critical
 
 `free_user_page_tables` walks PML4 indices 0..256 and frees *every* PDPT, PD, PT, and leaf frame it finds. But `create_new_pml4` only deep-copies PML4[0] → PDPT[0] → PD[0] (lines 293–340). **All other entries in indices 1..255 are shallow copies** — they share the kernel's PDPT/PD/PT frames.
@@ -179,7 +179,7 @@ The user stack *is* at PML4 index 255 (`0x7FFF >> 9 = 255`), and `create_new_pml
 
 ### BUG-05: `map_mmio_region` wrapping overflow for high physical addresses
 
-**File:** [memory.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/memory.rs#L439)  
+**File:** [memory.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/memory.rs#L439)  
 **Severity:** 🔴 Critical
 
 ```rust
@@ -194,7 +194,7 @@ Uses `wrapping_add` which silently wraps to 0 if `phys_addr + size + 0xFFF > u64
 
 ### BUG-06: MSI vector calculation truncation — `u8` overflow
 
-**File:** [interrupts.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/interrupts.rs#L74)  
+**File:** [interrupts.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/interrupts.rs#L74)  
 **Severity:** 🔴 Critical
 
 ```rust
@@ -211,7 +211,7 @@ More concretely: the bitmap only has 3 entries covering 192 vectors, but the cal
 
 ### BUG-24: `cow_write_block` does not write inode on fresh allocation (Data Loss)
 
-**File:** [raefs.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/raefs.rs#L1054-L1059)  
+**File:** [raefs.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/raefs.rs#L1054-L1059)  
 **Severity:** 🔴 Critical (Data Loss)
 
 When writing to a previously unallocated block slot (`old_block == 0`), `cow_write_block` allocates a new block, writes the data, and updates `inode.direct_blocks[block_idx] = new_block`. It then immediately returns `Ok(())` **without writing the inode back to disk** (`self.write_inode(inode)` is missing on this branch). If the system reboots, the newly allocated block is orphaned and the file retains a hole.
@@ -222,7 +222,7 @@ When writing to a previously unallocated block slot (`old_block == 0`), `cow_wri
 
 ### BUG-25: `cpu_offline` steals running tasks without stopping the target CPU
 
-**File:** [smp.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/smp.rs#L1138-L1143)  
+**File:** [smp.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/smp.rs#L1138-L1143)  
 **Severity:** 🔴 Critical
 
 When taking a CPU offline, `cpu_offline` (running on CPU A) directly locks the `current_task` of CPU B, `.take()`s it, and enqueues it onto another CPU. However, CPU B is *still actively executing that task*. CPU B is never interrupted (no IPI is sent to force it into the idle/parking loop). This results in the same task executing simultaneously on two CPUs, leading to immediate state corruption and crashes.
@@ -233,7 +233,7 @@ When taking a CPU offline, `cpu_offline` (running on CPU A) directly locks the `
 
 ### BUG-26: `poll_io_completion` blocks on MMIO futex (Hangs forever)
 
-**File:** [nvme.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/nvme.rs#L1250-L1263)  
+**File:** [nvme.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/nvme.rs#L1250-L1263)  
 **Severity:** 🔴 Critical
 
 If an NVMe completion is not immediately ready, `poll_io_completion` attempts to sleep by calling `FUTEX_MANAGER.wait(cq_doorbell, ...)` on the NVMe Completion Queue doorbell register. Hardware does not use futexes; it issues MSI/IRQs. Because there is no interrupt handler calling `futex_wake` on the doorbell address, any task that takes this path will hang indefinitely.
@@ -244,7 +244,7 @@ If an NVMe completion is not immediately ready, `poll_io_completion` attempts to
 
 ### BUG-27: `RawSpinlock` does not disable interrupts (Deadlock)
 
-**File:** [locking.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/locking.rs#L395-L416)  
+**File:** [locking.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/locking.rs#L395-L416)  
 **Severity:** 🔴 Critical
 
 `RawSpinlock::lock` busy-waits on an `AtomicBool` but never disables local CPU interrupts (`cli` / saving `rflags`). If a thread acquires a `RawSpinlock` and is subsequently interrupted by an IRQ, and the IRQ handler attempts to acquire the exact same lock, the CPU will deadlock spinning forever.
@@ -255,7 +255,7 @@ If an NVMe completion is not immediately ready, `poll_io_completion` attempts to
 
 ### BUG-28: `dma_alloc_coherent` permanently leaks memory
 
-**File:** [dma_engine.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/dma_engine.rs#L304-L328)  
+**File:** [dma_engine.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/dma_engine.rs#L304-L328)  
 **Severity:** 🔴 Critical
 
 `dma_alloc_coherent` acts as a simple bump allocator, incrementing `engine.coherent_next_addr` for each allocation. However, `dma_free_coherent` only removes the tracking metadata from `active_mappings`—it never reclaims or frees the actual physical memory or address space. Repeated allocations and frees will permanently leak physical memory.
@@ -266,7 +266,7 @@ If an NVMe completion is not immediately ready, `poll_io_completion` attempts to
 
 ### BUG-29: `RwSemaphore` readers spin forever due to disconnected `AtomicBool`s
 
-**File:** [locking.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/locking.rs#L705-L723)  
+**File:** [locking.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/locking.rs#L705-L723)  
 **Severity:** 🔴 Critical
 
 In `down_read_slowpath`, a local stack variable `waiter` is created with its own `AtomicBool`. A **completely separate instance** of `RwSemWaiter` with a new `AtomicBool::new(false)` is pushed into the `self.waiters` vector. The reader then spins checking its *local* `waiter.woken`. When `wake_readers` executes, it sets `woken = true` on the instance inside the vector. The reader's local variable never changes, causing an infinite loop.
@@ -277,7 +277,7 @@ In `down_read_slowpath`, a local stack variable `waiter` is created with its own
 
 ### BUG-32: `sys_net_socket` leaks sockets permanently on process exit
 
-**File:** [net.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/net.rs#L524-L525)  
+**File:** [net.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/net.rs#L524-L525)  
 **Severity:** 🔴 Critical (Resource Leak)
 
 `SYS_NET_SOCKET` uses a disjoint global `SOCKET_TABLE` instead of the process's own `FileDescriptorTable`. When a process terminates, the kernel cleans up its `fd_table`, but it does not know about or sweep `SOCKET_TABLE`. All sockets opened by the process remain open in `SOCKET_TABLE` forever, causing an unbounded memory and port leak.
@@ -288,7 +288,7 @@ In `down_read_slowpath`, a local stack variable `waiter` is created with its own
 
 ### BUG-33: `generate_attestation_quote` fallback is unsigned and trivially spoofable
 
-**File:** [security.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/security.rs#L245-L258)  
+**File:** [security.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/security.rs#L245-L258)  
 **Severity:** 🔴 Critical (Security)
 
 If the TPM is unavailable or `quote` fails, the fallback attestation path returns a blob of raw PCR values prefixed with "RAEB". Because this blob lacks any cryptographic signature from an Attestation Key, a malicious userspace agent or compromised kernel can trivially intercept the attestation request and forge arbitrary PCR values, entirely defeating remote anti-cheat validation.
@@ -299,7 +299,7 @@ If the TPM is unavailable or `quote` fails, the fallback attestation path return
 
 ### BUG-34: `FileDescriptorTable::close` and `dup2` leak underlying resources
 
-**File:** [process.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/process.rs#L483-L488)  
+**File:** [process.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/process.rs#L483-L488)  
 **Severity:** 🔴 Critical (Resource Leak)
 
 Calling `close()` or `dup2()` on a file descriptor merely removes the `FileDescriptor` struct from the `fds` BTreeMap. It does not invoke any cleanup logic, decrement VFS refcounts, or close Pipe endpoints. As a result, underlying resources (like Pipe memory buffers) are permanently leaked, and blocking readers/writers never receive EOF or EPIPE signals.
@@ -310,7 +310,7 @@ Calling `close()` or `dup2()` on a file descriptor merely removes the `FileDescr
 
 ### BUG-35: `FileDescriptorTable::read` and `write` silently discard I/O
 
-**File:** [process.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/process.rs#L490-L508)  
+**File:** [process.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/process.rs#L490-L508)  
 **Severity:** 🔴 Critical (Logic Bug)
 
 The `read` and `write` implementations in the POSIX file descriptor table do not actually interact with the VFS, files, or pipes. They merely increment the `descriptor.offset` and return success. All writes are silently dropped into the void, and all reads return whatever garbage happened to be in the user's buffer. 
@@ -321,7 +321,7 @@ The `read` and `write` implementations in the POSIX file descriptor table do not
 
 ### BUG-37: `NvmeBlockDevice` leaks DMA bounce buffers on every I/O operation
 
-**File:** [nvme.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/nvme.rs#L1777)  
+**File:** [nvme.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/nvme.rs#L1777)  
 **Severity:** 🔴 Critical (Resource Leak)
 
 The `read_sector` and `write_sector` methods in the NVMe adapter allocate a 4 KiB DMA bounce frame via `alloc_dma_frame_mapped()` to perform the transfer. However, this memory is never freed. Every single block I/O operation permanently leaks a physical frame and its corresponding IOMMU mapping. Under normal load (e.g., walking a filesystem), the OS will rapidly consume all physical memory and trigger an Out-Of-Memory crash in seconds.
@@ -332,7 +332,7 @@ The `read_sector` and `write_sector` methods in the NVMe adapter allocate a 4 Ki
 
 ### BUG-40: Sandbox `classify` incorrectly maps `SYS_INSTALL_RUN` and driver syscalls to GPU access
 
-**File:** [sandbox.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/sandbox.rs#L127)  
+**File:** [sandbox.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/sandbox.rs#L127)  
 **Severity:** 🔴 Critical (Security / Privilege Escalation)
 
 In the syscall classification layer of `sandbox.rs`, highly privileged operations like `SYS_INSTALL_RUN`, `SYS_DRIVER_REGISTER`, and `SYS_LINUXKPI_PCI_ENABLE` are arbitrarily mapped to `SyscallRequest::DeviceAccess { kind: DeviceKind::Gpu, write: true }`. Because allowing GPU access is standard for any sandboxed game or hardware-accelerated app, giving a process GPU access inadvertently grants it full permission to install OS updates to the raw disk or register arbitrary DMA-capable ring-0 drivers.
@@ -343,7 +343,7 @@ In the syscall classification layer of `sandbox.rs`, highly privileged operation
 
 ### BUG-41: WireGuard uses a hardcoded zeroed private key for all tunnels
 
-**File:** [wireguard.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/wireguard.rs#L134)  
+**File:** [wireguard.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/wireguard.rs#L134)  
 **Severity:** 🔴 Critical (Cryptography)
 
 When creating a new WireGuard tunnel via `add_tunnel`, the `local_static` private key is hardcoded to `[0u8; 32]`. The code comments that it will be loaded from sealed storage in "Phase 3". However, deploying WireGuard with a known private key means any passive or active attacker on the network can trivially derive the transport keys, decrypt all traffic, and impersonate the tunnel endpoints.
@@ -354,7 +354,7 @@ When creating a new WireGuard tunnel via `add_tunnel`, the `local_static` privat
 
 ### BUG-42: TLS `getrandom` generates completely deterministic entropy
 
-**File:** [tls.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/tls.rs#L84)  
+**File:** [tls.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/tls.rs#L84)  
 **Severity:** 🔴 Critical (Cryptography)
 
 The TLS implementation uses a local stub for `getrandom()` that fills the buffer with `(i as u8).wrapping_mul(0x5D).wrapping_add(0xA3)`. This means that `client_random` and `server_random` generated for every single TLS handshake are identical and completely deterministic. This catastrophically breaks TLS replay protection and makes all derived cryptographic session keys trivially guessable.
@@ -370,7 +370,7 @@ The TLS implementation uses a local stub for `getrandom()` that fills the buffer
 
 ### BUG-07: Syscall retry `rcx -= 2` modifies RIP while the task is blocked
 
-**File:** [syscall.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/syscall.rs#L542-L543)  
+**File:** [syscall.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/syscall.rs#L542-L543)  
 **Severity:** 🟠 High
 
 ```rust
@@ -390,7 +390,7 @@ If the architecture of the context switch saves/restores the register frame prop
 
 ### BUG-08: `SYS_CAP_GRANT` doesn't enforce `GRANT` right on the *derived* cap
 
-**File:** [syscall.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/syscall.rs#L658-L764)  
+**File:** [syscall.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/syscall.rs#L658-L764)  
 **Severity:** 🟠 High (security)
 
 The syscall constructs the derived `Cap` using `new_rights` directly from userspace (`regs.rdx`), which is only `from_bits_truncate`'d. The `grant()` function checks that the *parent* has `GRANT` right, and `is_valid_derivation` checks that child rights ⊆ parent rights for Channel/Mmio/Irq/Port. But for the **extended capability types** (Filesystem, Network, Gpu, Audio, Camera, Process, CryptoKey, Hypervisor, Attestation, Debug, System), `is_valid_derivation` returns `false` on the `_ => false` catch-all.
@@ -403,7 +403,7 @@ This means **no extended capability can ever be granted through `SYS_CAP_GRANT`*
 
 ### BUG-09: `unblock_virtio_waiters` ignores the `head` parameter — wakes ALL waiters
 
-**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/scheduler.rs#L1102-L1116)  
+**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/scheduler.rs#L1102-L1116)  
 **Severity:** 🟠 High
 
 ```rust
@@ -420,7 +420,7 @@ The `_head` parameter is entirely ignored. When *any* VirtIO completion fires, *
 
 ### BUG-10: `futex::wake` calls `unblock_futex_waiter` which is a no-op
 
-**File:** [sync.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/sync.rs#L50)  → [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/scheduler.rs#L1118-L1120)  
+**File:** [sync.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/sync.rs#L50)  → [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/scheduler.rs#L1118-L1120)  
 **Severity:** 🟠 High
 
 ```rust
@@ -441,7 +441,7 @@ Futex wakes do nothing. Any task that blocks on a futex is **never unblocked**. 
 
 ### BUG-11: `create_new_pml4` deep-copies PML4[0] → PDPT[0] → PD[0..8] — but clears too much
 
-**File:** [memory.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/memory.rs#L327-L334)  
+**File:** [memory.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/memory.rs#L327-L334)  
 **Severity:** 🟠 High
 
 ```rust
@@ -463,7 +463,7 @@ More critically, the comment says "lower 16MB" but PD entries 0–7 only cover 0
 
 ### BUG-12: `GsBase` encodes CPU ID — but `syscall_handler` does `swapgs` which clobbers it
 
-**File:** [gdt.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/gdt.rs#L126) + [gdt.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/gdt.rs#L207) + [syscall.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/syscall.rs#L147-L240)  
+**File:** [gdt.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/gdt.rs#L126) + [gdt.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/gdt.rs#L207) + [syscall.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/syscall.rs#L147-L240)  
 **Severity:** 🟠 High
 
 BSP sets `GsBase = 0` (CPU 0). APs set `GsBase = cpu_id`. `current_cpu_id()` reads `GsBase` to get the CPU ID. But the syscall handler uses SWAPGS to exchange GsBase with KernelGsBase (which points at `PerCpuSyscall`). After the inner syscall handler runs (with `swapgs` back to normal GsBase), the handler does another `swapgs` before `sysretq` (line 201), restoring GsBase to the CPU ID value.
@@ -490,7 +490,7 @@ Inside `exit_current_task`, `current_cpu_id()` reads GsBase and gets a large add
 
 ### BUG-30: Compositor HDR tonemapping causes severe performance DoS
 
-**File:** [compositor.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/compositor.rs#L362-L402)  
+**File:** [compositor.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/compositor.rs#L362-L402)  
 **Severity:** 🟠 High (Performance DoS)
 
 `HdrPipeline::process_pixel` performs floating-point sRGB-to-linear, PQ EOTF, and AcesFilmic tone mapping *per pixel* in software. The `f32_pow` and `f32_exp` functions use unoptimized Taylor series loops (up to 90 iterations per channel). At 1080p 60FPS, this requires over 10 billion iterations per second on the CPU, which will completely lock up the kernel and halt rendering.
@@ -501,7 +501,7 @@ Inside `exit_current_task`, `current_cpu_id()` reads GsBase and gets a large add
 
 ### BUG-36: `apply_relocations` silently ignores out-of-bounds ELF relocations
 
-**File:** [elf_loader.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/elf_loader.rs#L644-L649)  
+**File:** [elf_loader.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/elf_loader.rs#L644-L649)  
 **Severity:** 🟠 High (Security / Correctness)
 
 If an ELF relocation points to an address outside of any loaded segment (`None => continue`), or if the relocation size exceeds the segment boundary (`if seg_offset + 8 <= segment.data.len()`), the loader silently ignores the error and continues. This leaves unresolved pointers in the loaded binary, which will cause arbitrary crashes or allow control-flow hijacking at runtime.
@@ -512,7 +512,7 @@ If an ELF relocation points to an address outside of any loaded segment (`None =
 
 ### BUG-38: Tickless manager underflows `next - now` causing maximum sleep duration
 
-**File:** [timers.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/timers.rs#L587)  
+**File:** [timers.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/timers.rs#L587)  
 **Severity:** 🟠 High (Scheduling / Real-time)
 
 In `TicklessManager::enter_idle`, when determining how long to sleep before the next timer event, it calculates `let skip = (next - now).min(self.max_skip)`. If a timer has already expired by the time `enter_idle` is evaluated (`next < now`), the subtraction underflows to a massive integer, which is then clamped to `self.max_skip`. Instead of skipping 0 ticks and waking immediately, the CPU is put to sleep for the maximum possible duration, causing severe latency spikes and violating timer deadlines.
@@ -523,7 +523,7 @@ In `TicklessManager::enter_idle`, when determining how long to sleep before the 
 
 ### BUG-43: GENEVE TLV encoder truncates length header on unaligned options
 
-**File:** [tunnel.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/tunnel.rs#L687)  
+**File:** [tunnel.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/tunnel.rs#L687)  
 **Severity:** 🟠 High (Network Parsing / Out of Bounds)
 
 In `GeneveTlvOption::encode`, the option length byte is calculated as `(self.data.len() / 4) as u8`. However, the encoder writes the full `self.data.len()` bytes, followed by padding to a 4-byte boundary. If the option data length is not an exact multiple of 4 (e.g., 5 bytes), the written length field (1) will be smaller than the actual bytes consumed on the wire (8 bytes). This corrupts the TLV chain, causing the remote endpoint to read out of sync, potentially resulting in out-of-bounds reads or dropped packets.
@@ -538,7 +538,7 @@ In `GeneveTlvOption::encode`, the option length byte is calculated as `(self.dat
 
 ### BUG-13: `check_deadline_misses` updates `worst_miss_us` stat — but never actually stores the value
 
-**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/scheduler.rs#L333-L346)  
+**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/scheduler.rs#L333-L346)  
 **Severity:** 🟡 Medium
 
 ```rust
@@ -560,7 +560,7 @@ fn check_deadline_misses(&mut self) {
 
 ### BUG-14: `mmap` with no fixed address returns `self.mmap_base` *after* decrementing — off-by-one
 
-**File:** [process.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/process.rs#L304-L309)  
+**File:** [process.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/process.rs#L304-L309)  
 **Severity:** 🟡 Medium
 
 ```rust
@@ -589,7 +589,7 @@ Actually, re-reading more carefully: `start = self.mmap_base` after decrement. T
 
 ### BUG-15: `read_user_cstr` validates one byte at a time — O(n²) page table walks
 
-**File:** [syscall.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/syscall.rs#L423-L440)  
+**File:** [syscall.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/syscall.rs#L423-L440)  
 **Severity:** 🟡 Medium (performance DoS)
 
 ```rust
@@ -609,7 +609,7 @@ Each byte triggers a full 4-level page walk in `validate_user_range` → `user_l
 
 ### BUG-16: `allocate_contiguous_frames(3)` allocates `2^3 = 8` pages, not 3
 
-**File:** [virtio.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/virtio.rs#L113)  
+**File:** [virtio.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/virtio.rs#L113)  
 **Severity:** 🟡 Medium (waste)
 
 ```rust
@@ -624,7 +624,7 @@ let phys_base = crate::memory::allocate_contiguous_frames(3)
 
 ### BUG-17: `DMA bounce buffer` is 4 KiB but only allows `4096 - 64 = 4032` bytes of data
 
-**File:** [virtio.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/virtio.rs#L273)  
+**File:** [virtio.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/virtio.rs#L273)  
 **Severity:** 🟡 Medium
 
 ```rust
@@ -639,7 +639,7 @@ A standard 512-byte sector read/write works fine. But if a caller tries to do a 
 
 ### BUG-18: Keyboard interrupt sends to hardcoded IPC channel 1 — may not exist
 
-**File:** [interrupts.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/interrupts.rs#L1026)  
+**File:** [interrupts.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/interrupts.rs#L1026)  
 **Severity:** 🟡 Medium
 
 ```rust
@@ -656,7 +656,7 @@ Similarly, `unblock_receivers(1)` (line 1037) wakes receivers on channel 1, whic
 
 ### BUG-31: `allocate_inode` misses superblock flush and `free_inodes` update
 
-**File:** [raefs.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/raefs.rs#L980-L997)  
+**File:** [raefs.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/raefs.rs#L980-L997)  
 **Severity:** 🟡 Medium
 
 When `allocate_inode` successfully claims a bit in the inode bitmap, it writes the bitmap block to disk but fails to decrement `self.superblock.free_inodes` and does not call `self.flush_superblock()`. In contrast, `allocate_block` correctly handles these steps. If a crash occurs, the superblock's free inode count will be out of sync.
@@ -667,7 +667,7 @@ When `allocate_inode` successfully claims a bit in the inode bitmap, it writes t
 
 ### BUG-39: `RtcTime::compute_yearday` underflows if hardware month is 0
 
-**File:** [timers.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/timers.rs#L707)  
+**File:** [timers.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/timers.rs#L707)  
 **Severity:** 🟡 Medium (Logic)
 
 When calculating the day of the year, the loop boundary is defined as `0..(self.month as usize - 1).min(11)`. If a failing or uninitialized hardware RTC returns 0 for the month, the subtraction underflows to `usize::MAX`, which `.min(11)` clamps to `11`. The OS will erroneously calculate the yearday as if the date is in December, leading to corrupted timestamps in logs or the VFS.
@@ -682,7 +682,7 @@ When calculating the day of the year, the loop boundary is defined as `0..(self.
 
 ### BUG-19: `TaskId` counter uses `Relaxed` ordering — potential duplicate IDs under SMP
 
-**File:** [task.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/task.rs#L34-L35)  
+**File:** [task.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/task.rs#L34-L35)  
 **Severity:** 🔵 Low
 
 ```rust
@@ -696,7 +696,7 @@ TaskId(NEXT_ID.fetch_add(1, Ordering::Relaxed))
 
 ### BUG-20: `VirtioBlk::total_sectors` returns 0 — callers can't determine disk size
 
-**File:** [virtio.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/virtio.rs#L499-L503)  
+**File:** [virtio.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/virtio.rs#L499-L503)  
 **Severity:** 🔵 Low
 
 ```rust
@@ -711,7 +711,7 @@ The `VirtioBlk` block device always reports 0 sectors. The wrapper `VirtioBlockD
 
 ### BUG-21: `null_latency::non_game_cores` uses bitwise NOT — wraps to include invalid core bits
 
-**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/scheduler.rs#L1067)  
+**File:** [scheduler.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/scheduler.rs#L1067)  
 **Severity:** 🔵 Low
 
 ```rust
@@ -725,7 +725,7 @@ nl.non_game_cores = !nl.dedicated_cores;
 
 ### BUG-22: `APIC error handler` doesn't read the Error Status Register
 
-**File:** [interrupts.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/interrupts.rs#L1083-L1085)  
+**File:** [interrupts.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/interrupts.rs#L1083-L1085)  
 **Severity:** 🔵 Low
 
 ```rust
@@ -740,7 +740,7 @@ The APIC Error LVT fires when the Local APIC detects an error condition. To clea
 
 ### BUG-23: `IPC Channel` never gets cleaned up — leaked when both endpoints are destroyed
 
-**File:** [ipc.rs](file:///c:/Users/woisr/OneDrive/Documents/RaeenOS/kernel/src/ipc.rs)  
+**File:** [ipc.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/ipc.rs)  
 **Severity:** 🔵 Low
 
 There is no `destroy_channel` or reference counting. Once a channel is created, it lives in the `BTreeMap` forever. If both the sender and receiver tasks exit, the channel (with its 64-message buffer + potential shared frame) is never freed. Over time, this is an unbounded memory leak proportional to the number of IPC channels ever created.
@@ -757,7 +757,7 @@ There is no `destroy_channel` or reference counting. Once a channel is created, 
 | BUG-04 | 🔴 Critical | Memory | `free_user_page_tables` frees shared kernel PT frames |
 | BUG-05 | 🔴 Critical | Memory | `map_mmio_region` wrapping overflow on high addresses |
 | BUG-06 | 🔴 Critical | Interrupts | MSI vector u8 overflow in `allocate_msi_vector` |
-| BUG-24 | 🔴 Critical | RaeFS | `cow_write_block` ignores inode write on fresh alloc (Data Loss) |
+| BUG-24 | 🔴 Critical | AthFS | `cow_write_block` ignores inode write on fresh alloc (Data Loss) |
 | BUG-25 | 🔴 Critical | SMP | `cpu_offline` steals running tasks without IPI |
 | BUG-26 | 🔴 Critical | NVMe | `poll_io_completion` blocks on MMIO futex forever |
 | BUG-27 | 🔴 Critical | Locking | `RawSpinlock` deadlocks with interrupts |
@@ -786,7 +786,7 @@ There is no `destroy_channel` or reference counting. Once a channel is created, 
 | BUG-16 | 🟡 Medium | VirtIO | `allocate_contiguous_frames(3)` wastes 5 pages |
 | BUG-17 | 🟡 Medium | VirtIO | DMA bounce caps I/O at 4032 bytes, not 4096 |
 | BUG-18 | 🟡 Medium | Interrupts | Keyboard → hardcoded channel 1 may not exist |
-| BUG-31 | 🟡 Medium | RaeFS | `allocate_inode` misses superblock flush |
+| BUG-31 | 🟡 Medium | AthFS | `allocate_inode` misses superblock flush |
 | BUG-39 | 🟡 Medium | Timers | `compute_yearday` underflows if RTC month is 0 |
 | BUG-19 | 🔵 Low | Task | TaskId uses `Relaxed` ordering (safe but unconventional) |
 | BUG-20 | 🔵 Low | VirtIO | `VirtioBlk::total_sectors()` always returns 0 |

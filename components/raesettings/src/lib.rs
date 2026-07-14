@@ -1,4 +1,4 @@
-//! RaeSettings — system settings manager for RaeenOS.
+//! RaeSettings — system settings manager for AthenaOS.
 //!
 //! Typed, searchable, observable settings with per-user overrides,
 //! admin enforcement, cross-device sync, and version migration.

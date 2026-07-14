@@ -1,9 +1,7 @@
-//! RaePlay — built-in game launcher / library aggregator.
+//! AthPlay — PARKED game launcher (not an AthenaOS product surface).
 //!
-//! Steam, Epic, GOG, RaeStore unified game library with per-game
-//! profiles, playtime tracking, launch orchestration, and achievement
-//! aggregation.  All types are `no_std`-compatible; actual filesystem
-//! and process I/O is delegated to the OS layer via callbacks.
+//! Bootstrap residue: Steam/Epic/GOG library aggregation. Do not expand for
+//! Athena; see `docs/PARKED_GAMING.md`. Types remain so the workspace builds.
 #![cfg_attr(not(test), no_std)]
 
 extern crate alloc;
@@ -25,7 +23,7 @@ pub enum StoreType {
     Steam,
     Epic,
     Gog,
-    RaeStore,
+    AthStore,
     Manual,
 }
 
@@ -35,7 +33,7 @@ impl fmt::Display for StoreType {
             StoreType::Steam => f.write_str("Steam"),
             StoreType::Epic => f.write_str("Epic Games"),
             StoreType::Gog => f.write_str("GOG"),
-            StoreType::RaeStore => f.write_str("RaeStore"),
+            StoreType::AthStore => f.write_str("AthStore"),
             StoreType::Manual => f.write_str("Manual"),
         }
     }
@@ -332,7 +330,7 @@ impl InputProfile {
 }
 
 // ---------------------------------------------------------------------------
-// Per-game profile: Scheduler (SCHED_GAME integration)
+// Per-game profile: Scheduler (SCHED_BODY integration)
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq)]
@@ -370,7 +368,7 @@ impl SchedulerProfile {
 }
 
 // ---------------------------------------------------------------------------
-// Per-game profile: Compatibility (RaeBridge integration)
+// Per-game profile: Compatibility (AthBridge integration)
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1550,19 +1548,19 @@ impl StoreConnector for GogConnector {
 }
 
 // ---------------------------------------------------------------------------
-// RaeStore connector — native RaeenOS store
+// AthStore connector — native AthenaOS store
 // ---------------------------------------------------------------------------
 
-pub struct RaeStoreConnector {
+pub struct AthStoreConnector {
     games: Vec<GameEntry>,
     connected: bool,
     next_id: u64,
     api_endpoint: Option<String>,
 }
 
-/// A package listing from RaeStore's catalog API.
+/// A package listing from AthStore's catalog API.
 #[derive(Clone, Debug)]
-pub struct RaeStorePackage {
+pub struct AthStorePackage {
     pub package_id: String,
     pub name: String,
     pub version: String,
@@ -1573,7 +1571,7 @@ pub struct RaeStorePackage {
     pub tags: Vec<String>,
 }
 
-impl RaeStoreConnector {
+impl AthStoreConnector {
     pub fn new() -> Self {
         Self {
             games: Vec::new(),
@@ -1587,17 +1585,17 @@ impl RaeStoreConnector {
         self.api_endpoint = Some(endpoint);
     }
 
-    /// Register a game from the RaeStore catalog.
+    /// Register a game from the AthStore catalog.
     pub fn add_package(
         &mut self,
-        pkg: RaeStorePackage,
+        pkg: AthStorePackage,
         installed: bool,
         install_path: Option<String>,
     ) {
         let id = self.next_id;
         self.next_id += 1;
 
-        let mut entry = GameEntry::new(id, pkg.name, StoreType::RaeStore, pkg.package_id);
+        let mut entry = GameEntry::new(id, pkg.name, StoreType::AthStore, pkg.package_id);
         entry.executable = Some(pkg.executable);
         entry.install_size_bytes = pkg.size_bytes;
         entry.developer = Some(pkg.developer);
@@ -1613,13 +1611,13 @@ impl RaeStoreConnector {
     }
 }
 
-impl StoreConnector for RaeStoreConnector {
+impl StoreConnector for AthStoreConnector {
     fn name(&self) -> &str {
-        "RaeStore"
+        "AthStore"
     }
 
     fn store_type(&self) -> StoreType {
-        StoreType::RaeStore
+        StoreType::AthStore
     }
 
     fn scan_library(&mut self) -> Vec<GameEntry> {
@@ -1901,7 +1899,7 @@ impl LaunchManager {
     /// 1. Save current display state
     /// 2. Apply display profile
     /// 3. Apply GPU profile
-    /// 4. Activate SCHED_GAME if requested
+    /// 4. Activate SCHED_BODY if requested
     /// 5. Spawn process
     /// 6. Start overlay
     pub fn launch(
@@ -1934,7 +1932,7 @@ impl LaunchManager {
         }
 
         if request.profile.scheduler.null_latency {
-            env.push((String::from("RAEENOS_NULL_LATENCY"), String::from("1")));
+            env.push((String::from("ATHENAOS_NULL_LATENCY"), String::from("1")));
         }
 
         if request.profile.compat.mangohud {
@@ -2771,14 +2769,14 @@ impl GameDetailView {
 // Initialization helper
 // ---------------------------------------------------------------------------
 
-pub struct RaePlay {
+pub struct AthPlay {
     pub library: GameLibrary,
     pub launch_manager: LaunchManager,
     pub playtime: PlaytimeTracker,
     pub view: LibraryViewState,
 }
 
-impl RaePlay {
+impl AthPlay {
     pub fn new() -> Self {
         Self {
             library: GameLibrary::new(),

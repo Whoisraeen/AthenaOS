@@ -4,8 +4,8 @@
  *
  * ACPI handle/table surface. amdgpu reaches it for the VFCT path (a VBIOS image
  * embedded in an ACPI table — one VBIOS fallback) and the ATPX/ATCS hybrid-gfx
- * methods (out of the bring-up subset, RaeShield owns GPU arbitration). The
- * RaeenOS ACPI namespace is owned by the kernel; the userspace bring-up daemon
+ * methods (out of the bring-up subset, AthGuard owns GPU arbitration). The
+ * AthenaOS ACPI namespace is owned by the kernel; the userspace bring-up daemon
  * gets tables via the host, so acpi_get_table is backed by raeen_linuxkpi at M4
  * (reports "absent" until wired — the PCI-ROM VBIOS path is primary). License
  * boundary (../../README.md): API surface.

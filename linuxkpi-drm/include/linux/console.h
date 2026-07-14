@@ -3,7 +3,7 @@
  * <linux/console.h> shim (MPL-2.0, original work).
  *
  * Kernel console registration + locking. amdgpu takes console_lock() around the
- * fbdev/mode handoff to serialise against the boot console. In the RaeenOS daemon
+ * fbdev/mode handoff to serialise against the boot console. In the AthenaOS daemon
  * model there is no kernel printk console to fight over (the daemon logs via the
  * M4 log facade), so the lock calls are honest no-ops and (un)register is backed
  * by raeen_linuxkpi if ever needed. License boundary (../../README.md): surface.

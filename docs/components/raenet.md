@@ -1,4 +1,4 @@
-# RaeNet
+# AthNet
 
 Userspace networking above L3. L2/L3 stays in-kernel for hot-path throughput;
 TCP, UDP, QUIC, TLS, WireGuard, and the gaming traffic shaper live in user space.

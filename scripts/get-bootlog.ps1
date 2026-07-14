@@ -1,6 +1,6 @@
-# get-bootlog.ps1 - one-click: pull BOOTLOG.TXT off the RaeenOS USB and open it.
+# get-bootlog.ps1 - one-click: pull BOOTLOG.TXT off the AthenaOS USB and open it.
 #
-# Windows won't show the RaeenOS stick in Explorer (its partition is an EFI
+# Windows won't show the AthenaOS stick in Explorer (its partition is an EFI
 # System Partition, which Windows refuses to mount on removable media). This
 # reads the log straight off the raw disk instead - same end result as dragging
 # the file, but it works.
@@ -38,7 +38,7 @@ if (-not $isAdmin) {
         Write-Host "Saved: $Out"
         Start-Process notepad $Out
     } else {
-        Write-Host "No log was produced (is the RaeenOS stick plugged in?)."
+        Write-Host "No log was produced (is the AthenaOS stick plugged in?)."
         Start-Sleep 5
     }
     return

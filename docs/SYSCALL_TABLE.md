@@ -1,4 +1,4 @@
-# RaeenOS syscall table
+# AthenaOS syscall table
 
 **Authoritative source.** Required by `kernelchecklist.md` R10: every new
 syscall MUST add a row here in the same commit that adds the dispatch arm.
@@ -177,7 +177,7 @@ NAMED, clickable rows (name + path) the Files app / command palette use
 `raelangd` daemon half: FETCH claims the next queued >64 KiB script (Queued →
 Running, source handed over), COMPLETE reports exit + captured output.
 
-## Block 15: WireGuard (81–84) — Concept §RaeNet
+## Block 15: WireGuard (81–84) — Concept §AthNet
 
 | nr | name | args | rax |
 |---:|---|---|---|
@@ -263,10 +263,10 @@ legacy behavior for compatibility.
 
 **RENUMBERED 2026-06-25 from 100–106 (ABI_VERSION 3 → 4).** The original 100–106
 range was a hard collision: the dispatch arms for `SYS_OOM_SUBSCRIBE` (100, Block
-22a) and the RaeFS snapshots (101–103, Block 22b) precede the anti-cheat range arm
+22a) and the AthFS snapshots (101–103, Block 22b) precede the anti-cheat range arm
 in `kernel/src/syscall.rs`, and Rust's match is first-arm-wins — so calling the
 *documented* `SYS_AC_REGISTER_GAME` (102) actually ran `raefs::snapshot_restore`,
-a destructive filesystem rollback. OOM + RaeFS snapshots are live and iron-proven,
+a destructive filesystem rollback. OOM + AthFS snapshots are live and iron-proven,
 so anti-cheat (design-tier) moved to the fresh contiguous block below. The old
 anti-cheat numbers never reached `anticheat.rs`, so no working consumer broke.
 Canonical defs now live in `rae_abi` Block 34 (with a build-time collision guard).
@@ -290,7 +290,7 @@ True tiling: the WM records a desired cell size; a tiling-aware client polls it 
 | 291 | `SYS_SURFACE_RESIZE_REQ` | rdi=id | `w \| (h<<16)` if pending, `SURFACE_RESIZE_NONE`(0) if none, `SURFACE_RESIZE_ERR`(u64::MAX) on bad id |
 | 292 | `SYS_SURFACE_RESIZE` | rdi=id, rsi=w, rdx=h, r10=new_buf (page-aligned) | 0 on success, `SURFACE_RESIZE_ERR` on bad id / non-owner / bad dims / alloc fail |
 
-## Block 36: RaeBridge per-process launcher argv (293) — RESERVED
+## Block 36: AthBridge per-process launcher argv (293) — RESERVED
 
 `SYS_SPAWN_ARGS` (the launcher's argv/target-passing primitive, gate item #2 —
 one `.exe`/process) is **reserved here as 293** so the number cannot collide when
@@ -308,7 +308,7 @@ collision class: "19 and 27 already bit us").
 
 Packed argv blob: `argv_count` × `[u32 len][bytes]` (no NUL, length-prefixed);
 bounds `SPAWN_ARGS_MAX_BYTES=65536`, `SPAWN_ARGS_MAX_COUNT=64`. Native child stack
-convention (RaeenOS-native, NOT Linux auxv): `argc@[rsp]`, `argv@[rsp+8]`,
+convention (AthenaOS-native, NOT Linux auxv): `argc@[rsp]`, `argv@[rsp+8]`,
 NULL-terminated `char**`. Next free after this reservation: 294.
 
 ## Block 37: netlog diagnostic (296)
@@ -342,13 +342,13 @@ require explicit command marshalling and otherwise fail closed.
 Wire version 1 uses a 40-byte `rae_abi::drm_service::RequestHeader`; payloads
 are capped at 64 KiB. Next free: 300.
 
-## Block 22: RaeFS game extents (99)
+## Block 22: AthFS game extents (99)
 
 | nr | name | args | rax |
 |---:|---|---|---|
 | 99 | `SYS_RAEFS_GAME_INSTALL_HINT` | path_ptr, path_len (1..4096), expected_size (0 = default 32 KiB) | `start_block \| (block_count << 32)` or `E_RAEFS_*` |
 
-RaeFS errors: `E_RAEFS_NO_MOUNT` = `0xFFFF_FFFF_FFFF_F901`, `E_RAEFS_EXTENT_FAIL` = `F902`, `E_RAEFS_BAD_PATH` = `F903`.
+AthFS errors: `E_RAEFS_NO_MOUNT` = `0xFFFF_FFFF_FFFF_F901`, `E_RAEFS_EXTENT_FAIL` = `F902`, `E_RAEFS_BAD_PATH` = `F903`.
 
 ## Block 22a: Memory pressure (100) — Concept §Production hardening
 
@@ -365,7 +365,7 @@ bump).
 
 Requires `Cap::Filesystem` with `WRITE` when the task holds any filesystem caps (same rule as `SYS_MKDIR`).
 
-## Block 22b: RaeFS snapshots (101–103) — Concept §RaeFS CoW/snapshots
+## Block 22b: AthFS snapshots (101–103) — Concept §AthFS CoW/snapshots
 
 | nr | name | args | rax |
 |---:|---|---|---|
@@ -419,7 +419,7 @@ small BAR0 aperture) into the owning daemon. Two gates: the caller must own
 (`memory::phys_is_usable_ram` false) — usable RAM is refused, so a driver can
 never map kernel or another process's memory. Additive (no `ABI_VERSION` bump).
 
-`SYS_RAEGFX_REGISTER_SCANOUT` (143) is the first slot claimed from the RaeGFX
+`SYS_RAEGFX_REGISTER_SCANOUT` (143) is the first slot claimed from the AthGFX
 reserved range (143–199; additive, no `ABI_VERSION` bump). A GPU driver daemon
 (amdgpud, via `raeen_drm::kms::atomic_commit`) hands its display scanout
 framebuffer to the in-kernel compositor, which then presents THROUGH the
@@ -437,7 +437,7 @@ loads a named blob from the initramfs `firmware/<name>` tree and maps it into
 the daemon's address space (`[user_virt, size]` written to `out_ptr`). Every
 Linux GPU/Wi-Fi driver (amdgpu, i915, iwlwifi) needs it before hardware
 bring-up. Additive allocation (no `ABI_VERSION` bump): carved from the unused
-low end of the RaeGFX reserved range, which now starts at 143.
+low end of the AthGFX reserved range, which now starts at 143.
 
 ## Block 23a: Debug print (141)
 
@@ -447,7 +447,7 @@ syscall 27 in `ABI_VERSION = 1`, which collided with `SYS_SURFACE_CLOSE`
 in Block 3 — the compositor close-surface arm was unreachable because
 Rust match dispatches on first-arm-wins. Moved to 141 in `ABI_VERSION = 2`
 (see `components/rae_abi/src/lib.rs::syscall::SYS_DEBUG_PRINT`); relibc's
-`raeenOS_syscall::SYS_DEBUG_PRINT` was updated in the same commit. RaeGFX's
+`raeenOS_syscall::SYS_DEBUG_PRINT` was updated in the same commit. AthGFX's
 reserved range was slid to 142–199 to accommodate, then to 143–199 when
 `SYS_LINUXKPI_REQUEST_FIRMWARE` took 142 (additive, see Block 23).
 
@@ -462,7 +462,7 @@ either lock.
 
 ## Block 24: Installer (256–257)
 
-The userspace `raeinstaller` calls these to install RaeenOS onto the target disk.
+The userspace `raeinstaller` calls these to install AthenaOS onto the target disk.
 Both require `Cap::System{WRITE}` (seeded only when the kernel boots in installer
 mode). See `kernel/src/installer.rs`, `docs` Phase 3.
 
@@ -491,13 +491,13 @@ back to `THEME_DEFAULT_ACCENT` (RaeBlue, `0xFF4E9CFF`) on any error. Additive
 allocation (fresh slot 266 in the experimental range, next free after 264
 `SYS_NET_DNS` / 265 `SYS_NET_STATUS`); no `ABI_VERSION` bump.
 
-## Block 26: Audio submit (267) — Concept §RaeAudio (sub-3ms audio)
+## Block 26: Audio submit (267) — Concept §AthAudio (sub-3ms audio)
 
 | nr | name | args | rax |
 |---:|---|---|---|
 | 267 | `SYS_AUDIO_SUBMIT` | samples_ptr (`*const i16`), frame_count, format_flags | frames accepted / `u64::MAX` |
 
-`SYS_AUDIO_SUBMIT` feeds PCM samples into the RaeAudio mixer, completing the
+`SYS_AUDIO_SUBMIT` feeds PCM samples into the AthAudio mixer, completing the
 audio pillar end-to-end (app → mixer → ring → HDA). The kernel validates the
 buffer with `validate_user_range` and `copy_from_user`s it (no raw deref), then
 enqueues it into the calling task's per-PID `SourceKind::Pcm` mixer voice —
@@ -631,7 +631,7 @@ remapping.
 (`FOCUS`=0, `ACTIVATE`=1, `SCROLL`=2, `SET_VALUE`=3, `INCREMENT`=4,
 `DECREMENT`=5, `DISMISS`=6); `arg` (`rdx`) is action-specific (`0` when unused).
 At the window tier FOCUS/ACTIVATE raise+focus the owning surface and DISMISS
-closes it; widget-tier actions route through the RaeUI provider (implementer's
+closes it; widget-tier actions route through the AthUI provider (implementer's
 next slice) and refuse (`A11Y_ERR`) until that lands rather than faking success.
 
 Active state surfaces at `/proc/raeen/a11y` (`nodes: N`, `focused_id`, one line
@@ -766,7 +766,7 @@ proof: `search_index::run_boot_smoketest` (`[search] crawl-query+resolve
 smoketest: … wire_ok=… tiny_ok=… -> PASS`). Host KAT: `cargo test -p raekit`
 (`syscalls::tests::*` — round-trip + truncated/garbage no-panic).
 
-## Block 33: RaeBridge real-MSVC-CRT ABI (282–283) — Concept §Compatibility
+## Block 33: AthBridge real-MSVC-CRT ABI (282–283) — Concept §Compatibility
 
 The gate from "a hand-built PE runs" to "a real MSVC-compiled `.exe` runs". Every
 MSVC-CRT binary reads its Thread Environment Block via `gs:[0x30]` on entry (and
@@ -779,11 +779,11 @@ RW→RX. See `docs/components/raebridge-real-crt-abi.md` for the full design.
 | 283 | `SYS_MPROTECT` | rdi=addr (page-aligned), rsi=len, rdx=prot | 0 on success / `u64::MAX` on bad range/unmapped/W^X |
 
 **`SYS_SET_GS_BASE` (282)** sets the user-visible GS base to the Win32 TEB pointer
-for a RaeBridge guest. Mirrors `SYS_SET_FS_BASE` (126): persists in the per-task
+for a AthBridge guest. Mirrors `SYS_SET_FS_BASE` (126): persists in the per-task
 `Task::gs_base`, restored across context switches (the scheduler restores it
 field-vs-field, write-only-if-changed, like `fs_base`). Rejects
 `base >= 0x0000_8000_0000_0000`. **Subtlety:** the kernel writes the value via the
-ACTIVE `IA32_GS_BASE` MSR — RaeenOS's `syscall_handler` does an EVEN number of
+ACTIVE `IA32_GS_BASE` MSR — AthenaOS's `syscall_handler` does an EVEN number of
 `swapgs` between the dispatch arm and `sysretq`, so the active GS base set in the
 arm is the one that survives to user mode, and `IA32_KERNEL_GS_BASE` is left
 holding the per-CPU pointer for the next syscall entry. To keep SMP correct under
@@ -797,7 +797,7 @@ convention `SYS_MMAP` uses, `R|W == 3`). Flips `WRITABLE`/`NO_EXECUTE` and flush
 the TLB per page. Page-aligned `addr`; `len` rounded up to a page; range must stay
 below `0x0000_8000_0000_0000`; every page must already be mapped (a hole →
 `u64::MAX`, no demand-mapping). Validates the whole range mapped BEFORE flipping
-any page (atomic in practice). The RaeShield W^X gate (refuse simultaneous
+any page (atomic in practice). The AthGuard W^X gate (refuse simultaneous
 `PROT_WRITE | PROT_EXEC`) lives in this arm, off until Phase 9 enforcement
 (`memory::set_wx_policy_enforced`). The RW→RX flip the loader needs is
 `PROT_READ | PROT_EXEC`.
@@ -809,15 +809,15 @@ numbers — **no `ABI_VERSION` bump**. Kernel side: `kernel/src/syscall.rs` (arm
 282/283), `kernel/src/task.rs` (`Task::gs_base`), `kernel/src/scheduler.rs` (GS
 save/restore at the 3 switch sites), `kernel/src/gdt.rs` (cpu_id moved off the
 active GS base), `kernel/src/memory.rs` (`sys_mprotect` + `prot_to_pte_flags`).
-RaeBridge wiring (`syscalls.rs` wrappers + `exec.rs` steps 4b/5/6) is the
+AthBridge wiring (`syscalls.rs` wrappers + `exec.rs` steps 4b/5/6) is the
 raeen-compat follow-up.
 
 ## Reserved ranges (do NOT use without updating this table)
 
-- **96–99**: VFS mutations (96–98) + RaeFS game hint (99).
-- **107–108**: desktop integration (clipboard); **109–126**: RaeShield + net block (121–125) + TLS (126).
+- **96–99**: VFS mutations (96–98) + AthFS game hint (99).
+- **107–108**: desktop integration (clipboard); **109–126**: AthGuard + net block (121–125) + TLS (126).
 - **127–140**: LinuxKPI host (Phase 1-4).
-- **141–199**: reserved for RaeGFX runtime.
+- **141–199**: reserved for AthGFX runtime.
 - **200–255**: reserved for Linux compat shim (linux_syscall.rs).
 - **256–257**: Installer (Phase 3 + 16.1).
 - **258–263**: native synchronization (258 = `SYS_FUTEX`; rest unallocated).
@@ -828,10 +828,10 @@ raeen-compat follow-up.
 - **279**: `SYS_INPUT_CURSOR` — absolute cursor position for app hit-testing. Ungated.
 - **280**: `SYS_SURFACE_ORIGIN` — live surface origin for hit-testing. Ungated.
 - **281**: `SYS_SEARCH_QUERY_RESOLVED` — named (name + path) search results. Ungated.
-- **282–283**: RaeBridge real-MSVC-CRT ABI (282 `SYS_SET_GS_BASE`, 283 `SYS_MPROTECT`). Ungated.
+- **282–283**: AthBridge real-MSVC-CRT ABI (282 `SYS_SET_GS_BASE`, 283 `SYS_MPROTECT`). Ungated.
 - **284–290**: anti-cheat attestation (Block 34, `SYS_AC_*`).
 - **291–292**: surface resize protocol (Block 35).
-- **293**: `SYS_SPAWN_ARGS` — RaeBridge launcher argv (Block 36, **RESERVED**, impl gated on `scheduler.rs` cooling).
+- **293**: `SYS_SPAWN_ARGS` — AthBridge launcher argv (Block 36, **RESERVED**, impl gated on `scheduler.rs` cooling).
 - **Next free: 294.** 294+ experimental — must be documented and approved before promotion.
 
 ## How error codes are returned

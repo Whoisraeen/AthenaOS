@@ -3,9 +3,9 @@
 //! amdgpu's gfx ring (`amdgpu_async_gfx_ring=1`, the DEFAULT) is a MES-scheduled
 //! Kernel Gfx Queue, NOT a raw CP_RB0 ring: the CP only services the queue once MES
 //! maps + schedules it. Proven on iron 2026-06-27 — booting amdgpu with
-//! `async_gfx_ring=0` (the legacy raw-CP_RB0 path RaeenOS had been programming) makes
+//! `async_gfx_ring=0` (the legacy raw-CP_RB0 path AthenaOS had been programming) makes
 //! amdgpu FAIL to probe (`-110`, "MES failed to respond to msg=MISC"). So amdgpu
-//! depends on MES even in legacy gfx mode. RaeenOS loads the MES ucode (mes_2.bin via
+//! depends on MES even in legacy gfx mode. AthenaOS loads the MES ucode (mes_2.bin via
 //! PSP autoload) but never STARTS the MES microengine, so the gfx queue is never
 //! scheduled and the CP never fetches (every CP_RB0/GART/doorbell register matched
 //! amdgpu exactly, yet RPTR stayed 0 — because the gate was never a register).
@@ -151,7 +151,7 @@ pub struct MesLoadRegs {
 /// Build the `mes_v11_0_load_microcode` register sequence for one MES pipe — point
 /// the MES instruction cache at the (direct-loaded) ucode + the data cache at the
 /// data blob, set the 2M/512K bounds, and prime the I-cache. The MES ucode is
-/// PSP-autoloaded into a PSP-managed location we can't address, so RaeenOS must
+/// PSP-autoloaded into a PSP-managed location we can't address, so AthenaOS must
 /// DIRECT-load it (allocate + copy + GART-map the ucode/data blobs, like the SDMA
 /// direct-load) and pass their GART VAs here. WITHOUT this the MES has no code to run
 /// on activation → it faults → `CP_MES_CNTL` ACTIVE clears (iron: reads 0). Run this
@@ -423,7 +423,7 @@ pub struct MesHwResources {
 /// command ring. header = TYPE_SCHEDULER(1) | SET_HW_RSRC(0) | dwsize 64; the flags
 /// word = disable_reset|use_different_vmid_compute|disable_mes_log|apply_mmhub_pgvm_
 /// invalidate_ack_loss_wa|enable_level_process_quantum_check|enable_reg_active_poll
-/// (= 0x44f; the working amdgpu ships 0x447, bit3 added for the RaeenOS ack-loss env);
+/// (= 0x44f; the working amdgpu ships 0x447, bit3 added for the AthenaOS ack-loss env);
 /// oversubscription_timer 50.
 pub fn build_mes_set_hw_resources(r: &MesHwResources) -> Vec<u32> {
     let mut p = alloc::vec![0u32; HWRES_FRAME_DWORDS];
@@ -438,7 +438,7 @@ pub fn build_mes_set_hw_resources(r: &MesHwResources) -> Vec<u32> {
     p[15..17].copy_from_slice(&r.sdma_hqd_mask);
     // aggregated_doorbells[5] — per-priority-level aggregated doorbell indices. The
     // WORKING amdgpu MES SCHED ring (Athena live debugfs dump, 2026-06-29) sends
-    // 0x800,0x802,0x804,0x806,0x808 here. RaeenOS sent 0 — and the iron diagnostic
+    // 0x800,0x802,0x804,0x806,0x808 here. AthenaOS sent 0 — and the iron diagnostic
     // showed the MES READ set_hw_resources (HQD_RPTR advanced) but never ACKed it:
     // with no aggregated doorbells it can't set up scheduling, so it aborts the frame
     // without writing the api_completion_fence. These are doorbell-aperture indices.
@@ -463,7 +463,7 @@ pub fn build_mes_set_hw_resources(r: &MesHwResources) -> Vec<u32> {
     //
     // bit3 = apply_mmhub_pgvm_invalidate_ack_loss_wa: a MES-firmware workaround for a
     // LOST MMHUB page-VM invalidate ACK. The working driver ships it OFF (its MMHUB acks
-    // properly), but RaeenOS's INVALIDATE-STALL capture shows the MES issues the full-
+    // properly), but AthenaOS's INVALIDATE-STALL capture shows the MES issues the full-
     // flush invalidate (req=0x2f80000) and the ACK never returns on EITHER hub (MMVM/GCVM
     // ack=0) — the microengine then freezes mid-set_hw_resources (INSTR 0x7656, clock
     // running, no fault) waiting on an ack our environment never delivers. Setting the WA

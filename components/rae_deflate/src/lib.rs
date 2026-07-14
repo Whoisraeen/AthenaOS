@@ -1,8 +1,8 @@
 //! # RaeDeflate — a never-panic, `no_std` DEFLATE codec (RFC 1951) + gzip/zlib.
 //!
-//! RaeenOS_Concept.md §"The user owns the machine": a daily driver must be able
+//! LEGACY_GAMING_CONCEPT.md §"The user owns the machine": a daily driver must be able
 //! to *produce* compressed archives, not just read them. The `rae_zip`/`rae_tar`
-//! crates gave RaeenOS a from-scratch **decompressor** so someone can double-click
+//! crates gave AthenaOS a from-scratch **decompressor** so someone can double-click
 //! a `.zip`; this crate is the **inverse** — the canonical DEFLATE *compressor*
 //! (plus a self-contained inflate), so the Files app can offer "Compress to
 //! .zip/.gz" and any future writer (snapshots, logs, package tooling) can store
@@ -1004,7 +1004,7 @@ mod tests {
     fn roundtrip_short() {
         roundtrip(b"hi");
         roundtrip(b"a");
-        roundtrip(b"Hello, RaeenOS!");
+        roundtrip(b"Hello, AthenaOS!");
     }
 
     #[test]

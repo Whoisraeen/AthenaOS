@@ -1,7 +1,7 @@
 //! Built-in hardware diagnostics — temps, voltages, fan curves, SMART data,
 //! power draw monitoring. Replaces HWiNFO / HWMonitor / Open Hardware Monitor.
 //!
-//! Provides a unified sensor interface for RaeShell's system monitor widget.
+//! Provides a unified sensor interface for AthShell's system monitor widget.
 
 #![allow(dead_code)]
 
@@ -852,7 +852,7 @@ impl HwMonitor {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  9. Export Format (for RaeShell widget)
+//  9. Export Format (for AthShell widget)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone)]

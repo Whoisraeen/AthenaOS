@@ -1,11 +1,11 @@
-# RaeenOS User Guarantees
+# AthenaOS User Guarantees
 
-> RaeenOS_Concept.md §2: *"The user owns the machine. No forced updates. No telemetry
+> LEGACY_GAMING_CONCEPT.md §2: *"The user owns the machine. No forced updates. No telemetry
 > without explicit opt-in. No ads in the OS."* — and §"No ads. No data sales. Ever.
 > **Burned into the EULA.**"
 
 These are not marketing promises. They are **binding product guarantees** that belong
-in the RaeenOS End-User License Agreement, and — uniquely — each one is **enforced by
+in the AthenaOS End-User License Agreement, and — uniquely — each one is **enforced by
 the architecture**, not just asserted in prose. This document is the canonical text of
 those guarantees plus the technical mechanism that makes each one true.
 
@@ -15,7 +15,7 @@ A future legal EULA incorporates this file as its "Your Rights" section verbatim
 
 ## 1. No ads in the operating system. Ever.
 
-RaeenOS will never display advertisements in the shell, the Start menu, the lock
+AthenaOS will never display advertisements in the shell, the Start menu, the lock
 screen, Settings, Search, the file manager, or any first-party surface. There is no
 ad SDK, no sponsored placement, no "suggested app" that is a paid placement.
 
@@ -25,12 +25,12 @@ own apps, files, and settings actions — there is no ad inventory to inject.
 
 ## 2. No data sales. Ever.
 
-RaeenOS does not collect, broker, or sell user data. There is no data-broker
+AthenaOS does not collect, broker, or sell user data. There is no data-broker
 relationship, no behavioral-profile export, no "anonymized analytics" sold downstream.
 
-**Enforced by:** no telemetry-exfiltration path exists. RaeSync (`components/raesync`)
-is **end-to-end encrypted** (x25519 + HKDF + ChaCha20-Poly1305) — RaeenOS servers, if
-present, see ciphertext only and could not sell what they cannot read. RaeID
+**Enforced by:** no telemetry-exfiltration path exists. AthSync (`components/raesync`)
+is **end-to-end encrypted** (x25519 + HKDF + ChaCha20-Poly1305) — AthenaOS servers, if
+present, see ciphertext only and could not sell what they cannot read. AthID
 (`components/raeid`) is **optional**; the OS boots to a full guest desktop with no
 account.
 
@@ -71,7 +71,7 @@ a vendor kernel driver — see also `docs/ANTICHEAT_STRATEGY.md`.
 
 ## 6. No lock-in by friction.
 
-The default shell (RaeShell) can be replaced (`kernel::shell_api` — register/switch
+The default shell (AthShell) can be replaced (`kernel::shell_api` — register/switch
 shells), the window manager is swappable (float/tile/stack), and the whole look is
 user-owned via the theme engine + Vibe Mode. Nothing about leaving is engineered to
 be painful.

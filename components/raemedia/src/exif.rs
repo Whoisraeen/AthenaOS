@@ -1,5 +1,5 @@
 //! EXIF orientation parsing + the 8 EXIF transforms — *"show my photos the right
-//! way up"* (RaeenOS_Concept.md §creators/media). Phones and cameras store frames
+//! way up"* (LEGACY_GAMING_CONCEPT.md §creators/media). Phones and cameras store frames
 //! in sensor order and record an Orientation tag (TIFF tag 0x0112) describing how
 //! the viewer should rotate/flip them. A viewer that ignores it shows sideways
 //! and mirror-flipped photos — the #1 "this OS feels broken" papercut.

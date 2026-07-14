@@ -880,9 +880,9 @@ pub fn crc32_ieee(data: &[u8]) -> u32 {
     !crc
 }
 
-/// Seed a spec-correct GPT with an ESP and (when the disk has room) a RaeFS
+/// Seed a spec-correct GPT with an ESP and (when the disk has room) a AthFS
 /// root partition. Returns `(esp_start_lba, raefs_start_lba)`; `raefs_start`
-/// is 0 when the disk is too small for a RaeFS root (QEMU smoke disk).
+/// is 0 when the disk is too small for a AthFS root (QEMU smoke disk).
 pub fn seed_minimal_gpt_with_esp() -> Option<(u64, u64)> {
     const EFI_GUID: [u8; 16] = [
         0x28, 0x73, 0x2A, 0xC1, 0x1F, 0xF8, 0xD2, 0x11, 0xBA, 0x4B, 0x00, 0xA0, 0xC9, 0x3E, 0xC9,
@@ -967,7 +967,7 @@ pub fn seed_minimal_gpt_with_esp() -> Option<(u64, u64)> {
         }
     }
 
-    // Entry 1 — RaeFS root, when the disk is large enough to hold one. RaeFS
+    // Entry 1 — AthFS root, when the disk is large enough to hold one. AthFS
     // begins at the next 1 MiB boundary after the ESP and runs to the last
     // usable LBA. Require ≥ ~2 MiB of root (4096 sectors) before bothering —
     // the tiny QEMU smoke disk gets ESP-only and reports raefs_start = 0.
@@ -1078,14 +1078,14 @@ pub fn seed_minimal_gpt_with_esp() -> Option<(u64, u64)> {
     Some((start_lba, if have_raefs { raefs_start } else { 0 }))
 }
 
-/// The RaeFS partition type GUID (matches `block_io::PartitionType::RaeFs`).
+/// The AthFS partition type GUID (matches `block_io::PartitionType::RaeFs`).
 pub const RAEFS_TYPE_GUID: [u8; 16] = [
     0x46, 0x45, 0x41, 0x52, 0x4F, 0x53, 0x47, 0x21, 0x41, 0x52, 0x45, 0x45, 0x4E, 0x4F, 0x53, 0x21,
 ];
 
-/// Non-destructively add a RaeFS partition to the EXISTING GPT on `dev`
+/// Non-destructively add a AthFS partition to the EXISTING GPT on `dev`
 /// (dual-boot "install alongside"). Reads the current primary GPT, fills the
-/// first FREE entry slot with a RaeFS partition spanning `[start_lba, end_lba]`,
+/// first FREE entry slot with a AthFS partition spanning `[start_lba, end_lba]`,
 /// recomputes the partition-array + header CRC32s, and rewrites BOTH the primary
 /// and backup GPT — leaving every existing partition entry byte-for-byte intact.
 ///
@@ -1155,7 +1155,7 @@ pub fn add_gpt_partition_on(
     }
     let slot = free_slot?;
 
-    // ── Write the RaeFS entry into the free slot ────────────────────────────
+    // ── Write the AthFS entry into the free slot ────────────────────────────
     let off = slot * entry_size;
     entries[off..off + 16].copy_from_slice(&RAEFS_TYPE_GUID);
     entries[off + 16..off + 32].copy_from_slice(&[
@@ -1221,7 +1221,7 @@ pub fn add_gpt_partition_on(
     }
 
     crate::serial_println!(
-        "[fatfs] add_gpt_partition: RaeFS in slot {} at LBA {}..{} (array_crc=0x{:08x}, {} existing entries preserved)",
+        "[fatfs] add_gpt_partition: AthFS in slot {} at LBA {}..{} (array_crc=0x{:08x}, {} existing entries preserved)",
         slot,
         start_lba,
         end_lba,
@@ -1234,7 +1234,7 @@ pub fn add_gpt_partition_on(
     Some(slot)
 }
 
-/// Add a RaeFS partition to the ACTIVE block device's existing GPT (dual-boot).
+/// Add a AthFS partition to the ACTIVE block device's existing GPT (dual-boot).
 /// Thin wrapper over `add_gpt_partition_on` whose writes route through the
 /// active device's `safe_mode_guard_write`.
 pub fn add_gpt_partition(start_lba: u64, end_lba: u64) -> Option<usize> {
@@ -1257,7 +1257,7 @@ fn write_install_seed_artifact(esp_start_lba: u64) -> bool {
         return false;
     }
     let original = sector;
-    let marker = b"RAEENOS-INSTALL-SEED-BOOT-ARTIFACT";
+    let marker = b"ATHENAOS-INSTALL-SEED-BOOT-ARTIFACT";
     sector[..marker.len()].copy_from_slice(marker);
     if dev.write_sector(artifact_lba, &sector).is_err() {
         return false;
@@ -1505,7 +1505,7 @@ pub fn dump_text() -> String {
 // FAT32 formatter + file writer — MasterChecklist Phase 3.3
 //
 // Writes a spec-compliant FAT32 filesystem into an ESP partition and populates
-// the EFI boot tree (/EFI/BOOT/BOOTX64.EFI + /EFI/raeenos/). Used by the
+// the EFI boot tree (/EFI/BOOT/BOOTX64.EFI + /EFI/athenaos/). Used by the
 // installer (raeinstaller) to make a freshly-partitioned NVMe bootable.
 // Microsoft FAT spec (fatgen103) section 3 (BPB) + section 6 (directory entries).
 // ===========================================================================
@@ -1691,7 +1691,7 @@ pub fn fat32_format(
     vbr[64] = 0x80;
     vbr[66] = 0x29;
     vbr[67..71].copy_from_slice(&0x5241_4545u32.to_le_bytes());
-    vbr[71..82].copy_from_slice(b"RAEENOS ESP");
+    vbr[71..82].copy_from_slice(b"ATHENAOS ESP");
     vbr[82..90].copy_from_slice(b"FAT32   ");
     vbr[510] = 0x55;
     vbr[511] = 0xAA;
@@ -2064,17 +2064,17 @@ pub fn fat32_install_boot_tree(
     if !fat32_write_file_long(dev, &mut w, 2, "kernel-x86_64", "KERNEL~1", "", kernel) {
         return false;
     }
-    let raeenos = match fat32_mkdir(dev, &mut w, efi, "RAEENOS") {
+    let athenaos = match fat32_mkdir(dev, &mut w, efi, "ATHENAOS") {
         Some(c) => c,
         None => return false,
     };
     // Slot-A copy (Phase 3.6 atomic updates will swap kernel-x86_64 between
     // KERNEL-A.BIN / KERNEL-B.BIN); kept alongside the bootable root copy.
-    if !fat32_write_file(dev, &mut w, raeenos, "KERNEL-A", "BIN", kernel) {
+    if !fat32_write_file(dev, &mut w, athenaos, "KERNEL-A", "BIN", kernel) {
         return false;
     }
     // Phase 3.1: write the real ramdisk (initramfs) the installer sourced.
-    if !ramdisk.is_empty() && !fat32_write_file(dev, &mut w, raeenos, "INITRD", "IMG", ramdisk) {
+    if !ramdisk.is_empty() && !fat32_write_file(dev, &mut w, athenaos, "INITRD", "IMG", ramdisk) {
         return false;
     }
     crate::serial_println!(
@@ -2144,7 +2144,7 @@ pub fn run_format_smoketest() {
         crate::serial_println!("[fatfs] format smoketest: mkdir BOOT FAILED");
         return;
     };
-    let payload = b"RAEENOS-BOOTX64-PLACEHOLDER";
+    let payload = b"ATHENAOS-BOOTX64-PLACEHOLDER";
     let wrote = fat32_write_file(&dev, &mut w, boot, "BOOTX64", "EFI", payload);
 
     // Verify: re-parse the VBR we just wrote.

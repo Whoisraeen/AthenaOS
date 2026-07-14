@@ -1,4 +1,4 @@
-//! Navigation widgets for RaeUI.
+//! Navigation widgets for AthUI.
 //!
 //! Sidebar, Toolbar, Pagination, SegmentedControl, CommandPalette —
 //! all theme-aware and keyboard-navigable.

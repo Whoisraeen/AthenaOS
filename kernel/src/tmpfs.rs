@@ -1,11 +1,11 @@
-//! tmpfs — in-memory filesystem for RaeenOS.
+//! tmpfs — in-memory filesystem for AthenaOS.
 //!
 //! Provides a POSIX-compatible in-memory filesystem mounted at `/tmp` and
 //! `/dev/shm`. Data lives in `Vec<u8>` pages, supports hard links, symlinks,
 //! permission bits, and configurable size limits. All data is lost on reboot.
 //!
 //! Implements the VFS `Inode` trait so tmpfs files can be used transparently
-//! through the fd/syscall layer alongside RaeFS and initramfs files.
+//! through the fd/syscall layer alongside AthFS and initramfs files.
 
 #![allow(dead_code)]
 
@@ -640,7 +640,7 @@ impl crate::vfs::Inode for TmpfsVfsInode {
 /// common case is a flat scratch name). Returns `None` if `path` is not under a
 /// known tmpfs mount or the (flat) name is unusable.
 pub fn open_or_create(path: &str, create: bool) -> Option<(&'static str, u64)> {
-    // `rel` may be owned (the RaeBridge Windows-drive case flattens a sub-path),
+    // `rel` may be owned (the AthBridge Windows-drive case flattens a sub-path),
     // so carry a String and borrow it below.
     let (fs_name, rel): (&'static str, alloc::string::String) =
         if let Some(r) = path.strip_prefix("/tmp/") {
@@ -648,7 +648,7 @@ pub fn open_or_create(path: &str, create: bool) -> Option<(&'static str, u64)> {
         } else if let Some(r) = path.strip_prefix("/dev/shm/") {
             ("dev_shm", r.into())
         } else if let Some(r) = path.strip_prefix("/mnt/win_") {
-            // RaeBridge `C:\...` -> `/mnt/win_c/...`. The tmpfs holds flat names, so
+            // AthBridge `C:\...` -> `/mnt/win_c/...`. The tmpfs holds flat names, so
             // flatten the drive + sub-path into the shared "tmp" instance under a
             // `win_` prefix (e.g. `/mnt/win_c/out.txt` -> `win_c_out.txt`). Both the
             // guest CreateFileW and a later read translate to the same path, so the

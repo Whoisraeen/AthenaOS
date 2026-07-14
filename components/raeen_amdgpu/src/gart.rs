@@ -194,7 +194,7 @@ const CTX_PAGE_TABLE_DEPTH_SHIFT: u32 = 1; // 0 = flat (single level)
 const CTX_ALL_FAULT_ENABLE: u32 = 0x1fff_e00;
 // GCVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32 bit 0 = the page-directory VALID flag.
 // amdgpu sets it (Athena iron trace: PAGE_TABLE_BASE_LO = 0x5fd00001 on a page-
-// aligned table — the low 1 can only be a flag), and RaeenOS was omitting it, so the
+// aligned table — the low 1 can only be a flag), and AthenaOS was omitting it, so the
 // GMC saw the root PDB as not-present and never walked the table.
 const PTB_VALID: u32 = 1 << 0;
 // GCVM_L2_CNTL: ENABLE_L2_CACHE bit 0.
@@ -422,7 +422,7 @@ mod tests {
         //   END_LO/HI = 0xfff1ffff/0x7).
         let r = distinct_offsets();
         let c = GartConfig {
-            table_phys: 0x45_fd00_0000, // RaeenOS-allocated (amdgpu's was 0x4_5fd00000)
+            table_phys: 0x45_fd00_0000, // AthenaOS-allocated (amdgpu's was 0x4_5fd00000)
             gart_va_start: 0x7fff_0000_0000,
             gart_va_end: 0x7fff_1fff_ffff, // inclusive last byte, matching amdgpu's END
             fb_base: 0x80_0000_0000,
@@ -435,7 +435,7 @@ mod tests {
         };
         let seq = build_gart_enable_sequence(&r, &c);
         let find = |reg: u32| seq.iter().find(|(rr, _)| *rr == reg).map(|(_, v)| *v);
-        // The two values the trace caught RaeenOS getting wrong:
+        // The two values the trace caught AthenaOS getting wrong:
         assert_eq!(
             find(r.mx_l1_tlb_cntl),
             Some(0x1859),

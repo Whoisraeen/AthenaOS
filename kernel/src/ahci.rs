@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 //! AHCI/SATA host driver (in-kernel). REDOX_EXTRACTION_MAP R06 — compare DMA
-//! command-list programming with Redox `base.git` `ahcid`; RaeenOS stays
+//! command-list programming with Redox `base.git` `ahcid`; AthenaOS stays
 //! in-kernel per hybrid Concept until IOMMU userspace storage daemons land.
 //!
 //! R10: `init()` + `run_boot_smoketest()` + `/proc/raeen/ahci` + this doc block.
@@ -1319,7 +1319,7 @@ pub fn run_boot_smoketest() {
 
     match r {
         Ok(()) => {
-            let marker = b"RaeenOS-AHCI-block-0-ok!";
+            let marker = b"AthenaOS-AHCI-block-0-ok!";
             let matched = buf.len() >= marker.len() && &buf[..marker.len()] == marker;
             let preview: String = buf[..24]
                 .iter()
@@ -1392,7 +1392,7 @@ pub fn run_boot_smoketest() {
 /// `/proc/raeen/ahci` — controller/port summary.
 pub fn dump_text() -> String {
     let ctrls = AHCI_CONTROLLERS.lock();
-    let mut out = String::from("# RaeenOS AHCI\n");
+    let mut out = String::from("# AthenaOS AHCI\n");
     if ctrls.is_empty() {
         out.push_str("controllers: 0\n");
         out.push_str("note: no AHCI HBA found (normal when QEMU has no ahci device)\n");

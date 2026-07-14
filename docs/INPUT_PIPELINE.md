@@ -1,6 +1,6 @@
-# RaeenOS Input Pipeline
+# AthenaOS Input Pipeline
 
-Input latency is half the gaming-first promise (the other half is frame pacing). This doc
+Input latency is half the embodiment-first promise (the other half is frame pacing). This doc
 maps the path a physical action takes — keypress, mouse move, gamepad stick — from
 silicon to the game, and where each stage stands. Latency budgets live in
 `PERFORMANCE_TARGETS.md` §4; this is the architecture.
@@ -11,7 +11,7 @@ silicon to the game, and where each stage stands. Latency budgets live in
 
 ```
  device  ──IRQ──▶  driver        ──▶  input.rs           ──▶  routing        ──▶  consumer
- (HW)              (decode)            (normalize event)       (focus/grab)        (SCHED_GAME)
+ (HW)              (decode)            (normalize event)       (focus/grab)        (SCHED_BODY)
 
  USB kbd/mouse/pad ─▶ xhci + usb_hid ─┐
  PS/2 kbd/mouse    ─▶ i8042 (planned) ─┼─▶ InputEvent ─▶ focus-aware dispatch ─▶ game / compositor / shell
@@ -19,7 +19,7 @@ silicon to the game, and where each stage stands. Latency budgets live in
 ```
 
 **Principle:** input is **IRQ-driven**, never polled by a busy loop, and the consuming
-game thread is **SCHED_GAME** so an event preempts normal work. No stage may batch on the
+game thread is **SCHED_BODY** so an event preempts normal work. No stage may batch on the
 game path to "save interrupts" — that trades latency we refuse to spend.
 
 ---
@@ -40,7 +40,7 @@ Each driver turns raw reports into a uniform `InputEvent` (`input.rs`): key down
 stable keycode, relative/absolute pointer deltas, button/axis state. Scancode-set and
 HID-usage translation happen here so downstream never sees device-specific encodings.
 
-### 2.3 Gamepad specifics (gaming-first)
+### 2.3 Gamepad specifics (embodiment-first)
 - **DualSense / Xbox parsers** exist (`input.rs`): buttons, sticks, triggers, with
   per-controller report layouts.
 - **Output reports**: `DualSenseOutput::build_report` (rumble, LED, trigger effects) —
@@ -51,7 +51,7 @@ HID-usage translation happen here so downstream never sees device-specific encod
 
 ### 2.4 Key remapping
 `components/kanata_daemon` (vendored kanata-keyberon) provides advanced key remapping
-(layers, tap-hold, combos) as a userspace daemon — RaeenOS's "PowerToys Keyboard Manager /
+(layers, tap-hold, combos) as a userspace daemon — AthenaOS's "PowerToys Keyboard Manager /
 karabiner" equivalent. Sits between normalize and dispatch for keyboard events.
 
 ### 2.5 Routing / dispatch
@@ -61,7 +61,7 @@ Exclusive **grab** (pointer lock for FPS, raw input) bypasses cursor acceleratio
 delivers raw deltas. Global hotkeys (Game Bar, screenshot) are intercepted pre-dispatch.
 
 ### 2.6 Consumer wakeup
-The target thread is **SCHED_GAME**; delivery wakes it with real-time priority so the
+The target thread is **SCHED_BODY**; delivery wakes it with real-time priority so the
 input→game latency is a scheduler wakeup, not a tick boundary. This is the stage that most
 needs telemetry (`PERFORMANCE_TARGETS.md` §4/§5 list it ⬜ — wakeup latency isn't
 instrumented yet).
@@ -88,7 +88,7 @@ devices. *(Planned.)*
 | Normalize → InputEvent | 🟡 |
 | Key remapping (kanata) | 🟡 daemon vendored |
 | Focus routing / grab / hotkeys | 🟡 |
-| SCHED_GAME wakeup + latency telemetry | ⬜ not instrumented |
+| SCHED_BODY wakeup + latency telemetry | ⬜ not instrumented |
 | Deadzones / curves / per-game remap | ⬜ |
 | Accessibility transforms | ⬜ |
 

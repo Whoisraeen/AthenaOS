@@ -1,6 +1,6 @@
 //! # POSIX-TZ timezone engine for [`crate`] — UTC-offset + DST resolution.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy ("let people switch without
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy ("let people switch without
 //! conscious effort") — switcher criterion #5 is "import my calendar & contacts."
 //! Importing the *data* ([`crate::parse_ics`]) and expanding recurrence
 //! ([`crate::recur`]) still leaves one question a calendar UI must answer to be

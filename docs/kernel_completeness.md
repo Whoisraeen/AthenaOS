@@ -1,7 +1,7 @@
-# RaeenOS Kernel — Completeness Audit (Refreshed)
+# AthenaOS Kernel — Completeness Audit (Refreshed)
 
 **Date:** 2026-05-30  
-**Sources used:** `MasterChecklist.md`, `RaeenOS_Concept.md`, `kernel/src/main.rs`, `kernel/src/procfs.rs`, `target/serial-input.log`
+**Sources used:** `MasterChecklist.md`, `LEGACY_GAMING_CONCEPT.md`, `kernel/src/main.rs`, `kernel/src/procfs.rs`, `target/serial-input.log`
 
 ---
 
@@ -15,7 +15,7 @@
 | Checklist open (`[ ]`) | **100** | `MasterChecklist.md` |
 | Checklist completion (strict done only) | **39.7%** (91/229) | computed from checklist |
 | Native syscall surface | **98 live syscalls across 18+ blocks** | `proc_raeen_syscalls()` text |
-| QEMU boot reaches success marker | **Yes (fixed + verified 2026-06-01)** | Full UEFI boot reaches `[ OS ] System successfully booted.` (fresh `serial.log` line 1292) + spawns userspace. The old `serial-input.log` had **0** markers (boot stalled in the RaeFS smoketest); a chain of boot-path deadlocks was fixed — virtio-blk IRQ re-entrant `queue.lock()`, rtc/session re-entrant `dump_text` locks, buddy free-list dump guard, bounded virtio/NVMe completion polls, and high-BAR `ioremap` (was masked under WHPX). See MasterChecklist Latent-bugs. |
+| QEMU boot reaches success marker | **Yes (fixed + verified 2026-06-01)** | Full UEFI boot reaches `[ OS ] System successfully booted.` (fresh `serial.log` line 1292) + spawns userspace. The old `serial-input.log` had **0** markers (boot stalled in the AthFS smoketest); a chain of boot-path deadlocks was fixed — virtio-blk IRQ re-entrant `queue.lock()`, rtc/session re-entrant `dump_text` locks, buddy free-list dump guard, bounded virtio/NVMe completion polls, and high-BAR `ioremap` (was masked under WHPX). See MasterChecklist Latent-bugs. |
 | Athena (real hardware) acceptance proof | **No evidence in repo logs** | no Athena serial capture in tree |
 
 > [!NOTE]

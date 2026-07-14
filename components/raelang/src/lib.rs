@@ -22,7 +22,7 @@
 //! host (`notify(...)`, `setAccent(...)`, …). The host decides per call —
 //! including *denying* it, which surfaces in-script as a
 //! [`RaeError::CapabilityDenied`]. This is how the kernel enforces the
-//! user-authorized `cap_mask` on automation scripts (RaeShield: every
+//! user-authorized `cap_mask` on automation scripts (AthGuard: every
 //! privileged op is capability-gated, scripts included).
 //!
 //! The interpreter is a fuel-limited tree-walker: a runaway loop runs out
@@ -228,7 +228,7 @@ pub enum HostError {
 /// System-binding surface an embedder exposes to scripts. Every call a
 /// script makes that isn't a script-defined function, struct, or builtin
 /// is offered here. The kernel's implementation gates each name on the
-/// submitting user's `cap_mask` (RaeShield model: deny by default).
+/// submitting user's `cap_mask` (AthGuard model: deny by default).
 pub trait Host {
     fn call(&mut self, name: &str, args: &[Value]) -> Result<Value, HostError>;
 }

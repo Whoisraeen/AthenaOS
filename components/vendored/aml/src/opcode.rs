@@ -34,7 +34,7 @@ pub const DEF_CREATE_BIT_FIELD_OP: u8 = 0x8d;
 pub const DEF_CREATE_QWORD_FIELD_OP: u8 = 0x8f;
 pub const EXT_DEF_MUTEX_OP: u8 = 0x01;
 pub const EXT_DEF_COND_REF_OF_OP: u8 = 0x12;
-// RaeenOS additions (Phase 1.4): method-runtime opcodes real firmware uses
+// AthenaOS additions (Phase 1.4): method-runtime opcodes real firmware uses
 // (Athena: Acquire×21, Release×33, Sleep×43, Stall×37, Wait×3 — \_PIC died
 // on the first Acquire).
 pub const EXT_DEF_STALL_OP: u8 = 0x21;
@@ -51,7 +51,7 @@ pub const EXT_DEF_DEVICE_OP: u8 = 0x82;
 pub const EXT_DEF_PROCESSOR_OP: u8 = 0x83;
 pub const EXT_DEF_POWER_RES_OP: u8 = 0x84;
 pub const EXT_DEF_THERMAL_ZONE_OP: u8 = 0x85;
-// RaeenOS addition (MasterChecklist Phase 1.4): IndexField/BankField are
+// AthenaOS addition (MasterChecklist Phase 1.4): IndexField/BankField are
 // table-level NamedObj constructs used by real AMI/AMD firmware (Athena DSDT:
 // 4× IndexField; SSDTs: 42× BankField). An unparsed one aborts the whole
 // table's TermList → empty namespace → no _PRT/EC/battery on iron.
@@ -76,7 +76,7 @@ pub const DEF_BREAKPOINT_OP: u8 = 0xcc;
 pub const DEF_STORE_OP: u8 = 0x70;
 pub const DEF_ADD_OP: u8 = 0x72;
 pub const DEF_CONCAT_OP: u8 = 0x73;
-// RaeenOS additions (Phase 1.4): integer/object expression opcodes used at
+// AthenaOS additions (Phase 1.4): integer/object expression opcodes used at
 // load time by real AMD firmware (region offsets computed via
 // Add/Or/ShiftLeft/DerefOf/Index over a data package).
 pub const DEF_SUBTRACT_OP: u8 = 0x74;
@@ -133,7 +133,7 @@ where
     'c: 'a,
 {
     move |input: &'a [u8], context: &'c mut AmlContext| match input.first() {
-        // RaeenOS fix (Phase 1.4): empty input must be a SOFT failure
+        // AthenaOS fix (Phase 1.4): empty input must be a SOFT failure
         // (`WrongParser`) so `choice!` can try its other alternatives. With
         // the old hard `UnexpectedEndOfStream`, an else-less `If` as the LAST
         // construct of a term-list slice aborted the whole table: DefIfElse
@@ -162,7 +162,7 @@ mod tests {
     #[test]
     fn empty() {
         let mut context = crate::test_utils::make_test_context();
-        // RaeenOS fix (Phase 1.4): empty input is a SOFT failure (WrongParser)
+        // AthenaOS fix (Phase 1.4): empty input is a SOFT failure (WrongParser)
         // so optional-opcode probes (DefIfElse's else-peek) fall through in
         // choice! instead of aborting the table at end-of-slice.
         check_err!(opcode(NULL_NAME).parse(&[], &mut context), AmlError::WrongParser, &[]);

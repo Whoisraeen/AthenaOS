@@ -1,4 +1,4 @@
-# RaeKit
+# AthKit
 
 App development SDK. Rust-first, declarative, SwiftUI-style ergonomics without
 the Apple lock-in.

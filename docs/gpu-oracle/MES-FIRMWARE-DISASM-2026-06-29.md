@@ -9,7 +9,7 @@
 
 ## The finding
 - Working MES idles at INSTR_PNTR **0x7204** (4-aligned) — disassembles to the main dispatch loop (checks a local state==0xa, RMW's local mem at 0xf0100168 via LOCAL aperture).
-- RaeenOS SCHED pipe stalls at INSTR_PNTR **0x7656**. The 0x7600 region is CLEAN 4-byte RV64, so 0x7656 (2-aligned) is NOT a real instruction boundary → real PC = **0x7654** = `andi a3, a3, 0` — straight-line arithmetic inside the function at 0x7600 (prologue addi sp,-0x50; bitfield-extract a 64-bit arg at 0x7684: srli 0xb&0xf, srli 5&3, srli 7&7).
+- AthenaOS SCHED pipe stalls at INSTR_PNTR **0x7656**. The 0x7600 region is CLEAN 4-byte RV64, so 0x7656 (2-aligned) is NOT a real instruction boundary → real PC = **0x7654** = `andi a3, a3, 0` — straight-line arithmetic inside the function at 0x7600 (prologue addi sp,-0x50; bitfield-extract a 64-bit arg at 0x7684: srli 0xb&0xf, srli 5&3, srli 7&7).
 - **mcause=mepc=mbadaddr=0 → NO fault.** And 0x7654 is arithmetic (no load/branch to hang on). So the SCHED pipe **HALTED** (stopped advancing) mid-function — it is NOT poll-looping and NOT faulting.
 - KIQ pipe1 (same MES, same GFX block) works → not a global power-gate. **Conclusion: pipe0's (SCHED) own HQD/queue state is bad — it runs a few instrs out of idle then halts.** Next: audit the KIQ MAP_QUEUES → SCHED MQD fields (the SCHED ring isn't being cleanly scheduled), and the SCHED HQD activation, vs the working driver.
 

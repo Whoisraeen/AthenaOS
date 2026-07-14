@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────────────────
-# RaeenOS no-flash KVM test loop.
+# AthenaOS no-flash KVM test loop.
 #
 # Builds on the dev box, ships the ~20 MB UEFI image to the Athena Mini PC
 # (real Ryzen 5 7640HS, Zen4 family 0x19), KVM-boots it there with `-cpu host`

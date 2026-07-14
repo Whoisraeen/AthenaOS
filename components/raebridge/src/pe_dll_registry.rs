@@ -7715,7 +7715,7 @@ pub const CFGMGR32_NAMES: &[&str] = &[
 
 fn register_anti_cheat_companions(reg: &mut DllRegistry) {
     // Anti-cheat client DLLs games actually link to. The Concept doc's
-    // RaeShield attestation API replaces the need for these to run kernel
+    // AthGuard attestation API replaces the need for these to run kernel
     // code — but the names must resolve so the game's PE can load. The
     // attestation primitive (syscalls 100-106) does the real work.
     register_simple_dll(reg, "EasyAntiCheat.dll", slot(0x530), EAC_NAMES);

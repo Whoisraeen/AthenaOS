@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS DOCX (Word) reader — "open my Word documents" (RaeenOS_Concept.md
+# AthenaOS DOCX (Word) reader — "open my Word documents" (LEGACY_GAMING_CONCEPT.md
 # §Compatibility Strategy / office-style productivity). A Windows/macOS switcher
 # brings a folder of .docx files; an OS that can't open them isn't a daily driver.
 # A .docx IS a ZIP container of Office Open XML (WordprocessingML), so this crate

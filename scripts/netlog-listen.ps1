@@ -1,6 +1,6 @@
-# netlog-listen.ps1 - capture RaeenOS boot logs broadcast over the LAN.
+# netlog-listen.ps1 - capture AthenaOS boot logs broadcast over the LAN.
 #
-# RaeenOS (kernel/src/netlog.rs) UDP-broadcasts its in-RAM boot log on port
+# AthenaOS (kernel/src/netlog.rs) UDP-broadcasts its in-RAM boot log on port
 # 51514     no DHCP lease, no USB stick, no disk writes on the target. Run this
 # BEFORE booting Athena, leave it running, boot; the log assembles here live.
 #

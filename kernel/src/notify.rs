@@ -1,5 +1,5 @@
 //! Notifications + Notification Center + Quick Settings / Control Center
-//! (Concept §RaeShell: "system events surface as quiet, beautiful toasts —
+//! (Concept §AthShell: "system events surface as quiet, beautiful toasts —
 //! never a modal interruption, never a mystery beep"; §"The user owns the
 //! machine" — no nag; §Unified Settings — "every option searchable… no ads,
 //! no bloat"). MasterChecklist Phase 14.1 — "Notifications surface" + the
@@ -132,7 +132,7 @@ fn now_ms() -> u64 {
 
 // ── Notification history ring (retained after the toast TTL) ───────────────
 //
-// Concept §RaeShell: "system events surface as quiet, beautiful toasts" — but a
+// Concept §AthShell: "system events surface as quiet, beautiful toasts" — but a
 // toast that vanishes after 5 s with no record is a Windows pain point. The
 // history ring RETAINS every posted notification (grouped by source) so the
 // Notification Center can show what you missed, long after the toast expired.
@@ -410,7 +410,7 @@ pub fn post_at(source: &str, title: &str, urgency: NotificationUrgency, now: u64
 /// [`post`] carrying inline actions (notifications.md §5). `actions` are the
 /// labels the source declared over its capability-checked channel; the surface
 /// renders them without launching the app. A source without the action
-/// capability simply passes `&[]` → no action row (RaeShield is never bypassed:
+/// capability simply passes `&[]` → no action row (AthGuard is never bypassed:
 /// the *dispatch* of a button is the shell's capability-gated IPC, this just
 /// records what was declared).
 pub fn post_with_actions(
@@ -1395,7 +1395,7 @@ pub fn center_click(lx: i32, ly: i32) -> bool {
             CenterRow::Actions { y: ry, id, labels } => {
                 if ly >= ry && ly < ry + ACTION_ROW_H {
                     // An action chip was clicked. The actual dispatch is the
-                    // shell's capability-gated IPC (RaeShield is never bypassed
+                    // shell's capability-gated IPC (AthGuard is never bypassed
                     // here); the Center acts on the item by dismissing it, the
                     // notifications.md §5 "fires the callback, then dismisses".
                     if !labels.is_empty() {

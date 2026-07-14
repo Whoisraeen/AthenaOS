@@ -1,6 +1,6 @@
 # M5 — running the real amdgpu on bare-metal Athena (the goal)
 
-**Goal:** fully port the Linux amdgpu driver to bare metal so RaeenOS gets 3D
+**Goal:** fully port the Linux amdgpu driver to bare metal so AthenaOS gets 3D
 graphics + gaming acceleration. The compile/link work is done; this is the run.
 
 **Status (2026-06-30):** the real upstream amdgpu Phoenix bring-up graph **compiles,
@@ -21,13 +21,13 @@ gcc -std=gnu11 -ffreestanding -fno-stack-protector -fno-strict-aliasing -m64 \
     -mno-red-zone -c amdgpu/amdgpu_device.c $INC -> amdgpu_device.o (0 errors)
 ```
 (verified for amdgpu_device / gfx_v11_0 / mes_v11_0 — the most complex TUs). So the
-whole object set can be built for the RaeenOS daemon target with the same shim.
+whole object set can be built for the AthenaOS daemon target with the same shim.
 
 ---
 
 ## The remaining path to a live run
 
-### 1. Cross-build the object set + raeen_linuxkpi for RaeenOS
+### 1. Cross-build the object set + raeen_linuxkpi for AthenaOS
 - Compile all `BRINGUP*` .c with `-ffreestanding -mno-red-zone` for x86_64.
 - Build raeen_linuxkpi for `x86_64-unknown-none` (already the daemon/kernel target;
   the `clib` staticlib is currently built for `-linux-gnu` for the host link test —
@@ -36,7 +36,7 @@ whole object set can be built for the RaeenOS daemon target with the same shim.
 
 ### 2. Wire the device-access facade to the LIVE GPU (the key gap)
 Today raeen_linuxkpi's MMIO/PCI accessors split:
-- `readl/writel/pci_read_config_dword` (lib.rs) → real, route to the RaeenOS device
+- `readl/writel/pci_read_config_dword` (lib.rs) → real, route to the AthenaOS device
   syscalls (`host::sys_*`). ✅
 - `ioremap`/`pci_iomap`/`dma_alloc_coherent` in `drm_bringup.rs` → **null/no-op link
   stubs** (so the host m4c link resolves without a device). ❌ for a live run.
@@ -69,8 +69,8 @@ MES is alive → GFX ring submit → the first real `vkQueueSubmit`-equivalent �
 
 ### 5. Then: GFX submit → scanout → gaming
 GART/GTT + a GFX ring submit (already real in the object set) → direct scanout on
-the panel (modeset, EDID) → RaeGFX's Vulkan-equivalent path (Mesa RADV lineage over
-this driver) → games via RaeBridge/Proton.
+the panel (modeset, EDID) → AthGFX's Vulkan-equivalent path (Mesa RADV lineage over
+this driver) → games via AthBridge/Proton.
 
 ---
 

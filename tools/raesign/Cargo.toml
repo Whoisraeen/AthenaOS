@@ -1,4 +1,4 @@
-# raesign — RaeenOS detached-signature tool (Ed25519, RFC 8032). Signs kernel
+# raesign — AthenaOS detached-signature tool (Ed25519, RFC 8032). Signs kernel
 # images / update payloads / app bundles with the SHARED `rae_crypto` Ed25519,
 # so anything the kernel or raeupdate verifies was produced by the same proven
 # implementation. Host tool; its own workspace so it stays out of the main build.

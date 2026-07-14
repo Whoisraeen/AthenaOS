@@ -1,7 +1,7 @@
-# RaePlay
+# AthPlay
 
 Built-in game launcher and library aggregator. One library across Steam, Epic, GOG,
-RaeStore, and direct installs. Powers GameOS Mode.
+AthStore, and direct installs. Powers GameOS Mode.
 
 ## Goals
 
@@ -22,8 +22,8 @@ shell. Same library, same saves, same accounts.
 ## Layering
 
 - **raeplay-library**: catalog across providers; sourced from Steam manifests, Epic
-  manifests, RaeStore, and direct installs.
-- **raeplay-profiles**: per-game saved profiles, applied by the compositor and RaeAudio.
+  manifests, AthStore, and direct installs.
+- **raeplay-profiles**: per-game saved profiles, applied by the compositor and AthAudio.
 - **raeplay-overlay**: the in-game overlay, drawn by the compositor as a system
   layer above the game's swapchain.
 - **raeplay-capture**: video encode pipeline tied to the compositor's framebuffer
@@ -34,5 +34,5 @@ shell. Same library, same saves, same accounts.
 
 - Storefront API stability — how much do we lean on official APIs vs. parsing
   manifests on disk?
-- Cloud save aggregation policy (per-store accounts vs. RaeSync unification)
+- Cloud save aggregation policy (per-store accounts vs. AthSync unification)
 - Achievement aggregation — show in-OS, or defer to each store?

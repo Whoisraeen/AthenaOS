@@ -1,9 +1,9 @@
 # Implementation Plan: Phase 1 - Hardware Security & Input (IOMMU & USB)
 
 ## Background & Motivation
-RaeenOS is built on a "security by default" driver isolation model where every driver runs in its own protection domain with IOMMU enforcement. Currently, the kernel isolates drivers at the CPU ring level (Ring 3 vs Ring 0) and via capability handles, but a malicious or buggy driver could still use DMA (Direct Memory Access) to overwrite kernel memory. To solidify the system's security foundation before building complex user-space drivers, we must implement IOMMU. 
+AthenaOS is built on a "security by default" driver isolation model where every driver runs in its own protection domain with IOMMU enforcement. Currently, the kernel isolates drivers at the CPU ring level (Ring 3 vs Ring 0) and via capability handles, but a malicious or buggy driver could still use DMA (Direct Memory Access) to overwrite kernel memory. To solidify the system's security foundation before building complex user-space drivers, we must implement IOMMU. 
 
-Furthermore, the OS currently relies on legacy PS/2 for input. For a gaming-first OS in 2026, a modern USB stack (starting with xHCI and HID) is mandatory for supporting high-polling-rate mice, keyboards, and eventually game controllers.
+Furthermore, the OS currently relies on legacy PS/2 for input. For a embodiment-first OS in 2026, a modern USB stack (starting with xHCI and HID) is mandatory for supporting high-polling-rate mice, keyboards, and eventually game controllers.
 
 ## Scope & Impact
 This phase focuses on core hardware infrastructure. It is highly complex and carries significant risk of breaking the boot process.
@@ -38,7 +38,7 @@ This phase focuses on core hardware infrastructure. It is highly complex and car
 ### USB HID
 1.  Create `kernel/src/usb/hid.rs`.
 2.  Once a device is enumerated by xHCI, read its descriptors. If it is an HID device (keyboard/mouse), configure an interrupt transfer ring.
-3.  Translate HID reports into standard `RaeUI` input events and push them to the existing keyboard IPC channel.
+3.  Translate HID reports into standard `AthUI` input events and push them to the existing keyboard IPC channel.
 
 ## Alternatives Considered
 *   **User-space xHCI immediately:** Attempting to build IOMMU, capability-based MMIO/IRQ routing, and a complex xHCI driver all at once across the user-space boundary is too risky. Building xHCI in-kernel first proves the hardware logic and IOMMU mapping; we can lift-and-shift it to a user-space ELF later.

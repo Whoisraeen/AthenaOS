@@ -1,4 +1,4 @@
-# raemkusb — build a RaeenOS install-media image.
+# raemkusb — build a AthenaOS install-media image.
 #
 # Two modes:
 #   * inject (default): copy the real bootable UEFI image (kernel.uefi.img,

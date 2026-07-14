@@ -1,6 +1,6 @@
 # Design Spec: Clipboard History (Win+V-class history + pin)
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > A keystroke opens a glass panel of everything you've recently copied — text,
 > images, links — pin the keepers, paste the one you want. It must clear:
@@ -15,13 +15,13 @@ numbers; surface-specific layout dimensions are local constants from `space.*`.
 
 ## Concept promise + bar to clear
 
-> "The user owns the machine — no forced telemetry." — RaeenOS_Concept.md
+> "The user owns the machine — no forced telemetry." — LEGACY_GAMING_CONCEPT.md
 > (§The user owns the machine) → clipboard history is **local-only by default**,
 > with explicit auto-clear, no opt-out cloud sync.
 
 - **Bar to clear:** Windows 11 **Win+V** — a flyout of recent clips, pin to keep
   across sessions, image thumbnails, per-entry delete, clear-all, and paste-on-
-  select. RaeenOS matches the model and adds the glass material + accent cohesion
+  select. AthenaOS matches the model and adds the glass material + accent cohesion
   + a privacy posture that's owned, not assumed.
 
 ---
@@ -53,7 +53,7 @@ kernel side is a single buffer today), (b) the invocation hotkey, (c) the panel.
   HTML entries; each row has a `…` menu (pin, delete); a top bar with "Clear all"
   and a sync toggle; **clicking a row pastes it into the focused field** and
   closes. **Take:** the whole interaction model — pin section, paste-on-select,
-  clear-all, image thumbnails. **Avoid:** the cloud-sync default (RaeenOS = local
+  clear-all, image thumbnails. **Avoid:** the cloud-sync default (AthenaOS = local
   by default, sync is an explicit opt-in); the cramped row height.
 - **macOS (no native history; Maccy/Paste/Raycast fill it):** Maccy = a compact
   dropdown, fuzzy-searchable, keyboard-driven, pins; Paste = a horizontal full-
@@ -65,14 +65,14 @@ kernel side is a single buffer today), (b) the invocation hotkey, (c) the panel.
   privacy toggles (incognito/clear-on-lock) and configurable length. **Avoid:**
   the tray-menu cramped presentation.
 
-**RaeenOS synthesis:** Windows' **pin-section + paste-on-select + thumbnails**
+**AthenaOS synthesis:** Windows' **pin-section + paste-on-select + thumbnails**
 model, Maccy's **keyboard-first search + number-key paste**, KDE's **privacy
 controls (incognito, clear-on-lock, auto-clear)** — rendered as one glass flyout
 that reads the live accent.
 
 ---
 
-## RaeenOS design tokens this surface uses
+## AthenaOS design tokens this surface uses
 
 Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 
@@ -241,7 +241,7 @@ buried setting:
 - **Max entries shown:** the list virtualizes; render the first ~8 then scroll
   (the panel never grows unbounded on screen).
 
-**Flag to raeen-accessibility + RaeShield:** password-manager / secret fields
+**Flag to raeen-accessibility + AthGuard:** password-manager / secret fields
 should be excludable from history (a `Custom` MIME or a "sensitive" hint that the
 manager honors by skipping the copy). Coordinate the exclusion mechanism.
 
@@ -290,7 +290,7 @@ Ships only when:
   (text rows + image thumbnail cards + per-row pin/delete), §4 paste-on-select,
   §6 privacy controls. The entry-row and format-badge widgets consume
   `rae_tokens` (no private palette) and are reusable.
-- **raeen-accessibility / RaeShield** (flagged) — sensitive-field exclusion;
+- **raeen-accessibility / AthGuard** (flagged) — sensitive-field exclusion;
   contrast + focus audit.
 
 ### FAIL-able boot-log proof line
@@ -318,6 +318,6 @@ size caps are not enforced.) Plus cohesion:
 - Cohesion: before/after Vibe switch — pin indicator + selection accent change.
 
 ### Unblocks (MasterChecklist)
-- Phase 8 (RaeUI/RaeKit): the entry-row + thumbnail-card widgets.
-- Phase 14 (RaeShell + apps): the clipboard-history surface; activates the dead
+- Phase 8 (AthUI/AthKit): the entry-row + thumbnail-card widgets.
+- Phase 14 (AthShell + apps): the clipboard-history surface; activates the dead
   `raeshell::clipboard` manager and gives the kernel clipboard a history.

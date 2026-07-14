@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "nvidiad — RaeenOS native userspace NVIDIA GPU driver daemon. Runs the chip-identification bring-up (PCI -> BAR0 -> NV_PMC_BOOT_0 decode) and reports each part's firmware-requirement tier (where GSP-RM walls a from-scratch driver)."
+description = "nvidiad — AthenaOS native userspace NVIDIA GPU driver daemon. Runs the chip-identification bring-up (PCI -> BAR0 -> NV_PMC_BOOT_0 decode) and reports each part's firmware-requirement tier (where GSP-RM walls a from-scratch driver)."
 
 [dependencies]
 rae_abi = { path = "../components/rae_abi" }

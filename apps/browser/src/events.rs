@@ -1,7 +1,7 @@
 //! Browser event registry + click dispatch — turning a rendered page interactive.
 //!
-//! RaeenOS_Concept.md §"3. Web apps via PWA support that actually feels native (renders
-//! through RaeUI)": a static render is not an *app*. A real page responds to clicks. The
+//! LEGACY_GAMING_CONCEPT.md §"3. Web apps via PWA support that actually feels native (renders
+//! through AthUI)": a static render is not an *app*. A real page responds to clicks. The
 //! engines already ship the parts — `rae_js` runs script + exposes a host-object API,
 //! `raeweb` lays out the DOM and hit-tests a point to a node id, and [`crate::dom_js`] binds
 //! `document.getElementById(id).textContent = …` to the live tree. This module is the join

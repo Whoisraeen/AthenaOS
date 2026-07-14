@@ -1,4 +1,4 @@
-//! Hand-assembled PE32+ test executables for RaeBridge bring-up.
+//! Hand-assembled PE32+ test executables for AthBridge bring-up.
 //!
 //! Concept §Compatibility Strategy: every execution milestone needs a PE we
 //! fully control, built without an external assembler or linker (same
@@ -50,10 +50,10 @@ pub const HELLO_MSG: &[u8] = b"Hello from Windows\n";
 /// console subsystem, **73 KERNEL32 imports** (verified with `dumpbin /imports`,
 /// captured in `fixtures/real_msvc_mt_hello.dumpbin.txt`). This is the genuine
 /// MSVC CRT (`mainCRTStartup` → `__scrt_common_main_seh` → `main`), not a
-/// hand-assembled stand-in. If RaeBridge loads it, resolves every IAT slot to a
+/// hand-assembled stand-in. If AthBridge loads it, resolves every IAT slot to a
 /// real shim, runs the CRT startup to `main`, and `main` prints
 /// [`REAL_EXE_MSG`] via WriteFile and returns 0 — that is the milestone:
-/// real Windows software running on RaeenOS.
+/// real Windows software running on AthenaOS.
 pub const REAL_MSVC_MT_EXE: &[u8] = include_bytes!("../fixtures/real_msvc_mt_hello.exe");
 
 /// The exact bytes `main()` in the real exe hands to WriteFile.
@@ -87,7 +87,7 @@ pub fn real_msvc_mt_exe() -> &'static [u8] {
 /// exactly ONE additional KERNEL32 import: `GetFileSizeEx` (the CRT sizes its
 /// stdio buffers per std handle). Everything else is CRT-internal in `/MT`.
 ///
-/// If RaeBridge loads it, resolves every IAT slot to a real shim, runs the CRT
+/// If AthBridge loads it, resolves every IAT slot to a real shim, runs the CRT
 /// startup to `main`, and `main`'s `printf` emits [`REAL_PRINTF_MSG`] through the
 /// CRT format engine + WriteFile and returns 0 — that proves the CRT's format
 /// engine ran correctly through our shims, the printf-C-program case.
@@ -149,7 +149,7 @@ pub const REAL_MSVC_MT_CPP_EXE: &[u8] = include_bytes!("../fixtures/real_msvc_mt
 /// A real cl.exe-compiled **GUI** `.exe` (pure Win32, custom `rae_entry` that
 /// RETURNS so the loader regains control): registers a class, creates+shows a
 /// window, and `UpdateWindow`s it to drive a synchronous `WM_PAINT` that paints
-/// a white background + "HI" text. Imports only the user32/gdi32 names RaeBridge
+/// a white background + "HI" text. Imports only the user32/gdi32 names AthBridge
 /// has IAT-wired (verified by `dumpbin /imports`). Source: `fixtures/gui_window.c`.
 /// This is the guest-machine-code half of the notepad-class gate.
 pub const GUI_WINDOW_EXE: &[u8] = include_bytes!("../fixtures/gui_window.exe");
@@ -307,7 +307,7 @@ pub fn build_exit_process_exe() -> Vec<u8> {
     b
 }
 
-/// Build the "Hello from Windows" test image — the second RaeBridge bring-up
+/// Build the "Hello from Windows" test image — the second AthBridge bring-up
 /// rung: a PE32+ that produces *visible output*.
 ///
 /// Its entry point (Microsoft x64 ABI) does:
@@ -533,7 +533,7 @@ pub const API_FAIL_HEAPREALLOC: u64 = 4;
 pub const API_FAIL_TLS: u64 = 5;
 pub const API_FAIL_WRITECONSOLE: u64 = 6;
 
-/// Build the "API exercise" image — the third RaeBridge bring-up rung. Where
+/// Build the "API exercise" image — the third AthBridge bring-up rung. Where
 /// hello-world proved a single output call, this PE32+ *exercises the broadened
 /// shim surface* end-to-end from guest Windows machine code and self-verifies
 /// each result, returning a step code in RAX (0 = all-pass).

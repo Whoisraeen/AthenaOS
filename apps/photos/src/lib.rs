@@ -1,4 +1,4 @@
-//! RaeenOS Photos — *"show my photos"* (RaeenOS_Concept.md §creators/media).
+//! AthenaOS Photos — *"show my photos"* (LEGACY_GAMING_CONCEPT.md §creators/media).
 //!
 //! The daily-driver photo viewer that rivals Windows Photos and macOS Preview on
 //! day one: a **thumbnail grid** of a Pictures directory plus a **single-image
@@ -391,7 +391,7 @@ const DECODE_CAP: usize = 24 * 1024 * 1024; // 24 MiB
 
 // ── Persistent preferences (rae_toml) ─────────────────────────────────────────
 //
-// RaeenOS_Concept.md §"The user owns the machine": "remember my settings" must be
+// LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. Photos persists its last library FOLDER, the view MODE (grid vs single),
 // and the currently-selected photo FILE NAME to `<home>/.config/photos.toml`,
 // restoring them on launch. (There is no sort/zoom control in this build, so the

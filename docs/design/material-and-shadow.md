@@ -1,6 +1,6 @@
 # Design Spec: Material & Shadow (the systemic premium-feel fix)
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > This spec exists because raeen-visual-qa found the single biggest "looks basic,
 > not premium" signal in the whole UI: the drop shadow renders as a **hard,
@@ -17,11 +17,11 @@ adds no new tokens — it makes the existing ones actually look right.
 
 ## Concept promise + bar to clear
 
-> "glassmorphic, GPU-accelerated… looks like Metal." — RaeenOS_Concept.md (§RaeUI)
+> "glassmorphic, GPU-accelerated… looks like Metal." — LEGACY_GAMING_CONCEPT.md (§AthUI)
 
 - **Bar to clear:** macOS Sequoia and Windows 11 card/dialog shadows — **wide,
   soft, low-alpha, near-black ambient shadows** with a smooth penumbra and no
-  visible edge. The current RaeenOS shadow reads as "a flat sticker with a colored
+  visible edge. The current AthenaOS shadow reads as "a flat sticker with a colored
   ledge" — the opposite of premium.
 
 ---
@@ -180,7 +180,7 @@ the blur math that makes this soft *already exists three functions away*.
   blue channel leaks in).
 
 ### Unblocks (MasterChecklist)
-- **Phase 8 (RaeUI/RaeKit):** the `elev.*` material system is only "done" when the
+- **Phase 8 (AthUI/AthKit):** the `elev.*` material system is only "done" when the
   shadow looks soft — this is the gate.
 - **Every surface spec** (`desktop-shell`, `settings`, `files`,
   `window-management`) depends on this: they all reference `elev.*` and inherit the

@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS encoding utilities — base64 (standard + URL-safe), URL percent-encoding,
-# and hex. The lingua franca of the web/HTTP/PWA stack (RaeenOS_Concept.md §"web
+# AthenaOS encoding utilities — base64 (standard + URL-safe), URL percent-encoding,
+# and hex. The lingua franca of the web/HTTP/PWA stack (LEGACY_GAMING_CONCEPT.md §"web
 # apps via PWA support that actually feels native"): data: URIs, HTTP Basic auth,
 # URL query encoding. Foundational, zero-dep, never-panic infrastructure wired
 # into no consumer this slice.

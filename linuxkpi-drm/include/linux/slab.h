@@ -55,7 +55,7 @@ char *kstrndup(const char *s, size_t max, gfp_t gfp);
 void *kmemdup(const void *src, size_t len, gfp_t gfp);
 
 /* drm_managed.c uses the caller-tracking/NUMA and constant-string allocator
- * variants. RaeenOS has one kernel heap and no NUMA-local slab selection yet,
+ * variants. AthenaOS has one kernel heap and no NUMA-local slab selection yet,
  * so preserve the allocation and ownership semantics while deliberately
  * ignoring only those Linux diagnostics/placement hints. */
 #ifndef ARCH_DMA_MINALIGN

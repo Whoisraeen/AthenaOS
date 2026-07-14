@@ -1,6 +1,6 @@
 # Redox Extraction Map
 
-**Purpose:** Prioritized guide for what to copy/adapt from `redox_reference/` (Redox cookbook) and its upstream GitLab repos into RaeenOS.
+**Purpose:** Prioritized guide for what to copy/adapt from `redox_reference/` (Redox cookbook) and its upstream GitLab repos into AthenaOS.
 
 **Rules:** `.cursor/rules/redox-reference.mdc`, `.cursor/rules/redox-migration.mdc`  
 **License tracking:** `docs/THIRD_PARTY_LICENSES.md`  
@@ -51,11 +51,11 @@ the build list is now corrected to only what actually builds:
 **Remaining Concept-aligned items are third-party Rust crates Redox merely
 *packages*, not Redox-authored code** — pulling them is upstream-crate
 integration (future phase), not "porting Redox":
-- Skia + wgpu/naga → RaeGFX (Phase 6, the open Year-1 GPU-submit gap)
-- fd / lsd / zoxide → RaeShell CLI polish (Phase 8)
+- Skia + wgpu/naga → AthGFX (Phase 6, the open Year-1 GPU-submit gap)
+- fd / lsd / zoxide → AthShell CLI polish (Phase 8)
 - gameroy/melonds/etc. emulators → GameOS defaults (Phase 6/7 verification)
-- Innernet (WireGuard mesh) → RaeNet (we have `wireguard.rs` natively)
-- yara-x, mkisofs-rs → RaeShield quarantine / installer ISO (Phase 9/16)
+- Innernet (WireGuard mesh) → AthNet (we have `wireguard.rs` natively)
+- yara-x, mkisofs-rs → AthGuard quarantine / installer ISO (Phase 9/16)
 
 No remaining Redox-authored, Concept-aligned code is left unported. The
 extraction effort remains **closed**; the above are tracked under their owning
@@ -67,8 +67,8 @@ MasterChecklist phases, not here.
 
 | Do | Do not |
 |----|--------|
-| Commit and push **only** to the **private RaeenOS** GitHub (`origin` of this repo) | Push, PR, or fork-publish to `github.com/redox-os/*` or `gitlab.redox-os.org/redox-os/*` |
-| Keep `redox_reference/` as a **local read-only mirror** (`git pull` to refresh) | Commit RaeenOS-specific changes inside `redox_reference/` |
+| Commit and push **only** to the **private AthenaOS** GitHub (`origin` of this repo) | Push, PR, or fork-publish to `github.com/redox-os/*` or `gitlab.redox-os.org/redox-os/*` |
+| Keep `redox_reference/` as a **local read-only mirror** (`git pull` to refresh) | Commit AthenaOS-specific changes inside `redox_reference/` |
 | Copy source into `kernel/`, `components/`, `xtask/` with MIT headers preserved | Strip `Copyright … Redox OS Developers` lines |
 
 **Note:** `redox_reference/` is in `.gitignore`. Recipe paths below are relative to that clone on disk.
@@ -99,7 +99,7 @@ MasterChecklist phases, not here.
 | Status | Meaning |
 |--------|---------|
 | `[ ]` | Not started |
-| `[~]` | RaeenOS has partial own impl; Redox can inform or replace a slice |
+| `[~]` | AthenaOS has partial own impl; Redox can inform or replace a slice |
 | `[x]` | Migrated or consciously not needed |
 | **P0** | Unblocks current MasterChecklist phase (bare metal / USB / net) |
 | **P1** | High value next quarter |
@@ -110,19 +110,19 @@ MasterChecklist phases, not here.
 
 ## P0 — Boot, storage, USB, net (current checklist)
 
-| ID | Redox upstream | Cookbook pointer | RaeenOS destination | Checklist tie-in | Status | Notes |
+| ID | Redox upstream | Cookbook pointer | AthenaOS destination | Checklist tie-in | Status | Notes |
 |----|----------------|------------------|---------------------|------------------|--------|-------|
 | R01 | `bootloader.git` | `recipes/core/bootloader/` | `boot/` or xtask disk image | Phase 1.8 boot artifacts | `[~]` | `xtask build` emits BIOS+UEFI `.img`; OVMF probe; `docs/BOOT_PACKAGING.md` � keep rust-osdev 0.11 |
 | R02 | `kernel.git` | `recipes/core/kernel/` | **SKIP core** | — | **SKIP** | Microkernel + scheme IPC — do **not** replace hybrid `kernel/`. Cherry-pick: ACPI tables, panic formatting, low-level helpers only |
 | R03 | `base.git` → **pcid** | `recipes/core/base/` | `components/pcid` + `kernel/src/pci.rs` | Phase 1 PCIe enumeration | `[x]` | `components/pcid` curated ID table; kernel enum logs `pcid::describe()`. Full `pciids.git` DB deferred (R34). MSI-X in `pci.rs`. |
 | R04 | `base.git` → **xhcid** | `recipes/core/base/` | userspace USB host + `kernel/src/xhci.rs` IPC | Phase 2.1 USB | `[x]` | Full HID path on QEMU: config descriptor → Configure Endpoint → SET_CONFIGURATION → interrupt IN at correct DCI. Fixed off-by-one in `xhci_ep_index` (was programming DCI 4 = EP2-OUT → StallError; now DCI 3 = EP1-IN). Live servicing thread drains interrupt-IN completions. Serial: `[xhci] HID report (slot 2): [00,00,04..07,..]` → `input::push_event`. |
 | R05 | `base.git` → **inputd** / **ps2d** | `recipes/core/base/`, `config/minimal.toml` init | `kernel/src/usb_hid.rs` + `kernel/src/input.rs` | Phase 2.1 HID | `[x]` | Parsers + smoketest PASS; live keystrokes (sendkey a/b/c/d) reach `usb_hid::dispatch_boot_report` → `input::push_event` via the xHCI servicing thread (R04). |
-| R06 | `base.git` → **ahcid** | `recipes/core/base/` | userspace AHCI daemon | Phase 1 storage / RaeFS mount | `[~]` | In-kernel `ahci.rs`: identify + DMA read; QEMU `ahci` + `ide-hd` smoketest LBA0 (`[ahci] smoketest PASS`); `/proc/raeen/ahci`. Userspace `ahcid` deferred. |
-| R07 | `base.git` → **nvmed** (or nvme in base) | `recipes/core/base/` | userspace NVMe daemon | Phase 1 NVMe / RaeFS | `[~]` | Identify: ONCS@520, sqes/cqes, tnvmcap log; `sector_size` from NS; `/proc/raeen/nvme`; smoketest PASS line — compare `drivers/nvmed` when cloned |
-| R08 | `redoxfs.git` | `recipes/core/redoxfs/` | `components/raefs/` (fork) | Phase 1 GPT/RaeFS, storage tiers | `[x]` | `redoxfs_adapter/{tree,header,disk}.rs` + vendor LICENSE; disk trait and superblock probe completed |
+| R06 | `base.git` → **ahcid** | `recipes/core/base/` | userspace AHCI daemon | Phase 1 storage / AthFS mount | `[~]` | In-kernel `ahci.rs`: identify + DMA read; QEMU `ahci` + `ide-hd` smoketest LBA0 (`[ahci] smoketest PASS`); `/proc/raeen/ahci`. Userspace `ahcid` deferred. |
+| R07 | `base.git` → **nvmed** (or nvme in base) | `recipes/core/base/` | userspace NVMe daemon | Phase 1 NVMe / AthFS | `[~]` | Identify: ONCS@520, sqes/cqes, tnvmcap log; `sector_size` from NS; `/proc/raeen/nvme`; smoketest PASS line — compare `drivers/nvmed` when cloned |
+| R08 | `redoxfs.git` | `recipes/core/redoxfs/` | `components/raefs/` (fork) | Phase 1 GPT/AthFS, storage tiers | `[x]` | `redoxfs_adapter/{tree,header,disk}.rs` + vendor LICENSE; disk trait and superblock probe completed |
 | R09 | `redox-fatfs.git` | `recipes/libs/redox-fatfs/` | `kernel/src/fatfs_esp.rs` (native) | Phase 16 installer | `[~]` | Upstream `fatfs 0.3.6` depends on the abandoned `core_io` crate and won't build no_std on current nightly. Shipped a native FAT32 BPB + root-dir cluster parser instead (read-only ESP locator, 8.3 + LFN decode). Smoketest mounts sector 0 of active block dev, dumps to `/proc/raeen/fatfs_esp`. Write support + GPT-partition view follow when install lane copies files. |
 | R10 | `base.git` → **e1000d** / **rtl8139d** | `recipes/core/base/` | userspace NIC daemons | Phase 2.2 real NICs | `[x]` | **Conscious in-kernel** (`virtio_net`, e1000/igc paths). Userspace NIC daemons deferred until IOMMU + caps IPC model exists. |
-| R11 | `relibc.git` | `recipes/core/relibc/` | `components/raebridge/relibc/` | Phase 11 RaeBridge | `[~]` | `raeenOS_syscall.rs` + build-std; `user_init` spawns `hello_relibc` first (`msg:811x`, `[hello_relibc]`); caps + R19/R20 remain |
+| R11 | `relibc.git` | `recipes/core/relibc/` | `components/raebridge/relibc/` | Phase 11 AthBridge | `[~]` | `raeenOS_syscall.rs` + build-std; `user_init` spawns `hello_relibc` first (`msg:811x`, `[hello_relibc]`); caps + R19/R20 remain |
 | R12 | `aml` (any1/aml) | `recipes/wip/libs/other/aml/`, crates.io `aml` | `kernel` via `acpi_full.rs` | Phase 1.4 ACPI | `[x]` | `aml = "0.16"` in kernel; bring-up audit log + SSDT count at boot |
 | R13 | Cookbook `mk/qemu.mk` | `mk/qemu.mk` | `target/boot.ps1`, `xtask` | QEMU smoketest | `[x]` | Already mirrored: `qemu-xhci`, virtio-net; **intel-iommu** left off (breaks boot) |
 
@@ -130,20 +130,20 @@ MasterChecklist phases, not here.
 
 ## P1 — Platform, installer, dev loop
 
-| ID | Redox upstream | Cookbook pointer | RaeenOS destination | Checklist tie-in | Status | Notes |
+| ID | Redox upstream | Cookbook pointer | AthenaOS destination | Checklist tie-in | Status | Notes |
 |----|----------------|------------------|---------------------|------------------|--------|-------|
 | R14 | `installer.git` | `recipes/core/installer/` | `installer/` / Phase 16 | Phase 16 | `[ ]` | Partitioning + image laydown patterns |
 | R15 | `pkgar.git` / `pkgutils.git` | `recipes/core/pkgar`, `pkgutils` | packaging research | Phase 16 atomic updates | `[ ]` | Ideas for artifact format — not wholesale pkgar unless checklist says |
 | R16 | `base.git` → **acpid** | `recipes/core/base/` | `kernel/src/acpi_full.rs`, `battery.rs` | Phase 1.4 | `[~]` | Daemon model for _BST, GPE — we poll in-kernel today |
-| R17 | `base.git` → **vesad** / **bgad** | `recipes/core/base/` | **SKIP** display server | Phase 3 RaeGFX | **SKIP** | Use RaeGFX + GOP/EDID path — not Orbital/VESA daemons |
-| R18 | `netdb.git` / `netutils.git` | `recipes/core/netdb`, `netutils` | `components/raenet/` DNS stub | Phase 10 RaeNet | `[x]` | `netdb` is config data only; DNS resolver lives in already-added `relibc`. No standalone extraction. |
-| R19 | `openposixtestsuite.git` | `recipes/tests/openposixtestsuite/` | CI / RaeBridge tests | Phase 11 | `[ ]` | POSIX conformance when relibc lands |
+| R17 | `base.git` → **vesad** / **bgad** | `recipes/core/base/` | **SKIP** display server | Phase 3 AthGFX | **SKIP** | Use AthGFX + GOP/EDID path — not Orbital/VESA daemons |
+| R18 | `netdb.git` / `netutils.git` | `recipes/core/netdb`, `netutils` | `components/raenet/` DNS stub | Phase 10 AthNet | `[x]` | `netdb` is config data only; DNS resolver lives in already-added `relibc`. No standalone extraction. |
+| R19 | `openposixtestsuite.git` | `recipes/tests/openposixtestsuite/` | CI / AthBridge tests | Phase 11 | `[ ]` | POSIX conformance when relibc lands |
 | R20 | `redox-posix-tests.git` | `recipes/tests/redox-posix-tests/` | CI | Phase 11 | `[ ]` | Smaller than full OPATS |
 | R21 | `redoxer.git` | `recipes/dev/redoxer/` | `xtask` cross-build ideas | DevEx | `[ ]` | Optional: guest testing harness — do not require Redoxer for main loop |
 | R22 | Cookbook `src/bin/repo.rs` | `redox_reference/src/` | `xtask` | Build loop | `[ ]` | Recipe dependency graph / incremental cook ideas |
 | R23 | `.gitlab-ci.yml` + `config/*ci.toml` | root, `config/x86_64/ci.toml` | `.github/workflows/` | CI | `[ ]` | QEMU headless test patterns only |
-| R29 | `userutils.git` | `recipes/core/userutils` | `components/raeshield/` | Phase 9 RaeShield | `[x]` | Covered natively: `components/raeid` (1795 L) already implements the account system; `userutils` would duplicate. |
-| R30 | `dynamic-example.git` | `recipes/demos/dynamic-example` | `components/raebridge/loader` | Phase 11 RaeBridge | `[x]` | Covered + exceeded: `kernel/src/dynamic_linker.rs` (1211 L) + `elf_loader.rs` (1401 L) + `raebridge` full Win32 layer (kernel32/ntdll/d3d/pe_dll_registry). |
+| R29 | `userutils.git` | `recipes/core/userutils` | `components/raeshield/` | Phase 9 AthGuard | `[x]` | Covered natively: `components/raeid` (1795 L) already implements the account system; `userutils` would duplicate. |
+| R30 | `dynamic-example.git` | `recipes/demos/dynamic-example` | `components/raebridge/loader` | Phase 11 AthBridge | `[x]` | Covered + exceeded: `kernel/src/dynamic_linker.rs` (1211 L) + `elf_loader.rs` (1401 L) + `raebridge` full Win32 layer (kernel32/ntdll/d3d/pe_dll_registry). |
 | R33 | `gitoxide` / `binutils` | `recipes/dev/*` | `target/` rootfs | DevEx | `[ ]` | Pure-Rust git and development tools for self-hosting |
 | R34 | `pciids.git` | `recipes/libs/pciids` | `components/pcid` (expand) | Phase 1.7 Hardware | `[~]` | Subset in `pcid::KNOWN_DEVICES`; full DB vendored when installer/device-manager phase needs it |
 
@@ -151,13 +151,13 @@ MasterChecklist phases, not here.
 
 ## P2 — GUI, audio, media (mostly SKIP for Concept)
 
-| ID | Redox upstream | Cookbook pointer | RaeenOS destination | Status | Notes |
+| ID | Redox upstream | Cookbook pointer | AthenaOS destination | Status | Notes |
 |----|----------------|------------------|---------------------|--------|-------|
-| R24 | `orbital.git`, `liborbital` | `recipes/gui/orbital`, `libs/liborbital` | **SKIP** | **SKIP** | RaeUI / RaeGFX — not Orbital |
+| R24 | `orbital.git`, `liborbital` | `recipes/gui/orbital`, `libs/liborbital` | **SKIP** | **SKIP** | AthUI / AthGFX — not Orbital |
 | R25 | `mesa.git` | `recipes/libs/mesa` | **SKIP** | **SKIP** | Linux DRM stack — Concept forbids |
-| R26 | `cpal`, `timidity`, etc. | `recipes/sound/*`, `demos/cpal` | **SKIP** | **SKIP** | RaeAudio is proprietary path |
+| R26 | `cpal`, `timidity`, etc. | `recipes/sound/*`, `demos/cpal` | **SKIP** | **SKIP** | AthAudio is proprietary path |
 | R27 | `ion.git` | `recipes/core/ion` | optional shell research | `[ ]` | Reference only for CLI UX — Rae shell is separate |
-| R28 | `contain.git` | `recipes/core/contain` | RaeShield research | `[ ]` | Capability/container ideas — adapt to `crate::capability` |
+| R28 | `contain.git` | `recipes/core/contain` | AthGuard research | `[ ]` | Capability/container ideas — adapt to `crate::capability` |
 | R31 | `cosmic-*` | `recipes/cosmic/*` | `apps/` or `components/` | `[ ]` | System76 COSMIC desktop apps built in Rust; adapt `cosmic-files` as default file explorer |
 | R32 | `procedural-wallpapers-rs` | `recipes/gui/procedural-wallpapers-rs` | `components/raeui/` | `[ ]` | Concept §Live wallpapers that don't murder battery (GPU-accelerated procedural rendering) |
 
@@ -167,7 +167,7 @@ MasterChecklist phases, not here.
 
 When you clone `base.git` locally (read-only), look for these crates — names are stable in Redox docs and init:
 
-| Daemon / crate | Hardware | RaeenOS strategy |
+| Daemon / crate | Hardware | AthenaOS strategy |
 |----------------|----------|------------------|
 | `pcid` | PCIe config space | Compare with `pci.rs`; MSI-X setup |
 | `xhcid` | USB 3 host | Complement in-kernel `xhci.rs`; HID enumeration |
@@ -177,13 +177,13 @@ When you clone `base.git` locally (read-only), look for these crates — names a
 | `nvmed` | NVMe | Admin/IO queue vs `nvme.rs` |
 | `e1000d`, `rtl8139d`, … | Ethernet | Userspace + IOMMU after in-kernel P0 works |
 | `acpid` | ACPI events | Battery, lid, AC — align with `acpi_full.rs` |
-| `vesad`, `bgad` | Framebuffer | **Do not port** — RaeGFX path |
+| `vesad`, `bgad` | Framebuffer | **Do not port** — AthGFX path |
 
 ---
 
 ## Config / QEMU snippets worth mirroring
 
-From `config/base.toml` + `mk/qemu.mk` (already partially in RaeenOS):
+From `config/base.toml` + `mk/qemu.mk` (already partially in AthenaOS):
 
 ```text
 # Redox x86_64 QEMU (mk/qemu.mk)
@@ -199,7 +199,7 @@ inputd -A 2
 getty …
 ```
 
-→ Future RaeenOS initramfs: start input service before getty when USB HID is `[x]`.
+→ Future AthenaOS initramfs: start input service before getty when USB HID is `[x]`.
 
 ---
 
@@ -207,7 +207,7 @@ getty …
 
 ```powershell
 # Refresh cookbook (already at redox_reference/)
-cd C:\Users\woisr\OneDrive\Documents\RaeenOS\redox_reference
+cd C:\Users\woisr\OneDrive\Documents\AthenaOS\redox_reference
 git pull
 
 # Optional deep-read clones (sibling dir, gitignored or separate folder)
@@ -216,27 +216,27 @@ git clone https://gitlab.redox-os.org/redox-os/redoxfs.git redox_reference_upstr
 git clone https://gitlab.redox-os.org/redox-os/relibc.git redox_reference_upstream/relibc
 ```
 
-Add `redox_reference_upstream/` to `.gitignore` if created — keeps MIT sources local without bloating RaeenOS commits.
+Add `redox_reference_upstream/` to `.gitignore` if created — keeps MIT sources local without bloating AthenaOS commits.
 
 ---
 
 ### Storage Utilities & Installation
 - [ ] **FAT32 Formatter** (`https://gitlab.redox-os.org/redox-os/redox-fatfs.git`)
   - **Mapping:** *Phase 3.3 ESP*
-  - **Extract:** ESPs must be FAT32. This provides a battle-tested FAT32 implementation so we don't have to write one from scratch for the `RaeenOS` installer.
+  - **Extract:** ESPs must be FAT32. This provides a battle-tested FAT32 implementation so we don't have to write one from scratch for the `AthenaOS` installer.
 
 ### DNS & Network Resolution
 - [ ] **NetDB** (`https://gitlab.redox-os.org/redox-os/netdb.git`)
-  - **Mapping:** *Phase 10 RaeNet*
+  - **Mapping:** *Phase 10 AthNet*
   - **Extract:** DNS resolution abstractions and `/etc/resolv.conf` parsing utilities in safe Rust.
 
-### Modern Rust CLI & RaeShell Enhancements
+### Modern Rust CLI & AthShell Enhancements
 Redox OS ships with recipes for the best modern Rust CLI tools. By including these in the base install, we immediately deliver on the Concept promise of a modern, fast environment.
 - [ ] **Ripgrep** (`https://github.com/jackpot51/ripgrep.git`) & **FD** (`https://github.com/sharkdp/fd.git`)
-  - **Mapping:** *Phase 8 RaeShell / Search*
+  - **Mapping:** *Phase 8 AthShell / Search*
   - **Extract:** Fixes the "Search is broken" problem with sub-100ms local-first search logic.
 - [ ] **LSD** (`https://github.com/lsd-rs/lsd`) & **Zoxide** (`https://github.com/ajeetdsouza/zoxide`)
-  - **Mapping:** *Phase 8 RaeShell*
+  - **Mapping:** *Phase 8 AthShell*
   - **Extract:** Modern replacements for `ls` and `cd` that feel like 2026, not 1995.
 - [ ] **Helix** (`https://github.com/greyshaman/helix.git`)
   - **Mapping:** *Phase 0 DevEx*
@@ -244,28 +244,28 @@ Redox OS ships with recipes for the best modern Rust CLI tools. By including the
 
 ### Container & Sandbox Runtimes
 - [ ] **Youki** (`https://github.com/containers/youki`)
-  - **Mapping:** *Phase 9 RaeShield (Sandboxing)*
+  - **Mapping:** *Phase 9 AthGuard (Sandboxing)*
   - **Extract:** An OCI-compliant container runtime written entirely in Rust. While we use capabilities instead of standard Linux cgroups, Youki's namespace isolation logic is top-tier reference material for our app sandboxes.
 
 ### OS Init, Partitioning & Security (Rust Native)
 - [ ] **RustySD** (`https://github.com/willnode/rustysd`)
   - **Mapping:** *Phase 2 Init Daemon*
-  - **Extract:** Concept dictates "no systemd archaeology". This is a pure-Rust systemd-compatible service manager that can act as the backbone for RaeenOS service bring-up.
+  - **Extract:** Concept dictates "no systemd archaeology". This is a pure-Rust systemd-compatible service manager that can act as the backbone for AthenaOS service bring-up.
 - [ ] **Gptman** (`https://github.com/rust-disk-partition-management/gptman`)
   - **Mapping:** *Phase 3 Installer / Storage*
-  - **Extract:** A library to manage GUID Partition Tables (GPT) natively in Rust. Essential for the RaeenOS bare-metal installer.
+  - **Extract:** A library to manage GUID Partition Tables (GPT) natively in Rust. Essential for the AthenaOS bare-metal installer.
 - [ ] **Lemurs** (`https://github.com/coastalwhite/lemurs`)
-  - **Mapping:** *Phase 9 RaeShield (Login)*
-  - **Extract:** A tiny, customizable TUI Display/Login Manager in Rust. Perfect for the fallback TTY login interface before `RaeUI` fully initializes.
+  - **Mapping:** *Phase 9 AthGuard (Login)*
+  - **Extract:** A tiny, customizable TUI Display/Login Manager in Rust. Perfect for the fallback TTY login interface before `AthUI` fully initializes.
 - [ ] **Yara-X** (`https://github.com/VirusTotal/yara-x`)
-  - **Mapping:** *Phase 9 RaeShield (Security)*
+  - **Mapping:** *Phase 9 AthGuard (Security)*
   - **Extract:** Pure-Rust reimplementation of the YARA malware scanner, perfect for integrating into the quarantine framework.
 
 ### GameOS & Graphics Verification
-To prove out Phase 6 (`RaeGFX`) and Phase 7 (`RaeAudio`), we need complex workloads. The Redox cookbook contains recipes for these pure-Rust game engines and emulators, meaning they are already proven to compile in `no_std` or customized environments.
+To prove out Phase 6 (`AthGFX`) and Phase 7 (`AthAudio`), we need complex workloads. The Redox cookbook contains recipes for these pure-Rust game engines and emulators, meaning they are already proven to compile in `no_std` or customized environments.
 - [ ] **Naga & wgpu** (`https://github.com/gfx-rs/wgpu`)
-  - **Mapping:** *Phase 6 RaeGFX*
-  - **Extract:** The core shader translation and WebGPU native implementations required to power the `RaeUI` Skia backend.
+  - **Mapping:** *Phase 6 AthGFX*
+  - **Extract:** The core shader translation and WebGPU native implementations required to power the `AthUI` Skia backend.
 - [ ] **Rust-Doom & Unvanquished** (`https://github.com/hovinen/rust-doom`, `https://github.com/DaemonEngine/Daemon`)
   - **Mapping:** *Phase 6/7 Verification*
   - **Extract:** Run these natively to prove the GPU buffer mapping and low-latency audio routing works.
@@ -274,25 +274,25 @@ To prove out Phase 6 (`RaeGFX`) and Phase 7 (`RaeAudio`), we need complex worklo
   - **Extract:** Concept states "Gaming isn't a mode. It's the default." Shipping built-in, native emulators for Gameboy, DS, and Gamecube demonstrates this instantly out-of-the-box.
 
 ### The Ultimate TUI App Ecosystem
-Redox has ported a suite of modern terminal apps that look and feel like desktop apps. These should be built into `RaeShell`'s default PATH.
+Redox has ported a suite of modern terminal apps that look and feel like desktop apps. These should be built into `AthShell`'s default PATH.
 - [ ] **GitUI** (`https://github.com/extrawurst/gitui`) — Blazing fast git client.
 - [ ] **Process-Viewer** (`https://github.com/GuillaumeGomez/process-viewer`) & **Battop** (`https://github.com/svartalf/rust-battop`) — Modern Task Manager and battery visualizer in the terminal.
-- [ ] **Twitch-TUI & Youtube-TUI** (`https://github.com/Xithrius/twitch-tui`, `https://github.com/Siriusmart/youtube-tui`) — Media consumption directly in `RaeShell` to prove networking and media decoding.
+- [ ] **Twitch-TUI & Youtube-TUI** (`https://github.com/Xithrius/twitch-tui`, `https://github.com/Siriusmart/youtube-tui`) — Media consumption directly in `AthShell` to prove networking and media decoding.
 
-### Graphics APIs & Window Management (RaeGFX)
+### Graphics APIs & Window Management (AthGFX)
 - [ ] **libskia recipe** (`https://skia.googlesource.com/skia`)
-  - **Mapping:** *Phase 6 RaeGFX*
-  - **Extract:** The Concept explicitly specifies `RaeUI` is built on Skia. Redox already has a working recipe to cross-compile Skia into a `no_std` / custom OS environment!
+  - **Mapping:** *Phase 6 AthGFX*
+  - **Extract:** The Concept explicitly specifies `AthUI` is built on Skia. Redox already has a working recipe to cross-compile Skia into a `no_std` / custom OS environment!
 - [ ] **Wayland-rs & LeftWM** (`https://github.com/jackpot51/wayland-rs`, `https://github.com/leftwm/leftwm`)
   - **Mapping:** *Phase 6 Compositor*
-  - **Extract:** Pure-Rust Wayland bindings and a Rust window manager. If `RaeGFX` decides to implement Wayland protocol compatibility, this is the exact reference to use.
+  - **Extract:** Pure-Rust Wayland bindings and a Rust window manager. If `AthGFX` decides to implement Wayland protocol compatibility, this is the exact reference to use.
 
-### Network Mesh & Security (RaeNet)
+### Network Mesh & Security (AthNet)
 - [ ] **Innernet** (`https://github.com/tonarino/innernet`)
-  - **Mapping:** *Phase 10 RaeNet*
-  - **Extract:** A WireGuard-based mesh network written in Rust. RaeenOS wants native, fast networking. Integrating a WireGuard mesh securely into the OS configuration natively is a killer feature.
+  - **Mapping:** *Phase 10 AthNet*
+  - **Extract:** A WireGuard-based mesh network written in Rust. AthenaOS wants native, fast networking. Integrating a WireGuard mesh securely into the OS configuration natively is a killer feature.
 - [ ] **Sniffnet** (`https://github.com/GyulyVGC/sniffnet`)
-  - **Mapping:** *Phase 10 RaeNet*
+  - **Mapping:** *Phase 10 AthNet*
   - **Extract:** A network analyzer in Rust to verify packet routing and firewall rules.
 
 ### Core Kernel Tweaks & ISO Generation
@@ -301,13 +301,13 @@ Redox has ported a suite of modern terminal apps that look and feel like desktop
   - **Extract:** A high-performance memory allocator mapped for Rust. Can be analyzed for replacing the kernel's default heap allocator under heavy multicore loads.
 - [ ] **mkisofs-rs** (`https://github.com/marysaka/mkisofs-rs`)
   - **Mapping:** *Phase 16 Installer*
-  - **Extract:** Pure-Rust ISO 9660 image generator. Essential for the `xtask` build loop to generate bootable `RaeenOS.iso` files without relying on legacy C tools like `xorriso`.
+  - **Extract:** Pure-Rust ISO 9660 image generator. Essential for the `xtask` build loop to generate bootable `AthenaOS.iso` files without relying on legacy C tools like `xorriso`.
 - [x] **Kanata** (`https://github.com/jtroo/kanata`)
   - **Mapping:** *Phase 2.1 Input*
-  - **Extract:** An advanced keyboard remapper in Rust. Great reference for intercepting raw HID events and applying software macros before passing them to `RaeUI`.
+  - **Extract:** An advanced keyboard remapper in Rust. Great reference for intercepting raw HID events and applying software macros before passing them to `AthUI`.
 
 ### Developer Workflows & Build Scripts (xtask inspiration)
-The root of the `redox_reference` cookbook itself contains several excellent scripts and CI patterns we can extract to make RaeenOS development faster:
+The root of the `redox_reference` cookbook itself contains several excellent scripts and CI patterns we can extract to make AthenaOS development faster:
 - [ ] **`.gitlab-ci.yml` & `mk/ci.mk`**
   - **Mapping:** *Phase 0 DevEx / CI Pipeline*
   - **Extract:** Redox uses a headless `qemu-system-x86_64` runner with `gpu=no` in their CI to boot the OS, mount the disk, extract the `os-test.json` conformance logs, and assert success. We can replicate this exact flow in our `.github/workflows/` using `xtask`.
@@ -324,7 +324,7 @@ The root of the `redox_reference` cookbook itself contains several excellent scr
 ### OS Image Profiles & Bootstrapping
 - [ ] **`config/base.toml` & `config/desktop.toml`**
   - **Mapping:** *Phase 16 OS Assembly & Installer*
-  - **Extract:** Redox uses declarative TOML files to assemble its final `.img` files. These files dictate which packages are included, create default users (`root`, `user`), and configure exactly which microkernel schemes each user has access to (e.g., locking down the `display*` or `tcp` schemes). This is a masterclass in how to declaratively build `RaeenOS.iso` profiles (e.g., `gaming.toml`, `server.toml`).
+  - **Extract:** Redox uses declarative TOML files to assemble its final `.img` files. These files dictate which packages are included, create default users (`root`, `user`), and configure exactly which microkernel schemes each user has access to (e.g., locking down the `display*` or `tcp` schemes). This is a masterclass in how to declaratively build `AthenaOS.iso` profiles (e.g., `gaming.toml`, `server.toml`).
 - [ ] **Avoid `native_bootstrap.sh`**
   - **Mapping:** *Phase 0 DevEx*
   - **Extract:** The `native_bootstrap.sh` file is 1,180 lines of bash installing legacy C-tools (`bison`, `flex`, `genisoimage`, `m4`) across every Linux distro. **This proves why your Concept's `xtask` approach is superior.** We will entirely skip this headache by utilizing the pure-Rust equivalents we mapped earlier (like `mkisofs-rs`).
@@ -338,21 +338,21 @@ The root of the `redox_reference` cookbook itself contains several excellent scr
 3. Adapt: capabilities, IOMMU DMA, hybrid syscall boundary (no scheme-IPC in kernel hot path).
 4. `cargo run -p xtask -- build --release` + `target\boot.ps1` — serial proof.
 5. Update **Status** column here and row in `docs/THIRD_PARTY_LICENSES.md`.
-6. Auto-commit to **private RaeenOS GitHub only**.
+6. Auto-commit to **private AthenaOS GitHub only**.
 
 ---
 
 ## Do-not-port list (Concept conflicts)
 
-- Redox **microkernel** + **scheme IPC** as RaeenOS kernel core  
-- **Orbital**, **mesa**, **libdrm** as display stack → **RaeGFX**  
-- **ALSA/Pulse/cpal** paths → **RaeAudio**  
-- **Linux netfilter / full Wi-Fi kernel port** → **RaeNet** + LinuxKPI Path C per `docs/LINUX_DRIVER_STRATEGY.md`  
-- Whole **cookbook** as RaeenOS build system → keep **xtask** + small batches  
+- Redox **microkernel** + **scheme IPC** as AthenaOS kernel core  
+- **Orbital**, **mesa**, **libdrm** as display stack → **AthGFX**  
+- **ALSA/Pulse/cpal** paths → **AthAudio**  
+- **Linux netfilter / full Wi-Fi kernel port** → **AthNet** + LinuxKPI Path C per `docs/LINUX_DRIVER_STRATEGY.md`  
+- Whole **cookbook** as AthenaOS build system → keep **xtask** + small batches  
 
 ---
 
-## Landed in RaeenOS tree (2026-05-28)
+## Landed in AthenaOS tree (2026-05-28)
 
 | Path | Extraction IDs | Notes |
 |------|----------------|-------|
@@ -381,18 +381,18 @@ The appendix sections below (ripgrep, Helix, emulators, Innernet, Skia recipe, W
 
 Upstream sources were cloned read-only into `redox_reference_upstream/` (gitignored):
 `base` (full driver tree), `redoxfs`, `relibc`, `aml`. The entire Redox driver /
-subsystem surface was then cross-checked against the live RaeenOS tree.
+subsystem surface was then cross-checked against the live AthenaOS tree.
 
 > [!IMPORTANT]
-> **Conclusion: RaeenOS already implements — and in most cases *exceeds* — Redox's
+> **Conclusion: AthenaOS already implements — and in most cases *exceeds* — Redox's
 > entire extractable surface.** There is no remaining non-duplicative Redox code
 > to bulk-migrate. Forcing further copies would only create duplicate, conflicting,
 > or microkernel-scheme-mismatched code. The extraction initiative is **closed**;
 > future work is native feature completion + driver depth, not porting.
 
-**Evidence (Redox component → already-native RaeenOS equivalent):**
+**Evidence (Redox component → already-native AthenaOS equivalent):**
 
-| Redox | RaeenOS (verified present) |
+| Redox | AthenaOS (verified present) |
 |-------|----------------------------|
 | `partitionlib` (GPT/MBR) | `block_io.rs`: `detect_partition_table`, `parse_gpt`, `from_gpt_guid` |
 | `usbscsid` (SCSI + Bulk-Only Transport) | `usb_core.rs`: `scsi_read10/write10/inquiry/read_capacity10/request_sense`, `CommandBlockWrapper`, `CBW_SIGNATURE` |
@@ -405,7 +405,7 @@ subsystem surface was then cross-checked against the live RaeenOS tree.
 | `dynamic-example` (R30, dynamic ELF) | `dynamic_linker.rs` (1211 L) + `elf_loader.rs` (1401 L) + `raebridge` (full Win32 layer) |
 | `userutils` (R29, login/passwd) | `raeid` (1795 L account system) |
 | `netdb` (R18, DNS) | resolver lives in the already-added `relibc` |
-| `orbital` / `mesa` / `vesad` / scheme IPC | **SKIP** — RaeGFX/RaeUI + hybrid kernel (Concept) |
+| `orbital` / `mesa` / `vesad` / scheme IPC | **SKIP** — AthGFX/AthUI + hybrid kernel (Concept) |
 
 **Status upgrades:** R18, R29, R30 → `[x]` (covered natively, exceeds upstream).
 

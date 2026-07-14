@@ -1,4 +1,4 @@
-// raesign — Ed25519 (RFC 8032) detached-signature tool for RaeenOS secure boot,
+// raesign — Ed25519 (RFC 8032) detached-signature tool for AthenaOS secure boot,
 // atomic-update verification, and app-bundle code signing. Built on the shared
 // `rae_crypto` Ed25519 so signer and on-device verifier are the same code.
 //

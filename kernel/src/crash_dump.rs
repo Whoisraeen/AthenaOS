@@ -5,8 +5,8 @@
 //! allocation in the dump path, all writes go to a pre-reserved physical
 //! memory region that survives warm reboot.
 //!
-//! Concept (RaeenOS_Concept.md, "Stability & Recovery"): a crash must never be
-//! a black box. RaeenOS reserves the last 4 MiB of RAM at boot, drops a
+//! Concept (LEGACY_GAMING_CONCEPT.md, "Stability & Recovery"): a crash must never be
+//! a black box. AthenaOS reserves the last 4 MiB of RAM at boot, drops a
 //! tombstone (magic + timestamp + panic message + RIP/RSP/RBP) into it from the
 //! panic handler, and on the next boot detects the tombstone, reports it for
 //! `/var/crash/`, and clears the magic.
@@ -438,7 +438,7 @@ impl CrashDumpWriter {
             ctx.panic_msg_len = msg_len as u32;
 
             // Kernel version tag
-            let ver = b"RaeKernel v0.0.1";
+            let ver = b"AthKernel v0.0.1";
             ctx.kernel_version[..ver.len()].copy_from_slice(ver);
         }
     }
@@ -914,7 +914,7 @@ pub fn check_boot_tombstone() -> bool {
                 len,
             );
             // Stash the record so `flush_pending_crash_dump` can write it to
-            // RaeFS once the filesystem is mounted (init() runs before mount).
+            // AthFS once the filesystem is mounted (init() runs before mount).
             *PENDING_DUMP.lock() = Some(PendingCrash {
                 timestamp_tsc: tsc,
                 rip,
@@ -935,7 +935,7 @@ pub fn check_boot_tombstone() -> bool {
 }
 
 /// A crash record captured from the boot tombstone in [`check_boot_tombstone`],
-/// held until RaeFS is mounted and [`flush_pending_crash_dump`] can persist it.
+/// held until AthFS is mounted and [`flush_pending_crash_dump`] can persist it.
 struct PendingCrash {
     timestamp_tsc: u64,
     rip: u64,
@@ -944,14 +944,14 @@ struct PendingCrash {
     msg: String,
 }
 
-/// Captured prior-boot crash, awaiting a RaeFS write. `None` on a clean boot.
+/// Captured prior-boot crash, awaiting a AthFS write. `None` on a clean boot.
 static PENDING_DUMP: spin::Mutex<Option<PendingCrash>> = spin::Mutex::new(None);
 
 /// Render a human-readable `/var/crash` dump body for a [`PendingCrash`].
 fn format_dump_text(p: &PendingCrash) -> String {
     use core::fmt::Write;
     let mut out = String::new();
-    let _ = writeln!(out, "RaeenOS kernel crash dump (Phase 4.5)");
+    let _ = writeln!(out, "AthenaOS kernel crash dump (Phase 4.5)");
     let _ = writeln!(out, "magic:    {:#018x}", CRASH_BOOT_MAGIC);
     let _ = writeln!(out, "tsc:      {:#x}", p.timestamp_tsc);
     let _ = writeln!(out, "rip:      {:#x}", p.rip);
@@ -961,15 +961,15 @@ fn format_dump_text(p: &PendingCrash) -> String {
     out
 }
 
-/// Flat RaeFS filename for a crash dump keyed by TSC. RaeFS root files are a
+/// Flat AthFS filename for a crash dump keyed by TSC. AthFS root files are a
 /// flat namespace (no `/`, ≤55 bytes); the logical path is `/var/crash/<name>`.
 fn crash_dump_filename(tsc: u64) -> String {
     alloc::format!("varcrash-{:x}.dump", tsc)
 }
 
 /// Phase 4.5: persist the prior-boot crash (captured by
-/// [`check_boot_tombstone`]) to RaeFS as `/var/crash/varcrash-<tsc>.dump`.
-/// Call AFTER RaeFS is mounted. No-op on a clean boot; refused in safe-mode
+/// [`check_boot_tombstone`]) to AthFS as `/var/crash/varcrash-<tsc>.dump`.
+/// Call AFTER AthFS is mounted. No-op on a clean boot; refused in safe-mode
 /// (the dump stays in the reserved high-RAM region for the next non-safe boot).
 pub fn flush_pending_crash_dump() {
     let pending = PENDING_DUMP.lock().take();
@@ -1000,7 +1000,7 @@ pub fn flush_pending_crash_dump() {
     let report_ok = crate::raefs::write_flat_file("crash-report.txt", report.as_bytes());
     let _ = crate::notify::post(
         "Crash Reporter",
-        "RaeenOS recovered from a crash - report saved",
+        "AthenaOS recovered from a crash - report saved",
         crate::shell_api::NotificationUrgency::Critical,
     );
     crate::serial_println!(
@@ -1016,7 +1016,7 @@ pub fn flush_pending_crash_dump() {
 fn format_user_report(p: &PendingCrash, dump_name: &str) -> String {
     use core::fmt::Write;
     let mut out = String::new();
-    let _ = writeln!(out, "RaeenOS Crash Report");
+    let _ = writeln!(out, "AthenaOS Crash Report");
     let _ = writeln!(out, "====================");
     let _ = writeln!(
         out,
@@ -1042,8 +1042,8 @@ fn format_user_report(p: &PendingCrash, dump_name: &str) -> String {
 
 /// Phase 4.5 R10 proof: exercise the full /var/crash write+read path on a
 /// single boot without a real prior crash. Synthesizes a crash record, writes
-/// it to RaeFS, reads it back, and verifies the bytes round-trip. Uses the
-/// live mount when one is writable; otherwise (safe mode, or no RaeFS
+/// it to AthFS, reads it back, and verifies the bytes round-trip. Uses the
+/// live mount when one is writable; otherwise (safe mode, or no AthFS
 /// partition on the boot disk — auto-format refuses non-blank disks) the SAME
 /// write+readback proves itself on a throwaway RAM-backed volume.
 pub fn run_persist_smoketest() {
@@ -1167,7 +1167,7 @@ pub fn write_crash_dump(info: &core::panic::PanicInfo) {
     }
 
     // Drive the full structured dump as well (registers + backtrace + context).
-    panic_dump("RaeKernel panic");
+    panic_dump("AthKernel panic");
 }
 
 /// Format a `PanicInfo` into a fixed byte buffer without allocating, returning

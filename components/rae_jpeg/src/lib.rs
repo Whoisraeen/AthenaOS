@@ -1,9 +1,9 @@
 //! # RaeJPEG — a never-panic, `no_std` baseline JPEG codec (ITU-T T.81 / JFIF).
 //!
-//! RaeenOS_Concept.md (§creators / media): a daily driver must let people "show
+//! LEGACY_GAMING_CONCEPT.md (§creators / media): a daily driver must let people "show
 //! my photos" *and* "save/export my photo as JPEG." JPEG is the dominant *lossy*
 //! photo/camera format — every phone, every camera, and the bulk of web
-//! photography ship as JPEG. RaeenOS already decodes PNG/BMP/GIF; this crate is
+//! photography ship as JPEG. AthenaOS already decodes PNG/BMP/GIF; this crate is
 //! the from-scratch baseline-DCT JPEG path the Photos viewer and `raeplay`
 //! thumbnailer sit on, with both a **decoder** ([`decode_jpeg`]) and a baseline
 //! sequential **encoder** ([`encode_jpeg`] / [`JpegImage::to_jpeg`]) so a user
@@ -18,7 +18,7 @@
 //!   entropy scan, EOI. The encoder's output decodes back through this crate's
 //!   own [`decode_jpeg`] within lossy tolerance (the primary KAT lever).
 //!
-//! Output is a flat ARGB8888 `Vec<u32>` (`0xAARRGGBB`) — the RaeGFX compositor /
+//! Output is a flat ARGB8888 `Vec<u32>` (`0xAARRGGBB`) — the AthGFX compositor /
 //! Canvas pixel format, **matching the [`rae_png`]/[`rae_bmp`]/`rae_gif`
 //! decoders** so a gallery, a tab-strip, or a Quick Look preview can blit any of
 //! the still-image formats through one uniform pixel model.
@@ -105,7 +105,7 @@ pub enum JpegError {
 ///
 /// `pixels.len() == (width * height) as usize`. Each `u32` is `0xAARRGGBB` —
 /// identical to [`rae_png::PngImage`] / a `rae_bmp` image so callers consume all
-/// of RaeenOS's still-image decoders through one pixel model.
+/// of AthenaOS's still-image decoders through one pixel model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JpegImage {
     pub width: u32,
@@ -1186,7 +1186,7 @@ fn sync_restart(reader: &mut BitReader, expected: &mut u8) -> Result<bool, JpegE
 
 // ════════════════════════════════════════════════════════════════════════════
 // BASELINE JPEG ENCODER (ITU-T T.81 / JFIF) — the "save/export my photo as JPEG"
-// path (RaeenOS_Concept.md §creators / media). JPEG is the dominant *lossy*
+// path (LEGACY_GAMING_CONCEPT.md §creators / media). JPEG is the dominant *lossy*
 // photo/camera interchange format; an OS that can decode but not encode JPEG
 // can't let a user export an edit or a screenshot as the format the rest of the
 // world reads. This is the from-scratch baseline sequential-DCT encoder that

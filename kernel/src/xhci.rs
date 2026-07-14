@@ -61,8 +61,8 @@ impl DmaPage {
 /// Fill a 1 ms PCM buffer (48 kHz, 16-bit, stereo) with a 440 Hz square wave,
 /// continuing from sample `phase`; returns the next phase so consecutive buffers
 /// form a seamless tone across isochronous service intervals. 1 ms = 48 frames ×
-/// 2 channels × 2 bytes = 192 bytes. Stand-in for the RaeAudio mixer output until
-/// the USB DAC is wired as a RaeAudio sink (MasterChecklist Phase 2.6/7).
+/// 2 channels × 2 bytes = 192 bytes. Stand-in for the AthAudio mixer output until
+/// the USB DAC is wired as a AthAudio sink (MasterChecklist Phase 2.6/7).
 fn fill_square_tone(buf: &mut [u8], mut phase: u32) -> u32 {
     const PERIOD: u32 = 48_000 / 440; // ≈109 samples per 440 Hz cycle
     let mut i = 0;
@@ -3718,7 +3718,7 @@ impl XhciController {
         }
 
         // Stream a 440 Hz test tone through a multi-buffered isoch ring (the
-        // tone stands in for the RaeAudio mixer output). The ring-prime depth
+        // tone stands in for the AthAudio mixer output). The ring-prime depth
         // streams cleanly; sustaining the stream past it needs isoch
         // endpoint-restart-on-underrun handling (an isoch EP STOPS when its ring
         // drains — unlike interrupt EPs — so re-arming a stopped EP is more than
@@ -3746,7 +3746,7 @@ impl XhciController {
     /// keep the TD ring fed across service intervals rather than firing one TD.
     /// Returns the number of frames the DAC drained (transfer events observed).
     /// MasterChecklist Phase 2.6/7. A real player swaps `fill_square_tone` for
-    /// the RaeAudio mixer and runs this loop on the SCHED_GAME audio thread.
+    /// the AthAudio mixer and runs this loop on the SCHED_BODY audio thread.
     fn play_test_tone(
         &mut self,
         slot_id: u8,
@@ -3796,7 +3796,7 @@ impl XhciController {
         while drained < submitted {
             // FORWARD-LOOKING (MasterChecklist Phase 2.6/7): this one-shot boot
             // test-tone simply aborts on the first error. When USB isoch becomes
-            // a real RaeAudio sink, a software stall that misses a frame boundary
+            // a real AthAudio sink, a software stall that misses a frame boundary
             // raises a Missed Service Error (TrbCompletionCode::MissedService=23)
             // and HALTS the isoch ring — recovery then needs Reset Endpoint ->
             // Set TR Dequeue Pointer to restart the stream (same shape as the EP0
@@ -6074,7 +6074,7 @@ extern "C" fn hid_input_thread_entry() {
                 reports
             );
         }
-        // This thread is now a SCHED_GAME deadline (EDF) task (see
+        // This thread is now a SCHED_BODY deadline (EDF) task (see
         // spawn_hid_input_thread): the scheduler picks it FIRST every ~2 ms
         // period, ahead of the whole Normal queue, so it no longer waits a full
         // normal-runqueue rotation to be serviced (the old ~8×/s / ~125 ms
@@ -6113,8 +6113,8 @@ extern "C" fn hid_input_thread_entry() {
 /// input subsystem. Endpoints must already be armed (see `arm_hid_interrupts`).
 pub fn spawn_hid_input_thread() {
     let mut task = crate::task::Task::new(hid_input_thread_entry, None);
-    // SCHED_GAME deadline (EDF) task — input is a hot path. RaeenOS_Concept:
-    // "Sub-frame input latency"; CLAUDE rule 4: "SCHED_GAME for hot paths …
+    // SCHED_BODY deadline (EDF) task — input is a hot path. Athena_Concept.md:
+    // real-time where flesh would fail; CLAUDE: SCHED_BODY for control/sensor hot paths.
     // not optional." As a plain Normal task the drain was only picked once per
     // FULL normal-runqueue rotation — ~8x/s (~125 ms batches) on Athena with
     // the desktop's many userspace tasks (iron bootlog 2026-06-16T1651:
@@ -6138,7 +6138,7 @@ pub fn spawn_hid_input_thread() {
     // be armed but dead. spawn_on_bsp sets affinity=CPU0 and keeps the deadline.
     crate::scheduler::spawn_on_bsp(task);
     crate::serial_println!(
-        "[xhci] HID input servicing thread spawned (task={:?}, BSP-pinned, SCHED_GAME EDF 2ms)",
+        "[xhci] HID input servicing thread spawned (task={:?}, BSP-pinned, SCHED_BODY EDF 2ms)",
         task_id
     );
 }

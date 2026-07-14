@@ -3,7 +3,7 @@
  * <linux/interrupt.h> shim (MPL-2.0, original work).
  *
  * IRQ registration + deferred (tasklet) work. amdgpu registers its IH ring
- * handler via request_irq and defers bottom-half work to tasklets. In the RaeenOS
+ * handler via request_irq and defers bottom-half work to tasklets. In the AthenaOS
  * userspace-daemon model a device IRQ is delivered as IPC (raeen_linuxkpi's
  * IRQ-doorbell facade, P2), so request_irq wires the handler to that delivery and
  * tasklets run on the daemon's deferred-work pump — both backed at M4, never

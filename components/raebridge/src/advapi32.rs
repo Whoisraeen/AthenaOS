@@ -1,5 +1,5 @@
 //! advapi32.dll — Registry, security, cryptography, event logging, and
-//! service control manager APIs for RaeBridge.
+//! service control manager APIs for AthBridge.
 
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -879,7 +879,7 @@ pub fn lookup_account_sid_w(
     use_type: &mut u32,
 ) -> bool {
     let user_name = "user";
-    let domain_name = "RAEENOS";
+    let domain_name = "ATHENAOS";
 
     let wide_name = crate::string_to_wide(user_name);
     let wide_domain = crate::string_to_wide(domain_name);
@@ -1634,7 +1634,7 @@ pub fn lookup_account_sid_a(
 ) -> bool {
     let _ = system;
     let user_name = "user";
-    let domain_name = "RAEENOS";
+    let domain_name = "ATHENAOS";
 
     let n_needed = user_name.len() + 1;
     let d_needed = domain_name.len() + 1;

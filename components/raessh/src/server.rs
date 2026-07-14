@@ -5,7 +5,7 @@
 //! `ssh-userauth` publickey exchange, opens the `session` channel, and turns
 //! channel traffic into semantic [`SessionEvent`]s for the host to act on —
 //! encrypting every reply on the way out. The host binds `ShellRequested` /
-//! `Data` events to a RaeShell session and calls [`ServerSession::channel_output`]
+//! `Data` events to a AthShell session and calls [`ServerSession::channel_output`]
 //! to send shell output back; this module owns ALL of the protocol so that the
 //! integration layer is pure byte-shuffling. Never panics on a hostile peer.
 
@@ -33,7 +33,7 @@ use alloc::vec::Vec;
 const LOCAL_WINDOW: u32 = 1 << 20; // 1 MiB
 const LOCAL_MAX_PACKET: u32 = 32_768;
 
-/// A semantic event the host must act on (bind to a RaeShell session, etc.).
+/// A semantic event the host must act on (bind to a AthShell session, etc.).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SessionEvent {
     /// Nothing for the host to do (the protocol reply, if any, is in `reply`).
@@ -486,10 +486,10 @@ mod tests {
         assert_eq!(client.open(&step.reply)[0], SSH_MSG_CHANNEL_SUCCESS);
 
         // 5) Server sends shell output; client receives it as CHANNEL_DATA.
-        let wire = srv.channel_output(b"raeen@raeenos:~$ ");
+        let wire = srv.channel_output(b"raeen@athenaos:~$ ");
         let data = client.open(&wire);
         let (_ch, payload) = parse_channel_data(&data).unwrap();
-        assert_eq!(payload, b"raeen@raeenos:~$ ");
+        assert_eq!(payload, b"raeen@athenaos:~$ ");
 
         // 6) Client types a command; server surfaces it as a Data event.
         let step = srv

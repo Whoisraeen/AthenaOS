@@ -248,7 +248,7 @@ fn opt(name: &'static str, pass: bool, detail: String) -> Check {
 /// `/proc/raeen/selftest` body.
 pub fn dump_text() -> String {
     let mut s = String::new();
-    s.push_str("# RaeenOS consolidated boot self-test\n");
+    s.push_str("# AthenaOS consolidated boot self-test\n");
     if !RAN.load(Ordering::Relaxed) {
         s.push_str("status: not yet run\n");
         return s;

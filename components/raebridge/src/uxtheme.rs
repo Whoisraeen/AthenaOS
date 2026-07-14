@@ -1,4 +1,4 @@
-//! UxTheme visual styles API emulation for RaeBridge.
+//! UxTheme visual styles API emulation for AthBridge.
 #![no_std]
 
 extern crate alloc;

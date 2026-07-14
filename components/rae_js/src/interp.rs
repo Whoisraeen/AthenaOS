@@ -1,6 +1,6 @@
 //! # RaeJs tree-walking interpreter — JavaScript that actually EXECUTES.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy (criterion #5 — "the web browser is the
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy (criterion #5 — "the web browser is the
 //! universal app runtime; PWAs that feel native"): the [parser](crate::parse) turns page
 //! script into an AST but does not *run* it, so a page is still a static document. This
 //! module walks the [`Program`] AST and evaluates it to real [`JsValue`]s with real side

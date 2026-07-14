@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeKernel — hybrid kernel for RaeenOS. Boots bare-metal x86_64."
+description = "AthKernel — hybrid kernel for AthenaOS. Boots bare-metal x86_64."
 build = "build.rs"
 
 [[bin]]
@@ -27,8 +27,8 @@ bitflags = { version = "2", default-features = false }
 # Pure-Rust Zstd decompressor — MasterChecklist Phase 5.4: zstd read path
 ruzstd           = { version = "0.7", default-features = false }
 # NOTE: symphonia (audio decoder) goes in components/raeaudio NOT the kernel.
-# It requires arrayvec which needs std. Wire into userspace RaeAudio daemon (Phase 7).
-# RaeenOS component crates used by kernel-side services.
+# It requires arrayvec which needs std. Wire into userspace AthAudio daemon (Phase 7).
+# AthenaOS component crates used by kernel-side services.
 pcid    = { path = "../components/pcid" }
 raegfx  = { path = "../components/raegfx" }
 # raeui — the native widget toolkit (#![no_std], default features only; the
@@ -37,20 +37,20 @@ raegfx  = { path = "../components/raegfx" }
 # (a11y::publish_window_widgets_from_tree) walks a `raeui::accessibility::
 # AccessibilityTree` for the focused window's controls and converts its
 # `provider_nodes_for_window` output into kernel `AccessNode`s — the widget-tier
-# accessibility seam (Phase 19 audit P0 #1: apps name their controls). RaeUI is
+# accessibility seam (Phase 19 audit P0 #1: apps name their controls). AthUI is
 # the single source of role/label inference; the kernel never holds a shadow copy.
 raeui   = { path = "../components/raeui" }
 raeshell = { path = "../components/raeshell" }
 # raeweb — the from-scratch no_std HTML/CSS/layout/paint engine. The kernel-drawn
 # browser surface (webview.rs) drives RenderPipeline → backend::paint_displaylist_to_
 # _canvas → raegfx, presented by the compositor like Settings/GameOS (Concept §3:
-# "renders through RaeUI", §Core Principles #1: "No Electron tax"). The kernel's
+# "renders through AthUI", §Core Principles #1: "No Electron tax"). The kernel's
 # build-std/soft-float config links its raenet crypto cleanly (the userspace apps/web
 # poly1305/sha2 SIMD-split error does not apply here).
 raeweb  = { path = "../components/raeweb" }
 raeid   = { path = "../components/raeid" }
 raebridge = { path = "../components/raebridge" }
-# raeshield — RaeShield's no_std PolicyEnforcer/SandboxProfile types. The
+# raeshield — AthGuard's no_std PolicyEnforcer/SandboxProfile types. The
 # kernel sandbox.rs module imports these to gate syscall classes per task.
 # Policy *model* lives in the component; kernel only binds it to live tasks.
 raeshield = { path = "../components/raeshield" }
@@ -75,7 +75,7 @@ rae_crypto = { path = "../components/rae_crypto" }
 # 4251/4253/4252/4254): curve25519 KEX, chacha20-poly1305@openssh transport,
 # ed25519 publickey auth, channels — all on rae_crypto (already linked above).
 # ssh.rs runs its loopback self-test at boot; the TCP :22 listener binds it to a
-# RaeShell login. So you own your machine remotely (Concept §"the user owns the
+# AthShell login. So you own your machine remotely (Concept §"the user owns the
 # machine"). Sans-io + host-KAT-proven; links under the kernel's soft-float config.
 raessh = { path = "../components/raessh" }
 # raelang — the Swift-flavored Rae script interpreter (Concept §Customization
@@ -101,7 +101,7 @@ spinning_top = "0.2.5"
 # rangemap — no_std interval map. Backs the DMA coherent address-space pool
 # (BUG-28) and is the foundation for VMA / free-range tracking.
 rangemap = { version = "1", default-features = false }
-# lz4_flex — pure-Rust LZ4 (no_std). Fast transparent-compression path for RaeFS
+# lz4_flex — pure-Rust LZ4 (no_std). Fast transparent-compression path for AthFS
 # and snapshot diffs (complements the ruzstd decompressor above).
 lz4_flex = { version = "0.11", default-features = false, features = ["safe-encode", "safe-decode"] }
 # slab — no_std O(1) handle table with id reuse. Backs kernel handle registries
@@ -112,7 +112,7 @@ slab = { version = "0.4", default-features = false }
 # that bit us (xHCI DCI, HDA RIRB). 0.4 has the simple Volatile<&T> reference API
 # (0.5+ switched to a more involved VolatilePtr/NonNull surface).
 volatile = "0.4"
-# heapless — fixed-capacity, alloc-free collections for SCHED_GAME / IRQ hot
+# heapless — fixed-capacity, alloc-free collections for SCHED_BODY / IRQ hot
 # paths (Concept §"allocation-free in steady state"): SPSC ring for IRQ->task
 # events, bounded Vec where a heap alloc on the frame/audio path is unacceptable.
 heapless = "0.8"
@@ -171,7 +171,7 @@ kfence = []
 # Compiler KCFI: set only alongside nightly `-Z sanitizer=kcfi`. Off by default.
 kcfi = []
 # Safe-boot mode for bare-metal smoke tests. When enabled, every
-# `BlockDevice::write_sector` (NVMe/AHCI/virtio-blk/USB-MSC/RaeFS adapter)
+# `BlockDevice::write_sector` (NVMe/AHCI/virtio-blk/USB-MSC/AthFS adapter)
 # is gated by `block_io::safe_mode_guard_write` and rejected with a
 # `[safe-mode] BLOCKED ...` log line. Read paths are unaffected, so boot
 # proceeds normally — only the path that could clobber a host Windows

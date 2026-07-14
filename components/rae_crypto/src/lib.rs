@@ -33,7 +33,7 @@ use alloc::vec::Vec;
 mod field25519;
 
 /// Ed25519 (RFC 8032) signatures + SHA-512 — the shared signer/verifier for
-/// secure boot, atomic-update verification, and RaeShield code signing.
+/// secure boot, atomic-update verification, and AthGuard code signing.
 pub mod ed25519;
 
 /// X25519 (RFC 7748) Diffie-Hellman over Curve25519 — the shared key-agreement
@@ -66,7 +66,7 @@ pub mod chacha20poly1305;
 pub mod p256_ecdsa;
 
 /// ECDSA over NIST P-384 + SHA-384 (= COSE **ES384**, alg -35) — the DNSSEC
-/// algorithm-14 (`ECDSAP384SHA384`, RFC 6605) verifier that closes RaeNet's
+/// algorithm-14 (`ECDSAP384SHA384`, RFC 6605) verifier that closes AthNet's
 /// DNSSEC validator to algorithm-complete, and the high-assurance ES384 path
 /// for COSE/WebAuthn + P-384 code-signing chains. Sibling of `p256_ecdsa`;
 /// wraps the vetted RustCrypto `p384`/`ecdsa` crates + `sha2::Sha384`.
@@ -80,7 +80,7 @@ pub mod p384_ecdsa;
 pub mod rsa;
 
 /// Measured-boot PCR bank (TPM 2.0-style SHA-256 accumulators) — the shared
-/// measurement core used by the kernel's boot measurement + RaeShield's attestation.
+/// measurement core used by the kernel's boot measurement + AthGuard's attestation.
 pub mod pcr;
 
 const BLAKE2B_IV: [u64; 8] = [

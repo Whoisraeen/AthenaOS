@@ -149,16 +149,16 @@ default-members = [
 version = "0.0.1"
 edition = "2021"
 license = "MPL-2.0"
-authors = ["RaeenOS contributors"]
-repository = "https://github.com/raeenos/raeenos"
+authors = ["AthenaOS contributors"]
+repository = "https://github.com/athenaos/athenaos"
 
-# Vendored aml crate (rust-osdev aml 0.16.4) with RaeenOS fixes: Athena's
+# Vendored aml crate (rust-osdev aml 0.16.4) with AthenaOS fixes: Athena's
 # AMI/AMD firmware uses AML constructs 0.16.4 doesn't parse (MasterChecklist
 # Phase 1.4 — DSDT UnexpectedByte(0x5B..) → empty namespace → no _PRT/EC).
 # Patched here so the kernel and host tools (tools/aml_probe) share the fix.
 [patch.crates-io]
 aml = { path = "components/vendored/aml" }
-# Vendored linked_list_allocator 0.10.6 (phil-opp, MIT/Apache-2.0) with RaeenOS
+# Vendored linked_list_allocator 0.10.6 (phil-opp, MIT/Apache-2.0) with AthenaOS
 # freelist hardening: the intrusive `Hole.next` link is stored XOR-obfuscated +
 # location-tied and validated on every deref (fail-closed panic on corruption).
 # Always-on in the default build; hardens BOTH the kernel heap and the

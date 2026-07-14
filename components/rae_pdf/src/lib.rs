@@ -1,6 +1,6 @@
 //! # RaePdf — a never-panic, `no_std` PDF reader (PDF 1.4–1.7 subset).
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy ("how to actually win" — let people
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy ("how to actually win" — let people
 //! switch without conscious effort) and criterion #5, "open my PDFs": a Windows/
 //! macOS switcher arrives with a folder of PDFs, and "does my OS open my files" is
 //! table stakes for a daily driver. This crate is the from-scratch **reader** the
@@ -56,7 +56,7 @@
 //! The host KAT suite at the bottom (`cargo test -p rae_pdf`) is the proof: it
 //! hand-assembles minimal valid PDFs in-test (classic `xref` AND an xref **stream**,
 //! uncompressed AND FlateDecode'd content via rae_deflate's compressor) and asserts
-//! exact page counts and extracted text (`"Hello, RaeenOS!"`), TJ-array kerning
+//! exact page counts and extracted text (`"Hello, AthenaOS!"`), TJ-array kerning
 //! reassembly, literal-escape + hex-string decoding, and a hostile battery
 //! (non-PDF, truncated, bad startxref, reference cycle, huge object count, seeded
 //! fuzz) that all return `Err` with zero panics.

@@ -1,4 +1,4 @@
-//! raelangd — RaeenOS userspace Rae-script interpreter daemon.
+//! raelangd — AthenaOS userspace Rae-script interpreter daemon.
 //!
 //! Concept §Customization Engine: "Scripting layer — Swift scripts for
 //! automation, no PowerShell archaeology required." The kernel runs

@@ -22,10 +22,10 @@ glue that drives that encoder. This spec does NOT re-derive the encoder either.
 
 Same north-star clause the landed seams quote, already verbatim in `kernel/src/arch/mod.rs`:
 
-> "RaeenOS refuses ISA lock-in: the kernel sits on a clean `arch::` abstraction layer (boot, **MMU**,
+> "AthenaOS refuses ISA lock-in: the kernel sits on a clean `arch::` abstraction layer (boot, **MMU**,
 > interrupts, timers, SMP, context switch, syscall entry, firmware discovery) so the same OS boots
 > x86_64, aarch64 (ARM 64-bit), and i686 (32-bit x86) — each proven independently."
-> (RaeenOS_Concept.md §Architecture Reach)
+> (LEGACY_GAMING_CONCEPT.md §Architecture Reach)
 
 The MMU is the load-bearing word in that clause. x86_64 has **one** translation root (`CR3`) and
 maps the kernel into the higher half of every address space; aarch64 has **two** (`TTBR1_EL1`

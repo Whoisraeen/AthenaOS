@@ -69,7 +69,7 @@ where
             def_store(),
             def_to_integer(),
             def_cond_ref_of(),
-            // RaeenOS additions (Phase 1.4): expression opcodes real AMD/AMI
+            // AthenaOS additions (Phase 1.4): expression opcodes real AMD/AMI
             // firmware evaluates at table-load time (e.g. OperationRegion
             // offsets built with Add/Or/ShiftLeft over DerefOf(Index(pkg, n))).
             binary_integer_op(opcode::DEF_SUBTRACT_OP, "DefSubtract", |l, r| l.wrapping_sub(r)),
@@ -144,7 +144,7 @@ where
         .map(|((), result)| Ok(result))
 }
 
-/// RaeenOS addition (Phase 1.4): `DefAcquire := ExtOpPrefix 0x23 MutexObject
+/// AthenaOS addition (Phase 1.4): `DefAcquire := ExtOpPrefix 0x23 MutexObject
 /// Timeout(WordData)`. Boot-time AML runs single-threaded under the
 /// interpreter lock, so acquisition always succeeds immediately — returns
 /// `Integer(0)` ("not timed out", §19.6.2). The mutex operand is parsed and
@@ -162,7 +162,7 @@ where
         .map(|((), result)| Ok(result))
 }
 
-/// RaeenOS addition (Phase 1.4): `DefWait := ExtOpPrefix 0x25 EventObject
+/// AthenaOS addition (Phase 1.4): `DefWait := ExtOpPrefix 0x25 EventObject
 /// Operand(timeout ms)`. Nothing signals AML events during boot, so waiting
 /// can never complete — return `Integer(ones)` ("timed out", §19.6.145)
 /// immediately instead of stalling the boot for the timeout.
@@ -181,7 +181,7 @@ where
         .map(|((), result)| Ok(result))
 }
 
-/// RaeenOS addition (Phase 1.4): shared shape for the two-operand integer
+/// AthenaOS addition (Phase 1.4): shared shape for the two-operand integer
 /// expression opcodes (`Op := <opcode> Operand Operand Target`). Same
 /// structure as [`def_add`]/[`def_and`], parameterized on the operator.
 fn binary_integer_op<'a, 'c>(
@@ -210,7 +210,7 @@ where
         .map(|((), result)| Ok(result))
 }
 
-/// RaeenOS addition (Phase 1.4): `DefNot := 0x80 Operand Target` — bitwise NOT.
+/// AthenaOS addition (Phase 1.4): `DefNot := 0x80 Operand Target` — bitwise NOT.
 fn def_not<'a, 'c>() -> impl Parser<'a, 'c, AmlValue>
 where
     'c: 'a,
@@ -229,7 +229,7 @@ where
         .map(|((), result)| Ok(result))
 }
 
-/// RaeenOS addition (Phase 1.4): `DefSizeOf := 0x87 SuperName` — the byte
+/// AthenaOS addition (Phase 1.4): `DefSizeOf := 0x87 SuperName` — the byte
 /// length of a Buffer/String or the element count of a Package. The operand is
 /// parsed as a TermArg, which resolves a name to its value.
 fn def_size_of<'a, 'c>() -> impl Parser<'a, 'c, AmlValue>
@@ -258,7 +258,7 @@ where
         .map(|((), result)| Ok(result))
 }
 
-/// RaeenOS addition (Phase 1.4): `DefDerefOf := 0x83 ObjReference`.
+/// AthenaOS addition (Phase 1.4): `DefDerefOf := 0x83 ObjReference`.
 ///
 /// We do not model first-class object references: [`def_index`] already
 /// yields the indexed ELEMENT's value, so dereferencing is the identity on
@@ -274,7 +274,7 @@ where
         .map(|((), value)| Ok(value))
 }
 
-/// RaeenOS addition (Phase 1.4): `DefIndex := 0x88 BuffPkgStrObj IndexValue
+/// AthenaOS addition (Phase 1.4): `DefIndex := 0x88 BuffPkgStrObj IndexValue
 /// Target`. Yields the VALUE of the indexed element (see [`def_deref_of`] for
 /// the reference-model simplification): Package → element, Buffer/String →
 /// byte as an Integer.
@@ -1009,7 +1009,7 @@ where
                 } else {
                     None
                 };
-                // RaeenOS addition: name + arity visibility — arg-count
+                // AthenaOS addition: name + arity visibility — arg-count
                 // mismatches desync the byte stream and surface as confusing
                 // pkg-length overruns far from the cause.
                 log::trace!("MethodInvocation: {} consumes {:?} args", full_path, num_args);

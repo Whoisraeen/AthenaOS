@@ -75,7 +75,7 @@ impl RaeGfxQueue {
         for packet in commands {
             // Check for ring saturation/overflow conditions
             if (current_head + 1) % ring_depth == current_tail {
-                return Err("RaeGFX Error: Direct GPU Command Ring Buffer Saturated.");
+                return Err("AthGFX Error: Direct GPU Command Ring Buffer Saturated.");
             }
 
             // Calculate slot offset and perform a volatile copy into the mapped PCIe/VirtIO space

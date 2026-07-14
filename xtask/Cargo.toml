@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "Build automation for RaeenOS — builds the kernel, creates a bootable image, and launches QEMU."
+description = "Build automation for AthenaOS — builds the kernel, creates a bootable image, and launches QEMU."
 
 [dependencies]
 bootloader = "0.11"

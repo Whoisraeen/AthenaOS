@@ -1,4 +1,4 @@
-//! Unified input/controller subsystem for RaeenOS.
+//! Unified input/controller subsystem for AthenaOS.
 //!
 //! Provides a hardware-agnostic event pipeline for keyboards, mice, gamepads,
 //! and touch devices — with first-class support for DualSense (haptics,

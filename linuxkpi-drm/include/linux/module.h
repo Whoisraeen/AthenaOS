@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0 */
 /*
  * <linux/module.h> shim (MPL). amdgpu uses this mostly for the MODULE_*()
- * registration macros (firmware manifest, params, license). On RaeenOS the
+ * registration macros (firmware manifest, params, license). On AthenaOS the
  * driver is a userspace daemon, not a loadable module, so these macros are
  * compile-time no-ops — but MODULE_FIRMWARE() strings are still meaningful (the
  * blob manifest), so we keep them as discardable annotations.

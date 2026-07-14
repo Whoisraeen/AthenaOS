@@ -1,12 +1,12 @@
-# RaeBridge real-MSVC-CRT ABI spec — GS base + W^X mprotect
+# AthBridge real-MSVC-CRT ABI spec — GS base + W^X mprotect
 
 **Status:** SPEC ONLY. No `rae_abi`, `syscall.rs`, or kernel file is edited by
 this document. The implementation is gated on the kernel context-switch tree
 cooling (the GS save/restore lands in `scheduler.rs`, which is concurrently
 dirty). This is the design that lets the architect land `[interface]` + kernel
-impl + RaeBridge wiring together cleanly when the tree is safe.
+impl + AthBridge wiring together cleanly when the tree is safe.
 
-**Concept line served:** §Compatibility — "RaeBridge runs Windows apps natively"
+**Concept line served:** §Compatibility — "AthBridge runs Windows apps natively"
 and the gaming thesis ("Steam day one or there is no gaming OS"). This is the
 gate from "a hand-built PE runs" (`testpe` → `ExitProcess(42)` → exit 42,
 QEMU-proven) to "a real MSVC-compiled `.exe` runs."
@@ -23,7 +23,7 @@ the TLS array (`gs:[0x58]`), the PEB pointer (`gs:[0x60]`), and `LastError`
 (`gs:[0x68]`). `__readgsqword(0x30)` is emitted inline all over the CRT and
 Win32 shims.
 
-RaeBridge's `components/raebridge/src/ldr.rs` **already** builds an
+AthBridge's `components/raebridge/src/ldr.rs` **already** builds an
 offset-correct `Teb`/`Peb`/`RtlUserProcessParameters` set
 (`ProcessEnv::build`), and `ProcessEnv::gs_base()` already returns the TEB
 address. Two things are missing, both kernel/ABI work:
@@ -34,7 +34,7 @@ address. Two things are missing, both kernel/ABI work:
    once, the next scheduler switch-in would lose it (exactly the bug
    `Task::fs_base` was created to solve for FS/TLS).
 
-Plus a near-term constraint: RaeShield will enforce W^X, and `SYS_MMAP` today
+Plus a near-term constraint: AthGuard will enforce W^X, and `SYS_MMAP` today
 maps every anonymous page `PRESENT | WRITABLE | USER_ACCESSIBLE` with **no**
 `NO_EXECUTE` bit — i.e. RWX. The loader copies + relocates `.text` into a
 writable mapping and then needs to flip it RW→RX. There is no `mprotect` today.
@@ -43,7 +43,7 @@ writable mapping and then needs to flip it RW→RX. There is no `mprotect` today
 
 ## 1. The hard part: GS base collides with the kernel's per-CPU scheme
 
-This is **not** a clean mirror of `fs_base`. RaeenOS uses the GS base MSRs for
+This is **not** a clean mirror of `fs_base`. AthenaOS uses the GS base MSRs for
 its own per-CPU bookkeeping, and a naive `sys_set_gs_base` breaks SMP. The
 implementer MUST understand the existing scheme before touching it.
 
@@ -70,7 +70,7 @@ implementer MUST understand the existing scheme before touching it.
 ### The collision, precisely
 
 If `sys_set_gs_base(TEB)` simply writes `IA32_GS_BASE = TEB`, then the moment a
-RaeBridge guest task is running in user mode and takes an interrupt or makes a
+AthBridge guest task is running in user mode and takes an interrupt or makes a
 syscall, the kernel's `current_cpu_id()` (read after the inner `swapgs`) sees
 the TEB address — a large virtual address — and the defense clamp silently
 returns CPU `0`. On a multi-CPU boot that mis-attributes per-CPU state. It also
@@ -105,7 +105,7 @@ is *why* the impl is gated on the kernel cooling — do it as one careful slice,
 not interleaved with other context-switch churn.
 
 > Alternative considered and rejected: keep CPU id in the active GS base and
-> have RaeBridge guests use a software TEB shim (translate `gs:[off]` at
+> have AthBridge guests use a software TEB shim (translate `gs:[off]` at
 > instruction-decode time). Rejected — it defeats "runs Windows code natively
 > in-process," forces per-instruction emulation of every CRT `gs:` access, and
 > contradicts `exec.rs`'s "sys_mmap-backed memory is directly executable" model.
@@ -152,7 +152,7 @@ Mirror `SYS_SET_FS_BASE` (`syscall.rs` arm 126) exactly:
 Add to `kernel/src/task.rs` `struct Task` (next to `pub fs_base: u64`):
 
 ```rust
-/// Win32 TEB pointer for RaeBridge guests (the user-visible GS base).
+/// Win32 TEB pointer for AthBridge guests (the user-visible GS base).
 /// 0 for native/Linux tasks. Saved/restored across context switches like
 /// fs_base — see scheduler.rs. SYS_SET_GS_BASE writes it.
 pub gs_base: u64,
@@ -204,7 +204,7 @@ moved off the active GS base (§1.1). Document this lock-step in the impl.
 > Implementation note on `wrmsr` cost: like `fs_base`, the write is
 > conditional (`new_gs != old_gs`), so native/Linux tasks (both `0`) never pay
 > the `wrmsr` on a switch — the cost lands only when scheduling to/from a
-> RaeBridge guest.
+> AthBridge guest.
 
 > FSGSBASE note: the kernel writes GS via the MSR (`KernelGsBase::write`), not
 > `wrgsbase`, matching the `arch_prctl(ARCH_SET_FS)` comment that "QEMU's
@@ -231,7 +231,7 @@ writes the same `Task::gs_base` field.
 | rae_abi const | `pub const SYS_MPROTECT: u64 = 283;` |
 | args | `rdi = addr`, `rsi = len`, `rdx = prot` |
 | rax | `0` on success; `u64::MAX` on bad range / unmapped page / disallowed transition |
-| cap gate | **none today**, but see RaeShield W^X interaction below. The operation can only narrow/adjust protections on the caller's *own* already-mapped user pages; it maps nothing new and reaches no other address space. |
+| cap gate | **none today**, but see AthGuard W^X interaction below. The operation can only narrow/adjust protections on the caller's *own* already-mapped user pages; it maps nothing new and reaches no other address space. |
 | sandbox class | allowed in every `SandboxLevel` including safe mode (no block-device write; pure page-flag edit on the task's own mapping). |
 | ABI_VERSION | no bump (additive number). |
 
@@ -259,7 +259,7 @@ it is a local ABI constant, not an imported architecture.)
 |---|---|---|
 | contains `PROT_WRITE` | `WRITABLE` | else cleared |
 | does NOT contain `PROT_EXEC` | `NO_EXECUTE` set | else cleared (executable) |
-| always (for any non-NONE) | `PRESENT \| USER_ACCESSIBLE` | RaeBridge pages are user pages |
+| always (for any non-NONE) | `PRESENT \| USER_ACCESSIBLE` | AthBridge pages are user pages |
 | `PROT_NONE` | clear `PRESENT` (or `WRITABLE`+`NO_EXECUTE`, present) | spec leaves present-but-inaccessible as the simpler choice; document which |
 
 `PROT_READ` is implicit on x86_64 (no per-page read-disable independent of
@@ -286,34 +286,34 @@ present); a present user page is always readable. So the meaningful flips are
    WHOLE range is mapped (step 3) *before* flipping any page, so the flip loop
    cannot fail partway. This makes it atomic in practice.
 
-### RaeShield W^X interaction
+### AthGuard W^X interaction
 
-This syscall is the mechanism RaeShield's W^X policy will use, and is also the
+This syscall is the mechanism AthGuard's W^X policy will use, and is also the
 thing the policy must *constrain*:
 
 - **Today (W^X not yet enforced):** `SYS_MMAP` maps RWX, so the RW→RX flip is an
   optional hardening step; the guest would run even without it.
-- **When RaeShield enforces W^X (Phase 9):** `SYS_MMAP` should stop setting the
+- **When AthGuard enforces W^X (Phase 9):** `SYS_MMAP` should stop setting the
   execute permission by default (map RW + `NO_EXECUTE`), and `SYS_MPROTECT`
   becomes the *only* way to make a page executable — and the policy gate lives
   HERE: a `PROT_WRITE | PROT_EXEC` request (W+X simultaneously) is the thing
-  RaeShield refuses. The spec'd rule:
+  AthGuard refuses. The spec'd rule:
 
   > `SYS_MPROTECT` with both `PROT_WRITE` and `PROT_EXEC` set is **rejected**
   > under an active W^X policy (`u64::MAX`). A page may be writable OR
   > executable, never both at once. RW→RX (drop write, add exec) and RX→RW (the
   > JIT/relocation re-patch case) are the allowed transitions.
 
-  RaeBridge's loader fits this: it mmaps RW, copies+relocates, then mprotects
+  AthBridge's loader fits this: it mmaps RW, copies+relocates, then mprotects
   `.text` to `PROT_READ | PROT_EXEC` (W cleared as X is set) — never W+X.
 - Until the policy lands, `SYS_MPROTECT` honors the requested bits verbatim
   (including W+X) so bring-up isn't blocked; the W^X refusal is a one-line gate
-  added when RaeShield flips enforcement on. Flag this clearly so the gate is
+  added when AthGuard flips enforcement on. Flag this clearly so the gate is
   not forgotten (`// MasterChecklist Phase 9: refuse W+X under W^X policy`).
 
 ---
 
-## 4. The RaeBridge-side sequence
+## 4. The AthBridge-side sequence
 
 This is the order `exec.rs::load_pe_executable` (and the not-yet-written
 "spawn + jump to entry" step its docstring names) wires up. Steps 1–4 already
@@ -353,10 +353,10 @@ self-pointer consistency `env.teb.self_ptr == env.gs_base()` is already asserted
 in `ldr.rs` tests (`assert_eq!(env.teb.self_ptr, env.gs_base())`).
 
 **Lifetime constraint (carry into the wiring):** the `Box<ProcessEnv>` whose
-address is handed to `sys_set_gs_base` MUST outlive the guest thread. RaeBridge
+address is handed to `sys_set_gs_base` MUST outlive the guest thread. AthBridge
 runs the guest in-process, so the `ProcessEnv` must be owned by the long-lived
 per-process bridge state, not a stack temporary — dropping it dangles the GS
-base. (This is a RaeBridge-side correctness note, not a kernel one.)
+base. (This is a AthBridge-side correctness note, not a kernel one.)
 
 ---
 
@@ -398,9 +398,9 @@ Layering (cheapest first, per TESTING_STRATEGY):
 
 A real CRT binary that faults (AV / divide / `__try`/`__except`) needs the
 kernel to deliver the fault to the guest's `__C_specific_handler` via the
-`.pdata`/`.xdata` unwind tables RaeBridge already parses
+`.pdata`/`.xdata` unwind tables AthBridge already parses
 (`seh::parse_pdata`/`seh.rs`, host-KAT'd 14/14 per the SEH-engine memory). That
-requires kernel signal/fault plumbing: a CPU fault in a RaeBridge guest must be
+requires kernel signal/fault plumbing: a CPU fault in a AthBridge guest must be
 trapped, translated to an `EXCEPTION_RECORD` + `CONTEXT`, and the guest's
 language handler invoked on the guest stack, with continue/unwind semantics.
 
@@ -416,7 +416,7 @@ to be written). It is the next gate AFTER this one — a CRT binary first has to
 |---|---|---|
 | `[interface]` commit | **architect (opus, sole `rae_abi` editor)** | `SYS_SET_GS_BASE = 282`, `SYS_MPROTECT = 283`, `PROT_*` consts in `rae_abi`; rows in `docs/SYSCALL_TABLE.md` (new Block 33); ungated, all-sandbox, no `ABI_VERSION` bump (additive numbers). Lands WITH the dispatch arms. |
 | kernel impl | **raeen-kernel** | (a) `Task::gs_base` field + `0` init at the 4 ctor sites; (b) the dispatch arms 282/283 in `syscall.rs` (282 writes `KernelGsBase`; 283 walks+flips PTEs + TLB flush); (c) GS save/restore at the 3 `scheduler.rs` switch sites mirroring `fs_base`; (d) move `current_cpu_id()` off the active GS base onto the kernel-GS per-CPU `cpu_id` field, and audit interrupt-path callers. **Gated on the context-switch tree cooling** (touches `scheduler.rs`). |
-| RaeBridge wiring | **raeen-compat** | `syscalls.rs` wrappers `sys_set_gs_base`/`sys_mprotect`; `exec.rs` steps 4b/5/6 (mprotect `.text` RX, `set_gs_base(env.gs_base())`, jump entry); own the `ProcessEnv` lifetime; the tiny gs-PE FAIL-able smoketest + host KAT for the prot math. |
+| AthBridge wiring | **raeen-compat** | `syscalls.rs` wrappers `sys_set_gs_base`/`sys_mprotect`; `exec.rs` steps 4b/5/6 (mprotect `.text` RX, `set_gs_base(env.gs_base())`, jump entry); own the `ProcessEnv` lifetime; the tiny gs-PE FAIL-able smoketest + host KAT for the prot math. |
 
 The architect lands the `[interface]` (constants + table) + the kernel dispatch
 + the scheduler restore as one coordinated change once the kernel context-switch

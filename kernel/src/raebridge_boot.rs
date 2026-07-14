@@ -1,6 +1,6 @@
-//! RaeBridge boot-time smoketest.
+//! AthBridge boot-time smoketest.
 //!
-//! Concept §Compatibility Strategy: "RaeBridge runs Windows apps on day
+//! Concept §Compatibility Strategy: "AthBridge runs Windows apps on day
 //! one." That promise has to be measurable in the boot log from day one
 //! too.
 //!
@@ -180,7 +180,7 @@ pub fn run_boot_smoketest() {
     let dll_count = registry.dll_count();
     let total_funcs = total_function_count(&registry);
     crate::serial_println!(
-        "[ OK ] RaeBridge DLL registry: {} DLLs, {} Win32 names reachable for PE imports",
+        "[ OK ] AthBridge DLL registry: {} DLLs, {} Win32 names reachable for PE imports",
         dll_count,
         total_funcs,
     );
@@ -459,7 +459,7 @@ pub fn seh_dump_text() -> String {
     use core::fmt::Write;
     let ok = raebridge::seh::run_self_test();
     let mut s = String::new();
-    let _ = writeln!(s, "RaeBridge x64 SEH engine (MasterChecklist Phase 11.2)");
+    let _ = writeln!(s, "AthBridge x64 SEH engine (MasterChecklist Phase 11.2)");
     let _ = writeln!(s, "self_test: {}", if ok { "PASS" } else { "FAIL" });
     let _ = writeln!(
         s,

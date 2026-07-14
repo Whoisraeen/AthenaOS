@@ -91,7 +91,7 @@ int amdgpu_seamless = -1;
 int amdgpu_agp = -1;
 int amdgpu_wbrf = -1;
 int amdgpu_damage_clips = -1;
-/* rebar DISABLED for RaeenOS bring-up: resizable-BAR reprograms BAR0, which a
+/* rebar DISABLED for AthenaOS bring-up: resizable-BAR reprograms BAR0, which a
  * VFIO-passthrough host (QEMU/KVM) cannot remap (KVM_SET_USER_MEMORY_REGION at a
  * torn-down all-ones BAR base -> abort). Small-BAR mode is a fully-supported
  * amdgpu configuration (systems without rebar run this way) and is fine for the

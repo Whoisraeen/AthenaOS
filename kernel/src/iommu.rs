@@ -1,6 +1,6 @@
 //! Intel VT-d IOMMU driver — DMA sandboxing for device isolation.
 //!
-//! Every driver in RaeenOS runs in its own protection domain with
+//! Every driver in AthenaOS runs in its own protection domain with
 //! IOMMU enforcement. A misbehaving GPU or NIC driver can crash its
 //! service but cannot corrupt kernel memory or other devices' DMA
 //! buffers.

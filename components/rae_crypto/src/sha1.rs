@@ -7,7 +7,7 @@
 //! It is present here for **exactly one reason: HOTP / TOTP authenticator-app
 //! compatibility** (RFC 4226 / RFC 6238). Every Google Authenticator / Authy /
 //! 1Password-style code in the world is `HMAC-SHA-1` by default, and the format is
-//! frozen by interoperability — to read a user's existing 2FA secrets RaeenOS must
+//! frozen by interoperability — to read a user's existing 2FA secrets AthenaOS must
 //! speak HMAC-SHA-1.
 //!
 //! Crucially, the collision weakness does **not** apply to this use: HMAC's

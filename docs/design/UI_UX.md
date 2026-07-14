@@ -1,12 +1,12 @@
-# RaeenOS — UI/UX Master Spec ("The Perfect Mashup")
+# AthenaOS — UI/UX Master Spec ("The Perfect Mashup")
 
-> *"Built for people who care about how things feel."* — `RaeenOS_Concept.md`
+> *"Built for people who care about how things feel."* — `LEGACY_GAMING_CONCEPT.md`
 >
 > This is the **whole-OS layout + experience bible** for `raeen-ui` and `raeen-shell-apps`.
 > It is the north star: the single document that describes every surface of the OS and
 > the *why* behind it. It does **not** restate token-level detail — that lives in the
 > per-surface specs it indexes. When this doc and a per-surface spec disagree on a
-> number, the per-surface spec wins; when either disagrees with `RaeenOS_Concept.md`,
+> number, the per-surface spec wins; when either disagrees with `LEGACY_GAMING_CONCEPT.md`,
 > the Concept doc wins.
 
 ## How to use this doc
@@ -29,7 +29,7 @@
 ## 1. The thesis — the perfect mashup
 
 > Windows got bloated chasing enterprise. macOS locked itself behind taste-as-control.
-> Linux never solved coherence. **RaeenOS takes the best of all three and removes what
+> Linux never solved coherence. **AthenaOS takes the best of all three and removes what
 > everyone hates.**
 
 | We take from | The thing | Why |
@@ -38,13 +38,13 @@
 | **macOS** | Spotlight-speed search, Mission Control overview, Dock polish, traffic-light window controls, *coherence* and motion taste | The "it just feels premium" bar |
 | **Linux** | Total customizability, swappable WM (tile/stack/float) + swappable shell, virtual desktops, keyboard-driven power, no ads/telemetry | The "the user owns the machine" soul |
 
-**The RaeenOS soul on top of the mashup:** Liquid-Glass-grade visuals (§3), one coherent
+**The AthenaOS soul on top of the mashup:** Liquid-Glass-grade visuals (§3), one coherent
 widget system (no Linux inconsistency), Vibe-Mode personalities, GameOS Mode, and
 capability-sandboxed-by-default security — all with **zero** ads, telemetry, or forced
 updates.
 
 **The 10-minute promise:** a switcher from Windows *or* macOS is productive in 10 minutes.
-We ship three **Familiarity Presets** (§6) — *Windows-like*, *macOS-like*, *RaeenOS Native* —
+We ship three **Familiarity Presets** (§6) — *Windows-like*, *macOS-like*, *AthenaOS Native* —
 chosen in OOBE, each a coherent set of taskbar position, window-control side, and hotkeys.
 
 ---
@@ -55,7 +55,7 @@ Distilled from current (2025–26) community complaints. **Every row is a requir
 
 ### 2.1 Windows 11 — the most-hated, fixed
 
-| What people hate | RaeenOS does |
+| What people hate | AthenaOS does |
 |---|---|
 | Start menu is huge, clumsy, not customizable | Compact, instant, **fully customizable** launcher (resize, columns, hide recommendations, all-apps default). §4.3 |
 | Taskbar locked to bottom; can't move it | Taskbar movable to **bottom/top/left/right**, per-monitor. §4.2 |
@@ -71,7 +71,7 @@ Distilled from current (2025–26) community complaints. **Every row is a requir
 
 ### 2.2 macOS — the premium feel, minus the cage
 
-| What people hate | RaeenOS does |
+| What people hate | AthenaOS does |
 |---|---|
 | "Worst window management"; native only vertical splits; needs Rectangle/Magnet | **First-class tiling built in:** keyboard snap to halves/thirds/quarters, Snap Layouts, custom zones. §4.5 |
 | Alt/Cmd-Tab shows one window per app, not all | App-switcher cycles **every window**; per-app sub-cycle too. §4.5 |
@@ -82,29 +82,29 @@ Distilled from current (2025–26) community complaints. **Every row is a requir
 
 ### 2.3 Linux desktop — the freedom, minus the chaos
 
-| What people hate | RaeenOS does |
+| What people hate | AthenaOS does |
 |---|---|
-| Fragmentation — a dozen DEs, none cohesive | **One** first-class shell (RaeShell), one design language — *swappable* but never fragmented. §1, §7 |
-| Inconsistency — scrollbars/widgets differ per app | **One widget system** (RaeUI). Every app uses the same tokens → total visual consistency. §3 |
+| Fragmentation — a dozen DEs, none cohesive | **One** first-class shell (AthShell), one design language — *swappable* but never fragmented. §1, §7 |
+| Inconsistency — scrollbars/widgets differ per app | **One widget system** (AthUI). Every app uses the same tokens → total visual consistency. §3 |
 | HiDPI / fractional scaling is broken | Proper **fractional scaling + per-monitor scale** from day one. §4.16 |
-| App availability | RaeBridge (Windows-app compat) + RaeStore + PWA. (Concept) |
+| App availability | AthBridge (Windows-app compat) + AthStore + PWA. (Concept) |
 | Theming breaks apps / half-themed | Theming is a **first-class signed bundle** (Vibe Mode) the whole stack honors. §4.15 |
 
 ### 2.4 Features users actively want (our answer)
 
-| Want | RaeenOS |
+| Want | AthenaOS |
 |---|---|
-| App store: clean install/uninstall, trials, auto-update, gradated trust | **RaeStore** (.raepkg, Wasm sandbox tiers) |
-| Sandbox mode that makes malware infection impossible | **RaeShield** capabilities — sandbox-by-default, per-app manifests |
-| Central 3rd-party update management | RaeStore unified updates; atomic + rollback |
-| Remote control through NAT/firewalls | RaeSync / remote (Concept) |
+| App store: clean install/uninstall, trials, auto-update, gradated trust | **AthStore** (.raepkg, Wasm sandbox tiers) |
+| Sandbox mode that makes malware infection impossible | **AthGuard** capabilities — sandbox-by-default, per-app manifests |
+| Central 3rd-party update management | AthStore unified updates; atomic + rollback |
+| Remote control through NAT/firewalls | AthSync / remote (Concept) |
 | A real command palette / keyboard-driven everything | **Global Search + Command Palette** (§4.4) — the headline power feature |
 
 ### 2.5 What power users LOVE — we keep and out-execute
 
 Spotlight instant search · Mission Control overview · the Dock · Snap Layouts + Snap Groups +
 FancyZones custom zones · auto-tiling (Pop/COSMIC) · virtual desktops/Spaces · i3/yabai
-keyboard tiling · PowerToys-class utilities. **RaeenOS ships these as defaults, not
+keyboard tiling · PowerToys-class utilities. **AthenaOS ships these as defaults, not
 third-party bolt-ons.**
 
 ---
@@ -169,11 +169,11 @@ Every surface. Each entry: **purpose → layout → the mashup decision → stat
 - **Layout:** centered floating glass palette (Super/Cmd+Space). Instant fuzzy results,
   grouped (Apps / Files / Settings / Actions / Web), keyboard-first, type-to-run.
 - **Mashup:** Spotlight speed + macOS/raycast command-palette power + Windows search breadth —
-  but **100% local** (no Bing, no ads, no telemetry). This is RaeenOS's signature.
+  but **100% local** (no Bing, no ads, no telemetry). This is AthenaOS's signature.
 - **Status:** gap — top WS4 priority.
 
 ### 4.5 Window management — **TODO `window-management.md`**
-- **Purpose:** the multitasking core — RaeenOS's answer to *the* most-hated thing on both
+- **Purpose:** the multitasking core — AthenaOS's answer to *the* most-hated thing on both
   macOS and Windows.
 - **Modes (swappable per the Concept):** **float** (default, macOS-style), **tile** (i3-style
   auto-tiling), **stack**, **hybrid** — a first-class API, switchable live.
@@ -222,25 +222,25 @@ Every surface. Each entry: **purpose → layout → the mashup decision → stat
   inline search highlighting. No nested dead-ends, no legacy dialogs.
 
 ### 4.11 File Manager — **TODO `file-manager.md`**
-- **Purpose:** the modern Explorer/Finder RaeenOS promises.
+- **Purpose:** the modern Explorer/Finder AthenaOS promises.
 - **Layout:** tabs + split/dual panes; sidebar (places, buckets, devices, cloud); fuzzy
   search; batch rename; cut/copy/paste with a clipboard history; path bar (editable);
-  grid/list/column views; quick-look preview (Space). RaeFS per-app buckets surfaced.
+  grid/list/column views; quick-look preview (Space). AthFS per-app buckets surfaced.
 - **Mashup:** Windows tabs + macOS column view + quick-look + Linux dual-pane (Krusader)
   power. Fixes both "Explorer from 2007" and Finder gaps.
 - **Status:** `apps/files` is real (777 LOC, launchable) — audit against this spec + finish.
 
 ### 4.12 First-party app suite — `raeen-shell-apps`
-Coherent, all on RaeUI tokens: **Files, Settings, Terminal, Text Editor, Calculator, Task
+Coherent, all on AthUI tokens: **Files, Settings, Terminal, Text Editor, Calculator, Task
 Manager** (shipped + launchable today), plus planned **Media, Photos, Browser (PWA shell)**.
 Every app: same chrome, same shortcuts, same empty-states, same motion. *Cohesion is the
 product* — this is how we beat Linux's inconsistency.
 
 ### 4.13 Lock / Login / OOBE — **TODO `oobe.md`** (partially in `setup_ui`)
-- **OOBE:** the glass "Welcome to RaeenOS / set up your account" wizard — keep it warm,
-  short, no dark patterns, **no account required** for local use (RaeID is optional). Pick
+- **OOBE:** the glass "Welcome to AthenaOS / set up your account" wizard — keep it warm,
+  short, no dark patterns, **no account required** for local use (AthID is optional). Pick
   the Familiarity Preset (§6) and Vibe here.
-- **Login/Lock:** glass, wallpaper-aware, fast; passkey/biometric-ready (RaeShield).
+- **Login/Lock:** glass, wallpaper-aware, fast; passkey/biometric-ready (AthGuard).
 - **Status:** OOBE renders on iron; must move fully to AA type + the design tokens.
 
 ### 4.14 GameOS Mode — **TODO `gameos.md`** (Concept §GameOS)
@@ -275,7 +275,7 @@ product* — this is how we beat Linux's inconsistency.
 - **Mouse/trackpad:** drag-drop everywhere (pin, move, snap, file-onto-app); gestures
   (3/4-finger workspace + overview + back); hover previews; right-click = one flat complete
   menu (no "show more options").
-- **Touch:** larger hit targets, swipe gestures, on-screen keyboard — RaeUI adapts.
+- **Touch:** larger hit targets, swipe gestures, on-screen keyboard — AthUI adapts.
 - **Controller:** full navigation in GameOS Mode and, optionally, the whole shell.
 - **Cursor:** hardware cursor plane (no lag); the input→photon budget is a perf gate
   (`raeen-perf`).
@@ -290,7 +290,7 @@ Chosen in OOBE, switchable in Settings. Each is a **coherent set**, not à-la-ca
 |---|---|---|---|---|
 | **Windows-like** | Bottom, Start left, grouped | Min/Max/Close **right** | Start-button + search-in-taskbar | Float + Snap Layouts |
 | **macOS-like** | Dock bottom (magnify), global menu bar on | Traffic-lights **left** | Spotlight (Cmd+Space) | Float + Stage-style |
-| **RaeenOS Native** | Bottom mica, Start center | Traffic-lights left | Command palette (Super+Space) | Hybrid tiling |
+| **AthenaOS Native** | Bottom mica, Start center | Traffic-lights left | Command palette (Super+Space) | Hybrid tiling |
 
 The underlying shell is the same; presets just set defaults. Everything stays tweakable.
 
@@ -304,7 +304,7 @@ The underlying shell is the same; presets just set defaults. Everything stays tw
 - ❌ Bundled assistant / web-search injected into local search.
 - ❌ Dark patterns in OOBE / settings (no "are you sure you don't want…", no buried opt-outs).
 - ❌ Account required for local use.
-- ❌ Inconsistent widgets — every surface uses RaeUI tokens, no exceptions.
+- ❌ Inconsistent widgets — every surface uses AthUI tokens, no exceptions.
 - ❌ The 8×8 bitmap font on any user-facing surface.
 - ❌ Locking customization away "for your own good."
 

@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS CSV (RFC 4180) parser + serializer — the daily-driver "open my .csv
-# and see a table" gap (RaeenOS_Concept.md §"the user owns the machine": your
+# AthenaOS CSV (RFC 4180) parser + serializer — the daily-driver "open my .csv
+# and see a table" gap (LEGACY_GAMING_CONCEPT.md §"the user owns the machine": your
 # data files open with no cloud, no account, no friction). Foundational,
 # zero-dep, never-panic infrastructure: a Files Quick Look table, a spreadsheet
 # viewer, settings/data import-export all share one correct CSV core.

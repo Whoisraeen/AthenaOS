@@ -1,6 +1,6 @@
 //! # RaeDiff — a never-panic, `no_std` diff/patch engine.
 //!
-//! RaeenOS_Concept.md §"atomic CoW updates + one-click rollback": an OS update
+//! LEGACY_GAMING_CONCEPT.md §"atomic CoW updates + one-click rollback": an OS update
 //! should ship **only the changed bytes**, not a full image, then land atomically
 //! into the inactive A/B slot. The byte-delta primitive here ([`byte_delta`] /
 //! [`apply_delta`]) is exactly that on-the-wire update format: a `Copy{src,len}`

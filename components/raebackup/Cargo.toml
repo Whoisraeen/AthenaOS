@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeBackup — backup and restore system for RaeenOS"
+description = "RaeBackup — backup and restore system for AthenaOS"
 
 [dependencies]
 # Real Argon2id (password KDF), SHA-256 (content hashes), and HMAC-SHA256

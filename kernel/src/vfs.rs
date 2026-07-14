@@ -2,7 +2,7 @@
 //!
 //! Provides `SYS_OPEN`, `SYS_READ`, `SYS_WRITE`, `SYS_CLOSE`, `SYS_SEEK`, `SYS_STAT`
 //! handling over a true directory tree structure, mount points (e.g., `/proc`, `/system`),
-//! and file endpoints (e.g., RaeFS, initramfs).
+//! and file endpoints (e.g., AthFS, initramfs).
 
 use alloc::collections::BTreeMap;
 use alloc::string::{String, ToString};
@@ -562,7 +562,7 @@ pub fn unlink_at(path: &str) -> Result<(), u64> {
         }
     }
 
-    if crate::raefs::RaeFS::delete_file(&path) {
+    if crate::raefs::AthFS::delete_file(&path) {
         return Ok(());
     }
     Err(E_VFS_NOT_FOUND)
@@ -618,7 +618,7 @@ pub fn rename_at(old_path: &str, new_path: &str) -> Result<(), u64> {
         }
     }
 
-    if crate::raefs::RaeFS::rename_file(&old_path, &new_path) {
+    if crate::raefs::AthFS::rename_file(&old_path, &new_path) {
         return Ok(());
     }
     Err(E_VFS_NOT_FOUND)
@@ -637,7 +637,7 @@ pub fn open_path(path: &str) -> Option<Arc<dyn Inode>> {
 /// building the directory's dirent listing — `open_path` returns a
 /// `DirentStreamInode` for a directory, which enumerates every entry, so using
 /// it to `stat` a directory does a full readdir (and `stat("/")` could also fall
-/// through to the RaeFS `find_or_create_file` fallback). `stat`/`statx` use this
+/// through to the AthFS `find_or_create_file` fallback). `stat`/`statx` use this
 /// so a directory resolves fast and with the correct `S_IFDIR` mode — a real
 /// Linux binary stat'ing a path (extremely common) was stalling on it.
 pub fn is_dir(path: &str) -> bool {
@@ -825,11 +825,11 @@ fn open_path_exact(path: &str) -> Option<Arc<dyn Inode>> {
     // scratch/lock files. Create-on-open at the mount root (matches the /home
     // RAM-file behaviour); the data lives in TMPFS_INSTANCES keyed by inode, so
     // a write then a fresh read-open of the same name see the same bytes.
-    // The RaeBridge Windows drive namespace `C:\...` maps to `/mnt/win_<drive>/...`
+    // The AthBridge Windows drive namespace `C:\...` maps to `/mnt/win_<drive>/...`
     // (raebridge::translate_win_path). Back it with create-on-open tmpfs so a guest
     // `CreateFileW(CREATE_ALWAYS)` + `WriteFile` actually persists (and a later read
     // sees the bytes) — without it a guest save fails ERROR_FILE_NOT_FOUND because
-    // the underlying `open_path` never created. (The Concept-ideal per-app RaeFS
+    // the underlying `open_path` never created. (The Concept-ideal per-app AthFS
     // bucket binding for `C:\` is a follow-up; RAM-backed tmpfs proves the save/load
     // round-trip now.)
     if norm.starts_with("/tmp/") || norm.starts_with("/dev/shm/") || norm.starts_with("/mnt/win_") {
@@ -865,7 +865,7 @@ fn open_path_exact(path: &str) -> Option<Arc<dyn Inode>> {
         }
     }
 
-    // 3. Session home files (RAM-backed when RaeFS absent)
+    // 3. Session home files (RAM-backed when AthFS absent)
     if let Some(inode) = open_or_create_home_file(&norm) {
         return Some(inode);
     }
@@ -895,8 +895,8 @@ fn open_path_exact(path: &str) -> Option<Arc<dyn Inode>> {
             return Some(Arc::new(InitramfsInode { data }));
         }
     }
-    if let Some(inode_id) = crate::raefs::RaeFS::find_or_create_file(&norm) {
-        return Some(Arc::new(crate::raefs::RaeFSInode { id: inode_id }));
+    if let Some(inode_id) = crate::raefs::AthFS::find_or_create_file(&norm) {
+        return Some(Arc::new(crate::raefs::AthFSInode { id: inode_id }));
     }
     None
 }

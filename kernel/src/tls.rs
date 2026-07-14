@@ -1750,7 +1750,7 @@ pub fn dump_text() -> alloc::string::String {
     };
     let mut out = String::new();
     out.push_str(&alloc::format!(
-        "# RaeenOS TLS 1.3 ({} connection(s), {} total handshakes)\n",
+        "# AthenaOS TLS 1.3 ({} connection(s), {} total handshakes)\n",
         mgr.connections.len(),
         mgr.total_handshakes,
     ));

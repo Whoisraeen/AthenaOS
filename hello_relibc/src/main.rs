@@ -45,7 +45,7 @@ fn run_posix_smoke() {
             }
         }
 
-        // Pipes: not implemented on RaeenOS yet — expect failure.
+        // Pipes: not implemented on AthenaOS yet — expect failure.
         let mut fds = [0i32; 2];
         if pipe(fds.as_mut_ptr()) == 0 {
             printf(b"[hello_relibc] POSIX pipe: unexpected success\n\0".as_ptr());

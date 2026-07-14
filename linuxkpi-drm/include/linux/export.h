@@ -3,7 +3,7 @@
  * <linux/export.h> shim (MPL-2.0, original work).
  *
  * EXPORT_SYMBOL marks a kernel symbol as visible to other modules. In the
- * RaeenOS link model the whole amdgpu object set links against raeen_linuxkpi as
+ * AthenaOS link model the whole amdgpu object set links against raeen_linuxkpi as
  * one unit, so the export annotation is a compile-time no-op — every symbol is
  * already in scope. License boundary (../../README.md): API surface.
  */

@@ -3,7 +3,7 @@
  * <linux/cgroup_dmem.h> shim (MPL-2.0, original work).
  *
  * Device-memory cgroup accounting — charges VRAM/GTT allocations to a cgroup so a
- * container can be limited. RaeenOS has no dmem cgroup controller (RaeShield owns
+ * container can be limited. AthenaOS has no dmem cgroup controller (AthGuard owns
  * resource policy), so charging always succeeds with "no limit" and eviction is
  * always permitted — the honest answer for an unconstrained bring-up, not a fake
  * (SCOPE.md rule 9). License boundary (../../README.md): API surface.

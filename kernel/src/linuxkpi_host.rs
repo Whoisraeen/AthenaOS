@@ -5,7 +5,7 @@
 //! compiled as a userspace daemon against `components/raeen_linuxkpi`, believe it is
 //! running inside the Linux kernel with Ring-0 privileges. Every privileged call
 //! (`ioremap`, `dma_alloc_coherent`, `request_irq`, PCI config) is intercepted and
-//! translated into native RaeKernel primitives:
+//! translated into native AthKernel primitives:
 //!
 //!   * `ioremap`            → `memory::map_mmio_region` (the device's PCIe BARs)
 //!   * `dma_alloc_coherent` → `memory::allocate_contiguous_frames` + IOMMU sandbox

@@ -128,23 +128,23 @@ fn make_docx(body_inner: &str) -> Vec<u8> {
 #[test]
 fn extract_text_two_paragraphs() {
     let body = "\
-<w:p><w:r><w:t>Hello, RaeenOS!</w:t></w:r></w:p>\
+<w:p><w:r><w:t>Hello, AthenaOS!</w:t></w:r></w:p>\
 <w:p><w:r><w:t>Second paragraph.</w:t></w:r></w:p>";
     let docx = make_docx(body);
 
     let doc = Document::open(&docx).expect("open docx");
     // THE concrete extract_text assert: paragraphs joined by '\n'.
-    assert_eq!(doc.extract_text(), "Hello, RaeenOS!\nSecond paragraph.");
+    assert_eq!(doc.extract_text(), "Hello, AthenaOS!\nSecond paragraph.");
 
     let paras = doc.paragraphs();
     assert_eq!(paras.len(), 2);
     assert_eq!(paras[0].runs.len(), 1);
-    assert_eq!(paras[0].runs[0].text, "Hello, RaeenOS!");
+    assert_eq!(paras[0].runs[0].text, "Hello, AthenaOS!");
     assert_eq!(paras[1].runs[0].text, "Second paragraph.");
 
     // FAIL-ability: if paragraphs were joined by ' ' or '' this flips.
-    assert_ne!(doc.extract_text(), "Hello, RaeenOS!Second paragraph.");
-    assert_ne!(doc.extract_text(), "Hello, RaeenOS! Second paragraph.");
+    assert_ne!(doc.extract_text(), "Hello, AthenaOS!Second paragraph.");
+    assert_ne!(doc.extract_text(), "Hello, AthenaOS! Second paragraph.");
 }
 
 // ─── 2. Multiple runs in one paragraph with bold / italic / underline ───────

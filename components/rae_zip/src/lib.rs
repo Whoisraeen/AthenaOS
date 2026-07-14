@@ -1,6 +1,6 @@
 //! # RaeZip — a never-panic, `no_std` ZIP archive reader (PKZIP / .zip).
 //!
-//! RaeenOS_Concept.md §"The user owns the machine": a daily driver must let
+//! LEGACY_GAMING_CONCEPT.md §"The user owns the machine": a daily driver must let
 //! someone double-click a downloaded `.zip` and see what's inside *without*
 //! installing third-party tools. ZIP is also the container under `.docx`/`.xlsx`/
 //! `.pptx`, `.epub`, PWA bundles, and `.raepkg` app packages — so one correct,
@@ -759,7 +759,7 @@ fn inflate_block(
 // ════════════════════════════════════════════════════════════════════════════
 // ZIP WRITER — build a standard 32-bit (non-ZIP64) archive (APPNOTE.TXT).
 //
-// RaeenOS_Concept.md §"The user owns the machine": a daily driver must let
+// LEGACY_GAMING_CONCEPT.md §"The user owns the machine": a daily driver must let
 // someone *save* a `.docx`/`.xlsx` (both are ZIP containers) and create/export
 // packages — not just read archives. This writer is the inverse of the reader
 // above: every archive it produces is read back byte-correctly by `Archive::open`
@@ -818,7 +818,7 @@ struct PendingEntry {
 ///
 /// Mod-time/date is written as a fixed zero DOS datetime (`0x0000` time,
 /// `0x0021` date = 1980-01-01, the earliest representable DOS date) so output is
-/// deterministic and reproducible — RaeenOS has no wall clock dependency here and
+/// deterministic and reproducible — AthenaOS has no wall clock dependency here and
 /// reproducible archives matter for `.raepkg`/document diffing.
 pub struct ZipWriter {
     entries: Vec<PendingEntry>,
@@ -1194,7 +1194,7 @@ mod tests {
 
     #[test]
     fn open_and_read_stored_and_deflate() {
-        let stored_data = b"Hello, RaeenOS! This is a stored entry.".as_slice();
+        let stored_data = b"Hello, AthenaOS! This is a stored entry.".as_slice();
         let deflate_data =
             b"This entry is wrapped in a DEFLATE stored block (method 8).".as_slice();
 
@@ -1840,7 +1840,7 @@ mod tests {
     /// single round-trip also proves the writer's CRC-32 is correct.
     #[test]
     fn writer_roundtrip_stored_and_deflate() {
-        let stored_data = b"Hello, RaeenOS! A stored entry written by ZipWriter.".as_slice();
+        let stored_data = b"Hello, AthenaOS! A stored entry written by ZipWriter.".as_slice();
         let deflate_data = "Compress me with method 8. ".repeat(40); // repetitive → shrinks
         let third = b"a third tiny stored file".as_slice();
 
@@ -1915,7 +1915,7 @@ mod tests {
             }
         }
         // ~100 KB of compressible data (repeated text).
-        let large = "RaeenOS reproducible package payload. ".repeat(2700);
+        let large = "AthenaOS reproducible package payload. ".repeat(2700);
         assert!(large.len() > 100_000);
 
         let mut w = ZipWriter::new();

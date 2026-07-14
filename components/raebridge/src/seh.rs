@@ -1,5 +1,5 @@
 //! x64 structured-exception-handling (SEH) engine — Concept §Compatibility
-//! Strategy: "RaeBridge runs Windows apps on day one."
+//! Strategy: "AthBridge runs Windows apps on day one."
 //!
 //! Unlike x86 (which threads exception frames through a `FS:[0]` linked list),
 //! x86-64 Windows uses **table-based** exception handling. Every non-leaf
@@ -114,7 +114,7 @@ impl RegContext {
 
 /// Reads 8 bytes of the running process's memory at an absolute virtual
 /// address. The unwinder uses it to fetch saved nonvolatile registers off the
-/// stack and to pop return addresses. In the RaeBridge host process guest VAs
+/// stack and to pop return addresses. In the AthBridge host process guest VAs
 /// are host VAs, so the production impl is a checked raw load; host KATs back it
 /// with [`SliceMemory`] over a `Vec<u8>`. Returns `None` for an unreadable
 /// address (a corrupt or smashed stack must fail the walk, never fault it).

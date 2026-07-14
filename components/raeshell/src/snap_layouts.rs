@@ -1,7 +1,7 @@
-//! Windows 11-style **Snap Layouts** for the RaeenOS desktop.
+//! Windows 11-style **Snap Layouts** for the AthenaOS desktop.
 //!
 //! Concept §"Windows pain points -> our answer": productivity parity with the
-//! best of Win11/macOS window management. RaeenOS already has edge-drag Aero
+//! best of Win11/macOS window management. AthenaOS already has edge-drag Aero
 //! snapping (`tiling_wm::SnapZone`); this adds the *signature* Win11 interaction
 //! it was missing — a flyout of layout **templates** (two-even, large-left,
 //! thirds, quadrants, …) that you open with the Rae key + Z (or by hovering the

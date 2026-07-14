@@ -6,9 +6,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS date/time + locale-aware formatting engine — the reusable civil-date
+# AthenaOS date/time + locale-aware formatting engine — the reusable civil-date
 # core (Howard-Hinnant days-from-civil) plus ISO 8601 and locale-aware date/
-# number/time formatting (RaeenOS_Concept.md global-readiness: the OS must work
+# number/time formatting (LEGACY_GAMING_CONCEPT.md global-readiness: the OS must work
 # in every language and locale, not just en-US). Foundational for the Clock /
 # Calendar apps, log timestamps, scheduling, and the i18n date/number parity gap.
 #

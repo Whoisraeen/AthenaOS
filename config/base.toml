@@ -32,7 +32,7 @@ hello_linuxkpi = {}
 # xtask stamp ELFOSABI_LINUX so SYS_SPAWN routes it through linux_exec.
 linux_hello = { abi = "linux" }
 raebridge_host = {}
-# Per-process RaeBridge launcher: one Windows .exe = one RaeenOS process. The
+# Per-process AthBridge launcher: one Windows .exe = one AthenaOS process. The
 # parent writes a launch target to a well-known VFS path, spawns this, and reaps
 # its exit code (docs/components/raebridge-process-model.md option (b)).
 raebridge_run = {}

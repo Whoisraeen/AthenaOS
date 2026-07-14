@@ -75,7 +75,7 @@ impl core::ops::BitAnd for Rights {
 
 /// One unforgeable token referring to one resource.
 ///
-/// RaeShield model: every privileged operation requires holding the
+/// AthGuard model: every privileged operation requires holding the
 /// appropriate Cap variant with the correct Rights. No parallel
 /// access-control systems — this is the single authority source.
 #[derive(Clone, Copy, Debug)]
@@ -102,7 +102,7 @@ pub enum Cap {
         rights: Rights,
     },
 
-    // ── RaeShield extended capabilities ─────────────────────────────
+    // ── AthGuard extended capabilities ─────────────────────────────
     /// Filesystem access scoped to a subtree.
     Filesystem { root_inode: u64, rights: Rights },
 

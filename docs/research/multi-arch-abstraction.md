@@ -1,17 +1,17 @@
 # Spec: Multi-architecture support (arch:: abstraction + bring-up plan)
 
 Status: RESEARCH / ADR-candidate. Read-only spec — no crate modified by this document.
-Goal served: owner goal criterion #3 — "RaeenOS must boot, run, and install on x86_64
+Goal served: owner goal criterion #3 — "AthenaOS must boot, run, and install on x86_64
 (current), aarch64 (ARM 64-bit), AND i686 (32-bit x86), each proven independently in QEMU."
 
 ## Concept promise served
 
 The Concept doc has **no explicit multi-arch clause** (verified: no `aarch64`/`arm64`/`32-bit`/
-`portab*` token in `RaeenOS_Concept.md`). The closest load-bearing line is the manifesto:
+`portab*` token in `LEGACY_GAMING_CONCEPT.md`). The closest load-bearing line is the manifesto:
 
-> "macOS got locked behind a walled garden of Apple silicon. ... RaeenOS is the third path —
-> a from-scratch, gaming-first, native-feeling OS that treats power users like adults"
-> (RaeenOS_Concept.md §The OS Manifesto)
+> "macOS got locked behind a walled garden of Apple silicon. ... AthenaOS is the third path —
+> a from-scratch, embodiment-first, native-feeling OS that treats power users like adults"
+> (LEGACY_GAMING_CONCEPT.md §The OS Manifesto)
 
 Multi-arch is the *anti-"locked behind Apple silicon"* property: the OS is not welded to one
 ISA the way macOS is welded to Apple silicon. This is an **owner goal criterion that extends
@@ -57,7 +57,7 @@ There is **no `arch::` boundary today.** The kernel is monolithically x86_64. Su
   | `tpm.rs`, `secure_boot.rs`, `efi.rs`, `smbios.rs`, `acpi*.rs` | — | firmware discovery — **x86-PC-firmware-shaped**; aarch64 uses DeviceTree, not ACPI-MADT/legacy |
 
 - **Shared, already arch-clean (no change needed):** scheduler logic (`scheduler.rs` — only the
-  `switch_context` call + per-CPU access are arch), IPC (`ipc.rs`), VFS (`vfs.rs`), RaeFS
+  `switch_context` call + per-CPU access are arch), IPC (`ipc.rs`), VFS (`vfs.rs`), AthFS
   (`raefs.rs`), capability (`capability.rs`), all of `components/*` (the Rae* userspace), the
   net stack above the NIC drivers, crypto. These are pure `no_std`+`alloc` logic.
 
@@ -149,9 +149,9 @@ to the hot context-switch path, which violates "hot path is allocation/indirecti
 | **Firmware discovery** | ACPI (RSDP/MADT/DSDT), SMBIOS, EFI | **DeviceTree (DTB)** | ACPI | `arch::firmware::{discover() -> PlatformTopology}` — abstracts "how do I find CPUs/IRQs/devices" (ACPI-MADT vs DTB). Big secondary seam. |
 | **TPM / secure boot** | TPM 2.0 (TIS/CRB), UEFI secure boot | TPM via DTB or fTPM; UEFI | TPM/TIS | keep behind `arch::firmware`; aarch64 can stub measured-boot initially |
 
-**Stays fully shared (no per-arch copy):** scheduler policy + EDF/SCHED_GAME, MM allocator
-(buddy + slab + heap — *logic*; only the page-table backend is arch), IPC, VFS, RaeFS, all
-syscall *handlers*, capability/RaeShield, the entire `components/*` Rae* userspace stack, net
+**Stays fully shared (no per-arch copy):** scheduler policy + EDF/SCHED_BODY, MM allocator
+(buddy + slab + heap — *logic*; only the page-table backend is arch), IPC, VFS, AthFS, all
+syscall *handlers*, capability/AthGuard, the entire `components/*` Rae* userspace stack, net
 above the NIC, crypto, the procfs surface.
 
 ### Failure modes & security model

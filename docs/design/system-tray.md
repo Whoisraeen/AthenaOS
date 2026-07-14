@@ -1,6 +1,6 @@
 # Design Spec: System Tray / Status Area
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > The right edge of the taskbar — the always-on status cluster (network, volume,
 > battery, clock) plus app-owned tray icons. It must clear: **macOS Sequoia/26's
@@ -25,7 +25,7 @@ flyouts are owned by [`control-center.md`](./control-center.md) and
 ## Concept promise + bar to clear
 
 > "The user owns the machine… no ads, no bloat" + "Unified Settings — every option
-> searchable." — RaeenOS_Concept.md. The tray is the machine's *status at a glance*
+> searchable." — LEGACY_GAMING_CONCEPT.md. The tray is the machine's *status at a glance*
 > and the launch point for owning that status.
 
 - **Bar to clear:**
@@ -37,7 +37,7 @@ flyouts are owned by [`control-center.md`](./control-center.md) and
     group → Quick Settings), an **overflow flyout** (the `^` chevron) for app tray
     icons, per-icon left-click (primary) and right-click (context menu), and the
     clock+calendar at the far right.
-- **The RaeenOS-specific promise:** the tray cluster is **one click to Control
+- **The AthenaOS-specific promise:** the tray cluster is **one click to Control
   Center** (the gaming/RGB/power fast lane lives there) and **one click to the
   Notification Center** (zero-amnesia history) — the two right-edge flyouts the
   whole shell shares material with. No mystery icons: every tray glyph has a
@@ -76,7 +76,7 @@ the cluster, icon model, and clock exist.
   reorder/remove; Control Center is a fixed cluster entry; the clock is the calm
   right anchor. **Take:** monochrome resting glyphs, click→anchored popover, the
   Control Center entry, drag-to-customize, calm clock. **Avoid:** menu-bar
-  overcrowding with no overflow (RaeenOS has an overflow flyout); the fact that
+  overcrowding with no overflow (AthenaOS has an overflow flyout); the fact that
   third-party extras can hide off-screen with no recovery.
 - **Windows 11 24H2 tray:** the network+volume+battery glyphs are **one clickable
   group** that opens Quick Settings; the clock+date (two lines) opens the
@@ -84,26 +84,26 @@ the cluster, icon model, and clock exist.
   **overflow chevron** for the rest; left-click = primary action, right-click =
   per-icon context menu. **Take:** the status-group-as-one-Control-Center-button,
   two-line clock, the overflow chevron, the left/right click split. **Avoid:** the
-  overflow being a confusing "where did my icon go" drawer (RaeenOS labels overflow
+  overflow being a confusing "where did my icon go" drawer (AthenaOS labels overflow
   clearly and lets the user pin/unpin from it); the cramped fixed widths.
 - **GNOME 46+ top bar:** a single "system status" button (net/volume/battery)
   opens one Quick Settings popover; clock+calendar centered; very few standalone
   app icons (apps use the Quick Settings or notifications instead). **Take:** the
-  consolidated status button (RaeenOS's status cluster → Control Center mirrors
-  this). **Avoid:** removing app tray icons entirely — RaeenOS keeps them (Windows
+  consolidated status button (AthenaOS's status cluster → Control Center mirrors
+  this). **Avoid:** removing app tray icons entirely — AthenaOS keeps them (Windows
   switchers expect them) but with overflow discipline.
 - **SteamOS/couch:** the status area must read at 3m and be d-pad navigable; no
   hover. **Take:** every tray affordance has a focus equivalent with `elev.focus`;
   couch mode uses the 48px hit floor. **Avoid:** desktop density at the couch.
 
-**RaeenOS synthesis:** macOS's **monochrome glyphs + click→anchored popover +
+**AthenaOS synthesis:** macOS's **monochrome glyphs + click→anchored popover +
 drag-to-customize**, Win11's **status-group→Control-Center + two-line clock +
 overflow chevron + left/right click split**, GNOME's **consolidated status
 button**, on the shell's `material.glass` popovers with one shared accent.
 
 ---
 
-## RaeenOS design tokens this surface uses
+## AthenaOS design tokens this surface uses
 
 Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 
@@ -236,7 +236,7 @@ Right-click any tray icon → a `material.glass` `radius.md` `elev.2` context me
   disabled item `text.tertiary` no hover; submenu opens on hover/`→`.
 - **reduced-motion:** menu appears instantly.
 - **`Cap`-gating:** app context-menu actions route through the app's
-  capability-checked IPC; the tray never bypasses RaeShield.
+  capability-checked IPC; the tray never bypasses AthGuard.
 
 ---
 
@@ -370,10 +370,10 @@ capture artifact — memory `ui-glass-design-system`):
 - Reduced-motion on: no chip fade, no signal-bar animation, instant popovers.
 
 ### Unblocks (MasterChecklist)
-- **Phase 14 (RaeShell + apps):** the status area from a flat glyph list to a
+- **Phase 14 (AthShell + apps):** the status area from a flat glyph list to a
   full macOS/Win11-rival tray (states, overflow, popovers, context menus, live
   binding).
-- **Phase 8 (RaeUI/RaeKit):** the anchored-popover + overflow-flyout + context-menu
+- **Phase 8 (AthUI/AthKit):** the anchored-popover + overflow-flyout + context-menu
   reusable containers.
 - **Phase 13 (Customization):** accent-coherent tray + the Control Center fast lane
   one click from the right edge.

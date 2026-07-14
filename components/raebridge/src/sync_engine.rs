@@ -5,7 +5,7 @@
 //! Steam included — lives or dies on cheap `WaitForSingleObject`/`SetEvent`. Wine
 //! learned this the hard way: the wineserver round-trip on every wait was the
 //! perf cliff, and `fsync` fixed it by moving the *uncontended* op to a raw futex
-//! word with **zero** syscalls. RaeBridge holds that same contract.
+//! word with **zero** syscalls. AthBridge holds that same contract.
 //!
 //! [`crate::broker`] supplies the DECISIONS — [`SharedSyncState::wait_prepare`]
 //! and [`SharedSyncState::wake_count`] decide *whether* to cross the kernel
@@ -393,7 +393,7 @@ pub fn sync_engine_self_test_text() -> String {
     let mut s = String::new();
     let _ = writeln!(
         s,
-        "RaeBridge cross-process sync engine (broker §6.1, Slice 2b host half)"
+        "AthBridge cross-process sync engine (broker §6.1, Slice 2b host half)"
     );
     let _ = writeln!(s, "self_test: {}", if ok { "PASS" } else { "FAIL" });
     let _ = writeln!(

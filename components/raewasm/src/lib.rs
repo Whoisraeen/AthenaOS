@@ -1,4 +1,4 @@
-//! raewasm — the sandboxed WebAssembly runtime for RaeenOS (Concept §RaeShield —
+//! raewasm — the sandboxed WebAssembly runtime for AthenaOS (Concept §AthGuard —
 //! "WebAssembly sandboxed runtime for untrusted extensions/widgets/apps": any
 //! language in, one safe runtime — the anti-Electron).
 //!
@@ -13,7 +13,7 @@
 //! (`fuel`) traps infinite loops, a call-depth budget traps runaway recursion, and any
 //! fault (OOB access, div-by-zero, stack underflow, unknown opcode) returns an error
 //! instead of panicking. The capability gate is the [`HostEnv`] trait: raewasm stays
-//! kernel-free and resolves an imported `call` to its index; the embedder (RaeShield)
+//! kernel-free and resolves an imported `call` to its index; the embedder (AthGuard)
 //! maps that index to a `Cap` and grants or denies it (deny → trap). Still to wire:
 //! the i64/f32/f64 value types (i32-only today).
 //!
@@ -414,7 +414,7 @@ pub fn decode_import_section(body: &[u8]) -> Option<Vec<ImportFunc>> {
 /// The host-import surface. The Wasm sandbox cannot touch the system directly — every
 /// outside effect goes through an embedder-supplied `HostEnv`, which is where the
 /// capability check lives. raewasm stays kernel-free: it resolves an imported `call`
-/// to its import index and hands it here; the embedder (the kernel/RaeShield) maps
+/// to its import index and hands it here; the embedder (the kernel/AthGuard) maps
 /// that index to a `Cap` and either services the call or denies it (returns `None`,
 /// which traps the guest). This is the "one safe runtime" gate — untrusted code can
 /// only do what its manifest's capabilities permit.

@@ -1,4 +1,4 @@
-//! Linux-compatible audit framework for RaeenOS.
+//! Linux-compatible audit framework for AthenaOS.
 //!
 //! Provides a full audit subsystem modelled after the Linux kernel's audit
 //! infrastructure: event types, field-based filtering, audit rules with

@@ -1,4 +1,4 @@
-//! RaeenOS LinuxKPI — userspace shim exposing a Linux driver–compatible C ABI.
+//! AthenaOS LinuxKPI — userspace shim exposing a Linux driver–compatible C ABI.
 //!
 //! Phase 1: memory (bump heap), jiffies, msleep, printk, spinlock stubs.
 //! Phase 2: `ioremap`, PCI config, `request_irq` doorbells via host syscalls.
@@ -161,7 +161,7 @@ pub extern "C" fn lkpi_iounmap(virt: *mut u8, len: usize) {
 }
 
 // NB: the C prototype is pci_read_config_dword(struct pci_dev *dev, int where,
-// u32 *val) — amdgpu passes its pci_dev POINTER as the first arg, not the RaeenOS
+// u32 *val) — amdgpu passes its pci_dev POINTER as the first arg, not the AthenaOS
 // handle. When a device is registered (device_map), use that handle so config
 // reads hit the real GPU; otherwise fall back to the passed value (mock/tests).
 #[inline]
@@ -272,7 +272,7 @@ pub extern "C" fn dma_alloc_coherent(
     dma_handle: *mut u64,
     _gfp_flags: u32,
 ) -> *mut u8 {
-    // amdgpu passes its `struct device *` here, not the RaeenOS device handle —
+    // amdgpu passes its `struct device *` here, not the AthenaOS device handle —
     // use the claimed GPU's handle (device_map) so the DMA lands on the real GPU.
     let a = dma::dma_alloc_coherent(device_map::current_device(), size);
     if a.is_null() {

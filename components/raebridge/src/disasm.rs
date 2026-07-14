@@ -1,4 +1,4 @@
-//! x86-64 disassembly — Concept §"RaeBridge: run Windows games, day one".
+//! x86-64 disassembly — Concept §"AthBridge: run Windows games, day one".
 //!
 //! The Win32 compatibility path needs to *read* guest instructions, not just
 //! map them: x64 calling-convention marshaling, SEH `.pdata`/`.xdata` unwind
@@ -41,7 +41,7 @@ pub fn disassemble(code: &[u8], rip: u64, max: usize) -> Vec<Decoded> {
 }
 
 /// Self-test (callable from a kernel R10 boot smoketest). Decodes the exact
-/// prologue the RaeBridge test EXE uses — `sub rsp,0x28` then `mov ecx,42` —
+/// prologue the AthBridge test EXE uses — `sub rsp,0x28` then `mov ecx,42` —
 /// and confirms the mnemonics and instruction lengths. Returns true on PASS.
 pub fn run_self_test() -> bool {
     // 48 83 EC 28          sub rsp, 0x28

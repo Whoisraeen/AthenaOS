@@ -1,4 +1,4 @@
-//! RaeUpdate — system update manager for RaeenOS.
+//! RaeUpdate — system update manager for AthenaOS.
 //!
 //! Full-featured package management with dependency resolution, A/B partitioning,
 //! rollback, delta updates, and automatic update scheduling.

@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS shared design tokens — the single source of truth for the design
+# AthenaOS shared design tokens — the single source of truth for the design
 # language (docs/design/design-language.md): spacing, radius, color palettes,
 # the accent ramp + derive_accent(), elevation, type ramp, motion, glass.
 #

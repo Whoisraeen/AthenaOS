@@ -1,4 +1,4 @@
-//! Full-featured calculator application for the RaeenOS desktop shell.
+//! Full-featured calculator application for the AthenaOS desktop shell.
 //!
 //! Modes: Standard, Scientific, Programmer, Date calculation, Unit
 //! converter, Currency converter, and Graph mode.  Includes a full

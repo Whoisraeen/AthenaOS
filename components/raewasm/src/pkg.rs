@@ -9,7 +9,7 @@
 //!
 //! This is the bridge between [`crate::HostEnv`] (the raw call seam) and a real
 //! capability set: raewasm stays kernel-free, so a capability is an opaque `u32` id
-//! that the embedder (RaeShield) maps to its `Cap` enum. The container is a small
+//! that the embedder (AthGuard) maps to its `Cap` enum. The container is a small
 //! bounds-checked binary format — a malformed/hostile package returns `None`, never
 //! panics (same load-bearing property as the module decoder).
 

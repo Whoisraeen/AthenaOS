@@ -1,6 +1,6 @@
 //! Hardware-ID → driver-package matcher (auto driver scan + install).
 //!
-//! Concept §"it just works" / driver model: RaeenOS does NOT ship every driver.
+//! Concept §"it just works" / driver model: AthenaOS does NOT ship every driver.
 //! The installer scans the PCIe + USB buses, collects every Hardware ID
 //! (Vendor:Device), and matches each against this **built-in manifest**. It then
 //! copies only the LinuxKPI userspace driver packages the machine actually needs
@@ -12,7 +12,7 @@
 //!
 //! This module is the **Scan + Match** half of that pipeline (the kernel side).
 //! It classifies every PCI function as:
-//!   - [`DriverKind::Builtin`]  — an in-kernel RaeenOS driver already handles it
+//!   - [`DriverKind::Builtin`]  — an in-kernel AthenaOS driver already handles it
 //!                                (NVMe, AHCI, xHCI, virtio, e1000, igc, HDA);
 //!                                nothing to install.
 //!   - [`DriverKind::LinuxKpi`] — needs a userspace LinuxKPI driver package the
@@ -64,7 +64,7 @@ const VEN_QEMU_VGA: u16 = 0x1234; // QEMU stdvga / bochs
 /// How a matched device is serviced.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DriverKind {
-    /// In-kernel RaeenOS driver handles it — no install, no daemon.
+    /// In-kernel AthenaOS driver handles it — no install, no daemon.
     Builtin,
     /// Needs a userspace LinuxKPI driver package (installer copies, daemon
     /// launches, driver claims via `sys_claim_device`).
@@ -217,7 +217,7 @@ pub fn init() {
 /// R10 boot smoketest: scan the live PCI bus and resolve every device, then
 /// run synthetic probes for real-hardware targets QEMU does not expose (AMD
 /// 780M, Intel iGPU, Intel I225-V, Intel Wi-Fi) so the manifest is proven for
-/// the machines RaeenOS actually targets.
+/// the machines AthenaOS actually targets.
 pub fn run_boot_smoketest() {
     let matches = scan_pci();
     crate::serial_println!(
@@ -290,7 +290,7 @@ pub fn run_boot_smoketest() {
 /// and the driver-manager daemon consume.
 pub fn dump_text() -> String {
     let matches = scan_pci();
-    let mut out = String::from("# RaeenOS driver manifest (HWID → driver package)\n");
+    let mut out = String::from("# AthenaOS driver manifest (HWID → driver package)\n");
     out.push_str(&format!(
         "devices: {}  builtin: {}  linuxkpi: {}  none: {}\n\n",
         SCAN_DEVICES.load(Ordering::Relaxed),

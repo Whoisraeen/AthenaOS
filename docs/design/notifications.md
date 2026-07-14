@@ -1,6 +1,6 @@
 # Design Spec: Notifications + Notification Center
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > System events surface as quiet, beautiful toasts — never a modal interruption,
 > never a mystery beep — and the ones you miss wait for you in a calm, grouped
@@ -26,7 +26,7 @@ notification-center history panel (not in scope here)" deferral in
 
 > "system events surface as quiet, beautiful toasts — never a modal interruption,
 > never a mystery beep" + "The user owns the machine" (no nag, no ads).
-> — RaeenOS_Concept.md (§RaeShell, §"The user owns the machine")
+> — LEGACY_GAMING_CONCEPT.md (§AthShell, §"The user owns the machine")
 
 - **Bar to clear:**
   - **macOS Sequoia/26 Notification Center** — toasts slide in top-right, then
@@ -36,9 +36,9 @@ notification-center history panel (not in scope here)" deferral in
   - **Windows 11 24H2 Action Center** — a list of grouped notifications with
     per-app collapse, "Clear all," inline quick-reply on messaging toasts, and
     Focus assist (priority-only / alarms-only).
-- **The RaeenOS-specific promise — the #1 parity gap (memory `goal-rival`):**
+- **The AthenaOS-specific promise — the #1 parity gap (memory `goal-rival`):**
   - **No vanishing-toast amnesia.** Win11's #1 pain: a toast you glance away from
-    is gone forever. RaeenOS **retains every post in a history ring after its TTL**
+    is gone forever. AthenaOS **retains every post in a history ring after its TTL**
     (already built — see below), so the Center shows exactly what you missed.
   - **One coherent right-edge model**, not two flyouts: toasts (top-right) and the
     Notification Center pull-down share material/accent/elevation with Control
@@ -80,26 +80,26 @@ grouping data, DND, and the Center panel all exist.
   and show a "Delivered Quietly" section for the suppressed ones. **Take:** per-app
   stacking, inline actions, the "delivered quietly" honesty, one glass column.
   **Avoid:** the *two separate surfaces* (NC pull-down vs Control Center) the user
-  must learn — RaeenOS keeps both right-edge with one material and an adjacent
+  must learn — AthenaOS keeps both right-edge with one material and an adjacent
   mental model (`control-center.md` §3).
 - **Windows 11 24H2:** Action Center pull-up groups notifications by app with a
   collapse chevron, "Clear all" per group and global, inline quick-reply on
   messaging apps, and Focus assist tiers. **Take:** per-app group chevron, the dual
   clear-all (per-group + global), quick-reply. **Avoid:** the *vanishing toast* (no
-  retention until you open Action Center — RaeenOS retains from the moment of post);
-  the calendar/clock occupying half the flyout (RaeenOS Center is notifications-first).
+  retention until you open Action Center — AthenaOS retains from the moment of post);
+  the calendar/clock occupying half the flyout (AthenaOS Center is notifications-first).
 - **GNOME 46+:** a single calendar+notifications popover, grouped by app, "Clear"
   per group; minimal but coherent. **Take:** the calm, low-chrome grouped list.
   **Avoid:** the cramped popover width on large displays.
 
-**RaeenOS synthesis:** macOS's **per-app stacking + inline actions + "delivered
+**AthenaOS synthesis:** macOS's **per-app stacking + inline actions + "delivered
 quietly"** honesty, Win11's **per-group + global clear-all**, on one right-edge
 glass material shared with Control Center, with **zero-amnesia retention** as the
 differentiator — every post is kept the instant it fires.
 
 ---
 
-## RaeenOS design tokens this surface uses
+## AthenaOS design tokens this surface uses
 
 Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 
@@ -184,7 +184,7 @@ Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 
 ### Never steals focus
 Already the contract — a toast is an overlay, never a modal, never grabs keyboard
-focus from a running game (Concept §RaeShell).
+focus from a running game (Concept §AthShell).
 
 ---
 
@@ -287,7 +287,7 @@ without launching the app (Concept "fast is a feature").
 - On a **toast**: at most 2 buttons inline + overflow ("More" → opens the Center to
   that item). On a **Center item**: full action row.
 - **`Cap`-gating:** every action callback routes through the source's
-  capability-checked IPC — the notification surface never bypasses RaeShield. A
+  capability-checked IPC — the notification surface never bypasses AthGuard. A
   source without the action capability simply shows no action row.
 - **States:** button hover `bg.overlay`/`accent.subtle` lighter; press
   `accent.active` flash; focus ring + glow; disabled (no cap) → not rendered.
@@ -401,6 +401,6 @@ capture artifact, not the render — memory `ui-glass-design-system`):
 ### Unblocks (MasterChecklist)
 - **Phase 14.1 (Notifications surface):** from toast-only to a full grouped Center
   with inline actions + DND + zero-amnesia — the parity-#1 gap.
-- **Phase 8 (RaeUI/RaeKit):** the notification-card + group-deck reusable widgets.
+- **Phase 8 (AthUI/AthKit):** the notification-card + group-deck reusable widgets.
 - **Phase 13 (Customization):** accent-coherent toasts/Center make the Vibe re-skin
   reach the notification surface end to end.

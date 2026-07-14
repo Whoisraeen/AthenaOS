@@ -10,9 +10,9 @@ already does.
 
 ## Concept promise served
 
-> "RaeenOS ships a media stack that just plays the files people actually have — music, video,
+> "AthenaOS ships a media stack that just plays the files people actually have — music, video,
 > photos — out of the box, with no codec hunts and no bundled spyware."
-> (RaeenOS_Concept.md, Media / "it just works" pillar — the same line `raemedia/src/lib.rs`
+> (LEGACY_GAMING_CONCEPT.md, Media / "it just works" pillar — the same line `raemedia/src/lib.rs`
 > quotes in its module docstring for FLAC/WAV/MP3.)
 
 MP3 is the single most common consumer audio container in existence; "plays the files people
@@ -62,7 +62,7 @@ once iron HDA plays it (Phase 2.6 / 7).
 All values below are **corroborated across at least two independent decoders** and then
 **validated byte-exact against the already-landed tables** (the corroboration gate; see
 Verification §B). None of these projects is vendored or linked — they are read-only spec
-oracles. RaeenOS keeps its own `#![no_std]` no-libm decoder.
+oracles. AthenaOS keeps its own `#![no_std]` no-libm decoder.
 
 - **ISO/IEC 11172-3** — the normative source. Table B.7 (Huffman code tables), Table B.3
   (synthesis window D[512]), §2.4.3.2 (synthesis subband filter). 📖 normative reference, not code.

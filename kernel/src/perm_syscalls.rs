@@ -1,6 +1,6 @@
 //! Thin userspace ABI over `perm_prompt`.
 //!
-//! The permission-prompt queue is the kernel-side machinery behind RaeenOS's
+//! The permission-prompt queue is the kernel-side machinery behind AthenaOS's
 //! capability-based permissions (Concept §Security: "Apps request
 //! capabilities, user grants, OS enforces at the syscall layer"). The
 //! Settings → Privacy panel needs to enumerate pending requests, show a
@@ -147,7 +147,7 @@ pub fn dump_text() -> alloc::string::String {
     let n = perm_prompt::pending_count();
     let mut out = String::new();
     out.push_str(&alloc::format!(
-        "# RaeenOS permission-prompt queue ({} pending)\n",
+        "# AthenaOS permission-prompt queue ({} pending)\n",
         n,
     ));
     // drain_pending here would consume; we want a peek instead — read

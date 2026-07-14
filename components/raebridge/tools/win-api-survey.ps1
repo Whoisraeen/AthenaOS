@@ -1,11 +1,11 @@
-# RaeBridge Win32 API survey - ground-truth data gathering.
+# AthBridge Win32 API survey - ground-truth data gathering.
 #
 # Runs on a real Windows box against C:\Windows\System32 to produce:
 #   1. exports\<dll>.txt   - authoritative exported-name list per core DLL
 #   2. import-freq.txt     - "count<TAB>dll!name" ranked by how many real
 #                            System32 .exe binaries import each symbol
 #
-# This is the data-driven hit list the RaeBridge Wine strategy calls for
+# This is the data-driven hit list the AthBridge Wine strategy calls for
 # (docs/components/raebridge-wine-strategy.md section 7, Phase A item 1):
 # implement coverage in real-world frequency order instead of guessing.
 #

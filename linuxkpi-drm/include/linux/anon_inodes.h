@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MPL-2.0 */
-/* Anonymous-inode API surface.  RaeenOS render clients are brokered by the
+/* Anonymous-inode API surface.  AthenaOS render clients are brokered by the
  * kernel rather than represented by Linux VFS fds inside amdgpud.  The facade
  * therefore provides the exact Linux signatures and fails fd-export paths
- * closed until the broker installs the corresponding RaeenOS descriptor. */
+ * closed until the broker installs the corresponding AthenaOS descriptor. */
 #ifndef _LINUXKPI_LINUX_ANON_INODES_H
 #define _LINUXKPI_LINUX_ANON_INODES_H
 

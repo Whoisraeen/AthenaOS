@@ -1,4 +1,4 @@
-# QMP-driven QEMU screenshot harness for RaeenOS (ADR 0004).
+# QMP-driven QEMU screenshot harness for AthenaOS (ADR 0004).
 # Boots a built disk image headlessly, waits for a serial sentinel + a compositor
 # settle delay, then captures the framebuffer via QMP `screendump` format=png
 # (QEMU 7.1+; avoids the PPM->PNG striping artifact in project memory).

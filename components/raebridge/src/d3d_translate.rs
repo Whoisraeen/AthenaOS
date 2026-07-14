@@ -1,7 +1,7 @@
-//! DirectX 11/12 → RaeGFX Translation Layer
+//! DirectX 11/12 → AthGFX Translation Layer
 //!
 //! Integrated translation at the driver level (DXVK/VKD3D-Proton lineage).
-//! Maps D3D11/12 API semantics to the RaeGFX pipeline — resource creation,
+//! Maps D3D11/12 API semantics to the AthGFX pipeline — resource creation,
 //! state objects, command recording, shader compilation, and present.
 
 #![allow(non_camel_case_types, dead_code)]
@@ -15,7 +15,7 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Section 1: Comprehensive DXGI_FORMAT → RaeGFX PixelFormat Mapping
+// Section 1: Comprehensive DXGI_FORMAT → AthGFX PixelFormat Mapping
 // ═══════════════════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -264,7 +264,7 @@ impl DxgiFormat {
             Self::BC7_Unorm | Self::BC7_Typeless | Self::BC7_Unorm_Srgb => {
                 Some(raegfx::PixelFormat::Bc7Unorm)
             }
-            // Formats mapped to closest RaeGFX equivalent
+            // Formats mapped to closest AthGFX equivalent
             Self::R16G16_Float | Self::R16G16_Typeless | Self::R16G16_Unorm => {
                 Some(raegfx::PixelFormat::Rgba16Float)
             }
@@ -716,7 +716,7 @@ impl Default for D3d11DepthStencilDesc {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Section 3: D3D12 Command List → RaeGFX Translation
+// Section 3: D3D12 Command List → AthGFX Translation
 // ═══════════════════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -835,7 +835,7 @@ pub fn translate_barriers_to_raegfx(barriers: &[D3d12ResourceBarrier]) -> raegfx
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Section 3b: D3D12 Descriptor Heaps → RaeGFX Descriptor Sets
+// Section 3b: D3D12 Descriptor Heaps → AthGFX Descriptor Sets
 // ═══════════════════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1119,7 +1119,7 @@ pub fn is_dxil_bytecode(bytecode: &[u8]) -> bool {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Section 4b: Input Layout Translation (D3D vertex elements → RaeGFX)
+// Section 4b: Input Layout Translation (D3D vertex elements → AthGFX)
 // ═══════════════════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone)]

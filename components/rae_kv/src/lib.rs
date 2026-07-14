@@ -1,11 +1,11 @@
 //! # RaeKV — a never-panic, `no_std`, embedded sorted key-value store.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy ("how to actually win") + the
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy ("how to actually win") + the
 //! daily-driver table stakes: the first-party apps — Mail, Calendar, Notes,
 //! Settings — and the switcher import path all need **structured durable
 //! persistence beyond raw files**. A flat file gives you bytes; an app that wants
 //! "list everything under `mail/inbox/`", "read a setting by key", "delete this
-//! note", or "snapshot my data to a RaeFS bucket and reload it" needs an *ordered*,
+//! note", or "snapshot my data to a AthFS bucket and reload it" needs an *ordered*,
 //! *bounds-checked*, *integrity-checked* store. Nothing else in the tree provides
 //! that. RaeKV is that infrastructure layer — small, dependency-free, and safe to
 //! load from an untrusted blob.
@@ -39,7 +39,7 @@
 //! self-describing byte blob: a magic + version header, the entry count, then
 //! length-prefixed `(key, value)` pairs in sorted order, then a CRC-32 trailer over
 //! everything before it. This is a **consistent snapshot** — the natural unit for
-//! "save my app data to a file / RaeFS bucket."
+//! "save my app data to a file / AthFS bucket."
 //!
 //! [`KvStore::from_bytes`] parses it back. Every byte is treated as
 //! attacker-controlled (a blob from disk can be truncated, bit-rotted, or

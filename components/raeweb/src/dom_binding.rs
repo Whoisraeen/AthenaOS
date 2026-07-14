@@ -1,7 +1,7 @@
 //! RaeWeb live-DOM handle — the mutable document a script can reflect into.
 //!
-//! > "Web apps via PWA support that actually feels native (renders through RaeUI)."
-//! > — RaeenOS Concept §3
+//! > "Web apps via PWA support that actually feels native (renders through AthUI)."
+//! > — AthenaOS Concept §3
 //!
 //! The render pipeline ([`crate::RenderPipeline`]) parses HTML into an OWNED [`crate::DomNode`]
 //! tree and lays it out. That is enough for a *static* page, but an interactive page mutates

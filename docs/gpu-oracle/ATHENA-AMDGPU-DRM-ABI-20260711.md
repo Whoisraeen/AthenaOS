@@ -2,7 +2,7 @@
 
 This is a read-mostly capture from the working Arch Linux installation on the
 Beelink Athena (`1002:15bf`, Phoenix1/Radeon 760M). It defines the concrete
-kernel/userspace contract RaeenOS must reproduce for libdrm, Mesa/RADV, Vulkan
+kernel/userspace contract AthenaOS must reproduce for libdrm, Mesa/RADV, Vulkan
 WSI, command submission, fence completion, and hang recovery.
 
 The only workload was a ten-frame, 128x128 `vkcube` run through the existing
@@ -73,7 +73,7 @@ DCN 3.1.4   VCN 4.0.2   NBIO 7.7.0  SMUIO 13.0.7
 
 ### Command numbers and structure sizes
 
-The minimum AMDGPU render-node ABI is not a custom RaeenOS protocol. It is the
+The minimum AMDGPU render-node ABI is not a custom AthenaOS protocol. It is the
 Linux DRM UAPI below, with 64-bit little-endian layouts and 8-byte alignment
 unless noted.
 
@@ -103,7 +103,7 @@ Important compatibility detail: Mesa 26.1.2 actually issued GEM-VA request
 `0xc0406448` (`IOWR`), while the installed libdrm 2.4.134 public header expands
 `DRM_IOCTL_AMDGPU_GEM_VA` to `0x40406448` (`IOW`). Linux dispatches by DRM
 command number and descriptor rather than demanding identical direction bits.
-RaeenOS must accept both encodings (or normalize by type/number/size) instead of
+AthenaOS must accept both encodings (or normalize by type/number/size) instead of
 matching only one full 32-bit ioctl value.
 
 Other structures observed on the submission path:
@@ -168,7 +168,7 @@ Its BOs included:
 
 At the sample point the client had 13 idle BOs (393,216 bytes) and 19 completed
 BOs (3,899,392 bytes). Evicted, relocated, moved, and invalidated lists were all
-empty. This gives RaeenOS a concrete validation rule: a Mesa client needs a
+empty. This gives AthenaOS a concrete validation rule: a Mesa client needs a
 per-file VM, validated BO residency, VA map/unmap, explicit reservation fences,
 and PRIME/DMA-BUF export—not merely a physical allocator.
 
@@ -207,13 +207,13 @@ halt_if_hws_hang=0
 The live MP1 version is 13.0.4. Linux 7.0.12's `soc21_asic_reset_method()` maps
 MP1 13.0.4 to `AMD_RESET_METHOD_MODE2`, so Athena's automatic internal recovery
 method is PMFW MODE2. PCI core separately reports only `reset_method=bus`; the
-device advertises `FLReset-`. A correct RaeenOS recovery path cannot assume PCI
+device advertises `FLReset-`. A correct AthenaOS recovery path cannot assume PCI
 FLR is available.
 
 The upstream recovery sequence schedules reset work, marks a full reset,
 quiesces scheduling, performs MODE2 via PMFW, reinitializes the device/IP blocks,
 and re-establishes VM/fence state. Native boot history showed no real reset,
-devcoredump, VRAM loss, or fence reset. An induced-hang proof remains a RaeenOS
+devcoredump, VRAM loss, or fence reset. An induced-hang proof remains a AthenaOS
 hardware gate and should be run only when a recovery image and out-of-band boot
 path are ready.
 
@@ -233,7 +233,7 @@ node exposes an HDMI connector, atomic properties, VRR capability, primary/
 overlay/cursor planes, `IN_FORMATS`, and AMD GFX11 modifiers including 64/256 KiB
 tiled layouts, DCC variants, and linear fallback. Initial WSI enablement can use
 linear `XR24`/`AR24`; production presentation needs PRIME FD transfer, explicit
-sync-file exchange, DRI3/Present (or the RaeenOS-native equivalent), and format
+sync-file exchange, DRI3/Present (or the AthenaOS-native equivalent), and format
 modifier negotiation.
 
 ## Implementation order derived from the trace

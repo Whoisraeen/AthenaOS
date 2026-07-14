@@ -1,4 +1,4 @@
-//! DNS over TLS (Concept §RaeNet: private by default — name lookups leave
+//! DNS over TLS (Concept §AthNet: private by default — name lookups leave
 //! the machine encrypted, never as cleartext UDP-53 an ISP or coffee-shop
 //! AP can read or rewrite). MasterChecklist Phase 10.2 — "DNS over TLS or
 //! DNS over HTTPS".
@@ -33,7 +33,7 @@ pub struct DotUpstream {
     pub sni: &'static str,
 }
 
-/// Well-known public DoT resolvers, used until RaeShield network policy
+/// Well-known public DoT resolvers, used until AthGuard network policy
 /// supplies an override.
 pub static UPSTREAMS: [DotUpstream; 2] = [
     DotUpstream {

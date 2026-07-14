@@ -1,13 +1,13 @@
 //! Machine Check Exception handling — log, classify, clear correctable banks.
 //!
 //! Concept: real hardware raises MCEs (#MC, IDT vector 18) when the CPU detects
-//! an internal error — ECC memory faults, cache parity, bus errors. RaeenOS does
+//! an internal error — ECC memory faults, cache parity, bus errors. AthenaOS does
 //! not wedge silently: the kernel reads MCG_STATUS / the IA32_MCi_STATUS bank
 //! array, logs and clears *correctable* errors so the box keeps running, and for
 //! *uncorrectable* errors either panics (kernel-context fault → unrecoverable
 //! kernel state) or kills just the offending task (userspace-context fault →
 //! the rest of the system survives). This is the data-integrity backbone a
-//! gaming-first OS needs to avoid silent corruption mid-session.
+//! embodiment-first OS needs to avoid silent corruption mid-session.
 
 extern crate alloc;
 

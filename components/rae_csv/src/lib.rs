@@ -1,6 +1,6 @@
 //! # RaeCSV — a never-panic, `no_std` CSV parser + serializer (RFC 4180).
 //!
-//! RaeenOS_Concept.md §"the user owns the machine" — your data files are *yours*:
+//! LEGACY_GAMING_CONCEPT.md §"the user owns the machine" — your data files are *yours*:
 //! a spreadsheet, an export, a log dumped to comma-separated values opens with no
 //! cloud round-trip, no account, no friction. The concrete daily-driver gap this
 //! closes is "open my `.csv` and see a table": one correct, dependency-free,

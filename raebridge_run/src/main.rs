@@ -1,9 +1,9 @@
-//! `raebridge_run` — the per-process RaeBridge launcher (one `.exe`, one process).
+//! `raebridge_run` — the per-process AthBridge launcher (one `.exe`, one process).
 //!
-//! Concept §Compatibility Strategy: "RaeBridge runs Windows apps on day one.
+//! Concept §Compatibility Strategy: "AthBridge runs Windows apps on day one.
 //! Wine + Proton heritage, tightly integrated. Not a 'subsystem' — apps run
 //! naturally." Apps run *naturally* only when each Windows `.exe` is its OWN
-//! RaeenOS process — Wine's one-loader-process-per-exe model. This binary is
+//! AthenaOS process — Wine's one-loader-process-per-exe model. This binary is
 //! that loader process (our `wineloader`): the parent writes a launch target to
 //! a well-known VFS path, spawns `raebridge_run`, and reaps its exit code; the
 //! launcher reads the target, loads the PE, and runs it to its own

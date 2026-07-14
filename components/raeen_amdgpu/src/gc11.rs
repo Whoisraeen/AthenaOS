@@ -34,7 +34,7 @@ pub const CP_ME_CNTL_PFP_HALT: u32 = 0x0400_0000; // bit 26
 pub const CP_ME_CNTL_ME_HALT: u32 = 0x1000_0000; // bit 28
 /// Bit 24 — set by the RLC autoload (CP_ME_CNTL=0x15000000 = bits 28|26|24) and
 /// MUST be cleared too: the LIVE working amdgpu reads CP_ME_CNTL=0x00000000 (all
-/// clear) + CP_STAT=0 (idle), but RaeenOS's unhalt cleared only ME|PFP and left
+/// clear) + CP_STAT=0 (idle), but AthenaOS's unhalt cleared only ME|PFP and left
 /// bit 24 set (0x01000000) — and the CP then never fetched the ring (CP EXEC
 /// RPTR=0). Clearing it makes our value match the working driver exactly (iron
 /// umr 2026-06-27). (Nominally CE_HALT, but gfx11's F32 CP keeps this bit

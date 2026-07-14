@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS JavaScript engine — the foundation slice: an ECMAScript LEXER + PARSER
-# producing an AST. RaeenOS_Concept.md §Compatibility Strategy (criterion #5, "the
+# AthenaOS JavaScript engine — the foundation slice: an ECMAScript LEXER + PARSER
+# producing an AST. LEGACY_GAMING_CONCEPT.md §Compatibility Strategy (criterion #5, "the
 # web browser is the universal app runtime; PWAs that feel native"): raeweb already
 # renders HTML/CSS but has NO JavaScript, so pages cannot be interactive. This crate
 # is the language front-end the future interpreter/runtime + DOM bindings + event

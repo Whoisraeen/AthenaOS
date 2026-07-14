@@ -1,4 +1,4 @@
-//! AthKernel — the heart of AthenaOS (forked from RaeKernel / RaeenOS).
+//! AthKernel — the heart of AthenaOS (forked from AthKernel / AthenaOS).
 //!
 //! Boot path today:
 //!   bootloader (BIOS or UEFI)  →  `kernel_main(boot_info)`
@@ -61,13 +61,13 @@ pub fn boot_elapsed_ms() -> u64 {
 
 /// Set to true when kernel is booted in live-USB installer mode.
 /// MasterChecklist Phase 3.1: "Boot media flag distinguishes live USB installer mode from installed boot."
-/// Detected from UEFI cmdline argument "installer" or absence of a valid RaeFS root partition.
+/// Detected from UEFI cmdline argument "installer" or absence of a valid AthFS root partition.
 pub static INSTALLER_MODE: AtomicBool = AtomicBool::new(false);
 
 /// Check boot flags and set INSTALLER_MODE if appropriate.
 /// Called early in kernel_main after memory init.
 pub fn detect_installer_mode() {
-    // Heuristic: if no valid RaeFS partition is found during storage discovery,
+    // Heuristic: if no valid AthFS partition is found during storage discovery,
     // we're likely booting from live USB → enter installer mode.
     // The full installer process (raeinstaller) is spawned instead of the normal shell.
     // For now: always false (installed boot) until installer flow is wired.
@@ -131,7 +131,7 @@ pub mod virtio_net;
 //
 // Concept-doc-aligned subsystems. Linux-clone modules (ext4, drm, wayland,
 // ALSA, netfilter, procfs, sysfs, seccomp, mac, ebpf, io_uring, etc.) have
-// been deleted — RaeenOS builds its own proprietary stack per the manifesto.
+// been deleted — AthenaOS builds its own proprietary stack per the manifesto.
 //
 // ── Scheduling & process model ──
 pub mod init_system;
@@ -161,7 +161,7 @@ pub mod block_io;
 pub mod filesystems;
 pub mod nvme;
 pub mod tmpfs;
-// ── Networking (RaeNet substrate) ──
+// ── Networking (AthNet substrate) ──
 pub mod dhcp;
 pub mod dns;
 pub mod dot;
@@ -190,10 +190,10 @@ mod xhci_desc;
 pub mod display;
 pub mod gpu;
 pub mod gpu_render;
-// ── Audio (RaeAudio substrate) ──
+// ── Audio (AthAudio substrate) ──
 pub mod audio;
 pub mod usb_audio;
-// ── Security (RaeShield) ──
+// ── Security (AthGuard) ──
 pub mod anticheat;
 pub mod audit;
 pub mod crypto;
@@ -799,7 +799,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     #[cfg(feature = "safe_mode")]
     serial_println!(
         "[storage] *** SAFE IMAGE: storage is READ-ONLY for this entire boot — \
-         writes are never enabled AND the safe-mode guard is active. RaeenOS \
+         writes are never enabled AND the safe-mode guard is active. AthenaOS \
          cannot write any real disk (only its own pre-allocated bootlog file). \
          Safe to run on real hardware. ***"
     );
@@ -851,7 +851,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     quic::run_boot_smoketest();
     // RaeWeb native browser surface — fetch→parse→layout→paint→present + link
     // navigation, all through the raeweb engine → raegfx (Concept §3: "renders
-    // through RaeUI", §Core Principles #1: "No Electron tax"). Lands after the net
+    // through AthUI", §Core Principles #1: "No Electron tax"). Lands after the net
     // stack so a live fetch is possible, but the smoketest uses a bundled document
     // for determinism (QEMU/iron net RX is gated — live fix #2).
     webview::init();
@@ -873,7 +873,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     serial_println!("[ OK ] Storage encryption initialized");
     encryption::run_boot_smoketest(); // Argon2id RFC 9106 + BLAKE2b known-answer tests
     fde::init();
-    fde::run_boot_smoketest(); // Phase 3.8: RaeFS through AES-XTS, plaintext-never-on-disk
+    fde::run_boot_smoketest(); // Phase 3.8: AthFS through AES-XTS, plaintext-never-on-disk
     crypto::init();
     serial_println!("[ OK ] Kernel crypto API initialized");
     crypto::run_boot_smoketest(); // X25519 RFC 7748 known-answer test
@@ -1232,7 +1232,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     vibe_mode::init();
     cap_audit::init();
     cap_audit::run_boot_smoketest();
-    sandbox::init(); // Phase 9: per-task RaeShield sandbox enforcement at the syscall edge
+    sandbox::init(); // Phase 9: per-task AthGuard sandbox enforcement at the syscall edge
     sandbox::run_boot_smoketest();
     scheduler::run_kill_reclaim_smoketest(); // goal #6: kill_task reclaims sockets+sandbox (no leak)
     rae_manifest::init(); // Phase 9: RaeManifest.toml per-app permission manifests
@@ -1297,15 +1297,15 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     // re-flash cycle.
     let _t_post9_start = boot_elapsed_ms();
 
-    // Mount root: GPT RaeFS partition when present, else whole-disk / format fallback.
+    // Mount root: GPT AthFS partition when present, else whole-disk / format fallback.
     if !storage_mount::try_mount_raefs_root() {
-        let _fs = raefs::RaeFS::mount();
+        let _fs = raefs::AthFS::mount();
     }
     raefs::tiered_storage_init();
     raefs::tiered_storage_smoketest();
     raefs::init_extent_manager();
-    raefs::RaeFS::run_boot_smoketest();
-    raefs::RaeFS::run_format_smoketest();
+    raefs::AthFS::run_boot_smoketest();
+    raefs::AthFS::run_format_smoketest();
     raefs::run_snapshot_smoketest(); // Phase 5.1: snapshot syscall surface (101-103)
     raefs::run_rollback_roundtrip_smoketest(); // Phase 5: snapshot→write→restore round trip
     raefs::run_cow_journal_crash_smoketest(); // Phase 5: extent-data CoW crash-consistency (journal replay)
@@ -1319,10 +1319,10 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     raefs::run_bucket_key_selftest(); // Phase 5.6: per-app bucket key isolation
     raefs::run_file_key_selftest(); // Phase 5.2: per-file (FSCRYPT-equiv) key isolation
     raefs::run_compression_flag_smoketest(); // Phase 5.4: per-extent compression flag
-                                             // Phase 16 account persistence: now that the RaeFS root is mounted, load any
+                                             // Phase 16 account persistence: now that the AthFS root is mounted, load any
                                              // local accounts saved on a prior boot so the installed system has logins.
     session::load_persisted_accounts();
-    // Phase 4.5: now that RaeFS is mounted, persist any prior-boot crash dump
+    // Phase 4.5: now that AthFS is mounted, persist any prior-boot crash dump
     // captured from the high-RAM tombstone, then prove the /var/crash path.
     crash_dump::flush_pending_crash_dump();
     crash_dump::run_persist_smoketest();
@@ -1341,7 +1341,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
         frame[12] = 0x88;
         frame[13] = 0xb5; // ethertype = 0x88b5 (local experimental)
                           // Tiny human-readable payload so anyone capturing the wire knows it's us.
-        let tag = b"RaeenOS-virtio-net-hello";
+        let tag = b"AthenaOS-virtio-net-hello";
         frame[14..14 + tag.len()].copy_from_slice(tag);
         match net.tx_frame(&frame) {
             Ok(()) => serial_println!("[virtio-net] tx_frame OK ({} bytes)", frame.len()),
@@ -1577,7 +1577,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     }
 
     // Linux-ABI proof: spawn the embedded static Linux probe through the same
-    // linux_exec path RaeBridge/Proton binaries use. Its [linux-abi-probe]
+    // linux_exec path AthBridge/Proton binaries use. Its [linux-abi-probe]
     // PASS/FAIL line (printed once the scheduler runs it, captured in the CI
     // daemon-drain window) is the FAIL-able runtime proof that the ~31-syscall
     // Linux translation layer actually works on a real Linux ELF, not just at
@@ -1597,7 +1597,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     // engaged post-boot. Same deferred-spawn constraint as the net poller.
     thermal::spawn_poll_thread();
 
-    // One-shot: the RaeBridge thunk-INVOKE proof (constructs a CompatContext +
+    // One-shot: the AthBridge thunk-INVOKE proof (constructs a CompatContext +
     // invokes every kernel32 thunk). It can't run in the boot smoketest — the
     // context construction overflows the small BSP boot stack (#DF, "Latent
     // kernel bugs" row) — so it runs here on a spawned thread's 64 KiB stack.
@@ -1760,7 +1760,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     });
     serial_println!();
 
-    // SCHED_GAME/EDF deadline-adherence proof (Concept §Gaming-First: "Gaming
+    // SCHED_BODY/EDF deadline-adherence proof (Concept §Gaming-First: "Gaming
     // isn't a mode"). Launched HERE — AFTER the masked marker block — on purpose:
     // it spawns a deadline-class frame orchestrator + competing SCHED_NORMAL hogs,
     // and the EDF class has HARD priority over SCHED_NORMAL, so spawning it BEFORE

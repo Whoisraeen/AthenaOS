@@ -1,4 +1,4 @@
-//! RaeUI Rich Text Editor
+//! AthUI Rich Text Editor
 //!
 //! A structured document editor with styled text runs, paragraph formatting,
 //! cursor/selection management, undo/redo, clipboard operations, and find/replace.

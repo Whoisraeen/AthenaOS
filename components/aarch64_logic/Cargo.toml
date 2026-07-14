@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS aarch64 (ARM64) PURE-LOGIC foundation — the four host-KAT-able pieces
+# AthenaOS aarch64 (ARM64) PURE-LOGIC foundation — the four host-KAT-able pieces
 # the aarch64 bring-up spec (docs/research/aarch64-bringup-spec.md, ADR 0009)
 # names as "host-KAT-able BEFORE any aarch64 boot": the VMSAv8-64 stage-1
 # page-table descriptor encoder (mmu), the ESR_EL1 exception-syndrome decode

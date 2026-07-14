@@ -45,7 +45,7 @@ pub fn dump_text() -> alloc::string::String {
     let v = cpu_vendor();
     let tsc = unsafe { rdmsr_safe(0x10) }.is_some();
     alloc::format!(
-        "# RaeenOS MSR access\nvendor: {:?}\nis_intel: {}\nis_amd: {}\nfault_tolerant: yes (rdmsr_safe/wrmsr_safe)\ntsc_readable: {}\n",
+        "# AthenaOS MSR access\nvendor: {:?}\nis_intel: {}\nis_amd: {}\nfault_tolerant: yes (rdmsr_safe/wrmsr_safe)\ntsc_readable: {}\n",
         v,
         is_intel(),
         is_amd(),

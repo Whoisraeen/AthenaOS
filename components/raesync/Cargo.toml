@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeSync — optional cross-device sync, end-to-end encrypted."
+description = "AthSync — optional cross-device sync, end-to-end encrypted."
 
 [dependencies]
 # Real HKDF-SHA256 key derivation + HMAC-SHA256 authentication tags for the E2E

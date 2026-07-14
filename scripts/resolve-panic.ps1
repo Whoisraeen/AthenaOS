@@ -1,4 +1,4 @@
-# Resolve RaeenOS panic backtrace offsets to kernel functions.
+# Resolve AthenaOS panic backtrace offsets to kernel functions.
 #
 # Usage:
 #   powershell -File scripts\resolve-panic.ps1 0x123abc 0x456def ...

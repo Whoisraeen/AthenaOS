@@ -958,7 +958,7 @@ impl SmartBatteryData {
 
     pub fn new() -> Self {
         Self {
-            manufacturer_name: String::from("RaeenOS Battery"),
+            manufacturer_name: String::from("AthenaOS Battery"),
             device_name: String::from("BAT0"),
             device_chemistry: String::from("LION"),
             serial_number: 0x1234,

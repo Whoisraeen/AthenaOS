@@ -1,5 +1,5 @@
-//! RaeenOS shared design tokens — *"Built for people who care about how things
-//! feel."* (RaeenOS_Concept.md).
+//! AthenaOS shared design tokens — *"Built for people who care about how things
+//! feel."* (LEGACY_GAMING_CONCEPT.md).
 //!
 //! This crate is the single source of truth for the design language defined in
 //! `docs/design/design-language.md`: spacing, corner radius, the color palettes,
@@ -407,7 +407,7 @@ pub fn contrast_ratio(fg_argb: u32, bg_argb: u32) -> f32 {
 // *"Built for people who care about how things feel."* — accessibility is a
 // SHIP GATE (Phase 19 / PARITY_MATRIX §J): a UI that rivals macOS and Windows
 // has to be legible for low-vision users. Neither Windows nor macOS ships a
-// machine-checked WCAG audit of its OWN default palette — RaeenOS does, here,
+// machine-checked WCAG audit of its OWN default palette — AthenaOS does, here,
 // as a FAIL-able host KAT + boot smoketest. The contrast bar is WCAG 2.1 AA:
 //   • 4.5:1 for normal body text (the [`AA_BODY`] threshold)
 //   • 3.0:1 for large/UI text and non-text affordances incl. focus indicators
@@ -1027,7 +1027,7 @@ pub const REDUCED_MOTION_DURATION_MS: u32 = 0;
 
 // ── §5.1 material.glass — the Liquid Glass tiered material (IDENTITY.md §2) ──
 //
-// THE cohesion mechanism: RaeenOS ships EXACTLY three glass tiers and never a
+// THE cohesion mechanism: AthenaOS ships EXACTLY three glass tiers and never a
 // fourth (IDENTITY.md §1 "Use tiers early. Stop inventing new glass per screen.").
 // Every translucent surface picks one of chrome / panel / popover; the §7
 // per-surface table in IDENTITY.md assigns the tier so there is no judgment call

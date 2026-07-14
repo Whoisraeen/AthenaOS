@@ -1,4 +1,4 @@
-//! crypt32.dll — Windows CryptoAPI compatibility for RaeBridge.
+//! crypt32.dll — Windows CryptoAPI compatibility for AthBridge.
 //!
 //! Certificate stores, X.509 chain building/verification, PKCS#7/CMS
 //! message functions, CSP operations (hash, encrypt, sign), PFX

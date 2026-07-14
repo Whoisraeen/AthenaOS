@@ -1,4 +1,4 @@
-//! RaeUI i18n / Localization
+//! AthUI i18n / Localization
 //!
 //! Provides string translation with key lookup, plural rules, number/date
 //! formatting, RTL support, and a fallback chain (app locale → system → "en").

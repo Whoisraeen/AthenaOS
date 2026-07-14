@@ -1,8 +1,9 @@
-//! RaeShield — capability-based security framework for RaeenOS.
+//! AthGuard — capability-based security framework for AthenaOS.
 //!
 //! Sandbox policy engine, code signing, security audit log, process
-//! attestation, and mandatory access control.  Anti-cheat vendors use the
-//! attestation API instead of kernel-level drivers.
+//! attestation, and mandatory access control. Attestation is for **body/safety
+//! and integrity** — game anti-cheat vendor partnerships are parked (see
+//! `docs/PARKED_GAMING.md`).
 #![cfg_attr(not(test), no_std)]
 
 extern crate alloc;
@@ -1298,7 +1299,7 @@ pub fn verify_signature(
             // rae_crypto ships no RSA verifier, so an RSA-4096 signature cannot
             // be cryptographically checked here. Fail CLOSED rather than accept
             // it unverified (accepting = the same bypass). Nothing in the tree
-            // currently produces RSA-signed binaries; RaeenOS code signing is
+            // currently produces RSA-signed binaries; AthenaOS code signing is
             // Ed25519 (see keys/ + `raesign`).
             return SigningResult::InvalidSignature;
         }
@@ -1685,7 +1686,7 @@ impl AttestationResponse {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(512);
 
-        buf.extend_from_slice(b"RAET"); // RaeenOS aTtestation magic
+        buf.extend_from_slice(b"RAET"); // AthenaOS aTtestation magic
         buf.extend_from_slice(&1u32.to_le_bytes()); // version
 
         buf.extend_from_slice(&self.process_id.to_le_bytes());
@@ -1882,7 +1883,7 @@ impl MacPolicy {
         }
     }
 
-    /// Pre-built default MAC policy for RaeenOS.
+    /// Pre-built default MAC policy for AthenaOS.
     pub fn default_policy() -> Self {
         let mut policy = Self::new(true);
 
@@ -2431,7 +2432,7 @@ impl Default for SecurityManager {
 // 15. Utility: minimal SHA-256 (for no_std environments without crypto deps)
 // ---------------------------------------------------------------------------
 
-/// Simplified SHA-256 for hashing within the RaeShield component.
+/// Simplified SHA-256 for hashing within the AthGuard component.
 /// Not cryptographically rigorous — the kernel's `crypto` module provides
 /// the real implementation.  This exists so the component crate compiles
 /// independently.

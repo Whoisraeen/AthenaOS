@@ -1,6 +1,6 @@
 //! Versioned, hierarchical config registry.
 //!
-//! RaeenOS_Concept.md ships a specific dig at Windows:
+//! LEGACY_GAMING_CONCEPT.md ships a specific dig at Windows:
 //!
 //! > "Registry is a graveyard → Versioned, hierarchical, human-readable
 //! >  config with snapshots."
@@ -247,7 +247,7 @@ impl Registry {
     /// `/proc/raeen/config` calls this.
     pub fn dump(&self) -> String {
         let mut out = String::new();
-        out.push_str("# RaeenOS config registry (generation ");
+        out.push_str("# AthenaOS config registry (generation ");
         let g = GENERATION.load(Ordering::Relaxed);
         out.push_str(&alloc::format!("{}", g));
         out.push_str(", ");

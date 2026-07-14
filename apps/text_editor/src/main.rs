@@ -1,9 +1,9 @@
-//! RaeenOS Text Editor (Notepad-equivalent).
+//! AthenaOS Text Editor (Notepad-equivalent).
 //!
 //! Standalone userspace ELF launched from the start menu
 //! (`exec_path = "text_editor"`). Implements a fixed-line line buffer with
 //! insertion, navigation, and a status line. File I/O is now implemented
-//! for "todo.txt" (validated end-to-end with a mounted RaeFS).
+//! for "todo.txt" (validated end-to-end with a mounted AthFS).
 //!
 //! FIND & REPLACE (parity with Notes / Win11 Notepad / macOS TextEdit): Ctrl+F
 //! opens a find bar with live match recompute, a case toggle (default
@@ -172,7 +172,7 @@ impl Buf {
 
     fn seed_welcome(&mut self) {
         let welcome = [
-            "# Welcome to RaeenOS Text Editor",
+            "# Welcome to AthenaOS Text Editor",
             "",
             "Tab/Esc to dismiss. Type freely.",
             "Backspace deletes; Enter starts a new line.",
@@ -570,7 +570,7 @@ fn regex_replace_one_at(buf: &str, range: (usize, usize), query: &str, repl: &st
 
 // ── Persistent preferences (rae_toml) ─────────────────────────────────────────
 //
-// RaeenOS_Concept.md §"The user owns the machine": "remember my settings" must be
+// LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. The Text Editor persists its find-bar toggles (case-sensitive + regex,
 // mirroring Notes) AND the last-opened file PATH to
 // `<home>/.config/texteditor.toml`, restoring them on launch. The buffer CONTENT

@@ -1,4 +1,4 @@
-//! RaeShield Firewall — capability-gated packet filtering.
+//! AthGuard Firewall — capability-gated packet filtering.
 //!
 //! NOT iptables. This is a clean, capability-based firewall where every
 //! rule management operation requires `Cap::Network` authority. Per-app
@@ -996,7 +996,7 @@ pub fn init() {
     *FIREWALL.lock() = Some(fw);
 
     crate::serial_println!(
-        "[ OK ] RaeShield firewall initialized ({} rules, profile={:?}, conntrack 64k, rate-limit 1k pps)",
+        "[ OK ] AthGuard firewall initialized ({} rules, profile={:?}, conntrack 64k, rate-limit 1k pps)",
         rule_count, profile,
     );
 }
@@ -1009,7 +1009,7 @@ pub fn init() {
 /// RX/TX). Runs against a LOCAL `Firewall` so it never perturbs the live
 /// singleton's rules or stats.
 ///
-/// Concept §RaeNet / RaeShield: "each app can only reach the hosts and ports
+/// Concept §AthNet / AthGuard: "each app can only reach the hosts and ports
 /// its capability token permits." MasterChecklist Phase 10.2 — firewall
 /// rulesets per app.
 pub fn run_boot_smoketest() {
@@ -1223,7 +1223,7 @@ pub fn run_boot_smoketest() {
 pub fn dump_text() -> String {
     let guard = FIREWALL.lock();
     let mut out = String::new();
-    out.push_str("# RaeShield firewall (capability-gated, per-app)\n");
+    out.push_str("# AthGuard firewall (capability-gated, per-app)\n");
     match *guard {
         Some(ref fw) => {
             let s = fw.stats();

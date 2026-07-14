@@ -1,9 +1,9 @@
-//! RaeBridge per-process launcher — load ONE PE and run it to its own exit.
+//! AthBridge per-process launcher — load ONE PE and run it to its own exit.
 //!
-//! Concept §Compatibility Strategy: "RaeBridge runs Windows apps on day one.
+//! Concept §Compatibility Strategy: "AthBridge runs Windows apps on day one.
 //! Wine + Proton heritage, tightly integrated. Not a 'subsystem' — apps run
 //! naturally." This is the shared load path the `raebridge_run` binary calls so
-//! that each Windows `.exe` runs as its OWN RaeenOS process. Unlike the in-host
+//! that each Windows `.exe` runs as its OWN AthenaOS process. Unlike the in-host
 //! harness (where the first guest `ExitProcess` terminates every fixture in one
 //! process), here the launcher IS the process: the guest's `ExitProcess` shim
 //! calls `sys_exit`, killing only THIS child, and the parent reaps the code via

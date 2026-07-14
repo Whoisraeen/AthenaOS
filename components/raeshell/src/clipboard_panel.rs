@@ -1,4 +1,4 @@
-//! Clipboard-history panel — the Win+V-class glass flyout for RaeShell.
+//! Clipboard-history panel — the Win+V-class glass flyout for AthShell.
 //!
 //! A keystroke (`Super+C`) summons a glass panel of everything recently copied;
 //! pin the keepers, delete the rest, clear-all (keeping pins), and **paste-on-
@@ -8,7 +8,7 @@
 //! + `elev.3`) and the live shell accent — per `docs/design/clipboard-history.md`.
 //!
 //! Concept: *"The user owns the machine — no forced telemetry."*
-//! (RaeenOS_Concept.md §The user owns the machine) → the history is local-only,
+//! (LEGACY_GAMING_CONCEPT.md §The user owns the machine) → the history is local-only,
 //! RAM-only, owned by the user.
 //!
 //! ## Architecture (why this is a snapshot widget, not a syscall caller)

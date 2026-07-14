@@ -38,8 +38,8 @@ esac
 # Owner directive (2026-06): development is consolidated under Opus, the lead
 # developer, who has full read/write access to every crate. The per-crate map
 # in OWNERSHIP.toml is retained as a SUBSYSTEM AREA map (navigation + intent),
-# not an access boundary, while Opus drives RaeenOS to Concept-doc completion.
-# The architecture-gate (no-Linux-clone / RaeShield-cap / R10 / interface-tag)
+# not an access boundary, while Opus drives AthenaOS to Concept-doc completion.
+# The architecture-gate (no-Linux-clone / AthGuard-cap / R10 / interface-tag)
 # still runs for Opus — full access, same quality bar.
 if [ "$AGENT" = "opus" ]; then
   green "ownership-lock: agent 'opus' (lead developer) has full repository access. OK."

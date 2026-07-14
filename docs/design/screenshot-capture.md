@@ -1,6 +1,6 @@
 # Design Spec: Screenshot & Region Capture (with markup)
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > A hotkey dims the screen; you drag a rectangle, the dimensions tick up live, you
 > let go, and an action bar offers copy / save / markup / pin. It must clear:
@@ -20,7 +20,7 @@ numbers; surface-specific layout dimensions are local constants from `space.*`.
 
 - **Bar to clear:** macOS Screenshot (region drag with a live size readout, the
   floating thumbnail → markup, copy-vs-save) **and** Flameshot (the in-flight
-  toolbar of pen/arrow/rect/text/blur right on the dimmed overlay). RaeenOS does
+  toolbar of pen/arrow/rect/text/blur right on the dimmed overlay). AthenaOS does
   both **reading pixels straight from the compositor** — no app window, no
   off-screen round trip.
 
@@ -69,17 +69,17 @@ dimmed-overlay + selection visuals, (c) the post-capture action bar UI.
 - **Windows 11 Snipping Tool:** top mode bar (rectangle/window/full/freeform +
   delay), then opens an editor window for markup; copies to clipboard + toast.
   **Take:** the delay timer + freeform mode (both already in `CaptureMode`).
-  **Avoid:** the *separate editor window* — RaeenOS marks up **on the overlay**
+  **Avoid:** the *separate editor window* — AthenaOS marks up **on the overlay**
   (Flameshot model), no context switch.
 
-**RaeenOS synthesis:** macOS's **live-dimensions crosshair + window-pick + mode
+**AthenaOS synthesis:** macOS's **live-dimensions crosshair + window-pick + mode
 bar**, Flameshot's **in-flight markup toolbar + blur redaction**, Snipping Tool's
 **delay/freeform modes** — all rendered as a glass overlay that reads real
 compositor pixels and the live accent.
 
 ---
 
-## RaeenOS design tokens this surface uses
+## AthenaOS design tokens this surface uses
 
 Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 
@@ -120,7 +120,7 @@ update list below.)
 ## 1. Invocation
 
 The hotkeys map to the existing `KeyBindingManager` defaults in `screenshot.rs`
-(re-expressed with the RaeenOS `Super`-first convention; the manager is rebindable):
+(re-expressed with the AthenaOS `Super`-first convention; the manager is rebindable):
 
 - **Region capture:** `Super+Shift+S` (matches Windows muscle memory; already the
   `CaptureRegion` default keycode). Dims the screen → crosshair drag.
@@ -262,7 +262,7 @@ A vertical (or horizontal, screen-fit) `material.glass` toolbar (`radius.lg`,
 | Reduced-motion | bars appear instantly; no toolbar slide; the live readout still updates (functional) | raeen-accessibility |
 | Hit targets | tool + action buttons 32px (pointer) / 48px (couch); resize handles ≥16px grab area | raeen-visual-qa |
 | Keyboard-complete | full capture → markup → copy/save reachable with no pointer (arrow-nudge selection + tool shortcuts) | raeen-accessibility |
-| Redaction trust | the **Blur/Pixelate** redaction must be applied to the saved pixels, not just visually overlaid — flag so a "blurred" secret can't be recovered from the file | raeen-accessibility + RaeShield |
+| Redaction trust | the **Blur/Pixelate** redaction must be applied to the saved pixels, not just visually overlaid — flag so a "blurred" secret can't be recovered from the file | raeen-accessibility + AthGuard |
 
 ---
 
@@ -300,7 +300,7 @@ Ships only when:
   `rae_tokens` + the proposed `scrim.capture`.
 - **raeen-design-researcher (me)** — add `scrim.capture` to
   `design-language.md` §4 (the one new token) — see DESIGN_LANGUAGE update note.
-- **raeen-accessibility + RaeShield** (flagged) — redaction-applied-to-pixels
+- **raeen-accessibility + AthGuard** (flagged) — redaction-applied-to-pixels
   guarantee; contrast of the border/readout over arbitrary content.
 
 ### FAIL-able boot-log proof line
@@ -331,8 +331,8 @@ Plus cohesion:
   re-tint with the shell.
 
 ### Unblocks (MasterChecklist)
-- Phase 6 (RaeGFX): exercises the compositor capture path end-to-end (real region
+- Phase 6 (AthGFX): exercises the compositor capture path end-to-end (real region
   pixels → image).
-- Phase 8 (RaeUI/RaeKit): the glass-toolbar + tool-button widgets.
-- Phase 14 (RaeShell + apps): the screenshot/markup surface; activates the dead
+- Phase 8 (AthUI/AthKit): the glass-toolbar + tool-button widgets.
+- Phase 14 (AthShell + apps): the screenshot/markup surface; activates the dead
   `raeshell::screenshot` tool and connects it to live capture.

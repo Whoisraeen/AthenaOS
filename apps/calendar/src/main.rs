@@ -1,4 +1,4 @@
-//! RaeenOS Calendar & Contacts — userspace ELF entry shim.
+//! AthenaOS Calendar & Contacts — userspace ELF entry shim.
 //!
 //! All the app (the PIM model, the draw path, the syscall wiring, and the
 //! host-KAT'd [`calendar::PimModel`]) lives in the `calendar` LIBRARY crate

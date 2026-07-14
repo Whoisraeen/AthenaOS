@@ -1,11 +1,11 @@
-//! Sequential read-ahead (Concept §RaeFS: "game-aware extents — games
+//! Sequential read-ahead (Concept §AthFS: "game-aware extents — games
 //! stream assets in long sequential runs; the filesystem should already
 //! hold the next block by the time the engine asks for it").
 //! MasterChecklist Phase 5.5 — "Sequential prefetch on read patterns
 //! matching games".
 //!
 //! A per-inode stream detector watches logical-block reads; once a run of
-//! [`RUN_THRESHOLD`] consecutive blocks is seen, the RaeFS read path pulls
+//! [`RUN_THRESHOLD`] consecutive blocks is seen, the AthFS read path pulls
 //! the next [`PREFETCH_DEPTH`] blocks of the SAME file into a small
 //! read-ahead cache while the device queue is already hot. Subsequent
 //! sequential reads are served from the cache (hits) without touching the
@@ -13,7 +13,7 @@
 //! invalidates its cached blocks (no stale serves, CoW included).
 //!
 //! The smoketest streams a multi-block file on a RAM volume through the
-//! REAL RaeFS read path and asserts the detector fired, blocks were
+//! REAL AthFS read path and asserts the detector fired, blocks were
 //! prefetched, and the sequential tail was served from cache —
 //! deterministic on QEMU and iron.
 

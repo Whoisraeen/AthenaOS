@@ -1,4 +1,4 @@
-//! RaeStore — app store and package manager for RaeenOS.
+//! AthStore — app store and package manager for AthenaOS.
 //!
 //! 12% revenue share, sideloading allowed, no review hostage situations.
 //! Full package management with dependency resolution, sandboxed installation,
@@ -114,7 +114,7 @@ impl Ord for SemVer {
 // 2. PACKAGE FORMAT
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Capability a package may request. Maps to RaeShield's Cap system —
+/// Capability a package may request. Maps to AthGuard's Cap system —
 /// every privileged operation goes through capabilities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum AppPermission {
@@ -148,7 +148,7 @@ pub enum AppPermission {
 /// Where an installed package came from.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PackageOrigin {
-    /// Downloaded from an official RaeStore repository.
+    /// Downloaded from an official AthStore repository.
     Store,
     /// Sideloaded from a local file — shown as "unverified" in UI.
     Sideloaded,
@@ -240,7 +240,7 @@ impl SectionTable {
     }
 }
 
-/// The manifest embedded in every RaeStore package.
+/// The manifest embedded in every AthStore package.
 #[derive(Clone, Debug)]
 pub struct PackageManifest {
     pub id: AppId,
@@ -345,7 +345,7 @@ impl PackageSignature {
     }
 }
 
-/// A full RaeStore package — the archive contents parsed into memory.
+/// A full AthStore package — the archive contents parsed into memory.
 #[derive(Clone, Debug)]
 pub struct RaePackage {
     pub section_table: SectionTable,
@@ -557,7 +557,7 @@ impl SigningKeyring {
     }
 
     /// Verify a detached Ed25519 signature over `message` (the manifest's
-    /// signed hash) under the named key. RaeenOS keys are Ed25519 (32-byte
+    /// signed hash) under the named key. AthenaOS keys are Ed25519 (32-byte
     /// public key, 64-byte signature); a wrong-sized key/signature — e.g. an
     /// RSA-4096 signature we cannot verify — is rejected fail-closed. The
     /// former stub ignored the signature and accepted any non-revoked key.
@@ -1276,7 +1276,7 @@ impl DownloadQueue {
 // 5. STORE FRONTEND MODEL
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Store categories — RaeenOS is gaming-first, so gaming categories
+/// Store categories — AthenaOS is embodiment-first, so gaming categories
 /// get first-class treatment alongside productivity.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum StoreCategory {
@@ -1314,7 +1314,7 @@ pub enum PricingModel {
 }
 
 impl PricingModel {
-    /// RaeStore takes 12%. Calculate the developer's share in cents.
+    /// AthStore takes 12%. Calculate the developer's share in cents.
     pub fn developer_share_cents(&self) -> u64 {
         match self {
             PricingModel::Paid { price_cents } => price_cents * 88 / 100,
@@ -1446,7 +1446,7 @@ impl DeveloperPage {
     }
 }
 
-/// An editorial collection — curated lists by the RaeenOS team.
+/// An editorial collection — curated lists by the AthenaOS team.
 /// "No review hostage situations" — these are surfacing, not gatekeeping.
 #[derive(Clone, Debug)]
 pub struct EditorialCollection {
@@ -1894,7 +1894,7 @@ pub enum CapabilityDecision {
 /// Policy for sideloaded apps.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SideloadPolicy {
-    /// Always allow sideloading (default for RaeenOS).
+    /// Always allow sideloading (default for AthenaOS).
     AllowAll,
     /// Allow only signed sideloads.
     SignedOnly,
@@ -2092,7 +2092,7 @@ fn permission_description(perm: AppPermission) -> String {
         AppPermission::ScreenCapture => "Capture your screen",
         AppPermission::InputCapture => "Capture keyboard/mouse input globally",
         AppPermission::Overlay => "Draw overlays on screen",
-        AppPermission::GameMode => "Use SCHED_GAME priority",
+        AppPermission::GameMode => "Use SCHED_BODY priority",
         AppPermission::HardwareInfo => "Read hardware information",
         AppPermission::ProcessList => "View running processes",
         AppPermission::AutoStart => "Start automatically at boot",
@@ -2407,13 +2407,13 @@ pub struct StoreTransaction {
     pub origin: PackageOrigin,
 }
 
-/// The top-level RaeStore — app store + package manager.
+/// The top-level AthStore — app store + package manager.
 ///
 /// Design principles (from concept doc):
 /// - 12% revenue share
 /// - Sideloading allowed and supported as first-class
 /// - No review hostage situations
-pub struct RaeStore {
+pub struct AthStore {
     pub installed: BTreeMap<AppId, InstalledApp>,
     pub sandboxes: BTreeMap<AppId, AppSandbox>,
     pub repos: Vec<Repository>,
@@ -2430,7 +2430,7 @@ pub struct RaeStore {
 static STORE_INITIALIZED: AtomicBool = AtomicBool::new(false);
 static STORE_TRANSACTION_COUNT: AtomicU64 = AtomicU64::new(0);
 
-impl RaeStore {
+impl AthStore {
     pub fn new() -> Self {
         Self {
             installed: BTreeMap::new(),
@@ -2834,7 +2834,7 @@ impl RaeStore {
 // 8b. TRANSACTIONAL MULTI-PACKAGE INSTALL  (the "safe install" guarantee)
 // ═══════════════════════════════════════════════════════════════════════════
 //
-// RaeenOS_Concept.md §"the apps people use just work" + §"the user owns the
+// LEGACY_GAMING_CONCEPT.md §"the apps people use just work" + §"the user owns the
 // machine" (atomic CoW updates + one-click rollback): installing an app is a
 // TRANSACTION, not a sequence of independent mutations. Either the app and every
 // dependency it needs land together, or NOTHING changes — a missing dependency, a
@@ -2945,7 +2945,7 @@ impl InstallPlan {
     }
 }
 
-impl RaeStore {
+impl AthStore {
     /// Build a transactional install plan for `target`: resolve its dependency
     /// closure against the repositories, classify each app as a fresh install /
     /// upgrade / already-satisfied, and surface any failure (missing package,
@@ -3249,30 +3249,30 @@ impl RaeStore {
 
 // ── Global store instance ───────────────────────────────────────────────
 
-static mut RAESTORE: Option<RaeStore> = None;
+static mut RAESTORE: Option<AthStore> = None;
 
 pub fn init() {
     if STORE_INITIALIZED.swap(true, Ordering::SeqCst) {
         return;
     }
     unsafe {
-        RAESTORE = Some(RaeStore::new());
+        RAESTORE = Some(AthStore::new());
     }
 }
 
-pub fn store() -> &'static RaeStore {
-    unsafe { RAESTORE.as_ref().expect("RaeStore not initialized") }
+pub fn store() -> &'static AthStore {
+    unsafe { RAESTORE.as_ref().expect("AthStore not initialized") }
 }
 
-pub fn store_mut() -> &'static mut RaeStore {
-    unsafe { RAESTORE.as_mut().expect("RaeStore not initialized") }
+pub fn store_mut() -> &'static mut AthStore {
+    unsafe { RAESTORE.as_mut().expect("AthStore not initialized") }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // N. `.raepkg` WIRE-FORMAT CODEC  (untrusted-input parse + verify pipeline)
 // ═══════════════════════════════════════════════════════════════════════════
 //
-// RaeenOS_Concept.md §"security by default, not by friction" + §"the apps people
+// LEGACY_GAMING_CONCEPT.md §"security by default, not by friction" + §"the apps people
 // use just work": a `.raepkg` arrives as opaque bytes — downloaded from a repo,
 // double-clicked off a USB stick, or pulled from a mirror. THIS is the single
 // trust boundary where untrusted bytes become a package the system will run, so
@@ -4442,9 +4442,9 @@ mod transaction_tests {
         }
     }
 
-    /// Build a RaeStore with one repo populated from `entries`.
-    fn store_with(entries: Vec<RepoEntry>) -> RaeStore {
-        let mut s = RaeStore::new();
+    /// Build a AthStore with one repo populated from `entries`.
+    fn store_with(entries: Vec<RepoEntry>) -> AthStore {
+        let mut s = AthStore::new();
         let mut repo = Repository::new(RepositoryConfig::new(
             String::from("main"),
             String::from("http://repo"),

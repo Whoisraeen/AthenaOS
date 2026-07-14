@@ -4,7 +4,7 @@
 // implementation was deleted in commit b568b6e. main.rs still calls
 // `namespaces::init()`. Concept §R7 ("no Linux-clones") suggests we
 // won't restore Linux namespace semantics verbatim — sandboxing in
-// RaeenOS is expressed through capabilities (see crate::capability).
+// AthenaOS is expressed through capabilities (see crate::capability).
 //
 // This shim exists purely to keep the boot path linking. When the
 // sandboxing story is decided, replace with the real model.

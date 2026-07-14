@@ -4,8 +4,8 @@
 //! "Sticky keys / slow keys / key-repeat tuning (`input.rs` filters)".
 //!
 //! Windows (Ease of Access) and macOS (Accessibility → Keyboard) both ship this
-//! exact set; RaeenOS makes it a kernel input-pipeline stage so it works in
-//! EVERY surface (login, shell, games, RaeBridge guests) without per-app opt-in.
+//! exact set; AthenaOS makes it a kernel input-pipeline stage so it works in
+//! EVERY surface (login, shell, games, AthBridge guests) without per-app opt-in.
 //!
 //! The filter sits between the HID driver and the input event queue. Every
 //! physical key flows through [`A11yKeyFilter::filter_key`], which returns the

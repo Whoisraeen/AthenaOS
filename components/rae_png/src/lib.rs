@@ -1,12 +1,12 @@
 //! # RaePNG — a never-panic, `no_std` PNG decoder + encoder (RFC 2083 / W3C PNG).
 //!
-//! RaeenOS_Concept.md (§creators / media): a daily driver must let people "show
+//! LEGACY_GAMING_CONCEPT.md (§creators / media): a daily driver must let people "show
 //! my photos." PNG is the dominant *lossless* image format — photographs exported
 //! losslessly, the app icons the launcher and Files app draw, and the bulk of web
-//! imagery all ship as PNG. RaeenOS already decodes JPEG/GIF/BMP; this crate is
+//! imagery all ship as PNG. AthenaOS already decodes JPEG/GIF/BMP; this crate is
 //! the from-scratch PNG path the Photos viewer and `raeplay` thumbnailer sit on.
 //!
-//! Output is a flat ARGB8888 `Vec<u32>` (`0xAARRGGBB`) — the RaeGFX compositor /
+//! Output is a flat ARGB8888 `Vec<u32>` (`0xAARRGGBB`) — the AthGFX compositor /
 //! Canvas pixel format, **matching the [`rae_bmp`]/[`rae_gif`] decoders** so a
 //! gallery, a tab-strip, or a Quick Look preview can blit any of the four image
 //! formats through one uniform pixel model.
@@ -31,7 +31,7 @@
 //!   non-interlaced path.
 //!
 //! ## What it encodes ([`encode_png`] / [`PngImage::to_png`])
-//! The "edit AND save/export my photo" path (RaeenOS_Concept.md §creators /
+//! The "edit AND save/export my photo" path (LEGACY_GAMING_CONCEPT.md §creators /
 //! media, criterion #5) — the partner of [`decode_png`], so the Photos app can
 //! *write* a PNG, not just read one. Output is bit-depth-8 color type 6 (RGBA),
 //! falling back to color type 2 (RGB) when every pixel is fully opaque; scanlines
@@ -100,7 +100,7 @@ pub enum PngError {
 ///
 /// `pixels.len() == (width * height) as usize`. Each `u32` is `0xAARRGGBB` —
 /// identical to [`rae_bmp::BmpImage`] / a `rae_gif` frame so callers consume all
-/// of RaeenOS's still-image decoders through one pixel model.
+/// of AthenaOS's still-image decoders through one pixel model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PngImage {
     pub width: u32,
@@ -706,7 +706,7 @@ fn decode_adam7(
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// PNG ENCODER — the "edit AND save/export my photo" path (RaeenOS_Concept.md
+// PNG ENCODER — the "edit AND save/export my photo" path (LEGACY_GAMING_CONCEPT.md
 // §creators / media: criterion #5). The decoder above is the verification lever:
 // every encoder output is a valid PNG the decoder reads back pixel-exact.
 //
@@ -816,7 +816,7 @@ fn encode_chunk(ty: &[u8; 4], data: &[u8], out: &mut Vec<u8>) {
 
 /// Encode an ARGB8888 [`PngImage`] into a valid PNG byte stream.
 ///
-/// RaeenOS_Concept.md §creators / media (criterion #5: "edit AND save/export my
+/// LEGACY_GAMING_CONCEPT.md §creators / media (criterion #5: "edit AND save/export my
 /// photo"). This completes the image stack to decode + encode: the partner of
 /// [`decode_png`], and verified against it (a round-trip is pixel-exact and
 /// lossless).

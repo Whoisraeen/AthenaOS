@@ -1,7 +1,7 @@
-# RaeUI
+# AthUI
 
 Native UI framework. Skia for 2D, wgpu for 3D and compositor effects. Glassmorphic
-by default. The AppKit-on-Core-Graphics pattern: RaeUI is the proprietary surface;
+by default. The AppKit-on-Core-Graphics pattern: AthUI is the proprietary surface;
 Skia and wgpu are implementation detail.
 
 ## Goals
@@ -16,7 +16,7 @@ Skia and wgpu are implementation detail.
 
 ## Non-goals
 
-- Cross-platform support beyond RaeenOS (themes are RaeUI; there's no Windows port)
+- Cross-platform support beyond AthenaOS (themes are AthUI; there's no Windows port)
 - HTML/CSS compatibility. Web is via the PWA path, not this framework.
 
 ## Surface sketch

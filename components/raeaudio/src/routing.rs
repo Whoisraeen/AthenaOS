@@ -1,11 +1,11 @@
-//! VoiceMeeter-class audio routing matrix (Concept §RaeAudio — "VoiceMeeter-class
+//! VoiceMeeter-class audio routing matrix (Concept §AthAudio — "VoiceMeeter-class
 //! audio routing").
 //!
 //! Routes N virtual input strips to M output buses — the A1/A2/B1/B2 model where a
 //! single strip can feed several buses at once (e.g. "game audio → speakers AND the
 //! stream-mix bus"), each route carrying its own linear gain. Layered ON TOP of the
 //! per-stream [`crate::mixer::GameMixer`] (which collapses voices to one master bus):
-//! the GameMixer is the game/SCHED_GAME fast path; this matrix is the broader desktop
+//! the GameMixer is the game/SCHED_BODY fast path; this matrix is the broader desktop
 //! routing surface a creator/streamer expects.
 //!
 //! Pure logic — interleaved f32 with a shared `channels`/`frames` block layout on

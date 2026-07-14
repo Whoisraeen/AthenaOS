@@ -156,7 +156,7 @@ pub fn dump_text() -> String {
         0
     };
     let mut out = alloc::format!(
-        "# RaeenOS boot log (RAM ring, {} KiB capacity)\n# bytes_logged: {}  wrapped: {}  oldest_lost: {} bytes\n# === transcript follows ===\n",
+        "# AthenaOS boot log (RAM ring, {} KiB capacity)\n# bytes_logged: {}  wrapped: {}  oldest_lost: {} bytes\n# === transcript follows ===\n",
         RING_SIZE / 1024,
         head,
         wrapped,
@@ -235,7 +235,7 @@ pub fn render_diagnostics(ptr: *mut u8, w: u32, h: u32) {
     canvas.draw_text(
         24,
         16,
-        "RaeenOS boot diagnostics (photograph this screen)",
+        "AthenaOS boot diagnostics (photograph this screen)",
         HDR,
         None,
     );

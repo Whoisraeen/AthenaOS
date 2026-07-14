@@ -1,6 +1,6 @@
-//! RaeUI Flexbox Layout Engine
+//! AthUI Flexbox Layout Engine
 //!
-//! CSS Flexbox-inspired layout system for RaeUI widgets. Resolves dimensions,
+//! CSS Flexbox-inspired layout system for AthUI widgets. Resolves dimensions,
 //! distributes space among flex children, handles main/cross axis alignment,
 //! and recursively computes positions for the entire widget tree.
 

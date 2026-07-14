@@ -1,4 +1,4 @@
-# Off-target runner for the REAL upstream amdgpu init (Concept §RaeGFX — the
+# Off-target runner for the REAL upstream amdgpu init (Concept §AthGFX — the
 # Year-1 real-GPU-submit path; GPU campaign M1.x diagnostics).
 #
 # Links the exact merged C object graph amdgpud carries on iron

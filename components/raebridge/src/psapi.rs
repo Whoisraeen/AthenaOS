@@ -1,5 +1,5 @@
 //! psapi.dll — Process status, module enumeration, memory information, performance
-//! counters, working set queries, device drivers, and Tool Help snapshots for RaeBridge.
+//! counters, working set queries, device drivers, and Tool Help snapshots for AthBridge.
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;

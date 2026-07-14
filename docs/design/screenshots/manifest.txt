@@ -7,7 +7,7 @@ atom-glass-panel.png                      1459858  Glassmorphic panel: transluce
 atom-primitives.png                       1277383  Core primitives: rounded-rects (radii 0..40), vertical gradients, anti-aliased circles
 atom-type-ramp.png                        1837568  raefont grayscale-AA type ramp (Display..Caption, RaeSans + RaeMono) — text-crispness reference
 atom-focus-ring.png                        973258  raeui::draw_focus_ring: normal accent (left) + auto-swapped high-contrast cyan (right)
-atom-icons.png                            2969015  RaeGFX line-icon set: CC-tile size in glass tiles + 72px scaling proof + token-tinted strip (replaces letter placeholders)
+atom-icons.png                            2969015  AthGFX line-icon set: CC-tile size in glass tiles + 72px scaling proof + token-tinted strip (replaces letter placeholders)
 wallpaper-aurora-dark.png                 4097178  raegfx::glass::render_aurora_dark — full-screen procedural Aurora Mesh (blue/violet/teal blobs, soft falloff, vignette); replaces the flat navy void
 glass-tiers-over-aurora.png               2455173  raegfx::glass::draw_glass_surface — chrome/panel/popover tiers over the aurora (luma auto-adjust + iridescent edge); backdrop reads through, opacity rises left->right
 glass-iridescent-edge-3x.png               576508  raegfx::glass::draw_iridescent_rim — 3x zoom of a panel BOTTOM-RIGHT corner: the violet(right)->warm-amber(bottom) chromatic sweep over the aurora (the iridescent signature, two hues in one crop); FAIL-able chromatic-pixel proof

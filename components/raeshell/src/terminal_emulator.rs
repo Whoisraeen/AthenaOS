@@ -1,4 +1,4 @@
-//! Full VT100/xterm-compatible terminal emulator for RaeenOS.
+//! Full VT100/xterm-compatible terminal emulator for AthenaOS.
 //!
 //! Implements: CSI/SGR/OSC/DCS parsing, 256-colour + 24-bit true-colour,
 //! primary & alternate screen buffers, scrollback, character sets, DEC

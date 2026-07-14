@@ -15,7 +15,7 @@
 //! find symbols with the same splice semantics as the non-RCU list, or its
 //! lock-free walks corrupt.
 //!
-//! **Cooperative single-threaded daemon model.** The RaeenOS LinuxKPI daemon is
+//! **Cooperative single-threaded daemon model.** The AthenaOS LinuxKPI daemon is
 //! cooperatively scheduled — there is no preemption inside a list splice, and a
 //! reader cannot run between a writer's two pointer stores. So the RCU machinery
 //! collapses to its non-RCU equivalent: `rcu_read_lock`/`unlock` are no-ops,

@@ -1,4 +1,4 @@
-//! RaeenOS Notes — *"keep my notes"* (RaeenOS_Concept.md §Three User Experiences,
+//! AthenaOS Notes — *"keep my notes"* (LEGACY_GAMING_CONCEPT.md §Three User Experiences,
 //! the bundled-app parity bar vs Win11 Sticky Notes / macOS Notes).
 //!
 //! The daily-driver note-taking app: a **sidebar list** of `.md`/`.txt` notes in
@@ -875,7 +875,7 @@ impl FindState {
 
 // ── Persistent preferences (rae_toml) ─────────────────────────────────────────
 //
-// RaeenOS_Concept.md §"The user owns the machine": "remember my settings" must be
+// LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. Notes persists its VIEW state — which note was open, edit-vs-preview mode,
 // and the find-bar case-sensitive + regex toggles — to `<home>/.config/notes.toml`
 // and restores it on launch. The note CONTENT is NOT persisted here (it already
@@ -1195,7 +1195,7 @@ impl App {
     /// disk — saving it with Ctrl+S writes it as `welcome.md`).
     fn seed_welcome(&mut self) {
         let welcome = "# Welcome to Notes\n\n\
-            A **Markdown** editor with a *live* preview, built on RaeenOS's own\n\
+            A **Markdown** editor with a *live* preview, built on AthenaOS's own\n\
             `rae_markdown` parser.\n\n\
             ## Getting started\n\n\
             - Press **Tab** to toggle edit and preview\n\

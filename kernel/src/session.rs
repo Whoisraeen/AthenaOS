@@ -1,6 +1,6 @@
 //! User sessions — wires `raeid::AccountManager` into the kernel boot path.
 //!
-//! Concept § RaeID: passkeys first, optional, never required for local use.
+//! Concept § AthID: passkeys first, optional, never required for local use.
 //! Guest mode is full-featured; local accounts use password auth at login.
 
 #![allow(dead_code)]
@@ -67,11 +67,11 @@ fn fresh_token(st: &mut SessionState) -> SessionToken {
     let now = now_secs();
     bytes[0..8].copy_from_slice(&t.to_le_bytes());
     bytes[8..16].copy_from_slice(&now.to_le_bytes());
-    bytes[16..24].copy_from_slice(b"RaeenOS-");
+    bytes[16..24].copy_from_slice(b"AthenaOS-");
     SessionToken(bytes)
 }
 
-/// Seed RaeID with the default local account (`raeen` / `raeen`).
+/// Seed AthID with the default local account (`raeen` / `raeen`).
 pub fn init() {
     let now = now_secs();
     let mut manager = AccountManager::new(now);
@@ -94,12 +94,12 @@ pub fn init() {
         token_seq: 1,
     });
 
-    crate::serial_println!("[session] RaeID ready — default user 'raeen' (password: raeen)");
+    crate::serial_println!("[session] AthID ready — default user 'raeen' (password: raeen)");
     run_persistence_smoketest();
 }
 
 /// Create a local user account during install (MasterChecklist Phase 16.1).
-/// Registers the account in RaeID with a real Argon2id (RFC 9106) password hash
+/// Registers the account in AthID with a real Argon2id (RFC 9106) password hash
 /// (via `rae_crypto`, the shared memory-hard KDF) and persists the profile to
 /// the config registry so it survives reboot. Returns the new user id on
 /// success, or `None` if the username is taken/invalid.
@@ -166,8 +166,8 @@ pub fn create_local_account(username: &str, display_name: &str, password: &[u8])
         &alloc::format!("{now}"),
     );
 
-    // Durably persist the account (incl. its Argon2id credential) to the RaeFS
-    // root so the next boot has a working login. No-op when RaeFS isn't mounted.
+    // Durably persist the account (incl. its Argon2id credential) to the AthFS
+    // root so the next boot has a working login. No-op when AthFS isn't mounted.
     let persisted = persist_accounts(st);
 
     crate::serial_println!(
@@ -180,13 +180,13 @@ pub fn create_local_account(username: &str, display_name: &str, password: &[u8])
     Some(user_id.0)
 }
 
-/// Flat file in the RaeFS root holding all local accounts (identity + Argon2id
+/// Flat file in the AthFS root holding all local accounts (identity + Argon2id
 /// credential). See `raeid::{serialize,deserialize}_accounts`.
 const ACCOUNTS_FILE: &str = "accounts.dat";
 
-/// Write all non-guest local accounts to the RaeFS root. Returns `false` (and
-/// no-ops) when RaeFS isn't mounted — durable persistence only happens on an
-/// installed system with a RaeFS root. Holds the caller's `SESSION` lock; only
+/// Write all non-guest local accounts to the AthFS root. Returns `false` (and
+/// no-ops) when AthFS isn't mounted — durable persistence only happens on an
+/// installed system with a AthFS root. Holds the caller's `SESSION` lock; only
 /// the `RAEFS` lock is taken here (no nesting with `SESSION`).
 fn persist_accounts(st: &SessionState) -> bool {
     let mut records = alloc::vec::Vec::new();
@@ -210,10 +210,10 @@ fn persist_accounts(st: &SessionState) -> bool {
         .unwrap_or(false)
 }
 
-/// Load persisted accounts from the RaeFS root into the session manager. Call
-/// AFTER `storage_mount` has mounted the RaeFS root (which is after
+/// Load persisted accounts from the AthFS root into the session manager. Call
+/// AFTER `storage_mount` has mounted the AthFS root (which is after
 /// `session::init`). Accounts whose username already exists (e.g. the default
-/// `raeen`) are skipped. Safe no-op when RaeFS is absent or has no accounts.
+/// `raeen`) are skipped. Safe no-op when AthFS is absent or has no accounts.
 pub fn load_persisted_accounts() {
     let bytes = match crate::raefs::RAEFS
         .lock()
@@ -223,7 +223,7 @@ pub fn load_persisted_accounts() {
         Some(b) if !b.is_empty() => b,
         _ => {
             crate::serial_println!(
-                "[session] load_persisted_accounts: no accounts.dat on RaeFS (fresh system)"
+                "[session] load_persisted_accounts: no accounts.dat on AthFS (fresh system)"
             );
             return;
         }
@@ -259,9 +259,9 @@ pub fn load_persisted_accounts() {
 }
 
 /// R10 smoketest: prove the persistence round-trip end-to-end WITHOUT requiring
-/// a mounted RaeFS — build an account credential, serialize it, deserialize into
+/// a mounted AthFS — build an account credential, serialize it, deserialize into
 /// a record, and confirm the reconstructed credential still authenticates the
-/// original password (and rejects a wrong one). The actual RaeFS write/read is
+/// original password (and rejects a wrong one). The actual AthFS write/read is
 /// exercised by `persist_accounts` / `load_persisted_accounts` on an installed
 /// system. Uses a low Argon2id cost so the boot stays fast.
 pub fn run_persistence_smoketest() {
@@ -567,7 +567,7 @@ pub fn dump_text() -> String {
     let home = home_dir();
     let guard = SESSION.lock();
     let Some(st) = guard.as_ref() else {
-        return String::from("# RaeenOS session\nstatus: not initialized\n");
+        return String::from("# AthenaOS session\nstatus: not initialized\n");
     };
 
     let phase = match st.phase {
@@ -591,7 +591,7 @@ pub fn dump_text() -> String {
         String::from("none")
     };
 
-    let mut out = String::from("# RaeenOS session\n");
+    let mut out = String::from("# AthenaOS session\n");
     out.push_str(&alloc::format!("phase: {phase}\n"));
     out.push_str(&alloc::format!("active_uid: {active_uid}\n"));
     out.push_str(&alloc::format!("active_user: {active_name}\n"));

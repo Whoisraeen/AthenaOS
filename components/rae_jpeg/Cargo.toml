@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS baseline JPEG codec — "show my photos" + "save/export my photo as
-# JPEG" (RaeenOS_Concept.md §creators / media). JPEG is the dominant photo/camera
+# AthenaOS baseline JPEG codec — "show my photos" + "save/export my photo as
+# JPEG" (LEGACY_GAMING_CONCEPT.md §creators / media). JPEG is the dominant photo/camera
 # format on the web and from every phone/camera; an OS that can't open OR save a
 # .jpg isn't a daily driver. This is the from-scratch baseline sequential-DCT
 # decoder + encoder Photos / raeplay sit on, matching

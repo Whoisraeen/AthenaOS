@@ -1,4 +1,4 @@
-//! RaeGFX Shader Compiler IR — custom intermediate representation for shaders,
+//! AthGFX Shader Compiler IR — custom intermediate representation for shaders,
 //! CPU-side interpreter (software path), and basic SPIR-V parsing for hardware interop.
 
 extern crate alloc;

@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS MP4 / ISO-BMFF container DEMUXER — "play my movies" + .m4a/.mp4 audio
-# (RaeenOS_Concept.md §creators / media). MP4 is the dominant video/audio
+# AthenaOS MP4 / ISO-BMFF container DEMUXER — "play my movies" + .m4a/.mp4 audio
+# (LEGACY_GAMING_CONCEPT.md §creators / media). MP4 is the dominant video/audio
 # container: phone videos, downloads, streaming downloads, AAC music (.m4a) all
 # ship as ISO Base Media File Format. This crate parses the box tree → tracks →
 # sample tables, and resolves each sample's absolute file offset/size/timestamp so

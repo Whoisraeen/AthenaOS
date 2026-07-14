@@ -6,12 +6,12 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS embedded key-value store — structured, durable, ordered persistence for
+# AthenaOS embedded key-value store — structured, durable, ordered persistence for
 # the first-party apps (Mail, Calendar, Notes, Settings) and the switcher on-ramp
-# (RaeenOS_Concept.md §Compatibility Strategy criterion #5: "import & keep my
+# (LEGACY_GAMING_CONCEPT.md §Compatibility Strategy criterion #5: "import & keep my
 # stuff" needs somewhere to *put* it). Raw files give you bytes; an app that wants
 # "list every message in mail/inbox/", "look up a setting by key", or "snapshot my
-# notes to a RaeFS bucket and load them back" needs an ordered, bounds-checked,
+# notes to a AthFS bucket and load them back" needs an ordered, bounds-checked,
 # integrity-checked store. Nothing else in the tree provides that — rae_kv is that
 # infrastructure layer.
 #

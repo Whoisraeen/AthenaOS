@@ -2,13 +2,13 @@
 //! Star contracts.
 //!
 //! The Concept's headline promises (sub-frame input latency, sub-3ms audio,
-//! SCHED_GAME hard deadlines, fast boot) were unmeasurable — and CLAUDE.md is
+//! SCHED_BODY hard deadlines, fast boot) were unmeasurable — and CLAUDE.md is
 //! explicit that "a perf claim without a counter behind it is `[~]` at best".
 //! This module gives each promise a live counter so it becomes falsifiable:
 //!   * input events + a TSC timestamp of the last one (latency proxy),
 //!   * frames presented (compositor throughput),
 //!   * audio periods + underruns (the sub-3ms / zero-underrun contract),
-//!   * SCHED_GAME deadline misses (surfaced from the scheduler),
+//!   * SCHED_BODY deadline misses (surfaced from the scheduler),
 //!   * total boot time.
 //! Hot-path producers call the `record_*` helpers (a single relaxed atomic).
 
@@ -22,7 +22,7 @@ static AUDIO_PERIODS: AtomicU64 = AtomicU64::new(0);
 static AUDIO_UNDERRUNS: AtomicU64 = AtomicU64::new(0);
 
 // ─── audio thread wake jitter (PERFORMANCE_TARGETS §3: < 100 µs) ──────────────
-// The RaeAudio mix thread runs SCHED_GAME with a hard period; wake JITTER is how
+// The AthAudio mix thread runs SCHED_BODY with a hard period; wake JITTER is how
 // far each actual period drifts from the nominal period. Measured at the
 // record_audio_period site: the TSC delta between consecutive periods IS the
 // realized period, and jitter = |realized − budget|. AUDIO_PERIOD_BUDGET_US
@@ -36,9 +36,9 @@ static AJ_SUM_US: AtomicU64 = AtomicU64::new(0);
 static AJ_MAX_US: AtomicU64 = AtomicU64::new(0);
 static AJ_LAST_US: AtomicU64 = AtomicU64::new(0);
 
-// ─── SCHED_GAME deadline telemetry (the Concept's "Gaming isn't a mode") ─────
+// ─── SCHED_BODY deadline telemetry (the Concept's "Gaming isn't a mode") ─────
 // Detected scheduler-side at the EDF dispatch point: when an earliest-deadline
-// SCHED_GAME task is *picked* and the monotonic clock is already past its
+// SCHED_BODY task is *picked* and the monotonic clock is already past its
 // absolute deadline, that period's deadline is provably missed. These counters
 // are the dispatch-path twin of the per-task aggregate in `scheduler::
 // deadline_stats` — they live here, lock-free, so the pick hot path bumps a
@@ -69,9 +69,9 @@ static IP_MAX_TSC: AtomicU64 = AtomicU64::new(0);
 static IP_LAST_TSC: AtomicU64 = AtomicU64::new(0);
 
 // ─── input → game-thread wake latency (PERFORMANCE_TARGETS §4: < 1 ms) ────────
-// The Concept: "input is IRQ-driven and the consuming game thread is SCHED_GAME
+// The Concept: "input is IRQ-driven and the consuming game thread is SCHED_BODY
 // — an input event must preempt normal work." This measures the time from an
-// input event (USB-HID / PS/2 IRQ → record_input_event) to the next SCHED_GAME
+// input event (USB-HID / PS/2 IRQ → record_input_event) to the next SCHED_BODY
 // (EDF) task actually getting the CPU (record_game_dispatch, called live from
 // the pick path at scheduler.rs:436). INPUT_WAKE_TSC is armed at the FIRST input
 // after a game dispatch consumed the prior one (compare_exchange against 0), so
@@ -428,7 +428,7 @@ pub fn audio_jitter_snapshot() -> (u64, u64, u64, u64) {
     )
 }
 
-/// Record a SCHED_GAME (EDF) task dispatch from the scheduler pick path.
+/// Record a SCHED_BODY (EDF) task dispatch from the scheduler pick path.
 /// `now_us` and `absolute_deadline_us` are in the scheduler's existing
 /// microsecond monotonic time base (tick × TICK_PERIOD_US) — NO new clock is
 /// introduced. If `now_us > absolute_deadline_us` the period's deadline was
@@ -440,7 +440,7 @@ pub fn audio_jitter_snapshot() -> (u64, u64, u64, u64) {
 pub fn record_game_dispatch(now_us: u64, absolute_deadline_us: u64) {
     SG_DISPATCHES.fetch_add(1, Ordering::Relaxed);
     // Input → game-thread wake latency (§4): if an input has been waiting since
-    // before this SCHED_GAME task got the CPU, this dispatch is when the game
+    // before this SCHED_BODY task got the CPU, this dispatch is when the game
     // thread can first react to it. latency = now − the earliest pending input.
     // rdtsc here (not now_us) so it shares the input clock. Consume (swap 0) so
     // each input arms exactly one measurement.
@@ -498,7 +498,7 @@ pub fn input_game_wake_snapshot() -> (u64, u64, u64, u64) {
 }
 
 /// Record one context switch (a successful pick that actually changed the
-/// running task) and which class won the CPU. `is_game` true = SCHED_GAME
+/// running task) and which class won the CPU. `is_game` true = SCHED_BODY
 /// (deadline or round-robin Game), false = Normal/CFS. One relaxed bump each.
 #[inline]
 pub fn record_context_switch(is_game: bool) {
@@ -524,7 +524,7 @@ pub fn observe_runq_depth(depth: u64) {
     }
 }
 
-/// Live snapshot of the SCHED_GAME (EDF) dispatch-path counters for the
+/// Live snapshot of the SCHED_BODY (EDF) dispatch-path counters for the
 /// deadline-adherence proof (`sched_proof`): `(dispatches, deadline_misses,
 /// worst_lateness_ns, last_lateness_ns)`. These are the SAME lock-free atoms the
 /// EDF pick path bumps via `record_game_dispatch`, so a reader sampling them
@@ -639,7 +639,7 @@ pub fn dump_text() -> alloc::string::String {
     };
     let ip_max_us = IP_MAX_TSC.load(Ordering::Relaxed) / mhz;
     let ip_last_us = IP_LAST_TSC.load(Ordering::Relaxed) / mhz;
-    // SCHED_GAME miss-RATE in basis points (×100 = percent), from the
+    // SCHED_BODY miss-RATE in basis points (×100 = percent), from the
     // dispatch-path counters: misses / dispatches. 0 dispatches → 0 (no game
     // task has been picked yet — nothing to report, not a failure).
     let sg_dispatches = SG_DISPATCHES.load(Ordering::Relaxed);
@@ -650,7 +650,7 @@ pub fn dump_text() -> alloc::string::String {
         sg_misses.saturating_mul(10_000) / sg_dispatches
     };
     alloc::format!(
-        "# RaeenOS perf (North Star contracts)\n\
+        "# AthenaOS perf (North Star contracts)\n\
          boot_time_ms: {}\n\
          input_events: {}\n\
          last_input_tsc: {}\n\
@@ -755,7 +755,7 @@ pub fn run_boot_smoketest() {
         a_samples > 0 && a_avg > 0 && a_min <= a_avg && a_avg <= a_max && a_avg < 1_000_000; // 1 ms sanity ceiling (TCG-generous)
 
     let text = dump_text();
-    let surface_ok = text.starts_with("# RaeenOS perf")
+    let surface_ok = text.starts_with("# AthenaOS perf")
         && text.contains("input_events:")
         && text.contains("input_photon_avg_us:")
         && text.contains("input_photon_max_us:")
@@ -802,7 +802,7 @@ pub fn run_boot_smoketest() {
     MISSED_FRAMES.store(frame_snap[4], Ordering::Relaxed);
     FRAME_BUDGET_US.store(frame_snap[5], Ordering::Relaxed);
 
-    // Drive the SCHED_GAME dispatch counters through the SAME `record_game_
+    // Drive the SCHED_BODY dispatch counters through the SAME `record_game_
     // dispatch` the EDF pick path uses: one ON-TIME dispatch (now <= deadline,
     // no miss) then one LATE dispatch 5_000 µs past deadline (one miss, lateness
     // 5_000_000 ns). Assert the counters moved exactly: misses +1, dispatches
@@ -880,7 +880,7 @@ pub fn run_boot_smoketest() {
     IP_LAST_TSC.store(snap[7], Ordering::Relaxed);
 
     // FAIL-able input→game-wake proof (§4): arm via record_input_event, then a
-    // SCHED_GAME dispatch must record exactly one wake-latency sample and clear
+    // SCHED_BODY dispatch must record exactly one wake-latency sample and clear
     // the armed clock. Self-contained snapshot/restore of every static it
     // perturbs (the input-event family + IGW_* + SG_DISPATCHES). Live µs numbers
     // are iron-gated (no real input in headless CI) — this proves the LOGIC.

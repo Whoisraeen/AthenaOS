@@ -1,7 +1,7 @@
-//! Raw syscall stubs into the RaeenOS LinuxKPI host (kernel `linuxkpi_host.rs`).
+//! Raw syscall stubs into the AthenaOS LinuxKPI host (kernel `linuxkpi_host.rs`).
 //!
 //! **hosttest build (the `linuxkpi_harness`).** A raw `syscall` instruction with
-//! a RaeenOS syscall number is harmless-but-meaningless on Linux (`-ENOSYS`) and
+//! a AthenaOS syscall number is harmless-but-meaningless on Linux (`-ENOSYS`) and
 //! a hard fault on Windows — so on a non-Linux dev box the harness segfaults the
 //! moment any facade reaches one (e.g. `ktime_get_ns` → `sys_linuxkpi_jiffies`).
 //! Under `feature = "hosttest"` every site below is replaced by a benign stub:
@@ -109,7 +109,7 @@ unsafe fn syscall3(_nr: u64, _a0: u64, _a1: u64, _a2: u64) -> u64 {
     u64::MAX // failure sentinel
 }
 
-/// Generic 4-argument syscall helper (4th arg in `r10`, the RaeenOS native ABI's
+/// Generic 4-argument syscall helper (4th arg in `r10`, the AthenaOS native ABI's
 /// fourth register — `syscall` clobbers only `rcx`/`r11`, so `r10` survives).
 #[cfg(not(any(feature = "hosttest", feature = "hostrun")))]
 #[inline(always)]

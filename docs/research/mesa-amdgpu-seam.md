@@ -6,7 +6,7 @@
 ## TL;DR
 
 Porting Mesa (radeonsi for OpenGL, radv for Vulkan) is the path to **real GPU
-rendering** on RaeenOS — but it is a multi-month effort and is **gated on the
+rendering** on AthenaOS — but it is a multi-month effort and is **gated on the
 amdgpu bring-up being iron-proven first** (you don't render through a driver that
 can't bring the GPU up). This doc maps the exact seam Mesa talks to, audits what
 the bring-up already provides, and stages the build so each piece is host-proven
@@ -26,7 +26,7 @@ uses). Mesa talks to the GPU through ioctls:
               └─ libdrm_amdgpu      (amdgpu_device_initialize, amdgpu_bo_alloc,
                                       amdgpu_cs_submit, amdgpu_cs_query_fence_status…)
                    └─ DRM ioctls on a render node  (DRM_IOCTL_AMDGPU_*)
-                        └─ RaeenOS: routed to amdgpud (the Path-C userspace driver)
+                        └─ AthenaOS: routed to amdgpud (the Path-C userspace driver)
                              └─ raeen_amdgpu::bringup  (the ring submit + fence we built)
                                   └─ the GPU
 ```

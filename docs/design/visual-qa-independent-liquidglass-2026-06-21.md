@@ -31,7 +31,7 @@
 
 ## Headline verdict
 
-**The identity has LANDED.** Six rounds of concurrent work have moved RaeenOS from
+**The identity has LANDED.** Six rounds of concurrent work have moved AthenaOS from
 the "flat dark card over a void" defect (IDENTITY.md §0) to a genuinely coherent,
 recognizable Liquid Glass look. The three systemic moves the spec demanded are all
 visibly present in the pixels: (1) brighter **tiered** glass, (2) a **living aurora
@@ -56,13 +56,13 @@ weeks.
 
 **Does it beat macOS Tahoe + Win11?**
 - **vs Windows 11 24H2:** YES, already, on the finished surfaces. Win11's Mica is
-  flatter, more opaque, and has no iridescent signature; RaeenOS Control Center and
+  flatter, more opaque, and has no iridescent signature; AthenaOS Control Center and
   notifications read more premium. Win11 still wins on *breadth* (every surface is
-  finished) — RaeenOS's start/taskbar are behind any shipped Win11 surface.
+  finished) — AthenaOS's start/taskbar are behind any shipped Win11 surface.
 - **vs macOS Tahoe Liquid Glass:** NOT YET, but close on the flagship. macOS still
   wins on (a) luminous *light* glass that reflects the backdrop with specular life,
   (b) glossy pill controls with inner glow, (c) total finish across every surface,
-  (d) SF Display weight contrast. RaeenOS's dark glass is excellent but the rim is
+  (d) SF Display weight contrast. AthenaOS's dark glass is excellent but the rim is
   subtler and the controls are flatter than Tahoe's. Call it **~85% of Tahoe on
   Control Center, ~50% system-wide** because of the unfinished surfaces.
 
@@ -134,7 +134,7 @@ weeks.
 
 6. **Controls are flat-filled, not glossy.** The reference UI Kit's defining button
    look is a **pill with a colored inner glow + glossy top sheen**
-   (`reference/Liquid Glass UI Kit`). RaeenOS toggles are pills with accent glow
+   (`reference/Liquid Glass UI Kit`). AthenaOS toggles are pills with accent glow
    (good) but buttons/tiles are flat. This is the biggest single gap vs both Tahoe
    and the reference kit. **Owner: raeui** (a glossy-pill control recipe), spec
    already calls for it — **owner: raeen-design-researcher** to lock the inner-glow
@@ -161,18 +161,18 @@ weeks.
 
 - **vs macOS Tahoe Liquid Glass Control Center** (512pixels Aqua library; AppleWorld
   Today on the 26.1 tinted toggle): Tahoe's glass is *clear and light-reflecting* with
-  a specular highlight that tracks the backdrop; RaeenOS's dark glass is excellent but
+  a specular highlight that tracks the backdrop; AthenaOS's dark glass is excellent but
   **does not reflect** — it tints + frosts only. Tahoe also ships a **tinted (more
-  opaque) mode** as a user option; RaeenOS has the luma auto-adjust but no user
+  opaque) mode** as a user option; AthenaOS has the luma auto-adjust but no user
   clear/tinted toggle surfaced. Gap: specular reflection + a user opacity toggle.
 - **vs `reference/Liquid Glass UI Kit`:** the reference's **glossy pill buttons with
-  colored inner glow** are the headline; RaeenOS controls are flat by comparison
-  (finding #6). The reference rim is **vivid and obvious**; RaeenOS rim is subtle
+  colored inner glow** are the headline; AthenaOS controls are flat by comparison
+  (finding #6). The reference rim is **vivid and obvious**; AthenaOS rim is subtle
   (finding #5) — defensible as taste (subtle = premium) but currently *under* the
   reference, not a deliberate beat of it.
-- **vs Windows 11 24H2 (Mica/Acrylic):** RaeenOS already **beats** Win11 on material
+- **vs Windows 11 24H2 (Mica/Acrylic):** AthenaOS already **beats** Win11 on material
   richness — Mica is flat and opaque with no iridescent signature. Win11's win is
-  **finish breadth**: every Win11 surface is complete; RaeenOS's start/taskbar are not.
+  **finish breadth**: every Win11 surface is complete; AthenaOS's start/taskbar are not.
 
 ---
 

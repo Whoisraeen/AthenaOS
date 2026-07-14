@@ -1,8 +1,8 @@
-# RaeenOS Threat Model
+# AthenaOS Threat Model
 
 **Status:** Living document. Authoritative for "who we defend against and where
 enforcement actually lives." Pairs with `docs/CAPABILITIES.md` (the capability
-contract) and `MasterChecklist.md` Phase 9 (RaeShield roadmap).
+contract) and `MasterChecklist.md` Phase 9 (AthGuard roadmap).
 
 **Rule for contributors:** if you change *what is enforced* (add a sandbox gate
 class, wire a capability check, land secure boot), update the **Enforcement
@@ -18,7 +18,7 @@ Legend for every status cell:
 
 ---
 
-## 1. What RaeenOS protects (assets)
+## 1. What AthenaOS protects (assets)
 
 In priority order — this ordering decides what we fix first when defenses conflict.
 
@@ -29,8 +29,8 @@ In priority order — this ordering decides what we fix first when defenses conf
    silently modified by an app, a downloaded bundle, or a malicious driver.
 3. **Availability for the foreground task.** A background app (or a buggy
    driver) cannot starve or crash the foreground game/creative workload.
-   (Gaming-first: a dropped frame is a defect, a crash is a failure.)
-4. **Attestation integrity.** When RaeShield tells an anti-cheat vendor "this
+   (Embodiment-first: a dropped frame is a defect, a crash is a failure.)
+4. **Attestation integrity.** When AthGuard tells an anti-cheat vendor "this
    process is unmodified," that statement is trustworthy without the vendor
    owning ring 0.
 
@@ -43,7 +43,7 @@ A sideloaded or store app, possibly signed by a real-but-hostile developer, that
 runs as a normal user process and tries to read another app's data, claim
 hardware, exfiltrate over the network, or escalate to kernel.
 
-- **In scope.** This is the adversary the capability model + RaeShield sandbox +
+- **In scope.** This is the adversary the capability model + AthGuard sandbox +
   data buckets are built for. Defense must hold even for a *signed* app — a valid
   signature proves provenance, not benevolence.
 - **Defenses:** capability gating (§4), syscall-edge sandbox (§5), per-app bucket
@@ -74,7 +74,7 @@ and tries to DMA into kernel/other-process memory or take down the system.
   structural (separate address spaces), not yet silicon-enforced.
 
 ### D. Network attacker
-Anyone on the wire between RaeenOS and a remote host.
+Anyone on the wire between AthenaOS and a remote host.
 
 - **In scope:** confidentiality/integrity of traffic we originate via real,
   KAT-proven crypto (X25519, ChaCha20-Poly1305, Ed25519 — §8). Firewall is
@@ -94,7 +94,7 @@ the machine is off.
   image or kernel binary bypasses capabilities, sandboxing, signing, and bucket
   encryption wholesale. Full-disk encryption (FDE) is also PLANNED, so data at
   rest is readable by anyone with the disk.
-  → Until §9 lands, RaeenOS protects **apps from each other at runtime**, NOT
+  → Until §9 lands, AthenaOS protects **apps from each other at runtime**, NOT
   **the system from offline tampering.** State this plainly to any user or
   partner; do not imply otherwise.
 
@@ -118,9 +118,9 @@ A user trying to inspect/modify their *own* machine.
   ┌─────────────────────────── Ring 3 (untrusted) ───────────────────────────┐
   │  App (AppSandbox/Strict)   Linux-ABI app   Driver daemon   First-party app │
   └───────────────┬───────────────┬───────────────┬───────────────┬──────────┘
-        syscall edge ── RaeShield sandbox gate (§5) ── runs for BOTH ABIs ─────
+        syscall edge ── AthGuard sandbox gate (§5) ── runs for BOTH ABIs ─────
   ┌───────────────┴───────────────────────────────────────────────────────────┐
-  │                         Ring 0 — RaeKernel (TCB)                            │
+  │                         Ring 0 — AthKernel (TCB)                            │
   │  capability authority · scheduler · memory isolation · VFS gate · crypto    │
   └────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -152,7 +152,7 @@ that performs the privileged op.
 |---|---|---|---|---|
 | `Mmio` / `Irq` / `Port` | yes | yes (driver claim path) | **ENFORCED** | userspace driver framework gates claim/DMA. |
 | `Network` | yes (firewall rule ops) | partial | **PARTIAL** | `firewall.rs` requires `Cap::Network`+WRITE for rule changes; socket *creation* is gated by the sandbox class, not a per-socket cap check. |
-| `Filesystem` | partial | n/a | **PARTIAL** | bucket access is enforced via the VFS gate + RaeFS (§6), not via a `Cap::Filesystem` handle check on every open. |
+| `Filesystem` | partial | n/a | **PARTIAL** | bucket access is enforced via the VFS gate + AthFS (§6), not via a `Cap::Filesystem` handle check on every open. |
 | `Camera` | **no** | **no** | **DESIGNED** | flavor + rights defined; the "requires user prompt" rule is NOT wired — a held Camera cap is not gated by user consent because no UI consumes the prompt queue (§5 prompt gap). Do not advertise camera consent. |
 | `Audio` / `Gpu` | partial | via driver | **PARTIAL** | device daemons hold them; no per-call app-side check yet. |
 | `Process` | yes | at spawn | **ENFORCED** | derivation + transitive revoke proven. |
@@ -167,7 +167,7 @@ operation sites.
 
 ---
 
-## 5. Syscall-edge sandbox (RaeShield) — coverage
+## 5. Syscall-edge sandbox (AthGuard) — coverage
 
 `kernel/src/sandbox.rs` gates the syscall edge by per-task `SandboxLevel`
 (Trusted / AppSandbox / Strict). Trusted (the default) short-circuits on one
@@ -176,7 +176,7 @@ atomic load.
 | Property | Status | Note |
 |---|---|---|
 | Gate runs for **native** ABI tasks | **ENFORCED** | `check_syscall` in `syscall_handler_inner`. |
-| Gate runs for **Linux** ABI tasks | **ENFORCED (2026-06-10)** | `check_linux_syscall` — *the Linux dispatch used to `return` before the gate, so every sandboxed Linux binary bypassed RaeShield entirely.* Now both ABIs gate before dispatch. Boot proof: `[sandbox] run_boot_smoketest: … linux_gate=true … -> PASS`. |
+| Gate runs for **Linux** ABI tasks | **ENFORCED (2026-06-10)** | `check_linux_syscall` — *the Linux dispatch used to `return` before the gate, so every sandboxed Linux binary bypassed AthGuard entirely.* Now both ABIs gate before dispatch. Boot proof: `[sandbox] run_boot_smoketest: … linux_gate=true … -> PASS`. |
 | Gated syscall classes | **PARTIAL — by design, but the checklist oversold it** | Only **Device/DMA/PCI**, **Network (sockets)**, and **Install** are classed. The ~170 other syscalls (file I/O, IPC, mmap, scheduling, compositor) are **not** sandbox-gated at this edge — a sandboxed app calls them freely. This is a deliberate staged rollout, NOT "every syscall that touches userspace state." Confidentiality for those paths relies on capabilities (§4) + memory isolation (§3), not this gate. |
 | Manifest-granted relaxation | **ENFORCED** | an AppSandbox task whose `RaeManifest.toml` declared a class passes that class; Strict never gets grants. |
 | Runtime permission **prompt** (user says yes/no live) | **PARTIAL** | kernel queue + syscall surface exist (`perm_prompt.rs`, `perm_syscalls.rs`), but **no compositor UI consumes it**, so no cap is actually gated on live user consent yet. This is why `Camera` is DESIGNED, not ENFORCED. |
@@ -195,7 +195,7 @@ collapse the boundary:
 | Layer | Status | Boot proof |
 |---|---|---|
 | VFS gate (the path a real read takes) | **ENFORCED** | `data_buckets::run_boot_smoketest: … vfs_deny=true deny_foreign=true allow_owner=true -> PASS` |
-| RaeFS capability layer | **ENFORCED** | `[raefs] bucket smoketest: isolation=true … cap=true` |
+| AthFS capability layer | **ENFORCED** | `[raefs] bucket smoketest: isolation=true … cap=true` |
 | Per-app encryption keys (FSCRYPT-equiv) | **ENFORCED** | `[raefs] bucket-key selftest: cross_app_unreadable=true -> PASS` |
 
 **Gap:** the end-to-end acceptance test — a real *malicious userspace app*
@@ -250,10 +250,10 @@ boot**. The following are all PLANNED:
 - A/B atomic update slots with signature verification (tamper-evident updates).
 
 **Consequence, stated bluntly:** an attacker who can write the boot image, the
-kernel binary, or the raw disk defeats the entire model. RaeenOS today is a
+kernel binary, or the raw disk defeats the entire model. AthenaOS today is a
 strong **runtime app-isolation** system and a weak **offline-tamper-resistance**
 system. The roadmap closes this (MasterChecklist Phase 9.2/9.3 + Phase 4), but
-until it does, do not describe RaeenOS as "secure boot" or "encrypted at rest" to
+until it does, do not describe AthenaOS as "secure boot" or "encrypted at rest" to
 users or partners.
 
 ---

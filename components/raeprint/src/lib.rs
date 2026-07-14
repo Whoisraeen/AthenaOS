@@ -1,4 +1,4 @@
-//! RaePrint — CUPS-equivalent printing subsystem for RaeenOS.
+//! RaePrint — CUPS-equivalent printing subsystem for AthenaOS.
 //!
 //! Implements printer discovery, print job lifecycle, queue management,
 //! IPP protocol, page description, PPD parsing, print filters, spooling, and
@@ -1565,7 +1565,7 @@ mod tests {
 
     #[test]
     fn pdf_has_valid_magic_and_eof() {
-        let pdf = PdfBuilder::single_text_page("Hello RaeenOS", BaseFont::Helvetica)
+        let pdf = PdfBuilder::single_text_page("Hello AthenaOS", BaseFont::Helvetica)
             .build()
             .expect("single page must build");
         assert!(pdf.starts_with(b"%PDF-1.7"), "missing %PDF magic");

@@ -1,15 +1,15 @@
-//! RaeBridge DXBC -> SPIR-V shader translator (slice 1).
+//! AthBridge DXBC -> SPIR-V shader translator (slice 1).
 //!
-//! Concept promise served (RaeenOS_Concept.md, §Gaming-First / Compatibility):
-//!   "DirectX 11/12 -> RaeGFX translation at the driver level (DXVK/VKD3D-Proton
+//! Concept promise served (LEGACY_GAMING_CONCEPT.md, §Gaming-First / Compatibility):
+//!   "DirectX 11/12 -> AthGFX translation at the driver level (DXVK/VKD3D-Proton
 //!    lineage, but integrated and signed)" and
-//!   "Steam works day one via RaeBridge -- non-negotiable; without Steam there is
+//!   "Steam works day one via AthBridge -- non-negotiable; without Steam there is
 //!    no PC gaming OS."
 //!
-//! A Direct3D game cannot draw a single triangle on RaeGFX/Vulkan until its
+//! A Direct3D game cannot draw a single triangle on AthGFX/Vulkan until its
 //! HLSL-compiled shaders (shipped as DXBC for D3D9/10/11) become SPIR-V. This
 //! module is that translator. It is the FIRST real DirectX shader translation in
-//! RaeBridge -- everything before it was a 5-word SPIR-V header stub.
+//! AthBridge -- everything before it was a 5-word SPIR-V header stub.
 //!
 //! ## The CPU-side vs GPU-gated boundary (load-bearing)
 //! Translation is pure CPU-side compute, host-KAT-provable NOW: parse DXBC ->
@@ -2187,7 +2187,7 @@ impl SpirvBuilder {
         let mut words = Vec::new();
         words.push(SPIRV_MAGIC);
         words.push(0x0001_0000); // version 1.0
-        words.push(0x000E_0000); // generator magic (RaeBridge)
+        words.push(0x000E_0000); // generator magic (AthBridge)
         words.push(self.next_id); // bound
         words.push(0); // schema
         words.extend_from_slice(&self.capabilities);

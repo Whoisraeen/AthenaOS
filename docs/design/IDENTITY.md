@@ -1,15 +1,15 @@
-# RaeenOS IDENTITY — The Liquid Glass Design Language
+# AthenaOS IDENTITY — The Liquid Glass Design Language
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md (§RaeUI)
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md (§AthUI)
 >
 > The owner's verdict on the current build: **"it has no native theme or identity
 > that is clean and stunning."** This document fixes that. It defines the ONE
-> signature look that makes RaeenOS instantly recognizable and on par with — or
+> signature look that makes AthenaOS instantly recognizable and on par with — or
 > better than — macOS 26 "Tahoe" Liquid Glass and Windows 11 Mica/Acrylic.
 >
 > This is the **identity layer**. It sits above `design-language.md` (the full
 > token catalog) and `material-and-shadow.md` (the shadow rendering contract). On
-> any conflict about *what RaeenOS looks like*, this file wins; on token plumbing
+> any conflict about *what AthenaOS looks like*, this file wins; on token plumbing
 > mechanics, `design-language.md` + `rae_tokens` win. New tokens proposed here are
 > collected in the **Token Diff** at the end so `rae_tokens` can implement them
 > mechanically.
@@ -43,7 +43,7 @@ is application of tokens we mostly already have.
 > **"Use tiers early. Stop inventing new glass per screen."**
 > — `reference/Liquid glass guide_ Use tiers early...`
 
-RaeenOS ships **exactly three glass tiers and never a fourth.** Every translucent
+AthenaOS ships **exactly three glass tiers and never a fourth.** Every translucent
 surface in the OS picks one of `glass.chrome`, `glass.panel`, `glass.popover`.
 No surface is allowed to invent its own alpha/blur/tint. This is *the* cohesion
 mechanism — it is the difference between "a collection of pretty screens" and "one
@@ -170,7 +170,7 @@ Tokens: `GLASS_INTERIOR_LUMA_CEIL = 0.40`. Applied inside
 
 ### 2.4 The iridescent / chromatic edge — THE signature
 
-This is the one thing that says "RaeenOS liquid glass" at a glance and that no flat
+This is the one thing that says "AthenaOS liquid glass" at a glance and that no flat
 Acrylic/Mica has. Real liquid glass refracts light into a thin rainbow at its
 border. We fake it cheaply on the SW rasterizer with a **multi-hue rim drawn
 inside the glass edge**, at low alpha, over the rounded-rect stroke:
@@ -209,7 +209,7 @@ decorative; legibility wins — see §9).
 ## 3. The signature backdrop — "Aurora Mesh" wallpaper (kills the void)
 
 The flat void is half the problem: glass has nothing to refract. The default
-RaeenOS wallpaper is a **procedural aurora mesh** — no asset file, rendered by
+AthenaOS wallpaper is a **procedural aurora mesh** — no asset file, rendered by
 raeen-gfx as a `LiveWallpaper` engine (the trait already exists; today's seed is a
 two-color navy `GradientWallpaper`, which is the void).
 
@@ -260,7 +260,7 @@ backdrop re-tints with Vibe Mode automatically.
 
 ## 4. Accent + identity color — "RaeBlue"
 
-RaeenOS has ONE signature hue, the way macOS owns its blue and Windows owns its
+AthenaOS has ONE signature hue, the way macOS owns its blue and Windows owns its
 blue. Ours is **RaeBlue `0xFF_4E_9C_FF`** — a bright, slightly electric azure
 (already the `rae_tokens` seed and `ThemeAbi.accent_argb` default). It is:
 
@@ -302,7 +302,7 @@ These are already in `rae_tokens`; this section pins the *identity intent* so th
 aren't drifted. **No changes to the corner/motion tokens** — they are correct.
 
 ### 5.1 Rounding — generous, concentric
-`radius.xs 4 / sm 8 / md 12 / lg 16 / xl 24`. Identity intent: RaeenOS rounds
+`radius.xs 4 / sm 8 / md 12 / lg 16 / xl 24`. Identity intent: AthenaOS rounds
 **generously**. Windows = `md 12`, Start/Control Center/large cards = `lg 16`, OOBE
 / full-screen modals = `xl 24`. Pills (`radius_pill = h/2`) for buttons, toggles,
 search fields, chips — the reference's pill buttons are core to the look. Nested
@@ -339,7 +339,7 @@ gate. No new type tokens.
 
 ## 7. Per-surface tier application (the cohesion table — no judgment calls)
 
-Every translucent surface in RaeenOS maps to exactly one glass tier + one elevation.
+Every translucent surface in AthenaOS maps to exactly one glass tier + one elevation.
 This table is **normative** — call sites read the tier, they do not choose alpha.
 
 | Surface | Glass tier | Elevation | Radius | Notes |
@@ -586,11 +586,11 @@ Vibe presets, proving one seed coherently re-tints glass + aurora + controls.
    correctly; focus ring + glow intact.
 
 ### Unblocks (MasterChecklist)
-- **Phase 8 (RaeUI/RaeKit):** the `material.glass` system is only "done" when it's
+- **Phase 8 (AthUI/AthKit):** the `material.glass` system is only "done" when it's
   tiered + luminous + iridescent — this is that definition.
 - **Phase 13 (Customization / Vibe Mode):** Vibe's "one tap re-skins the whole
   desktop" needs the seed→aurora→rim flow (Step 6).
-- **Phase 14 (RaeShell + apps):** every surface spec (`control-center`, `files`,
+- **Phase 14 (AthShell + apps):** every surface spec (`control-center`, `files`,
   `notifications`, `taskbar`, `start`) inherits this identity; they were each
   "fine but didn't belong to one system" — the three tiers + aurora + rim are what
   make them one system.

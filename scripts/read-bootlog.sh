@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# read-bootlog.sh - read (or pre-create) RaeenOS's BOOTLOG.TXT from an ESP, on Linux.
+# read-bootlog.sh - read (or pre-create) AthenaOS's BOOTLOG.TXT from an ESP, on Linux.
 #
 # The kernel persists the boot-log ring to a PRE-CREATED 1 MiB BOOTLOG.TXT in the
 # ESP root (kernel/src/bootlog_persist.rs). On Linux, unlike Windows, you just
@@ -75,7 +75,7 @@ if [ "$CREATE" = 1 ]; then
     echo "[read-bootlog] pre-creating 1 MiB $MNT/BOOTLOG.TXT (clusters allocated so --safe can overwrite it in place)"
     sudo dd if=/dev/zero of="$MNT/BOOTLOG.TXT" bs=1M count=1 status=none
     sudo sync
-    echo "[read-bootlog] done - boot RaeenOS (--safe) on this target and it'll fill the file."
+    echo "[read-bootlog] done - boot AthenaOS (--safe) on this target and it'll fill the file."
     exit 0
 fi
 

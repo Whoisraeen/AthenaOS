@@ -1,5 +1,5 @@
 //! shell32.dll — Shell operations, file dialogs, shell folders, drag-drop,
-//! notify icons, path utilities, and recycle bin APIs for RaeBridge.
+//! notify icons, path utilities, and recycle bin APIs for AthBridge.
 
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -1172,7 +1172,7 @@ pub fn sh_get_known_folder_path_extended(
 }
 
 // =========================================================================
-// Path mapping: Windows → RaeenOS
+// Path mapping: Windows → AthenaOS
 // =========================================================================
 
 pub fn map_win_folder_to_raeen(win_path: &str) -> String {
@@ -1250,19 +1250,19 @@ pub fn map_win_folder_to_raeen(win_path: &str) -> String {
     }
     if normalized.starts_with("c:/programdata") {
         let rest = &win_path[14..];
-        let mut result = String::from("/etc/raeenos");
+        let mut result = String::from("/etc/athenaos");
         result.push_str(rest);
         return result;
     }
     if normalized.starts_with("c:/windows/system32") {
         let rest = &win_path[19..];
-        let mut result = String::from("/sys/raeenos/system32");
+        let mut result = String::from("/sys/athenaos/system32");
         result.push_str(rest);
         return result;
     }
     if normalized.starts_with("c:/windows") {
         let rest = &win_path[10..];
-        let mut result = String::from("/sys/raeenos");
+        let mut result = String::from("/sys/athenaos");
         result.push_str(rest);
         return result;
     }

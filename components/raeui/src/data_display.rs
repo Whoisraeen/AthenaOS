@@ -1,4 +1,4 @@
-//! Data display widgets for RaeUI.
+//! Data display widgets for AthUI.
 //!
 //! Table (virtual-scrolled), TreeView, ListView (virtual-scrolled), GridView,
 //! Badge, Tag, Tooltip, Avatar, Breadcrumb, Chart, Sparkline, StatusIndicator.

@@ -1,4 +1,4 @@
-//! RaeenOS Video — *"play my movies"* (RaeenOS_Concept.md §creators / media).
+//! AthenaOS Video — *"play my movies"* (LEGACY_GAMING_CONCEPT.md §creators / media).
 //!
 //! The first-party local media player — QuickTime / Windows Media Player on day
 //! one — that wires three already-built engines into a clickable app:

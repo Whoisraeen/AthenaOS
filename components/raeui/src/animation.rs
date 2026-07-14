@@ -1,4 +1,4 @@
-//! RaeUI Animation Engine — curve-editable animations for the RaeenOS UI.
+//! AthUI Animation Engine — curve-editable animations for the AthenaOS UI.
 //!
 //! Provides timeline-based animations with extensive easing (cubic bezier,
 //! spring physics, elastic, bounce), keyframe sequences, and an engine that
@@ -798,7 +798,7 @@ mod tests {
 // ── Curve editor model (MasterChecklist L1585) ───────────────────────────
 // The data model behind the user-facing "edit window animation curves" UI:
 // a list of selectable presets + a custom cubic-bezier the user tweaks, which
-// resolves to the EasingFunction the compositor/RaeUI feeds the AnimationEngine.
+// resolves to the EasingFunction the compositor/AthUI feeds the AnimationEngine.
 // Pure logic (clamping + preset->curve mapping); the rendered editor sits on top.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CurvePreset {

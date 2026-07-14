@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# architecture-gate.sh — mechanical enforcement of the RaeenOS architecture rules
+# architecture-gate.sh — mechanical enforcement of the AthenaOS architecture rules
 # on every commit. Wired into .git/hooks/pre-commit. Fails the commit on:
 #
 #   (a) §R7 violations: new std-isms or Linux clones in no_std/kernel crates.
-#   (b) a deleted or bypassed RaeShield capability check.
+#   (b) a deleted or bypassed AthGuard capability check.
 #   (c) a new kernel module missing the R10 4-artifact contract
 #       (init + run_boot_smoketest + procfs/dump_text + Concept docstring).
 #   (d) a changed signature in the shared-interface crate (rae_abi / rae_driver_api)
 #       without an Opus sign-off marker ([interface] tag + RAEEN_AGENT=opus).
 #
-# Concept doc (RaeenOS_Concept.md) and docs/LINUX_DRIVER_STRATEGY.md §R7 win.
+# Concept doc (LEGACY_GAMING_CONCEPT.md) and docs/LINUX_DRIVER_STRATEGY.md §R7 win.
 set -uo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -41,7 +41,7 @@ for f in $STAGED; do
       add=$(added_lines "$f")
       if echo "$add" | grep -qiE "$LINUX_CLONE_RE"; then
         hit=$(echo "$add" | grep -ioE "$LINUX_CLONE_RE" | head -1)
-        red "  R7 FAIL  $f adds a Linux-clone identifier ('$hit'). Use the RaeenOS proprietary stack."
+        red "  R7 FAIL  $f adds a Linux-clone identifier ('$hit'). Use the AthenaOS proprietary stack."
         fail=1
       fi
       ;;
@@ -55,7 +55,7 @@ for f in $STAGED; do
       # Linux clone identifier.
       if echo "$add" | grep -qiE "$LINUX_CLONE_RE"; then
         hit=$(echo "$add" | grep -ioE "$LINUX_CLONE_RE" | head -1)
-        red "  R7 FAIL  $f adds a Linux-clone identifier ('$hit'). Use the RaeenOS proprietary stack."
+        red "  R7 FAIL  $f adds a Linux-clone identifier ('$hit'). Use the AthenaOS proprietary stack."
         fail=1
       fi
       ;;
@@ -72,12 +72,12 @@ for f in $STAGED; do
 done
 if echo "$STAGED" | grep -q '^xtask/src/main.rs$'; then
   if added_lines xtask/src/main.rs | grep -qiE 'rustysd|systemd|busybox|coreutils'; then
-    red "  R7 FAIL  xtask adds a Linux init/coreutils clone to the port list. Native RaeenOS only."
+    red "  R7 FAIL  xtask adds a Linux init/coreutils clone to the port list. Native AthenaOS only."
     fail=1
   fi
 fi
 
-# ── (b) RaeShield capability checks must not be deleted/bypassed ──────────────
+# ── (b) AthGuard capability checks must not be deleted/bypassed ──────────────
 CAP_CALL_RE='(capability::|cap_check|check_cap|require_cap|assert_system_authority|with_current_task.*cap_table)'
 for f in $STAGED; do
   case "$f" in
@@ -88,7 +88,7 @@ for f in $STAGED; do
       a_count=$(echo "$added"   | grep -cE "$CAP_CALL_RE")
       if [ "$r_count" -gt "$a_count" ]; then
         red "  CAP FAIL  $f removes more capability checks ($r_count) than it adds ($a_count)."
-        yellow "            A privileged path may have lost its RaeShield gate. Restore it or get Opus sign-off."
+        yellow "            A privileged path may have lost its AthGuard gate. Restore it or get Opus sign-off."
         fail=1
       fi
       # Explicit bypass markers are never allowed.
@@ -150,5 +150,5 @@ if [ "$fail" -ne 0 ]; then
   red "architecture-gate: commit rejected. Fix the violations above (Concept doc wins)."
   exit 1
 fi
-green "architecture-gate: §R7 + RaeShield + R10 + interface checks passed."
+green "architecture-gate: §R7 + AthGuard + R10 + interface checks passed."
 exit 0

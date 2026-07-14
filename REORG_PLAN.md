@@ -1,6 +1,6 @@
-# RaeenOS File Structure Reorganization Plan
+# AthenaOS File Structure Reorganization Plan
 
-This document outlines the steps required to clean up the RaeenOS root directory and update the `Cargo.toml` workspace so the build doesn't break. Please execute these file movements and update the Cargo files accordingly.
+This document outlines the steps required to clean up the AthenaOS root directory and update the `Cargo.toml` workspace so the build doesn't break. Please execute these file movements and update the Cargo files accordingly.
 
 ## 1. Documentation Organization
 Move the scattered markdown files into a dedicated subfolder (e.g., `docs/planning/` and `docs/checklists/`):
@@ -12,7 +12,7 @@ Move the scattered markdown files into a dedicated subfolder (e.g., `docs/planni
 - `NEW_BUG_DISCOVERY.md` -> `.github/ISSUE_TEMPLATE/NEW_BUG_DISCOVERY.md`
 - `PRODUCTION_CHECKLIST.md` -> `docs/checklists/PRODUCTION_CHECKLIST.md`
 - `kernelchecklist.md` -> `docs/checklists/kernelchecklist.md`
-- `RaeenOS_Concept.md` -> `docs/RaeenOS_Concept.md`
+- `LEGACY_GAMING_CONCEPT.md` -> `docs/LEGACY_GAMING_CONCEPT.md`
 
 Leave `README.md`, `CLAUDE.md`, and `AGENTS.md` in the root.
 

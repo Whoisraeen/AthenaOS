@@ -1,4 +1,4 @@
-// raemkusb — build a RaeenOS install-media image.
+// raemkusb — build a AthenaOS install-media image.
 //
 // Default (inject) mode: copy the real bootable UEFI image (kernel.uefi.img,
 // produced by `xtask build`) and inject the `INSTALL.NOW` marker into its ESP
@@ -31,7 +31,7 @@ const EFI_GUID: [u8; 16] = [
 // The marker the kernel's maybe_run_triggered_install() looks for at the ESP
 // root: read_esp_file(&[], "INSTALL", "NOW"). Presence is what matters; the
 // content is informational.
-const INSTALL_MARKER: &[u8] = b"raeenos-install-trigger-v1\n";
+const INSTALL_MARKER: &[u8] = b"athenaos-install-trigger-v1\n";
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -129,7 +129,7 @@ fn inspect_image(image: &str) {
 fn build_inject(boot_image: &str, out: &str) {
     // 1. Read the proven-bootable source image (xtask's kernel.uefi.img) and
     //    extract its boot tree. The `bootloader` crate builds that ESP as
-    //    FAT16, which `fatfs` reads fine — but the RaeenOS kernel's installer
+    //    FAT16, which `fatfs` reads fine — but the AthenaOS kernel's installer
     //    reader is FAT32-only, so we can't just inject a marker and ship the
     //    FAT16 stick (the kernel couldn't read INSTALL.NOW or source payloads
     //    from it). Instead we re-house the IDENTICAL boot-tree bytes into a
@@ -200,7 +200,7 @@ fn build_inject(boot_image: &str, out: &str) {
             slice,
             fatfs::FormatVolumeOptions::new()
                 .fat_type(fatfs::FatType::Fat32)
-                .volume_label(*b"RAEENOS USB"),
+                .volume_label(*b"ATHENAOS USB"),
         )
         .unwrap_or_else(|e| {
             eprintln!("raemkusb: format dest FAT32 failed: {e}");
@@ -375,7 +375,7 @@ fn write_gpt(img: &mut [u8], total_sectors: u64, esp_start: u64, esp_end: u64) {
         h[32..40].copy_from_slice(&alt_lba.to_le_bytes());
         h[40..48].copy_from_slice(&first_usable.to_le_bytes());
         h[48..56].copy_from_slice(&last_usable.to_le_bytes());
-        h[56..72].copy_from_slice(b"RAEENOS-USBGUID!");
+        h[56..72].copy_from_slice(b"ATHENAOS-USBGUID!");
         h[72..80].copy_from_slice(&entries_lba.to_le_bytes());
         h[80..84].copy_from_slice(&128u32.to_le_bytes());
         h[84..88].copy_from_slice(&128u32.to_le_bytes());
@@ -468,7 +468,7 @@ fn fat32_format(img: &mut [u8], esp_start_lba: u64, esp_sectors: u32) -> Fat {
     vbr[64] = 0x80;
     vbr[66] = 0x29;
     vbr[67..71].copy_from_slice(&0x5241_4545u32.to_le_bytes());
-    vbr[71..82].copy_from_slice(b"RAEENOS ESP");
+    vbr[71..82].copy_from_slice(b"ATHENAOS ESP");
     vbr[82..90].copy_from_slice(b"FAT32   ");
     vbr[510] = 0x55;
     vbr[511] = 0xAA;

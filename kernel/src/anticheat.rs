@@ -1,8 +1,8 @@
-//! Anti-cheat and kernel integrity subsystem for RaeenOS.
+//! Anti-cheat and kernel integrity subsystem for AthenaOS.
 //!
 //! Anti-cheat exists for the *game publishers*, not the user: its job is to let
-//! competitive titles (Fortnite, Valorant, Overwatch, …) run on RaeenOS without
-//! handing cheaters an easy exploit surface. RaeenOS uses a **two-tier strategy**
+//! competitive titles (Fortnite, Valorant, Overwatch, …) run on AthenaOS without
+//! handing cheaters an easy exploit surface. AthenaOS uses a **two-tier strategy**
 //! (full rationale in `docs/ANTICHEAT_STRATEGY.md`):
 //!
 //!   - **Tier 1 — userspace attestation (this module, the default).** A
@@ -15,7 +15,7 @@
 //!   - **Tier 2 — sanctioned kernel anti-cheat, ONLY for titles that require it.**
 //!     Some publishers mandate a kernel vantage point and won't ship without one;
 //!     refusing that (Linux's stance) is why those games are unplayable there. For
-//!     those titles RaeenOS offers a *signed, countersigned, per-game,
+//!     those titles AthenaOS offers a *signed, countersigned, per-game,
 //!     load-on-launch* kernel AC module slot — bounded, audited, unloaded on exit,
 //!     gated by explicit user consent. Ring-0 on a leash, not a boot-resident
 //!     rootkit. The detection primitives below (code hashing, hook/debugger
@@ -464,7 +464,7 @@ pub enum AntiCheatVendor {
     EasyAntiCheat,
     BattlEye,
     Vanguard,
-    RaeShield,
+    AthGuard,
     Custom(String),
 }
 
@@ -474,7 +474,7 @@ impl AntiCheatVendor {
             Self::EasyAntiCheat => "EasyAntiCheat",
             Self::BattlEye => "BattlEye",
             Self::Vanguard => "Vanguard",
-            Self::RaeShield => "RaeShield",
+            Self::AthGuard => "AthGuard",
             Self::Custom(n) => n.as_str(),
         }
     }
@@ -484,7 +484,7 @@ impl AntiCheatVendor {
             0 => Self::EasyAntiCheat,
             1 => Self::BattlEye,
             2 => Self::Vanguard,
-            3 => Self::RaeShield,
+            3 => Self::AthGuard,
             _ => Self::Custom(String::from("unknown")),
         }
     }
@@ -774,7 +774,7 @@ impl AttestationService {
 
 // Canonical numbers live in rae_abi (Block 34, 284–290). Re-exported here so
 // the handlers read by name. RENUMBERED 2026-06-25 from 100–106, which collided
-// with SYS_OOM_SUBSCRIBE (100) + RaeFS snapshots (101–103) — calling the old
+// with SYS_OOM_SUBSCRIBE (100) + AthFS snapshots (101–103) — calling the old
 // SYS_AC_REGISTER_GAME (102) ran a destructive raefs::snapshot_restore.
 pub const SYS_AC_REQUEST_ATTESTATION: u64 = rae_abi::syscall::SYS_AC_REQUEST_ATTESTATION;
 pub const SYS_AC_VERIFY_ATTESTATION: u64 = rae_abi::syscall::SYS_AC_VERIFY_ATTESTATION;
@@ -801,7 +801,7 @@ const AC_ERR_PERM: u64 = 8;
 // Audit finding: anti-cheat syscalls 100-106 were ungated — any task,
 // including a sandboxed one, could register/attest/poison another PID's
 // session and feed an attacker-controlled timestamp. The gate below closes
-// that. RaeShield mandate / Concept §Security criterion #6: no undocumented
+// that. AthGuard mandate / Concept §Security criterion #6: no undocumented
 // fail-open privileged op.
 //
 // Rule (fail-closed): the caller MUST hold `Cap::Attestation` with the
@@ -1339,7 +1339,7 @@ impl KernelIntegrity {
 
     fn check_for_unknown_modules(&mut self) {
         // Stub: walk the kernel module list and verify each signature.
-        // In RaeenOS the kernel is monolithic with no loadable module support
+        // In AthenaOS the kernel is monolithic with no loadable module support
         // today, so any module present is inherently suspicious.
         let module_count = count_loaded_modules();
         if module_count > 0 {
@@ -1757,15 +1757,15 @@ pub fn run_boot_smoketest() {
     mgr.register_game(
         game_pid,
         String::from("smoketest"),
-        Some(AntiCheatVendor::RaeShield),
+        Some(AntiCheatVendor::AthGuard),
         1000,
         1,
     );
     let attest = mgr
-        .request_attestation(game_pid, AntiCheatVendor::RaeShield, 2)
+        .request_attestation(game_pid, AntiCheatVendor::AthGuard, 2)
         .is_some()
         && mgr
-            .request_attestation(0xFACE, AntiCheatVendor::RaeShield, 2)
+            .request_attestation(0xFACE, AntiCheatVendor::AthGuard, 2)
             .is_none()
         && mgr.active_game_count() == 1;
 

@@ -571,7 +571,7 @@ pub fn invoke_wndproc(proc_addr: u64, hwnd: u64, msg: u32, wparam: u64, lparam: 
 }
 
 /// True if `class` is a USER32-provided system control class — one the guest can
-/// `CreateWindowEx` WITHOUT registering, because USER32 (here, RaeBridge)
+/// `CreateWindowEx` WITHOUT registering, because USER32 (here, AthBridge)
 /// supplies the window proc. A real Notepad's text lives in an "EDIT" child it
 /// never registers; BUTTON/STATIC are accepted as system classes too (creation
 /// succeeds) though only EDIT has interactive built-in behavior so far.
@@ -2129,11 +2129,11 @@ mod tests {
         // The notepad save path: SetWindowText stores, GetWindowText reads back
         // identically, and the length matches the UTF-16 code-unit count.
         let (mut ctx, hwnd) = ctx_with_window(0);
-        assert!(set_window_text(&mut ctx, hwnd, "Hello, RaeBridge").is_true());
+        assert!(set_window_text(&mut ctx, hwnd, "Hello, AthBridge").is_true());
         assert_eq!(ctx.last_error, ERROR_SUCCESS);
         assert_eq!(
             get_window_text(&ctx, hwnd).as_deref(),
-            Some("Hello, RaeBridge")
+            Some("Hello, AthBridge")
         );
         assert_eq!(get_window_text_length(&ctx, hwnd), 16);
         // Overwrite (SetWindowText replaces, never appends).

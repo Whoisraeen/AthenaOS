@@ -1,4 +1,4 @@
-//! ws2_32.dll — Windows Sockets 2 (Winsock) API stubs for RaeBridge.
+//! ws2_32.dll — Windows Sockets 2 (Winsock) API stubs for AthBridge.
 
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -130,7 +130,7 @@ pub fn wsa_startup(ctx: &mut CompatContext, version_requested: u16, wsa_data: &m
 
     wsa_data.version = version_requested;
     wsa_data.high_version = 0x0202; // Winsock 2.2
-    wsa_data.description = String::from("RaeBridge Winsock 2.2");
+    wsa_data.description = String::from("AthBridge Winsock 2.2");
     wsa_data.system_status = String::from("Running");
     wsa_data.max_sockets = 1024;
     wsa_data.max_udp_dg = 65507;
@@ -727,7 +727,7 @@ pub fn gethostname(ctx: &mut CompatContext, name: &mut [u8]) -> i32 {
         return SOCKET_ERROR;
     }
 
-    let hostname = b"RAEENOS\0";
+    let hostname = b"ATHENAOS\0";
     let copy = core::cmp::min(hostname.len(), name.len());
     name[..copy].copy_from_slice(&hostname[..copy]);
     ctx.wsa_error = 0;

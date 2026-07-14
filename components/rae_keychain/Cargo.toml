@@ -6,12 +6,12 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS secure credential store / keychain — the encrypted-at-rest password,
+# AthenaOS secure credential store / keychain — the encrypted-at-rest password,
 # token, and key vault every desktop OS ships (macOS Keychain, Windows
 # Credential Manager, freedesktop Secret Service). Daily-driver table stakes
-# and the storage half of RaeenOS's auth story: it pairs with raeid's passkeys
+# and the storage half of AthenaOS's auth story: it pairs with raeid's passkeys
 # and rae_otp's TOTP secrets so apps can persist passwords/tokens/keys behind a
-# passphrase (RaeenOS_Concept.md §Compatibility Strategy criterion #5 — "import
+# passphrase (LEGACY_GAMING_CONCEPT.md §Compatibility Strategy criterion #5 — "import
 # & keep my stuff"). A switcher arrives with a browser full of saved logins;
 # this is where they live, encrypted.
 #

@@ -1,5 +1,5 @@
 //! setupapi.dll — Device installation, enumeration, driver management, INF file
-//! parsing, and Configuration Manager (CM) devnode APIs for RaeBridge.
+//! parsing, and Configuration Manager (CM) devnode APIs for AthBridge.
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;

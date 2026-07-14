@@ -1,11 +1,11 @@
-# RaeAudio
+# AthAudio
 
 Low-latency audio engine. Sub-3ms round-trip on certified hardware.
 
 ## Goals
 
 - Single audio model. No ASIO / WASAPI / WDM split; no PulseAudio / PipeWire / JACK confusion.
-- Real-time mixer that runs in its own scheduling class (paired with `SCHED_GAME` from RaeKernel)
+- Real-time mixer that runs in its own scheduling class (paired with `SCHED_BODY` from AthKernel)
 - Per-app routing, hot-pluggable virtual devices (VoiceMeeter-class, built in, properly)
 - Surround, spatial audio (Atmos-class metadata), and headphone HRTF without third-party shims
 - Hardware-accelerated where supported (e.g., on GPU compute or DSP cores)

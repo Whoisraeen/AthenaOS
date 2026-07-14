@@ -1,6 +1,6 @@
-# RaeSync
+# AthSync
 
-Optional cross-device sync. End-to-end encrypted. Requires RaeID, and is off
+Optional cross-device sync. End-to-end encrypted. Requires AthID, and is off
 by default until the user opts in.
 
 ## What syncs

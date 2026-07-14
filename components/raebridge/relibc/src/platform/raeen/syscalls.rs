@@ -1,2 +1,2 @@
-//! Thin re-export of the RaeenOS syscall adapter.
+//! Thin re-export of the AthenaOS syscall adapter.
 pub use crate::raeenOS_syscall::*;

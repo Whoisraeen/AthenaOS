@@ -1,6 +1,6 @@
 //! # Recurrence expansion + civil date arithmetic for [`crate`].
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy ("let people switch without
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy ("let people switch without
 //! conscious effort") — switcher criterion #5 is "import my calendar & contacts."
 //! Importing the *data* (the [`crate::parse_ics`] layer) is necessary but not
 //! sufficient: a calendar UI must answer **"what events occur in this date

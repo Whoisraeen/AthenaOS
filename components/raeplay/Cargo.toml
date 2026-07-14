@@ -4,4 +4,4 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaePlay — built-in game launcher / library aggregator (Steam, Epic, GOG, RaeStore unified)."
+description = "AthPlay — built-in game launcher / library aggregator (Steam, Epic, GOG, AthStore unified)."

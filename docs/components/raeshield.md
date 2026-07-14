@@ -1,4 +1,4 @@
-# RaeShield
+# AthGuard
 
 iOS-grade security without iOS-grade lockdown. Capability-based permissions,
 sandboxing, attestation.
@@ -80,7 +80,7 @@ capability set scopes its blast radius.
 ## Anti-cheat attestation pitch
 
 The pitch to EAC and BattlEye, summarized: *you don't need kernel access on
-RaeenOS; here's a better, harder-to-bypass primitive.*
+AthenaOS; here's a better, harder-to-bypass primitive.*
 
 The attestation API surfaces:
 - Measured boot chain (UEFI → bootloader → kernel → init → compositor)

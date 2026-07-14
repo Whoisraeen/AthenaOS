@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MPL-2.0 */
-/* Small folio batch facade used by DRM GEM's shmem helpers. RaeenOS' current
+/* Small folio batch facade used by DRM GEM's shmem helpers. AthenaOS' current
  * page model is single-page folios; unsupported shmem creation fails closed. */
 #ifndef _LINUXKPI_LINUX_PAGEVEC_H
 #define _LINUXKPI_LINUX_PAGEVEC_H

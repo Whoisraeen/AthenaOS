@@ -4,7 +4,7 @@
  *
  * System sleep-state surface. amdgpu_device queries the target suspend state
  * (S3 vs s2idle) to pick its reset/power path. S3 suspend/resume is a separate
- * RaeenOS phase; here it is the suspend_state_t + the query, backed by
+ * AthenaOS phase; here it is the suspend_state_t + the query, backed by
  * raeen_linuxkpi at M4 (reports the real target). suspend_state_t lives in
  * <linux/pm.h>. License boundary (../../README.md): API surface.
  */

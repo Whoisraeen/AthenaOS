@@ -368,7 +368,7 @@ pub struct AccessibilityTree {
 
 impl AccessibilityTree {
     pub fn new() -> Self {
-        let root = AccessibilityNode::new(0, Role::Application, "RaeenOS");
+        let root = AccessibilityNode::new(0, Role::Application, "AthenaOS");
         Self {
             nodes: vec![root],
             root_id: 0,

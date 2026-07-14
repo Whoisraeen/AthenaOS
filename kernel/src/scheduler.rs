@@ -1,4 +1,4 @@
-//! CFS-style scheduler with SCHED_GAME hard-priority class and per-CPU runqueues.
+//! CFS-style scheduler with SCHED_BODY hard-priority class and per-CPU runqueues.
 //!
 //! Concept §Scheduling: "per-CPU runqueues (10k context switches/s per core)".
 //!
@@ -61,7 +61,7 @@ const TICK_PERIOD_US: u64 = 1_000;
 /// clock. This REPLACES the old `tick * TICK_PERIOD_US` base, which advanced one
 /// "µs-of-1000" per `yield_task` call (timers + cooperative yields), so it ran at
 /// ~1/10 real rate AND was paced by voluntary yields rather than time — degrading
-/// SCHED_GAME deadline accounting for short periods (MasterChecklist ~L435, the
+/// SCHED_BODY deadline accounting for short periods (MasterChecklist ~L435, the
 /// "EDF-clock 1/10 defect"). Absolute deadlines (`now + relative`) and miss checks
 /// (`now > absolute_deadline`) are all computed in these real µs, so sub-6 ms
 /// (input) and sub-3 ms (audio) periods are now accounted against true wall time.
@@ -82,7 +82,7 @@ const TICK_PERIOD_US: u64 = 1_000;
 ///
 /// TSC-sync caveat (CLAUDE §10, MasterChecklist 4.8 "TSC sync WARN across CPUs"):
 /// the EDF path here is BSP-pinned in practice (APs `hlt`-idle post-boot and the
-/// SCHED_GAME service threads + sched_proof are affinity-masked to CPU 0), so the
+/// SCHED_BODY service threads + sched_proof are affinity-masked to CPU 0), so the
 /// clock is read on ONE CPU and per-boot monotonicity holds even before cross-CPU
 /// TSC sync lands — exactly how the compositor's `monotonic_us` is used today.
 #[inline]
@@ -359,7 +359,7 @@ impl Scheduler {
         let tick = self.tick;
 
         // 1. Deadline (EDF) — but ONLY a task that actually has work to do
-        //    THIS period. A periodic SCHED_GAME task (compositor @16ms,
+        //    THIS period. A periodic SCHED_BODY task (compositor @16ms,
         //    audio @2.67ms) that already finished its work for the current
         //    period must yield the CPU to lower scheduling classes until
         //    its next period begins. Otherwise it stays runnable in
@@ -406,7 +406,7 @@ impl Scheduler {
             if let Some(ref mut dl) = t.deadline {
                 if dl.needs_new_period(now_us) {
                     dl.wake(now_us);
-                    // Global SCHED_GAME telemetry: one deadline period started.
+                    // Global SCHED_BODY telemetry: one deadline period started.
                     // This is the miss-RATE denominator read by
                     // /proc/raeen/gaming + sys_deadline_stats. Without it the
                     // aggregate's `total_invocations` stayed 0 forever, so the
@@ -430,7 +430,7 @@ impl Scheduler {
             } else {
                 self.dl_starve_streak[cpu_id] = 0;
             }
-            // SCHED_GAME deadline-miss telemetry (Concept "Gaming isn't a mode",
+            // SCHED_BODY deadline-miss telemetry (Concept "Gaming isn't a mode",
             // CLAUDE §1 North Star table). THIS is the dispatch point: the
             // earliest-deadline ready EDF task is about to get the CPU. If the
             // monotonic clock (`now_us`, same µs base as `absolute_deadline`)
@@ -713,7 +713,7 @@ pub fn spawn(task: Task) {
         if let Some(ref mut dl) = task.deadline {
             // First period anchored to the SAME wall-time µs base pick_next uses.
             dl.wake(edf_monotonic_us(sched.tick));
-            // Register the SCHED_GAME task and its first deadline period in the
+            // Register the SCHED_BODY task and its first deadline period in the
             // global aggregate (see pick_next for why the denominator matters).
             sched.deadline_stats.total_tasks += 1;
             sched.deadline_stats.total_invocations += 1;
@@ -854,7 +854,7 @@ pub fn yield_task() {
         // never pay the wrmsr.
         let old_fs = current.fs_base;
         let new_fs = next.fs_base;
-        // Win32 TEB (GS base) for RaeBridge guests — see Task::gs_base and
+        // Win32 TEB (GS base) for AthBridge guests — see Task::gs_base and
         // syscall arm 282. Restored via the ACTIVE GsBase (NOT KernelGsBase):
         // context switches run from Rust kernel code, and the value left in the
         // active GS base here is the one that survives the syscall handler's
@@ -864,7 +864,7 @@ pub fn yield_task() {
         // it. While the kernel then runs with active GS = TEB (large),
         // current_cpu_id() reads the per-CPU id from the kernel-GS block, so
         // SMP stays correct. Both fields are 0 for native/Linux tasks, so the
-        // wrmsr is skipped unless scheduling to/from a RaeBridge guest.
+        // wrmsr is skipped unless scheduling to/from a AthBridge guest.
         let old_gs = current.gs_base;
         let new_gs = next.gs_base;
 
@@ -945,7 +945,7 @@ pub fn yield_task() {
 
 /// Install the incoming task's user-visible GS base during a context switch.
 ///
-/// `gs_base != 0` → a RaeBridge guest's Win32 TEB (set via SYS_SET_GS_BASE).
+/// `gs_base != 0` → a AthBridge guest's Win32 TEB (set via SYS_SET_GS_BASE).
 /// `gs_base == 0` → a native/Linux task: restore the legacy small-integer
 /// `cpu_id` so `gdt::current_cpu_id()`'s active-GS fast path returns the right
 /// core (writing 0 unconditionally would mis-report cpu_id as 0 on every AP).
@@ -1591,7 +1591,7 @@ pub fn run_boot_smoketest() {
         if reaped && !enqueued { "PASS" } else { "FAIL" },
     );
 
-    // ── SCHED_GAME deadline telemetry (Concept "Gaming isn't a mode") ──
+    // ── SCHED_BODY deadline telemetry (Concept "Gaming isn't a mode") ──
     // Two-part proof the deadline-miss telemetry is REAL (CLAUDE §1 North
     // Star table: "EDF exists; deadline-miss telemetry missing").
     //
@@ -1626,7 +1626,7 @@ pub fn run_boot_smoketest() {
     };
 
     // Part 2 — live wiring: the global aggregate read by every telemetry
-    // surface must actually advance when a SCHED_GAME deadline task is
+    // surface must actually advance when a SCHED_BODY deadline task is
     // spawned via the real `spawn` path. Pre-fix `total_invocations`/
     // `total_tasks` were declared but never incremented, so the aggregate sat
     // at 0 forever (the bug). We spawn a probe to exercise that path, then
@@ -1853,7 +1853,7 @@ pub fn run_kill_reclaim_smoketest() {
     );
 }
 
-/// Smoketest probe: a trivial SCHED_GAME deadline task. It exists only so
+/// Smoketest probe: a trivial SCHED_BODY deadline task. It exists only so
 /// `spawn` runs the deadline-accounting path (which bumps the global aggregate);
 /// once BOOT_COMPLETE unblocks BSP scheduling it gets a slice, runs, and exits.
 extern "C" fn deadline_probe_worker() {
@@ -2296,7 +2296,7 @@ pub fn find_cap_children(
     children
 }
 
-/// SCHED_GAME deadline-miss telemetry for `/proc/raeen/perf`: returns
+/// SCHED_BODY deadline-miss telemetry for `/proc/raeen/perf`: returns
 /// `(total_misses, worst_miss_us)`. Uses `try_lock` so a telemetry read can
 /// never deadlock the dump path; returns `(0, 0)` if the scheduler is busy.
 pub fn deadline_miss_stats() -> (u64, u64) {

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# athena-gpu-capture.sh — READ-ONLY GPU/PSP ground-truth capture for the RaeenOS
+# athena-gpu-capture.sh — READ-ONLY GPU/PSP ground-truth capture for the AthenaOS
 # amdgpu bring-up, run on Athena (Arch Linux, amdgpu loaded, Radeon 760M/780M).
 #
 # Everything here is a READ. No register writes, nothing destructive. It dumps the
-# state of a *working* amdgpu so the RaeenOS PSP firmware-load path can be built
+# state of a *working* amdgpu so the AthenaOS PSP firmware-load path can be built
 # against ground truth instead of reverse-engineered blind.
 #
 #   sudo bash scripts/athena-gpu-capture.sh
@@ -52,7 +52,7 @@ cat "$DRI/amdgpu_fw_attestation" 2>/dev/null | head -40 || echo "no fw_attestati
 ls "$DRI" 2>/dev/null | grep -iE 'discovery|vbios|psp' || true
 
 # ---- umr: the money shots (best-effort; skips cleanly if umr/reg-name absent) ----
-sec "UMR REGISTER READS (state of a WORKING GFX/PSP — confirms RaeenOS offsets)"
+sec "UMR REGISTER READS (state of a WORKING GFX/PSP — confirms AthenaOS offsets)"
 if ! command -v umr >/dev/null 2>&1; then
   echo "umr NOT installed.  Install:  sudo pacman -S umr   (or: yay -S umr-git)"
 else

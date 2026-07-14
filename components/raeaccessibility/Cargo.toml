@@ -4,6 +4,6 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeAccessibility — system accessibility service for RaeenOS"
+description = "RaeAccessibility — system accessibility service for AthenaOS"
 
 [dependencies]

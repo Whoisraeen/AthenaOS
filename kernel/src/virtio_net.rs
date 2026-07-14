@@ -4,7 +4,7 @@
 // frames against a `virtio-net-pci` device. Year-1 networking
 // deliverable: this is what unblocks ARP/DHCP/ping via smoltcp.
 //
-// Concept §Networking: RaeenOS uses RaeNet on real hardware. virtio-net
+// Concept §Networking: AthenaOS uses AthNet on real hardware. virtio-net
 // is the guest-only convenience driver for QEMU/KVM that lets us run
 // the network stack without writing an e1000/realtek/Intel-igb driver.
 //
@@ -724,7 +724,7 @@ pub fn run_boot_smoketest() {
     frame[6..12].copy_from_slice(&src);
     frame[12] = 0x88;
     frame[13] = 0xb5;
-    let tag = b"RaeenOS-virtio-net-hello";
+    let tag = b"AthenaOS-virtio-net-hello";
     frame[14..14 + tag.len()].copy_from_slice(tag);
 
     let t0 = unsafe { core::arch::x86_64::_rdtsc() };

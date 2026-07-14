@@ -1,9 +1,9 @@
-//! WireGuard userspace primitive — Concept §RaeNet:
+//! WireGuard userspace primitive — Concept §AthNet:
 //!
 //! > "built-in WireGuard, QUIC priority, gaming traffic shaping."
 //!
 //! WireGuard is "userspace VPN" only in the sense that the canonical
-//! Linux implementation runs as a kernel module. RaeenOS keeps the
+//! Linux implementation runs as a kernel module. AthenaOS keeps the
 //! crypto-state-machine kernel-side because the firewall + traffic
 //! shaper need to see plaintext to apply QoS, and we already have a
 //! kernel-side crypto module (`crate::crypto`) with the Curve25519 +
@@ -172,7 +172,7 @@ pub fn add_tunnel(name: &str, endpoint: u64, pubkey: [u8; 32]) -> u64 {
     // key — that lets any observer derive the transport keys. Generate a fresh
     // X25519 private key from the CSPRNG (X25519 clamps internally, so 32 random
     // bytes is a valid scalar). MasterChecklist Phase 3 swaps this for a key
-    // loaded from sealed storage / RaeShield TPM quote.
+    // loaded from sealed storage / AthGuard TPM quote.
     let mut local_static = [0u8; 32];
     if crate::crypto::getrandom(&mut local_static).is_err() {
         crate::serial_println!(
@@ -867,7 +867,7 @@ pub fn dump_text() -> String {
     };
     let mut out = String::new();
     out.push_str(&alloc::format!(
-        "# RaeenOS WireGuard ({} tunnels, {}/{} successful handshakes)\n",
+        "# AthenaOS WireGuard ({} tunnels, {}/{} successful handshakes)\n",
         r.tunnels.len(),
         r.handshakes_succeeded,
         r.handshakes_attempted,

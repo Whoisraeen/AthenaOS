@@ -1,14 +1,14 @@
-//! Linux x86_64 syscall translation layer for RaeenOS.
+//! Linux x86_64 syscall translation layer for AthenaOS.
 //!
 //! Maps Linux syscall numbers (the real x86_64 ABI from `asm/unistd_64.h`)
 //! to our POSIX layer implementations. When a Linux ELF binary issues a
 //! `syscall` instruction, the kernel detects it via the ELF OS/ABI field
-//! and routes through this dispatch table instead of the native RaeenOS
+//! and routes through this dispatch table instead of the native AthenaOS
 //! syscall handler.
 //!
 //! This is NOT a Linux kernel clone — it's a translation shim that lets
-//! unmodified Linux binaries run on RaeenOS by mapping their syscalls to
-//! RaeenOS's own subsystems.
+//! unmodified Linux binaries run on AthenaOS by mapping their syscalls to
+//! AthenaOS's own subsystems.
 
 #![allow(dead_code)]
 
@@ -108,7 +108,7 @@ pub const SYS_EPOLL_CTL: u64 = 233;
 pub const SYS_EPOLL_WAIT: u64 = 232;
 pub const SYS_EPOLL_PWAIT: u64 = 281;
 pub const SYS_EPOLL_PWAIT2: u64 = 441;
-// Extended-attribute family. RaeFS/the VFS expose no xattrs, so the LIST
+// Extended-attribute family. AthFS/the VFS expose no xattrs, so the LIST
 // variants report an empty set (0) and the GET variants report "no such attr"
 // (ENODATA) — what a real `ls -l` / `cp` expects on a no-xattr filesystem
 // (oracle: a stock dynamically-linked `ls` calls llistxattr per entry).
@@ -243,7 +243,7 @@ pub struct Utsname {
 }
 
 impl Utsname {
-    fn raeenos_default() -> Self {
+    fn athenaos_default() -> Self {
         let mut u = Utsname {
             sysname: [0; 65],
             nodename: [0; 65],
@@ -253,9 +253,9 @@ impl Utsname {
             domainname: [0; 65],
         };
         Self::fill_field(&mut u.sysname, b"Linux");
-        Self::fill_field(&mut u.nodename, b"raeenos");
-        Self::fill_field(&mut u.release, b"6.1.0-raeenos");
-        Self::fill_field(&mut u.version, b"#1 SMP RaeenOS");
+        Self::fill_field(&mut u.nodename, b"athenaos");
+        Self::fill_field(&mut u.release, b"6.1.0-athenaos");
+        Self::fill_field(&mut u.version, b"#1 SMP AthenaOS");
         Self::fill_field(&mut u.machine, b"x86_64");
         Self::fill_field(&mut u.domainname, b"(none)");
         u
@@ -611,12 +611,12 @@ fn handle_prctl(option: u64, arg2: u64, _arg3: u64, _arg4: u64, _arg5: u64) -> i
         }
         PR_SET_NO_NEW_PRIVS => {
             // Accept: we always enforce no-new-privs by default via
-            // RaeShield's capability model.
+            // AthGuard's capability model.
             0
         }
         PR_GET_NO_NEW_PRIVS => 1, // Always set
         PR_SET_SECCOMP => {
-            // RaeShield handles sandboxing natively; accept the seccomp
+            // AthGuard handles sandboxing natively; accept the seccomp
             // request but don't install a BPF filter (not applicable).
             0
         }
@@ -649,7 +649,7 @@ fn handle_arch_prctl(code: u64, addr: u64) -> i64 {
             0
         }
         ARCH_SET_GS => {
-            // Refused by design. RaeenOS keeps the CPU id in the user-visible
+            // Refused by design. AthenaOS keeps the CPU id in the user-visible
             // GS base (gdt::current_cpu_id) and PerCpuSyscall in
             // IA32_KERNEL_GS_BASE — honoring a user GS base would corrupt the
             // per-CPU scheme. x86_64 Linux libcs use FS exclusively for TLS,
@@ -1795,14 +1795,14 @@ pub fn linux_syscall_dispatch(regs: &mut SyscallRegisters) {
         SYS_RT_SIGTIMEDWAIT => Errno::Eagain.as_neg(), // timed out, no signal pending
         SYS_FALLOCATE => 0, // best-effort: the FS allocates on write; succeed so callers proceed
         SYS_STATFS | SYS_FSTATFS => {
-            // statfs(path=a1, buf=a2) / fstatfs(fd=a1, buf=a2): no real RaeFS block
+            // statfs(path=a1, buf=a2) / fstatfs(fd=a1, buf=a2): no real AthFS block
             // accounting yet — report a plausible filesystem with ample free space (so
             // free-space checks pass) instead of ENOSYS. 120-byte layout from Athena's
             // asm-generic/statfs.h.
             let mut b = [0u8; 120];
             let s64 =
                 |b: &mut [u8; 120], o: usize, v: i64| b[o..o + 8].copy_from_slice(&v.to_le_bytes());
-            s64(&mut b, 0, 0x5241_4566); // f_type (RaeFS magic)
+            s64(&mut b, 0, 0x5241_4566); // f_type (AthFS magic)
             s64(&mut b, 8, 4096); // f_bsize
             s64(&mut b, 16, 0x0100_0000); // f_blocks (16M * 4K = 64 GB)
             s64(&mut b, 24, 0x00C0_0000); // f_bfree
@@ -2611,7 +2611,7 @@ pub fn linux_syscall_dispatch(regs: &mut SyscallRegisters) {
             if n < 3 {
                 crate::serial_println!("[linux_syscall] uname");
             }
-            let uname = Utsname::raeenos_default();
+            let uname = Utsname::athenaos_default();
             let bytes = unsafe {
                 core::slice::from_raw_parts(
                     &uname as *const _ as *const u8,
@@ -2725,7 +2725,7 @@ pub fn linux_syscall_dispatch(regs: &mut SyscallRegisters) {
             }
         }
 
-        // Extended attributes: RaeFS/the VFS store none. LIST -> 0 bytes (empty
+        // Extended attributes: AthFS/the VFS store none. LIST -> 0 bytes (empty
         // set), GET -> ENODATA (no such attribute), SET -> 0 (accepted, no-op).
         // This is the behaviour a no-xattr filesystem presents; a stock `ls -l`
         // calls llistxattr per entry and treats 0 as "no '+' indicator".
@@ -3254,8 +3254,8 @@ pub fn dump_text() -> String {
     let last = LAST_NR.load(Ordering::Relaxed);
     let tracked = LINUX_TASKS.lock().len();
 
-    let mut out = String::from("# RaeenOS Linux syscall translation\n");
-    out.push_str("mode: Linux x86_64 ABI -> RaeenOS posix/syscall shims\n");
+    let mut out = String::from("# AthenaOS Linux syscall translation\n");
+    out.push_str("mode: Linux x86_64 ABI -> AthenaOS posix/syscall shims\n");
     out.push_str(&alloc::format!("linux_tasks_tracked: {}\n", tracked));
     out.push_str(&alloc::format!("total_dispatched: {}\n", total));
     out.push_str(&alloc::format!("handled_or_stubbed: {}\n", handled));

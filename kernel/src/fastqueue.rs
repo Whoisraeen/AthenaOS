@@ -1,4 +1,4 @@
-//! Fixed-capacity, allocation-free queues — Concept §SCHED_GAME
+//! Fixed-capacity, allocation-free queues — Concept §SCHED_BODY
 //! "allocation-free in steady state".
 //!
 //! The IRQ→task event path and the frame/audio inner loops must not risk an

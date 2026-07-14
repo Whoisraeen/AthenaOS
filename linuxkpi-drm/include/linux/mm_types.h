@@ -31,7 +31,7 @@ struct page {
 	void                  *private_data;
 	struct list_head       lru;      /* TTM pool chains free pages here */
 	unsigned long          private;  /* TTM stashes the page order here */
-	/* RaeenOS LinuxKPI backing identity. These are private facade fields,
+	/* AthenaOS LinuxKPI backing identity. These are private facade fields,
 	 * never consumed by upstream code: the daemon VA and DMA/physical address
 	 * are intentionally distinct, and the allocation token releases the host
 	 * IOMMU mapping on the head page. */
@@ -45,7 +45,7 @@ typedef unsigned long vm_flags_t;
 typedef int vm_fault_t;
 
 /* Linux 7 represents the mutable VMA flags passed to shmem as an opaque
- * one-word bitmap.  Keep that by-value ABI exact even though RaeenOS does not
+ * one-word bitmap.  Keep that by-value ABI exact even though AthenaOS does not
  * yet provide shmem-backed GEM objects. */
 typedef struct {
 	unsigned long __vma_flags[1];

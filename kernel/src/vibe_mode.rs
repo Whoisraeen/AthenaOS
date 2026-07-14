@@ -8,7 +8,7 @@
 //! A preset is a BUNDLE binding the subsystems that already exist: a theme
 //! (`theme_engine` carries accent/fonts/cursor/animation curves/scanlines/
 //! particles), a live wallpaper (`live_wallpaper`), a named sound pack
-//! (RaeAudio asset — id recorded now, audible on iron when Phase 7 PCM
+//! (AthAudio asset — id recorded now, audible on iron when Phase 7 PCM
 //! lands), and the RGB accent the peripheral sync mirrors. [`apply_preset`]
 //! switches everything in one call; presets bind by NAME so id reshuffles
 //! across boots can't mismatch them.
@@ -79,7 +79,7 @@ static ACTIVE: Mutex<Option<&'static VibePreset>> = Mutex::new(None);
 static APPLIES: AtomicU64 = AtomicU64::new(0);
 
 /// Apply a preset by name: theme + wallpaper switch through their engines,
-/// the sound pack + RGB accent are recorded for RaeAudio / peripheral sync.
+/// the sound pack + RGB accent are recorded for AthAudio / peripheral sync.
 /// Returns false (and changes nothing) for an unknown preset or when a
 /// bound theme/wallpaper name doesn't resolve — fail-closed, no half-vibe.
 pub fn apply_preset(name: &str) -> bool {

@@ -1,4 +1,4 @@
-//! Built-in text editor for RaeenOS — modal editing, syntax highlighting,
+//! Built-in text editor for AthenaOS — modal editing, syntax highlighting,
 //! search/replace, undo/redo, and line numbers.
 
 #![allow(dead_code)]

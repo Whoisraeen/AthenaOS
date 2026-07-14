@@ -1968,7 +1968,7 @@ impl ComputeDevice for CpuDevice {
         ComputeBackend::Cpu
     }
     fn name(&self) -> &str {
-        "RaeenOS CPU"
+        "AthenaOS CPU"
     }
     fn available_memory(&self) -> usize {
         1024 * 1024 * 1024

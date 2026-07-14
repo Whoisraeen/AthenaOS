@@ -11,8 +11,8 @@ use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
 const DBUS_INTERFACE: &str = "org.freedesktop.Notifications";
 const DBUS_PATH: &str = "/org/freedesktop/Notifications";
-const SERVER_NAME: &str = "RaeenOS Notification Daemon";
-const SERVER_VENDOR: &str = "RaeenOS";
+const SERVER_NAME: &str = "AthenaOS Notification Daemon";
+const SERVER_VENDOR: &str = "AthenaOS";
 const SERVER_VERSION: &str = "1.0.0";
 const SPEC_VERSION: &str = "1.2";
 const DEFAULT_EXPIRE_MS: i32 = 5000;

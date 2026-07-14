@@ -1,6 +1,6 @@
 //! # RaeTar — a never-panic, `no_std` TAR + gzip archive reader (.tar / .tar.gz / .tgz).
 //!
-//! RaeenOS_Concept.md §"The user owns the machine": a daily driver must let
+//! LEGACY_GAMING_CONCEPT.md §"The user owns the machine": a daily driver must let
 //! someone double-click a downloaded `.tar.gz` and see (and extract) what's inside
 //! *without* installing a third-party tool. `.tar.gz` is the canonical shape of a
 //! source release, a language toolchain tarball, a container layer, and most
@@ -1014,7 +1014,7 @@ fn inflate_block(
 // ════════════════════════════════════════════════════════════════════════════
 // TAR WRITER — ustar encoder (+ gzip convenience) ────────────────────────────
 //
-// RaeenOS_Concept.md §"The user owns the machine": owning your data means being
+// LEGACY_GAMING_CONCEPT.md §"The user owns the machine": owning your data means being
 // able to *export* and *back up* it, not just read what someone else produced.
 // `TarWriter` produces a spec-correct ustar archive that this crate's own
 // `read_tar` reads back identically — the writer/reader round-trip is the proof

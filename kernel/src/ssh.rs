@@ -1,13 +1,13 @@
-//! In-kernel SSH server (`raessh`) — remote administration of RaeenOS.
+//! In-kernel SSH server (`raessh`) — remote administration of AthenaOS.
 //!
 //! Concept §"The user owns the machine": you can reach a shell on your own OS
 //! over the network, on your terms — no cloud broker, no telemetry, an SSH-2.0
 //! server built from scratch (`components/raessh`, `#![forbid(unsafe_code)]`) on
-//! RaeenOS's own KAT-proven crypto (`rae_crypto`: curve25519, ed25519,
+//! AthenaOS's own KAT-proven crypto (`rae_crypto`: curve25519, ed25519,
 //! chacha20-poly1305). This module is the kernel binding: it owns the ed25519
 //! host key + the `authorized_keys` allow-list, proves the whole stack at boot
 //! with a loopback self-test, and (next increment) drives a TCP `:22` listener
-//! from the net poll loop, binding an authenticated shell channel to RaeShell.
+//! from the net poll loop, binding an authenticated shell channel to AthShell.
 //!
 //! R10 contract: [`init`] (called from `kernel_main`) + [`run_boot_smoketest`]
 //! (FAIL-able) + [`dump_text`] (`/proc/raeen/ssh`) + this docstring.
@@ -26,8 +26,8 @@ pub const SSH_PORT: u16 = 22;
 /// Server identity + policy, established once at boot.
 struct SshServer {
     /// The long-term ed25519 host-key seed (32-byte private) — a fresh random
-    /// key per boot for now; persistence to RaeFS is a follow-up
-    /// (MasterChecklist RaeNet SSH server: host-key persistence).
+    /// key per boot for now; persistence to AthFS is a follow-up
+    /// (MasterChecklist AthNet SSH server: host-key persistence).
     host_seed: [u8; 32],
     /// The host public key (advertised to clients as `ssh-ed25519`).
     host_pub: [u8; 32],

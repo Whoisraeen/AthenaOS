@@ -6,10 +6,10 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS file-association / MIME resolver — a zero-dependency, never-panic,
+# AthenaOS file-association / MIME resolver — a zero-dependency, never-panic,
 # `no_std` core that answers "what is this file, and what opens it?"
-# (RaeenOS_Concept.md §"Built for people who care about how things feel." /
-# daily-driver table stakes). Today RaeenOS has ZERO file-association registry:
+# (LEGACY_GAMING_CONCEPT.md §"Built for people who care about how things feel." /
+# daily-driver table stakes). Today AthenaOS has ZERO file-association registry:
 # a user can't open a downloaded file by double-clicking it. This crate is the
 # infra-first foundation for that — MIME detection by extension AND by magic
 # bytes (so mislabeled / extension-less files still resolve), plus a queryable

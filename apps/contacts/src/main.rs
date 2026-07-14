@@ -1,4 +1,4 @@
-//! RaeenOS Contacts — the bundled address book (Concept §Three User Experiences:
+//! AthenaOS Contacts — the bundled address book (Concept §Three User Experiences:
 //! daily-driver parity vs Win11 People / macOS Contacts).
 //!
 //! A standalone userspace ELF (`exec_path = "contacts"`). The rich data model

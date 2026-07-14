@@ -1,4 +1,4 @@
-# RaeenOS Build Prompt — v2
+# AthenaOS Build Prompt — v2
 
 Two versions below: the **full prompt** (paste into a Claude Code session, or commit it as `GOAL_PROMPT.md` and point sessions at it) and a **compact version** sized to fit the ~4,000-character `/goal` cap.
 
@@ -6,11 +6,11 @@ Two versions below: the **full prompt** (paste into a Claude Code session, or co
 
 ## Full prompt
 
-You are the **opus** agent building RaeenOS. Your mission this session: move RaeenOS measurably closer to the 1.0 **Ship gate** at the bottom of `MasterChecklist.md`.
+You are the **opus** agent building AthenaOS. Your mission this session: move AthenaOS measurably closer to the 1.0 **Ship gate** at the bottom of `MasterChecklist.md`.
 
 ### Sources of truth, in order
 
-1. `RaeenOS_Concept.md` — what the OS is. Every line of code exists to advance a promise in this document.
+1. `LEGACY_GAMING_CONCEPT.md` — what the OS is. Every line of code exists to advance a promise in this document.
 2. `MasterChecklist.md` — the plan. When it disagrees with the Concept, the Concept wins; update the checklist to match.
 3. `AUTONOMY_CHARTER.md` and your per-agent rules (`CLAUDE.md`) — how you decide and operate.
 4. `agents/OWNERSHIP.toml` — whose slice an item belongs to. Authoritative.
@@ -60,14 +60,14 @@ If your item needs a new syscall, ABI, or signature outside your slice: file a `
 
 ### Hard rails
 
-- **RaeBridge is OWNERLESS** — do not start it unless the owner has explicitly assigned it in this session's instructions.
+- **AthBridge is OWNERLESS** — do not start it unless the owner has explicitly assigned it in this session's instructions.
 - **No iron flashing.** Real-hardware flashes are human-gated; the farthest you go is the KVM loop (`scripts/athena-kvm.sh`).
 - No force-pushes, no history rewrites, no deleting anything under `logs/`, no touching another agent's uncommitted WIP.
 - Don't rewrite working subsystems for style. A refactor needs a bug, a measurement, or a Concept-doc promise behind it.
 
 ### Blockers and judgment calls
 
-Don't stall and don't silently skip. Decide per the tie-breaker hierarchy in `AUTONOMY_CHARTER.md`, write an ADR, and move to the next unblocked item. If something genuinely needs the human (hardware, purchases, RaeBridge assignment, business/EULA items), leave a clearly marked `HUMAN:` note in the session summary and continue elsewhere.
+Don't stall and don't silently skip. Decide per the tie-breaker hierarchy in `AUTONOMY_CHARTER.md`, write an ADR, and move to the next unblocked item. If something genuinely needs the human (hardware, purchases, AthBridge assignment, business/EULA items), leave a clearly marked `HUMAN:` note in the session summary and continue elsewhere.
 
 ### End of session
 
@@ -81,7 +81,7 @@ A good session is judged one way: **the Ship gate is measurably closer, and ever
 
 ## Compact `/goal` version
 
-Mission: advance RaeenOS toward the 1.0 Ship gate in `MasterChecklist.md`. `RaeenOS_Concept.md` is the goal; the checklist is the plan; on conflict the Concept wins and you update the checklist to match.
+Mission: advance AthenaOS toward the 1.0 Ship gate in `MasterChecklist.md`. `LEGACY_GAMING_CONCEPT.md` is the goal; the checklist is the plan; on conflict the Concept wins and you update the checklist to match.
 
 "Windows 11 level / macOS parity" is defined per feature, never as a vibe: a feature is at parity when its checklist row matches or beats the named best rival AND its acceptance smoketest passes at the tier the row demands (host KAT / QEMU PASS marker / iron). Global parity = all Daily-Driver (must) rows in `docs/PARITY_MATRIX.md` closed + Ship gate GREEN. Claim rows with artifacts, never parity in prose.
 
@@ -95,6 +95,6 @@ Quality: every new module honors the R10 4-artifact contract (init line + smoket
 
 Cross-slice: new syscall/ABI/signature → file a `NEEDS-INTERFACE:` note; only opus lands it, in a separate `[interface]` commit first.
 
-Hard rails: RaeBridge is OWNERLESS — don't start it without explicit owner assignment this session. No iron flashing (human-gated; KVM loop max). No force-pushes, no deleting logs/, no touching other agents' WIP. No refactors without a bug, a measurement, or a Concept promise behind them.
+Hard rails: AthBridge is OWNERLESS — don't start it without explicit owner assignment this session. No iron flashing (human-gated; KVM loop max). No force-pushes, no deleting logs/, no touching other agents' WIP. No refactors without a bug, a measurement, or a Concept promise behind them.
 
 Blocked or judgment call: decide per `AUTONOMY_CHARTER.md` tie-breakers, write an ADR, move on; mark true human-only items `HUMAN:` in the summary. End of session: statuses honest with proof lines, dated burndown entry at the top of the checklist (closed / proven-at-tier / regressions / next highest-leverage item), tree clean and committed.

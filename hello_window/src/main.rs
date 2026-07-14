@@ -27,7 +27,7 @@ pub extern "C" fn _start() -> ! {
     canvas.fill_rect(WIN_W - 32, 0, 32, 32, 0xFFEF4444);
     canvas.draw_text(WIN_W - 22, 8, "X", 0xFFFFFFFF, None);
 
-    canvas.draw_text(40, 80, "Hello from RaeenOS!", 0xFFE2E8F0, None);
+    canvas.draw_text(40, 80, "Hello from AthenaOS!", 0xFFE2E8F0, None);
     canvas.draw_text(
         40,
         110,

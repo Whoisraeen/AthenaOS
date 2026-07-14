@@ -1,4 +1,4 @@
-//! xtask — build automation for AthenaOS (forked from RaeenOS).
+//! xtask — build automation for AthenaOS (forked from AthenaOS).
 //!
 //! Usage:
 //!   cargo run -p xtask -- build            Build the kernel (debug)
@@ -531,7 +531,7 @@ fn build_user_apps(release: bool) {
         let osabi = if linux_abi_apps.contains(app) {
             0x03 // ELFOSABI_LINUX → kernel routes through linux_exec
         } else {
-            0xAE // ELFOSABI_RAEENOS → native syscall table
+            0xAE // ELFOSABI_ATHENAOS → native syscall table
         };
         stamp_osabi(&user_bin_dir.join(app), osabi);
     }
@@ -551,7 +551,7 @@ fn build_user_apps(release: bool) {
             let bin_name = bin_path.file_name().unwrap();
             let dest = user_bin_dir.join(bin_name);
             std::fs::copy(&bin_path, &dest).unwrap();
-            // Ports link the in-tree relibc, which speaks NATIVE RaeenOS
+            // Ports link the in-tree relibc, which speaks NATIVE AthenaOS
             // syscalls — stamp them native regardless of what their build
             // target wrote into the osabi byte.
             stamp_osabi(&dest, 0xAE);
@@ -739,12 +739,12 @@ fn build_user_apps(release: bool) {
 
 /// Stamp the ELF OS/ABI identification byte (`e_ident[EI_OSABI]`, offset 7)
 /// of a freshly built user ELF. The kernel's SYS_SPAWN dispatches on it:
-/// 0xAE (`ELFOSABI_RAEENOS`, kernel/src/elf_loader.rs) runs the native
-/// RaeenOS syscall table; anything else valid (0x00 SysV, 0x03 Linux) routes
+/// 0xAE (`ELFOSABI_ATHENAOS`, kernel/src/elf_loader.rs) runs the native
+/// AthenaOS syscall table; anything else valid (0x00 SysV, 0x03 Linux) routes
 /// through `linux_exec` — Linux auxv stack + Linux syscall translation. The
 /// byte a toolchain writes reflects the BUILD TARGET, not the syscall ABI the
 /// binary actually speaks (relibc-linked apps target a Linux-flavored triple
-/// but call native RaeenOS syscall numbers), so xtask stamps the truth from
+/// but call native AthenaOS syscall numbers), so xtask stamps the truth from
 /// `config/base.toml` rather than trusting the linker.
 fn stamp_osabi(path: &Path, osabi: u8) {
     let mut bytes = match std::fs::read(path) {
@@ -967,7 +967,7 @@ fn create_disk_image(release: bool, uefi: bool) -> PathBuf {
 fn bootlog_placeholder() -> Vec<u8> {
     let mut data = vec![0u8; 1024 * 1024];
     let msg =
-        b"RAEENOS BOOTLOG: placeholder - the kernel has not written a log into this file yet.\r\n";
+        b"ATHENAOS BOOTLOG: placeholder - the kernel has not written a log into this file yet.\r\n";
     data[..msg.len()].copy_from_slice(msg);
     data
 }
@@ -994,7 +994,7 @@ fn write_usb_msc_image(path: &Path) -> std::io::Result<()> {
     let mut img = vec![0u8; IMG_SIZE];
 
     // Smoketest signature (read back via SCSI READ(10) of sector 0).
-    let sig = b"RAEENOS-USB-MSC-SECTOR0";
+    let sig = b"ATHENAOS-USB-MSC-SECTOR0";
     img[..sig.len()].copy_from_slice(sig);
 
     // MBR partition entry #0: FAT16 LBA from sector 2048 to end of image.
@@ -1241,7 +1241,7 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
     // tick). Re-enable manually only when diagnosing interrupt/fault issues.
     // Hardware acceleration (opt-in): set RAEEN_ACCEL=whpx to run the guest on
     // the Windows Hypervisor Platform — orders of magnitude faster than the
-    // default TCG software emulation (under TCG the heavy RaeFS bucket I/O in the
+    // default TCG software emulation (under TCG the heavy AthFS bucket I/O in the
     // boot smoketest crawls for minutes). `kernel-irqchip=off` is required (WHPX
     // has no in-kernel IRQ chip).
     //
@@ -1371,7 +1371,7 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
 
     // User-mode netdev + virtio-net-pci for RX/DHCP bring-up (#110).
     // hostfwd: host localhost:2222 -> guest :22, so a real `ssh -p 2222
-    // raeen@localhost` reaches the in-kernel RaeSSH listener (RaeNet SSH server
+    // raeen@localhost` reaches the in-kernel RaeSSH listener (AthNet SSH server
     // Increment B). Harmless when nothing listens; guest DHCP IP is 10.0.2.15.
     cmd.args([
         "-netdev",
@@ -1620,7 +1620,7 @@ fn ensure_smoketest_disks(root: &Path) {
     let nvme = target.join("nvme.img");
     if !nvme.exists() {
         let mut bytes = vec![0u8; 16 * 1024 * 1024];
-        let marker = b"RaeenOS-NVMe-block-0-ok!";
+        let marker = b"AthenaOS-NVMe-block-0-ok!";
         bytes[..marker.len()].copy_from_slice(marker);
         let _ = std::fs::write(&nvme, bytes);
     }
@@ -1628,7 +1628,7 @@ fn ensure_smoketest_disks(root: &Path) {
     let ahci = target.join("ahci.img");
     if !ahci.exists() {
         let mut bytes = vec![0u8; 1024 * 1024];
-        let marker = b"RaeenOS-AHCI-block-0-ok!";
+        let marker = b"AthenaOS-AHCI-block-0-ok!";
         bytes[..marker.len()].copy_from_slice(marker);
         let _ = std::fs::write(&ahci, bytes);
     }
@@ -1636,7 +1636,7 @@ fn ensure_smoketest_disks(root: &Path) {
     let virtio = target.join("virtio.img");
     if !virtio.exists() {
         let mut bytes = vec![0u8; 1024 * 1024];
-        let marker = b"RaeFS-VirtIO-Block-0 hello!";
+        let marker = b"AthFS-VirtIO-Block-0 hello!";
         bytes[..marker.len()].copy_from_slice(marker);
         let _ = std::fs::write(&virtio, bytes);
     }

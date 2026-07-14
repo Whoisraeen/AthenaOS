@@ -1,7 +1,7 @@
 //! Kernel-side text clipboard + Win+V-class history — Concept §"The user owns
 //! the machine".
 //!
-//! RaeenOS_Concept.md §The user owns the machine:
+//! LEGACY_GAMING_CONCEPT.md §The user owns the machine:
 //! > "no forced telemetry … the user owns the machine"
 //!
 //! Clipboard history is **local-only by default**: a bounded, session-wide ring
@@ -11,7 +11,7 @@
 //! single session-wide UTF-8 buffer (capped at 64 KiB); the SET path now ALSO
 //! appends to the history ring so the clipboard-history panel can render past
 //! copies that survive across apps. Binary clipboard formats are userspace-only
-//! (RaeUI); the kernel ring is text-first with a reserved format tag so
+//! (AthUI); the kernel ring is text-first with a reserved format tag so
 //! Image/Files/Url can follow additively.
 //!
 //! ## Syscalls (107-108 active buffer; 268-273 history)
@@ -251,7 +251,7 @@ pub fn dump_text() -> String {
     drop(clip);
     let (count, pinned) = history_count();
     alloc::format!(
-        "# RaeenOS clipboard\nbytes: {}\nset_count: {}\nget_count: {}\nhistory_count: {}\npinned_count: {}\nmax_entries: {}\nlocal_only: 1\npreview: \"{}\"\n",
+        "# AthenaOS clipboard\nbytes: {}\nset_count: {}\nget_count: {}\nhistory_count: {}\npinned_count: {}\nmax_entries: {}\nlocal_only: 1\npreview: \"{}\"\n",
         clip_len,
         SET_COUNT.load(Ordering::Relaxed),
         GET_COUNT.load(Ordering::Relaxed),
@@ -269,7 +269,7 @@ pub fn dump_text() -> String {
 /// invariant holds; prints FAIL with the failing condition otherwise.
 pub fn run_boot_smoketest() {
     // 1. Active-buffer round-trip (preserves the original smoketest contract).
-    let test = b"RaeenOS clipboard smoketest";
+    let test = b"AthenaOS clipboard smoketest";
     if set(test).is_err() {
         crate::serial_println!("[clipboard] smoketest FAIL: set rejected");
         return;

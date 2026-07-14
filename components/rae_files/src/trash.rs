@@ -1,6 +1,6 @@
-//! Trash as a **CoW move** — RaeenOS_Concept.md §RaeFS *"instant rollback /
+//! Trash as a **CoW move** — LEGACY_GAMING_CONCEPT.md §AthFS *"instant rollback /
 //! per-app data buckets"*. Deleting a file moves it into a `.Trash` bucket under
-//! the session home (a real RaeFS directory, satisfying the kernel's
+//! the session home (a real AthFS directory, satisfying the kernel's
 //! `is_session_home_path` write gate); the move is a metadata-only CoW rename,
 //! so it is instant and **undoable** — Restore is just the reverse rename, and
 //! Empty Trash is the only step that actually unlinks bytes.

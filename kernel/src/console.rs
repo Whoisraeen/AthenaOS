@@ -253,7 +253,7 @@ impl Console {
             width: info.width as usize / FONT_WIDTH,
             height: info.height as usize / FONT_HEIGHT,
             fg_color: Rgb::new(255, 255, 255),
-            bg_color: framebuffer::RAEENOS_INK,
+            bg_color: framebuffer::ATHENAOS_INK,
         }
     }
 

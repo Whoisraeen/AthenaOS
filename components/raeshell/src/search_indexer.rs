@@ -1,4 +1,4 @@
-//! Full-text search engine for the RaeenOS desktop shell.
+//! Full-text search engine for the AthenaOS desktop shell.
 //!
 //! Provides file, application, and settings indexing with TF-IDF scoring,
 //! trigram-based fuzzy matching, incremental updates, and calculator evaluation.

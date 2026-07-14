@@ -4,7 +4,7 @@
 //! symbol resolution via GNU hash tables, relocation processing, lazy PLT
 //! binding, and dlopen/dlsym/dlclose runtime loading API.
 //!
-//! This is part of RaeenOS's Linux compatibility layer — it runs *inside*
+//! This is part of AthenaOS's Linux compatibility layer — it runs *inside*
 //! the kernel to link Linux ELF binaries against their shared libraries,
 //! not a userspace ld.so clone.
 

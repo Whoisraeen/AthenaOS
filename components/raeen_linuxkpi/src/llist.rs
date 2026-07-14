@@ -14,7 +14,7 @@
 //! with the LIFO push / steal-all semantics or it leaks or double-frees jobs.
 //!
 //! **Cooperative single-thread daemon model — `cmpxchg` collapses to a swap.**
-//! The RaeenOS LinuxKPI daemon is cooperatively scheduled: there is no preemption
+//! The AthenaOS LinuxKPI daemon is cooperatively scheduled: there is no preemption
 //! inside `llist_add`, and no second CPU racing the head, so the lock-less
 //! `cmpxchg` loop that Linux needs to defend against concurrent pushers reduces to
 //! a plain read-modify-write of the head pointer. This is the same simplification

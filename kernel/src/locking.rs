@@ -1,4 +1,4 @@
-//! Advanced Locking Primitives — RaeenOS kernel
+//! Advanced Locking Primitives — AthenaOS kernel
 //!
 //! Full locking infrastructure: RCU, seqlocks, rw semaphores, mutexes,
 //! spinlock variants, per-CPU variables, lockdep, atomics, memory ordering,

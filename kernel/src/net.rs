@@ -344,7 +344,7 @@ pub fn run_ipv6_smoketest() {
 
 pub fn dump_text() -> alloc::string::String {
     let mut out = crate::net_drivers::pci_selection_dump_text();
-    out.push_str("# RaeenOS network subsystem\n");
+    out.push_str("# AthenaOS network subsystem\n");
     let backend = match *NIC_BACKEND.lock() {
         NicBackend::NetDriver => "net_driver",
         NicBackend::VirtioNet => "virtio-net",
@@ -530,13 +530,13 @@ pub fn firewall_check_outbound(ipv4_data: &[u8], app_id: Option<u64>) -> bool {
 // Gaming Traffic Shaping — strict-priority egress scheduler
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Traffic class for the RaeNet priority queue.
-/// Outbound packets are tagged by the sending process's SCHED_GAME status
+/// Traffic class for the AthNet priority queue.
+/// Outbound packets are tagged by the sending process's SCHED_BODY status
 /// and dequeued in strict priority order: Game first, then Interactive, then Bulk.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TrafficClass {
     /// Highest priority — game engine traffic, controller input, voice chat.
-    /// Tagged automatically when the sending thread has SCHED_GAME priority.
+    /// Tagged automatically when the sending thread has SCHED_BODY priority.
     Game = 0,
     /// Normal priority — web browsing, chat, interactive apps.
     Interactive = 1,
@@ -557,7 +557,7 @@ pub struct TaggedPacket {
 /// Three queues (Game / Interactive / Bulk) with strict priority dequeue:
 /// all Game packets drain before any Interactive packet is sent, and all
 /// Interactive packets drain before any Bulk packet is sent. This gives
-/// SCHED_GAME threads sub-frame network latency.
+/// SCHED_BODY threads sub-frame network latency.
 #[derive(Debug)]
 pub struct TrafficShaper {
     game_queue: Vec<TaggedPacket>,
@@ -670,7 +670,7 @@ impl TrafficShaper {
     }
 
     /// Classify a packet based on the sending process's scheduler class.
-    /// SCHED_GAME threads automatically get TrafficClass::Game.
+    /// SCHED_BODY threads automatically get TrafficClass::Game.
     pub fn classify(is_sched_game: bool, dst_port: u16) -> TrafficClass {
         if is_sched_game {
             return TrafficClass::Game;
@@ -752,10 +752,10 @@ pub fn init_traffic_shaper() {
 }
 
 /// Deterministic proof of gaming traffic shaping (strict-priority egress):
-/// classification by SCHED_GAME status and well-known port, that a Game packet
+/// classification by SCHED_BODY status and well-known port, that a Game packet
 /// enqueued LAST still dequeues FIRST ahead of Interactive and Bulk, and that a
 /// full queue tail-drops. MasterChecklist Phase 10.2 — gaming traffic shaping.
-/// Concept §RaeNet / SCHED_GAME sub-frame network latency.
+/// Concept §AthNet / SCHED_BODY sub-frame network latency.
 pub fn run_traffic_shaper_smoketest() {
     let mut pass = 0u32;
     let mut total = 0u32;
@@ -768,7 +768,7 @@ pub fn run_traffic_shaper_smoketest() {
         }
     };
 
-    // Classification: SCHED_GAME is always Game; otherwise the port decides.
+    // Classification: SCHED_BODY is always Game; otherwise the port decides.
     check(
         TrafficShaper::classify(true, 9999) == TrafficClass::Game,
         "classify-sched-game",
@@ -855,7 +855,7 @@ pub fn run_traffic_shaper_smoketest() {
 pub fn dump_shaper_text() -> alloc::string::String {
     let guard = TRAFFIC_SHAPER.lock();
     let mut out = alloc::string::String::new();
-    out.push_str("# RaeNet gaming traffic shaper (strict priority)\n");
+    out.push_str("# AthNet gaming traffic shaper (strict priority)\n");
     match *guard {
         Some(ref s) => {
             let st = s.stats();

@@ -1,6 +1,6 @@
-# RaeenOS Design Language
+# AthenaOS Design Language
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > This is the canonical token set. Every per-surface spec in `docs/design/`
 > references this file by token name (e.g. `radius.lg`, `elev.2`,
@@ -9,7 +9,7 @@
 > across surfaces is the single biggest UI risk; this file is the defense.
 
 The bar: **the familiarity of Windows 11, the cleanness of macOS, the cool
-factor of Linux** — without copying any of them. RaeenOS's distinct synthesis is
+factor of Linux** — without copying any of them. AthenaOS's distinct synthesis is
 *one accent-driven material system* that the user owns end-to-end (Vibe Mode),
 rendered by a compositor that already does the expensive parts (blur, shadow,
 HDR tone-map) in `kernel/src/compositor.rs`.
@@ -62,7 +62,7 @@ runtime carrier so the accent the user picks flows everywhere.
   rings; generous spacing; system font (Cantarell/Inter-like); CSS-token
   theming. **Take:** the discipline of a strict spacing scale and a *visible*
   focus ring (we owe this for a11y + controller). **Avoid:** the flatness —
-  RaeenOS is explicitly glass-and-depth.
+  AthenaOS is explicitly glass-and-depth.
 - **SteamOS (gamescope/Big Picture):** large hit targets (≥48px), high-contrast
   focus glow that reads from across a room, controller-first nav with a single
   always-visible focus cursor, reduced reliance on hover. **Take:** the focus
@@ -70,7 +70,7 @@ runtime carrier so the accent the user picks flows everywhere.
   that focus must be legible at 3 meters. **Avoid:** abandoning the desktop
   density — couch mode is a *mode*, not the default.
 
-**RaeenOS synthesis:** Windows-familiar *layout* (bottom taskbar, Start at left,
+**AthenaOS synthesis:** Windows-familiar *layout* (bottom taskbar, Start at left,
 tray at right) + macOS-clean *materiality* (continuous radii, glass with a top
 highlight, neutral chrome) + Linux-grade *ownership* (every token above is a
 theme variable the user re-skins via Vibe Mode), all on a compositor that

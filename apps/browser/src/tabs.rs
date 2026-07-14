@@ -1,5 +1,5 @@
 //! Multi-tab browsing — *"the web is the universal app runtime; PWAs that feel
-//! native"* (RaeenOS_Concept.md §"3. Web apps via PWA support that actually feels
+//! native"* (LEGACY_GAMING_CONCEPT.md §"3. Web apps via PWA support that actually feels
 //! native"). A daily-driver browser needs tabs, and each tab must be an
 //! INDEPENDENT browsing context: its own navigation history, current page, title,
 //! and scroll position. Navigating, going back, or reloading in one tab must never

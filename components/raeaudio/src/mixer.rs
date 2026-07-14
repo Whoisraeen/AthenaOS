@@ -1,8 +1,8 @@
-//! Real-time game-priority mixer — Concept §"RaeAudio: SCHED_GAME mix thread,
+//! Real-time game-priority mixer — Concept §"AthAudio: SCHED_BODY mix thread,
 //! sub-3 ms round-trip, zero underruns" and MasterChecklist Phase 7.2
 //! "In-kernel audio mixer (priority over background apps in game mode)".
 //!
-//! This is the hot path: it runs on the SCHED_GAME mix thread once per buffer
+//! This is the hot path: it runs on the SCHED_BODY mix thread once per buffer
 //! period and MUST be allocation-free in steady state. All per-stream scratch
 //! and the master bus are pre-allocated at construction; [`GameMixer::mix`]
 //! touches no allocator and uses only saturating/limited arithmetic so two

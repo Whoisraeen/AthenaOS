@@ -1,4 +1,4 @@
-//! System monitor for RaeenOS — task manager with CPU/GPU/memory/disk/network
+//! System monitor for AthenaOS — task manager with CPU/GPU/memory/disk/network
 //! graphs, process list, and per-core utilisation.
 
 #![allow(dead_code)]

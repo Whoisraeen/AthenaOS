@@ -1,11 +1,11 @@
-//! Root filesystem discovery — GPT/MBR partition scan + RaeFS mount.
+//! Root filesystem discovery — GPT/MBR partition scan + AthFS mount.
 //!
-//! Tier-2 deliverable: mount RaeFS from a real NVMe partition when present,
+//! Tier-2 deliverable: mount AthFS from a real NVMe partition when present,
 //! fall back to virtio-blk whole-disk / in-memory format.
 //!
 //! Also provides `discover_boot_disk()` / `get_boot_disk()` — a one-time scan
 //! that records device type, partition table type, sector count, and whether an
-//! ESP and/or a RaeFS partition are present. The result is cached in
+//! ESP and/or a AthFS partition are present. The result is cached in
 //! `BOOT_DISK_INFO` and surfaced in `/proc/raeen/storage`.
 
 #![allow(dead_code)]
@@ -29,7 +29,7 @@ pub struct BootDiskInfo {
     pub sector_count: u64,
     /// Whether an EFI System Partition (GUID C12A7328-...) was found.
     pub has_esp: bool,
-    /// Whether a RaeFS partition (type 0xDA / RAEFS GUID) was found.
+    /// Whether a AthFS partition (type 0xDA / RAEFS GUID) was found.
     pub has_raefs: bool,
 }
 
@@ -69,10 +69,10 @@ fn infer_device_type() -> &'static str {
     "unknown"
 }
 
-// ─── RaeFS magic probe ────────────────────────────────────────────────────────
+// ─── AthFS magic probe ────────────────────────────────────────────────────────
 
-/// Check whether the first 8 bytes of a sector carry the RaeFS magic
-/// 0x526165465321 ("RaeFS!"), stored as a little-endian u64.
+/// Check whether the first 8 bytes of a sector carry the AthFS magic
+/// 0x526165465321 ("AthFS!"), stored as a little-endian u64.
 fn has_raefs_magic(sector_buf: &[u8]) -> bool {
     if sector_buf.len() < 8 {
         return false;
@@ -94,7 +94,7 @@ fn has_raefs_magic(sector_buf: &[u8]) -> bool {
 // ─── discover_boot_disk ───────────────────────────────────────────────────────
 
 /// Probe `ACTIVE_BLOCK_DEVICE`, read sector 0 (and LBA 1+ for GPT), then
-/// classify the disk layout and note whether an ESP / RaeFS partition exists.
+/// classify the disk layout and note whether an ESP / AthFS partition exists.
 ///
 /// The result is stored in `BOOT_DISK_INFO` and also returned.
 pub fn discover_boot_disk() -> Option<BootDiskInfo> {
@@ -116,7 +116,7 @@ pub fn discover_boot_disk() -> Option<BootDiskInfo> {
     // ── Determine partition table type ───────────────────────────────────────
     let pt = detect_partition_table(&lba0);
 
-    // ── Check for a bare RaeFS volume (no partition table) ──────────────────
+    // ── Check for a bare AthFS volume (no partition table) ──────────────────
     if matches!(pt, PartitionTableType::None | PartitionTableType::Unknown) {
         if has_raefs_magic(&lba0) {
             let info = BootDiskInfo {
@@ -235,10 +235,10 @@ pub fn get_boot_disk() -> Option<BootDiskInfo> {
 
 // ─── try_mount_raefs_root ─────────────────────────────────────────────────────
 
-/// Scan sector 0 of the active block device, find a RaeFS partition, and mount.
-/// Returns `true` if RaeFS mounted from a partition.
+/// Scan sector 0 of the active block device, find a AthFS partition, and mount.
+/// Returns `true` if AthFS mounted from a partition.
 pub fn try_mount_raefs_root() -> bool {
-    crate::serial_println!("[storage] scanning active block device for RaeFS partition...");
+    crate::serial_println!("[storage] scanning active block device for AthFS partition...");
     let active = block_io::ACTIVE_BLOCK_DEVICE.lock();
     let dev = match active.as_ref() {
         Some(d) => d,
@@ -266,7 +266,7 @@ pub fn try_mount_raefs_root() -> bool {
             // LBA 2+, so the parser needs LBAs 0..34 in the buffer. The old
             // code read ONLY LBA 0 (the protective MBR), leaving the header
             // and entries zeroed — parse_gpt then saw no "EFI PART" signature
-            // and rejected every freshly-installed disk, so the on-disk RaeFS
+            // and rejected every freshly-installed disk, so the on-disk AthFS
             // root could never mount. Read all 34 sectors like discover does.
             let mut read_ok = true;
             for s in 0..buf_sectors as u64 {
@@ -301,10 +301,10 @@ pub fn try_mount_raefs_root() -> bool {
         }
     };
 
-    // Release the ACTIVE_BLOCK_DEVICE lock BEFORE the mount loop. RaeFS::mount()
+    // Release the ACTIVE_BLOCK_DEVICE lock BEFORE the mount loop. AthFS::mount()
     // -> read_block() re-acquires this same lock, and spin::Mutex is NOT
     // reentrant, so holding it here deadlocked the mount of every freshly
-    // installed on-disk RaeFS volume — the boot froze permanently right after
+    // installed on-disk AthFS volume — the boot froze permanently right after
     // "[storage] candidate part N LBA ... type RaeFs" (the candidate printed,
     // then mount() spun forever waiting on a lock this function still held).
     // The partition table is already parsed into the owned `partitions` Vec, so
@@ -326,9 +326,9 @@ pub fn try_mount_raefs_root() -> bool {
 
         *block_io::ROOT_PARTITION_LBA.lock() = part.start_sector;
 
-        if let Some(fs) = crate::raefs::RaeFS::mount() {
+        if let Some(fs) = crate::raefs::AthFS::mount() {
             crate::serial_println!(
-                "[storage] RaeFS mounted from partition {} @ LBA {}",
+                "[storage] AthFS mounted from partition {} @ LBA {}",
                 part.number,
                 part.start_sector,
             );
@@ -338,7 +338,7 @@ pub fn try_mount_raefs_root() -> bool {
 
         *block_io::ROOT_PARTITION_LBA.lock() = 0;
         crate::serial_println!(
-            "[storage] partition {} is not a valid RaeFS volume",
+            "[storage] partition {} is not a valid AthFS volume",
             part.number
         );
     }
@@ -385,7 +385,7 @@ pub fn dump_text() -> String {
             let size_mb = info.sector_count / 2048;
             out.push_str(&alloc::format!("  Size:         {} MiB\n", size_mb));
             out.push_str(&alloc::format!("  Has ESP:      {}\n", info.has_esp));
-            out.push_str(&alloc::format!("  Has RaeFS:    {}\n", info.has_raefs));
+            out.push_str(&alloc::format!("  Has AthFS:    {}\n", info.has_raefs));
         }
         None => {
             out.push_str("Boot Disk Info: <not yet discovered>\n");

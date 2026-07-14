@@ -1,4 +1,4 @@
-//! RaeenOS HID report-descriptor decoding (Concept §Input — "Gaming isn't a
+//! AthenaOS HID report-descriptor decoding (Concept §Input — "Gaming isn't a
 //! mode": gaming mice/keyboards must work, and they frequently do NOT speak the
 //! USB HID *boot* protocol — they report through a report descriptor with
 //! vendor layouts, 16-bit X/Y, report IDs, extra buttons, etc.).
@@ -7,7 +7,7 @@
 //! (`kernel/src/usb_hid.rs`). This crate adds report-descriptor-driven decoding
 //! by wrapping the `hidreport` crate (MIT) — the *same* parser Redox OS relies
 //! on (`usbhidd` -> `rehid` -> `hidreport`). We harvest the parser only; the
-//! USB transport stays RaeenOS's in-kernel xHCI driver. See
+//! USB transport stays AthenaOS's in-kernel xHCI driver. See
 //! `docs/REDOX_EXTRACTION_MAP.md`.
 //!
 //! `#![no_std]` + `alloc` so the kernel can depend on this once the mouse test

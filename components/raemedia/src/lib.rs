@@ -2794,7 +2794,7 @@ impl AudioDecoder for Mp3Decoder {
 //
 // The one *fully-decodable* audio path in the pipeline: a `.wav`/raw-PCM track
 // carries uncompressed samples, so "decode" is a format conversion to the f32
-// `AudioFrame` the rest of the pipeline (resampler/remixer/normalizer → RaeAudio)
+// `AudioFrame` the rest of the pipeline (resampler/remixer/normalizer → AthAudio)
 // expects. Concept §creators/media: *"play my music"* — WAV is the lossless
 // format every export tool produces and is what actually makes sound today
 // (AAC/MP3/FLAC/Opus are header-parse + silence pending a harvested codec).
@@ -4317,7 +4317,7 @@ impl AudioResampler {
 // Pure-logic proof for the parts of the media engine that turn "open a file" into
 // "make sound / detect end-of-stream / control transport": the PCM decoder, the
 // WAV demux->decode path, the MediaPipeline state machine, format dispatch, and
-// the PCM-conversion helpers that feed RaeAudio. Every fixture is built from
+// the PCM-conversion helpers that feed AthAudio. Every fixture is built from
 // `alloc` only (no std-ism — keeps the no_std crate clean for the R7 gate); the
 // test runner links std itself. Each assert is a concrete value, and the hostile-
 // input tests prove the untrusted-media boundary never panics.

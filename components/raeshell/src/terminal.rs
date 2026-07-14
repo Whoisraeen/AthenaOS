@@ -1,4 +1,4 @@
-//! VT100/xterm-compatible terminal emulator for RaeenOS.
+//! VT100/xterm-compatible terminal emulator for AthenaOS.
 //!
 //! Processes raw byte streams, interprets ANSI/VT100/xterm escape sequences,
 //! and renders the result to a Canvas via the 8×8 bitmap font.

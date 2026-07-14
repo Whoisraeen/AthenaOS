@@ -274,7 +274,7 @@ impl LoginState {
             );
         }
 
-        // ── Bottom-of-card footer: small RaeenOS wordmark (`type.label`, accent)
+        // ── Bottom-of-card footer: small AthenaOS wordmark (`type.label`, accent)
         //    so the brand reads even on a single screenshot.
         let footer = "AthenaOS";
         let footer_w = canvas.measure_text_aa(footer, TYPE_LABEL, sans);

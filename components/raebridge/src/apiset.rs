@@ -1,6 +1,6 @@
 //! Windows API Set schema resolution — the MinWin virtual-DLL layer.
 //!
-//! Concept alignment (`RaeenOS_Concept.md` §Compatibility): RaeBridge must
+//! Concept alignment (`LEGACY_GAMING_CONCEPT.md` §Compatibility): AthBridge must
 //! resolve Windows imports *the way Windows does*, as one integrated runtime —
 //! not with per-app hacks. Modern MSVC / UCRT binaries almost never import from
 //! `kernel32.dll` directly; they import from **API Set contract DLLs** such as
@@ -16,7 +16,7 @@
 //! forwarder stubs shipped in `C:\Windows\System32\downlevel\` on
 //! Windows 10.0.26200 (see `components/raebridge/tools/apiset-map.ps1`), i.e.
 //! ground truth from a shipping Windows, not a hand-guessed heuristic. Each
-//! real host is then remapped to the RaeBridge module that actually implements
+//! real host is then remapped to the AthBridge module that actually implements
 //! those exports:
 //!   * `kernelbase` / `kernel32` -> our `kernel32`
 //!   * `ucrtbase`  / `vcruntime` -> our `msvcrt`
@@ -43,12 +43,12 @@ fn to_ascii_lower(s: &str) -> String {
 }
 
 /// Canonicalize a DLL name exactly as it appears in a PE import descriptor to
-/// the RaeBridge module DLL name (lowercase, `.dll` suffix) that hosts its
+/// the AthBridge module DLL name (lowercase, `.dll` suffix) that hosts its
 /// exports.
 ///
 /// * API Set contracts (`api-ms-win-*`, `ext-ms-win-*`) are redirected via the
 ///   schema table + prefix fallback.
-/// * Physical host DLLs that alias onto a RaeBridge module (`kernelbase`,
+/// * Physical host DLLs that alias onto a AthBridge module (`kernelbase`,
 ///   `ucrtbase`, `combase`, …) are folded onto that module.
 /// * Any other name passes through unchanged (just lowercased).
 ///
@@ -76,7 +76,7 @@ pub fn is_api_set(dll: &str) -> bool {
     lc.starts_with("api-ms-win-") || lc.starts_with("ext-ms-win-")
 }
 
-/// Fold a physical host DLL name onto the RaeBridge module that implements it.
+/// Fold a physical host DLL name onto the AthBridge module that implements it.
 fn host_to_module(host: &str) -> &str {
     match host {
         "kernelbase" | "kernel32" => "kernel32",
@@ -254,7 +254,7 @@ mod tests {
 
     #[test]
     fn exact_schema_entries_redirect_to_module() {
-        // ground-truth entries fold onto the RaeBridge module that hosts them
+        // ground-truth entries fold onto the AthBridge module that hosts them
         assert_eq!(
             canonical_dll("api-ms-win-core-synch-l1-2-0.dll"),
             "kernel32.dll"

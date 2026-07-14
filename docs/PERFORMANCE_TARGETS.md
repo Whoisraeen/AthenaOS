@@ -1,6 +1,6 @@
-# RaeenOS Performance Targets
+# AthenaOS Performance Targets
 
-The gaming-first thesis made measurable. RaeenOS's reason to exist is **latency**:
+The embodiment-first thesis made measurable. AthenaOS's reason to exist is **latency**:
 windows-class breadth with console-class responsiveness. This doc is the single
 authoritative budget — every number here is a contract a subsystem must hold, with how
 it's measured and where it stands today. Scattered perf claims elsewhere defer to this.
@@ -36,12 +36,12 @@ backgrounding those is the open win.
 | Input → photon (added by OS) | < 1 frame | < 4 ms | hardware capture (iron) | ⬜ |
 | **VRR**: present within refresh window | always | — | pacer + scanout timestamp | 🟡 VRR pacer exists |
 
-**Rule:** the compositor runs on **SCHED_GAME** (above SCHED_FIFO). A game's frame, the
+**Rule:** the compositor runs on **SCHED_BODY** (above SCHED_FIFO). A game's frame, the
 compositor's composite, and the present must all land inside the refresh window — no
 compositor-induced latency. Glassmorphism/blur must stay within the frame budget or be
 dropped, never blow the deadline.
 
-## 3. Audio (RaeAudio)
+## 3. Audio (AthAudio)
 
 | Metric | Target | Stretch | Measured how | Status |
 |---|---|---|---|---|
@@ -49,8 +49,8 @@ dropped, never blow the deadline.
 | Buffer underruns under game load | 0 | 0 | `/proc/raeen/perf` `audio_underruns` / `audio_periods` (live xrun counter; `record_audio_period(wrote==0)` at audio.rs) | 🟡 counter wired + live; 0-under-game-load needs HDA PCM on iron |
 | Audio thread wake jitter | < 100 µs | < 50 µs | `/proc/raeen/perf` `audio_jitter.{avg,max}_us` (\|realized period − budget\| at record_audio_period) | 🟡 wired + logic-proven; live needs sustained audio (iron, Phase 7) |
 
-**Rule:** the audio mix thread runs on **SCHED_GAME**; its deadline is hard. Sub-3ms is
-the headline RaeAudio promise — measured end-to-end once HDA PCM playback lands (Phase 7).
+**Rule:** the audio mix thread runs on **SCHED_BODY**; its deadline is hard. Sub-3ms is
+the headline AthAudio promise — measured end-to-end once HDA PCM playback lands (Phase 7).
 
 ## 4. Input
 
@@ -59,9 +59,9 @@ the headline RaeAudio promise — measured end-to-end once HDA PCM playback land
 | USB HID poll rate | 1000 Hz | 1000 Hz | xHCI interrupt interval | 🟡 |
 | Gamepad (DualSense/Xbox) report → event | < 1 ms | < 0.5 ms | input pipeline trace | 🟡 parsers exist |
 | Keypress → event delivered | < 1 ms | — | i8042/HID IRQ → input.rs | 🟡 |
-| Input event → game (wake latency) | < 1 ms | < 0.5 ms | `/proc/raeen/perf` `input_game_wake.{avg,max,last}_us` (input IRQ → next SCHED_GAME dispatch) | 🟡 pipeline wired + logic-proven; live µs desktop/iron-gated |
+| Input event → game (wake latency) | < 1 ms | < 0.5 ms | `/proc/raeen/perf` `input_game_wake.{avg,max,last}_us` (input IRQ → next SCHED_BODY dispatch) | 🟡 pipeline wired + logic-proven; live µs desktop/iron-gated |
 
-**Rule:** input is IRQ-driven and the consuming game thread is SCHED_GAME — an input
+**Rule:** input is IRQ-driven and the consuming game thread is SCHED_BODY — an input
 event must preempt normal work. No batching that adds latency on the game path.
 
 ## 5. Scheduler (the engine under all of the above)
@@ -69,20 +69,20 @@ event must preempt normal work. No batching that adds latency on the game path.
 | Metric | Target | Stretch | Measured how | Status |
 |---|---|---|---|---|
 | Context-switch cost | < 2 µs | < 1 µs | TSC around switch_context; decision/scan now `/proc/raeen/perf` `sched_pick.{min,avg,max}_ns` | 🟡 pick/scan cost wired (live); the asm register/stack swap itself still ⬜ (needs an asm probe or ping-pong harness) |
-| SCHED_GAME wakeup latency (IRQ→run) | < 10 µs | < 5 µs | input-driven case: `/proc/raeen/perf` `input_game_wake.*_us` (input IRQ → SCHED_GAME dispatch, §4) | 🟡 input-driven wake measured; non-input (timer/IPC) wakes not separately traced |
-| EDF deadline-miss rate (SCHED_GAME) | 0 | 0 | per-class miss counter | 🟡 EDF exists |
+| SCHED_BODY wakeup latency (IRQ→run) | < 10 µs | < 5 µs | input-driven case: `/proc/raeen/perf` `input_game_wake.*_us` (input IRQ → SCHED_BODY dispatch, §4) | 🟡 input-driven wake measured; non-input (timer/IPC) wakes not separately traced |
+| EDF deadline-miss rate (SCHED_BODY) | 0 | 0 | per-class miss counter | 🟡 EDF exists |
 | Timer tick / preemption granularity | ≤ 1 ms | ≤ 250 µs | LAPIC timer cfg | ✅ |
 
-**Rule:** SCHED_GAME is a **hard real-time class above SCHED_FIFO** — games, compositor,
+**Rule:** SCHED_BODY is a **hard real-time class above SCHED_FIFO** — games, compositor,
 audio. Its deadlines are not best-effort. Work-stealing stays off until the steal-resume
 race is fixed (intermittent rsp=0 #DF — see scheduler memory).
 
-## 6. Storage (RaeFS / NVMe)
+## 6. Storage (AthFS / NVMe)
 
 | Metric | Target | Stretch | Measured how | Status |
 |---|---|---|---|---|
 | NVMe 4K random read latency | < 100 µs | — | submit→completion TSC | ⬜ iron |
-| RaeFS CoW write amplification | < 1.3× | < 1.1× | bytes-written / logical | ⬜ |
+| AthFS CoW write amplification | < 1.3× | < 1.1× | bytes-written / logical | ⬜ |
 | Snapshot create | < 50 ms | — | freeze bitmaps+inode table | 🟡 works, untimed |
 | Game-asset streaming throughput | ≥ NVMe line rate | — | sustained read bench | ⬜ |
 
@@ -101,7 +101,7 @@ race is fixed (intermittent rsp=0 #DF — see scheduler memory).
 - **`/proc/raeen/perf` is the one place**, lock-free per-metric counters, fed by the
   hot-path `record_*` helpers. As of 2026-06-25 it carries: boot time; input events +
   input→photon latency; frames presented + frametime ring + FPS + **missed-frame rate**
-  (§2); audio periods + **underruns** (§3); SCHED_GAME dispatches + **deadline-miss rate**
+  (§2); audio periods + **underruns** (§3); SCHED_BODY dispatches + **deadline-miss rate**
   + lateness (§5); context-switch count + per-class picks + runq depth; **scheduler
   pick/scan latency** (§5); **heap-alloc fast-path min/avg/max ns** (§7); **input→game
   wake latency** (§4/§5). Each has a FAIL-able boot smoketest proving the recording logic.
@@ -116,7 +116,7 @@ race is fixed (intermittent rsp=0 #DF — see scheduler memory).
 - §1 full-boot < 6 s: QEMU 13.5 s is dominated by the **TCG-only xHCI HCE wedge**
   (~3.5 s, absent on iron) + module smoketests; the iron 11.1 s root-cause needs the
   `[tier*-prof]` buckets read on a real Athena boot.
-- §2 missed-frame rate, §4 input→game wake, §5 input-driven SCHED_GAME wakeup,
+- §2 missed-frame rate, §4 input→game wake, §5 input-driven SCHED_BODY wakeup,
   input→photon: live µs/rate need the compositor + real input on a panel.
 - §3 audio round-trip + 0-underruns + wake jitter: need HDA PCM on iron (Phase 7).
 - §5 heap-alloc < 500 ns / pick-scan < 2 µs: QEMU shows ~130 ns / ~1.5 µs (already under
@@ -124,7 +124,7 @@ race is fixed (intermittent rsp=0 #DF — see scheduler memory).
 - §6 NVMe latency / CoW write-amp: need real NVMe I/O on iron.
 
 ### Not applicable by current design
-- §7 **page-fault → resident**: RaeenOS **eager-maps**; the fault handler kills the task
+- §7 **page-fault → resident**: AthenaOS **eager-maps**; the fault handler kills the task
   (user fault) or panics (kernel fault) — there is no demand-paging "fault → resident"
   path to time. Revisit only if lazy paging is ever added.
 

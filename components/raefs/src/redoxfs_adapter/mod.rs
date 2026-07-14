@@ -1,4 +1,4 @@
-//! RedoxFS on-disk tree layer adapted for RaeFS (`no_std`).
+//! RedoxFS on-disk tree layer adapted for AthFS (`no_std`).
 //!
 //! Provenance: Redox OS `redoxfs` `src/tree.rs` (MIT, see `vendor/redoxfs/LICENSE`).
 //! Types are trimmed to the 4-level `TreeList` pointer tower used for inode lookup;

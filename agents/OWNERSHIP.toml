@@ -1,4 +1,4 @@
-# RaeenOS crate ownership manifest.
+# AthenaOS crate ownership manifest.
 #
 # Owner directive (2026-06): development is CONSOLIDATED under `opus`, the lead
 # developer, who has full read/write access to every crate. Guardrail scripts
@@ -7,7 +7,7 @@
 # (which crate is the filesystem, which is audio, …), NOT an access boundary.
 #
 # The architecture-gate (scripts/architecture-gate.sh) still runs for opus:
-# no Linux clones (§R7), no deleted RaeShield capability checks, the R10
+# no Linux clones (§R7), no deleted AthGuard capability checks, the R10
 # 4-artifact contract for new kernel modules, and the [interface] sign-off for
 # rae_abi / rae_driver_api. Full access, same quality bar.
 #
@@ -15,7 +15,7 @@
 # if reactivated they remain constrained to the areas marked with their name.
 #
 # RULES:
-#   * Concept doc (RaeenOS_Concept.md) wins every conflict.
+#   * Concept doc (LEGACY_GAMING_CONCEPT.md) wins every conflict.
 #   * Interface changes (rae_abi, rae_driver_api, root Cargo.toml, syscall
 #     surface) carry the `[interface]` tag and RAEEN_AGENT=opus.
 #   * A crate appears exactly once. New crates are added here before commit.
@@ -24,7 +24,7 @@
 version = 2
 agents = ["opus", "gemini", "composer"]
 lead = "opus"                     # full-access lead developer (ownership-lock bypass)
-concept_doc = "RaeenOS_Concept.md"
+concept_doc = "LEGACY_GAMING_CONCEPT.md"
 checklist = "MasterChecklist.md"
 
 # ── Opus-only meta paths (interface + build contract + governance) ───────────
@@ -110,5 +110,5 @@ prefixes = ["docs/", "MasterChecklist.md", "README.md", "Audit.md", "AGENTS.md"]
 "apps/hello_raeui" = "opus"
 "ports" = "opus"
 
-# Area: Windows compatibility (RaeBridge) — now owned by opus (was OWNERLESS).
+# Area: Windows compatibility (AthBridge) — now owned by opus (was OWNERLESS).
 "components/raebridge" = "opus"

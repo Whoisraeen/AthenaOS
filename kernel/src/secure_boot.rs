@@ -1,4 +1,4 @@
-//! Secure-boot trust anchor — MasterChecklist Phase 3.7 / RaeenOS_Concept.md
+//! Secure-boot trust anchor — MasterChecklist Phase 3.7 / LEGACY_GAMING_CONCEPT.md
 //! §Security ("every artifact the system trusts is signed; the kernel holds
 //! only the PUBLIC verification key").
 //!
@@ -9,7 +9,7 @@
 //! running system cannot mint trusted signatures.
 //!
 //! [`verify_against_anchor`] is the reusable verification primitive that
-//! raeupdate / RaeShield bundle-install call. The boot smoketest proves the
+//! raeupdate / AthGuard bundle-install call. The boot smoketest proves the
 //! anchor verifies an EXTERNALLY-produced signature (made by `raesign`, never
 //! by this kernel) with public-key-only material, and rejects tampered
 //! signatures fail-closed — distinct from `crypto.rs`'s self-contained Ed25519
@@ -51,7 +51,7 @@ const BM_TOTAL_LEN: usize = BM_MANIFEST_LEN + 64;
 static MANIFEST_STATUS: AtomicU8 = AtomicU8::new(0);
 
 /// Trust-anchor Ed25519 public key. The matching private key is the OFFLINE dev
-/// key (`raesign keygen "raeenos-secureboot-dev-v1"`) and is never present in
+/// key (`raesign keygen "athenaos-secureboot-dev-v1"`) and is never present in
 /// the kernel. Rotating the anchor = replace these 32 bytes and re-sign.
 const ANCHOR_PUBKEY: [u8; 32] = [
     0xbe, 0xf1, 0xf9, 0x6d, 0x8a, 0xe4, 0x97, 0xb0, 0x13, 0x7b, 0xe4, 0x9c, 0xac, 0x46, 0x92, 0xda,
@@ -61,7 +61,7 @@ const ANCHOR_PUBKEY: [u8; 32] = [
 /// Boot-smoketest vector: a fixed message and a detached Ed25519 signature over
 /// it, both produced offline by `raesign` with the dev key. Verified here with
 /// `ANCHOR_PUBKEY` alone — proof the kernel verifies signatures it did not make.
-const ANCHOR_MESSAGE: &[u8] = b"RaeenOS secure-boot trust anchor v1";
+const ANCHOR_MESSAGE: &[u8] = b"AthenaOS secure-boot trust anchor v1";
 const ANCHOR_SIG: [u8; 64] = [
     0xbc, 0x06, 0xc8, 0xcf, 0x6a, 0xf5, 0x56, 0x3f, 0x36, 0xf8, 0x06, 0xff, 0xcb, 0x20, 0xb4, 0x63,
     0x25, 0xe7, 0x3a, 0x7b, 0x11, 0xc3, 0x58, 0xab, 0xda, 0xf8, 0x5e, 0xf0, 0x19, 0xca, 0xf5, 0xed,

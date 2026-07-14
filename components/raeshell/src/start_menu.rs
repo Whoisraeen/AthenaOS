@@ -1,4 +1,4 @@
-//! Full start menu for RaeenOS shell.
+//! Full start menu for AthenaOS shell.
 
 #![allow(dead_code)]
 

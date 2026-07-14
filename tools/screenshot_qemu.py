@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""QMP-driven QEMU screenshot harness for RaeenOS (ADR 0004).
+"""QMP-driven QEMU screenshot harness for AthenaOS (ADR 0004).
 
 Boots a built disk image headlessly, waits for a serial sentinel (plus a
 settle delay for the compositor), then captures the framebuffer via the QMP

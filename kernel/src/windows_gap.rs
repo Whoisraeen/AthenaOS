@@ -1,6 +1,6 @@
-//! Windows pain-point gap tracker — Concept §Windows Pain Points → RaeenOS Solutions.
+//! Windows pain-point gap tracker — Concept §Windows Pain Points → AthenaOS Solutions.
 //!
-//! Maps each row in `RaeenOS_Concept.md` "Windows Pain Points → RaeenOS Solutions"
+//! Maps each row in `LEGACY_GAMING_CONCEPT.md` "Windows Pain Points → AthenaOS Solutions"
 //! to kernel-layer status (DONE / PARTIAL / STUB / USERSPACE / MISSING).
 //! Userspace-only answers are labelled honestly; the kernel row is never
 //! silently marked DONE.
@@ -152,8 +152,8 @@ pub fn init() {
 }
 
 pub fn dump_text() -> String {
-    let mut out = String::from("# RaeenOS Windows pain-point kernel map\n");
-    out.push_str("# Source: RaeenOS_Concept.md §Windows Pain Points → RaeenOS Solutions\n\n");
+    let mut out = String::from("# AthenaOS Windows pain-point kernel map\n");
+    out.push_str("# Source: LEGACY_GAMING_CONCEPT.md §Windows Pain Points → AthenaOS Solutions\n\n");
     for (i, r) in rows().iter().enumerate() {
         out.push_str(&alloc::format!(
             "[{:02}] status={:<10} kernel={}\n     windows: {}\n     raeen:   {}\n",

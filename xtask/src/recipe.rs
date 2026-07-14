@@ -27,10 +27,10 @@ pub fn parse_profile(path: &Path) -> Vec<String> {
 }
 
 /// Packages declaring `abi = "linux"` in the profile. xtask stamps these
-/// ELFOSABI_LINUX (0x03) instead of ELFOSABI_RAEENOS, so the kernel's
+/// ELFOSABI_LINUX (0x03) instead of ELFOSABI_ATHENAOS, so the kernel's
 /// SYS_SPAWN routes them through linux_exec (Linux auxv stack + Linux
 /// syscall table). Everything else in the profile is native by construction
-/// — including relibc-linked apps, whose relibc port speaks NATIVE RaeenOS
+/// — including relibc-linked apps, whose relibc port speaks NATIVE AthenaOS
 /// syscall numbers (components/raebridge/relibc/src/raeenOS_syscall.rs).
 pub fn parse_profile_linux_abi(path: &Path) -> Vec<String> {
     let content = fs::read_to_string(path).unwrap_or_else(|e| {

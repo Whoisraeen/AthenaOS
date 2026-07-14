@@ -10,7 +10,7 @@
 >
 > What actually shipped (verified in source 2026-06-21; file evidence in the audit):
 > - §1 tree: `kernel/src/a11y.rs` (1236 lines), R10-complete, ABI 277/278 (sec 7 interface landed).
-> - §2 screen reader: announce core + `SpeechSink`/`LogSpeechSink` built (TTS->RaeAudio still gated).
+> - §2 screen reader: announce core + `SpeechSink`/`LogSpeechSink` built (TTS->AthAudio still gated).
 > - §3 magnifier: compositor source-sampled upscale + focus-follows + FAIL-able smoketest — built.
 > - §4 color filters + reduced-motion hook + raeui role inference (`role_from_widget_kind`) — built.
 > - §5 contrast math (`rae_tokens::contrast_ratio` + HC palette) — built/unit-tested.
@@ -52,9 +52,9 @@ OWNED and largely built — the remaining gap is INTEGRATION + user-reach + audi
 
 ## 0. Best-of-breed scan (what each piece must beat)
 
-| Piece | Windows | macOS | Linux | RaeenOS target (beat them) |
+| Piece | Windows | macOS | Linux | AthenaOS target (beat them) |
 |---|---|---|---|---|
-| A11y tree | UI Automation provider tree (AutomationElement) | NSAccessibility / AXUIElement | AT-SPI2 over D-Bus | AccessKit-shaped node arena, kernel-owned at window tier + RaeUI widget provider; cap-gated read like macOS TCC. **No D-Bus round-trip tax** — a syscall + procfs snapshot. |
+| A11y tree | UI Automation provider tree (AutomationElement) | NSAccessibility / AXUIElement | AT-SPI2 over D-Bus | AccessKit-shaped node arena, kernel-owned at window tier + AthUI widget provider; cap-gated read like macOS TCC. **No D-Bus round-trip tax** — a syscall + procfs snapshot. |
 | Screen reader | Narrator | VoiceOver (best-in-class) | Orca | Tree-walk + focus-announce **logic** host-KAT'd & deterministic; speech is a pluggable sink (log/braille now, TTS iron-gated). Other apps feed a stable focus-event stream. |
 | Magnifier | Magnifier (full/lens/docked) | Zoom (smooth, focus-follow) | gnome magnifier (heavy) | **Compositor post-process upscale of the already-composited `scanout_ready` buffer** — one extra sampled blit, near-zero frames (reuse the exact overview/snapshot scaled-blit math). Focus-follows from the a11y focus event. |
 | Keyboard nav | Tab/arrow + access keys | Full Keyboard Access | inconsistent | One consistent focus ring + Tab order across shell AND apps, driven by the a11y tree's `focus_next/prev`; focus trapping in modals; "no mouse required" as a FAIL-able audit. |
@@ -69,7 +69,7 @@ OWNED and largely built — the remaining gap is INTEGRATION + user-reach + audi
 raeen-architect lands the NEEDS-INTERFACE block FIRST.
 
 ### Data model
-AccessKit vocabulary, RaeenOS-native `no_std` types (do NOT vendor the std-heavy AccessKit
+AccessKit vocabulary, AthenaOS-native `no_std` types (do NOT vendor the std-heavy AccessKit
 crate into the kernel; mirror its shape so a future userspace AccessKit *adapter* maps 1:1).
 Full type spec is in `phase19-accessibility-foundation.md §3` — `Role(u16)`, `NodeState`
 bitflags, `Actions` bitflags, `AccessNode { id, parent, role, name, state, bounds, actions,
@@ -155,7 +155,7 @@ magnifier below, which DOES touch `compositor.rs`.)
 3. **Speech sink (pluggable; log/braille now, TTS iron-gated):** the announcer writes to a
    `SpeechSink` trait. The default sink is the **serial/announce log** (QEMU-provable: the spoken
    string appears in the boot log). A braille sink and a real **TTS sink are iron/audio-gated**
-   (TTS needs the RaeAudio PCM path proven on iron, Phase 7) — identify them as the tail, ship
+   (TTS needs the AthAudio PCM path proven on iron, Phase 7) — identify them as the tail, ship
    the log/braille sink now, mark TTS pending.
 
 ### Why the split matters
@@ -178,7 +178,7 @@ NOT block the reader on iron TTS.
   state suffixes (disabled/selected/expanded). FAIL-able, dev box.
 - **QEMU smoketest:** seed two kernel surfaces, focus one, assert the announcer's string for the
   focused node is correct AND that a focus change to the other surface re-announces.
-- **iron-gated:** real TTS audio output (RaeAudio PCM). Mark pending; report QEMU evidence.
+- **iron-gated:** real TTS audio output (AthAudio PCM). Mark pending; report QEMU evidence.
 
 ### FAIL-able boot-log line (R10, exact)
 ```

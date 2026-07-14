@@ -1,4 +1,4 @@
-//! RaeNet — userspace networking above L3.
+//! AthNet — userspace networking above L3.
 //!
 //! Userspace networking with built-in WireGuard, QUIC priority, and gaming traffic shaping.
 //! See `docs/components/raenet.md` for the design.
@@ -871,7 +871,7 @@ pub fn run_boot_smoketest() -> bool {
     let mut tunnel = WireGuardTunnel::new(config);
     tunnel.establish().unwrap();
 
-    let plaintext = b"RaeNet Crypto Proof";
+    let plaintext = b"AthNet Crypto Proof";
     let encrypted = tunnel.encrypt_packet(plaintext);
     if encrypted.is_err() {
         return false;

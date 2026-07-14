@@ -1,8 +1,8 @@
 //! USB Audio Class (UAC) driver — playback + capture over isochronous endpoints.
 //!
-//! Concept §RaeAudio: a clean low-latency audio engine, none of the legacy
+//! Concept §AthAudio: a clean low-latency audio engine, none of the legacy
 //! desktop-audio-daemon mess. USB DACs / headphone
-//! amps are the common external-audio path on a gaming desktop, so RaeAudio
+//! amps are the common external-audio path on a gaming desktop, so AthAudio
 //! treats UAC as a first-class output device alongside the in-kernel HDA path
 //! (`audio.rs`). This module owns the class-specific descriptor parse + stream
 //! configuration; the live isochronous transfers ride the xHCI driver
@@ -395,7 +395,7 @@ pub fn run_boot_smoketest() {
 /// `/proc/raeen/usb_audio` text.
 pub fn dump_text() -> alloc::string::String {
     use alloc::string::String;
-    let mut out = String::from("# RaeenOS USB Audio Class (UAC1/UAC2)\n");
+    let mut out = String::from("# AthenaOS USB Audio Class (UAC1/UAC2)\n");
     out.push_str("class: 0x01 (AUDIO)  subclasses: AC=0x01 AS=0x02\n");
     out.push_str("formats: PCM Format-Type-I  transport: isochronous\n");
     out.push_str("directions: playback (speaker/headphones) + capture (microphone)\n");

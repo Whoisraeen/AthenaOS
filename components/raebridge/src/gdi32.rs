@@ -1,4 +1,4 @@
-//! gdi32.dll — Graphics Device Interface API stubs for RaeBridge.
+//! gdi32.dll — Graphics Device Interface API stubs for AthBridge.
 
 use alloc::string::String;
 use alloc::vec::Vec;

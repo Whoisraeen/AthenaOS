@@ -1,4 +1,4 @@
-//! Native RaeenOS syscall bindings for the compatibility layer.
+//! Native AthenaOS syscall bindings for the compatibility layer.
 
 // Syscall numbers (matching kernel/src/syscall.rs)
 pub const SYS_SPAWN: u64 = 11;

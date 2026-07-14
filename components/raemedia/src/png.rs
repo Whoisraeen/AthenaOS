@@ -1,6 +1,6 @@
 //! # RaeMedia PNG decoder — pixels, not hex.
 //!
-//! RaeenOS_Concept.md (§creators / media): the OS must let people "play my movies,
+//! LEGACY_GAMING_CONCEPT.md (§creators / media): the OS must let people "play my movies,
 //! show my photos." A computer that can't render a photo library isn't a daily
 //! driver. Today the Files-app Quick Look only reports a PNG's dimensions and a hex
 //! dump — this module is the foundation that turns that into actual pixels, and the
@@ -70,7 +70,7 @@ pub enum PngError {
 /// A decoded image: a flat ARGB8888 buffer plus dimensions.
 ///
 /// `pixels.len() == (width * height) as usize`. Each `u32` is `0xAARRGGBB`,
-/// the format the RaeGFX compositor/Canvas consumes directly.
+/// the format the AthGFX compositor/Canvas consumes directly.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DecodedImage {
     pub width: u32,

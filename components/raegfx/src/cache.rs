@@ -2,7 +2,7 @@
 //!
 //! Shaders are identified by a SHA-256 hash of their source/SPIR-V. The cache
 //! stores compiled IR so that subsequent loads skip compilation. This is the
-//! "shader cache at the OS level, shared across Vulkan/RaeGFX" from the concept doc.
+//! "shader cache at the OS level, shared across Vulkan/AthGFX" from the concept doc.
 
 extern crate alloc;
 

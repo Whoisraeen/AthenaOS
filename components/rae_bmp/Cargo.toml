@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS BMP + ICO decoder — pixels and favicons, not bytes
-# (RaeenOS_Concept.md §web / media: a browser that can't show a site's favicon
+# AthenaOS BMP + ICO decoder — pixels and favicons, not bytes
+# (LEGACY_GAMING_CONCEPT.md §web / media: a browser that can't show a site's favicon
 # and an OS that can't render a Windows bitmap aren't daily drivers). BMP rounds
 # out raster coverage alongside the existing PNG/JPEG/GIF decoders; ICO is the
 # favicon container the web pillar needs (favicons ship as .ico). A from-scratch,

@@ -1,6 +1,6 @@
 //! # RaeJs collection + temporal built-ins: `Map`, `Set`, `Date`, basic `Symbol`.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy (criterion #5 — "the web browser is the
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy (criterion #5 — "the web browser is the
 //! universal app runtime; PWAs that feel native"): real-world page script reaches for
 //! `Map`/`Set` for keyed/unique collections and `Date` for timestamps on essentially every
 //! interactive page; the [interpreter](crate::interp) (which deferred them) cannot run such

@@ -1,4 +1,4 @@
-//! Desktop Window Manager (DWM) API emulation for RaeBridge.
+//! Desktop Window Manager (DWM) API emulation for AthBridge.
 #![no_std]
 
 extern crate alloc;

@@ -1,6 +1,6 @@
 //! amdgpu_hostrun — execute the REAL upstream `amdgpu_device_init` off-target.
 //!
-//! Concept §RaeGFX ("looks like Metal, performs like Vulkan"): the Year-1
+//! Concept §AthGFX ("looks like Metal, performs like Vulkan"): the Year-1
 //! real-GPU-submit campaign's M1 iron run wedged the box somewhere at/after the
 //! CLKA #2 IP-discovery enumeration (docs/gpu-oracle/M1-VERDICT-20260706.md).
 //! Every probe on iron costs a manual power cycle; this runner executes the same

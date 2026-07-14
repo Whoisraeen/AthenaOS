@@ -1,6 +1,6 @@
 //! userenv.dll — User Environment API: user profiles, environment blocks,
 //! Group Policy, application containers, special folder mapping, token/SID
-//! utilities, and security descriptor functions for RaeBridge.
+//! utilities, and security descriptor functions for AthBridge.
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;
@@ -482,7 +482,7 @@ pub fn lookup_account_sid_w(
     } else {
         AccountInfo {
             name: String::from("user"),
-            domain: String::from("RAEENOS"),
+            domain: String::from("ATHENAOS"),
             sid_type: 1, // SidTypeUser
         }
     };

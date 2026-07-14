@@ -1,4 +1,4 @@
-//! amdgpud — RaeenOS userspace AMD GPU driver daemon.
+//! amdgpud — AthenaOS userspace AMD GPU driver daemon.
 //!
 //! Runs the real amdgpu initialization pipeline (mirroring `amdgpu_device_init`
 //! → `amdgpu_device_ip_init`) on top of the LinuxKPI host + raeen_drm:
@@ -69,7 +69,7 @@ unsafe fn sys_exit(code: u64) -> ! {
 /// Self-promote amdgpud into the Game scheduling class (SYS_SETPRIORITY=21,
 /// target=0=self, prio=1=Game). The GPU bring-up polls the SMU/IMU/RLC with
 /// `msleep` (yield) loops; at the default Normal priority each yield only resumes
-/// after the SCHED_GAME compositor's next frame on CPU0 — the one CPU that
+/// after the SCHED_BODY compositor's next frame on CPU0 — the one CPU that
 /// schedules post-boot (the APs idle) — which stretched nominal ~2s polls into
 /// ~90s and the whole bring-up to ~480s on iron (2026-06-28: ~225s of it stuck in
 /// two yield-bound stalls). Game priority lets the polls resume promptly. The
@@ -923,7 +923,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
     }
 
     fn mes_ucode_blobs(&mut self) -> Option<(alloc::vec::Vec<u8>, alloc::vec::Vec<u8>)> {
-        // The MES scheduler (pipe 0) ucode + data, split out of mes_2.bin — RaeenOS
+        // The MES scheduler (pipe 0) ucode + data, split out of mes_2.bin — AthenaOS
         // direct-loads them into GART-mapped buffers (the PSP copy isn't addressable).
         let blob = self.request_firmware_bytes("amdgpu/gc_11_0_1_mes_2.bin")?;
         let (ucode, data) = raeen_amdgpu::rlc_autoload::extract_mes_ucode_data(&blob)?;
@@ -950,7 +950,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
 
     fn cp_mec_doorbell_range_regs(&mut self) -> Option<(u32, u32)> {
         // regCP_MEC_DOORBELL_RANGE_LOWER/UPPER (GC seg0), discovery-resolved — the MES/KIQ
-        // doorbell-wake range RaeenOS had been missing.
+        // doorbell-wake range AthenaOS had been missing.
         raeen_amdgpu::regs::cp_mec_doorbell_range(self.discovery_blocks.as_ref()?)
     }
 
@@ -1029,7 +1029,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
 
     fn commit_scanout(&mut self, width: u32, height: u32, pitch: u32, gpu_addr: u64) -> bool {
         // amdgpu_dm builds a drm_atomic_state and commits; raeen_drm forwards the
-        // final mode + scanout buffer to the RaeenOS compositor.
+        // final mode + scanout buffer to the AthenaOS compositor.
         let mode = kms::DrmDisplayMode::new(width as u16, height as u16, 60);
         let fb = kms::DrmFramebuffer {
             fb_id: 1,
@@ -1590,7 +1590,7 @@ fn run_real_amdgpu_init(handle: u64) -> i32 {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     // Run the whole bring-up in the Game scheduling class. Its SMU/IMU/RLC poll
-    // loops msleep-yield, and at Normal priority each yield waits a full SCHED_GAME
+    // loops msleep-yield, and at Normal priority each yield waits a full SCHED_BODY
     // compositor frame to resume on the single post-boot scheduling CPU — which
     // ballooned the iron bring-up to ~480s (~225s of pure yield-wait, 2026-06-28).
     // Self-promote FIRST so every downstream poll resumes promptly.
@@ -1854,7 +1854,7 @@ pub extern "C" fn _start() -> ! {
     // ── MES-BYPASS DISPLAY PATH ───────────────────────────────────────────────
     // try_page_flip just proved (CRC + eyes) that we can point the real DCN's HUBP0
     // at a chosen VRAM buffer. Register that SAME buffer as the compositor's external
-    // scanout so the RaeenOS DESKTOP is scanned out by the real display engine — a
+    // scanout so the AthenaOS DESKTOP is scanned out by the real display engine — a
     // working GPU display with ZERO reliance on the MES. DCN is a separate,
     // firmware-lit power domain that keeps scanning after this daemon exits, so the
     // desktop stays live.
@@ -1883,7 +1883,7 @@ pub extern "C" fn _start() -> ! {
     klog(&alloc::format!(
         "[amdgpu] BYPASS: DCN desktop scanout register(phys={scanout_phys:#x} {FB_W}x{FB_H}) -> {}",
         if reg == 1 {
-            "OK — the RaeenOS desktop is now scanned out by the real DCN (MES-free)"
+            "OK — the AthenaOS desktop is now scanned out by the real DCN (MES-free)"
         } else {
             "FAILED (ownership/bounds gate rejected — see [gpu]/[linuxkpi] lines)"
         }

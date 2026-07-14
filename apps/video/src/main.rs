@@ -1,4 +1,4 @@
-//! RaeenOS Video — userspace ELF entry shim.
+//! AthenaOS Video — userspace ELF entry shim.
 //!
 //! All of the app (state, the open/demux pipeline, the decode dispatch, the draw
 //! path, the syscall wiring) lives in the `video` LIBRARY crate (`src/lib.rs`) so a

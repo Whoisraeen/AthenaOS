@@ -1,4 +1,4 @@
-//! kanata_daemon — userspace input-macro router for RaeenOS.
+//! kanata_daemon — userspace input-macro router for AthenaOS.
 //!
 //! Concept §Input: "user-defined macros / remaps, hold-tap, layers."
 //! This daemon owns the kbd capability handle granted by the kernel,

@@ -1351,7 +1351,7 @@ static struct {
 } rlc_autoload_info[SOC21_FIRMWARE_ID_MAX];
 
 /*
- * RaeenOS wall-7 (2026-07-09): Phoenix ships no gc_11_0_1_toc.bin, so the daemon
+ * AthenaOS wall-7 (2026-07-09): Phoenix ships no gc_11_0_1_toc.bin, so the daemon
  * serves psp_13_0_4_toc.bin in its place. That linux-firmware blob wraps the
  * RLC_TABLE_OF_CONTENT entry array in a "$PS1" signature block AFTER the firmware
  * header's ucode_array_offset_bytes — which gfx_v11_0_init_toc_microcode points
@@ -1412,7 +1412,7 @@ static uint32_t gfx_v11_0_calc_toc_total_size(struct amdgpu_device *adev)
 	gfx_v11_0_parse_rlc_toc(adev, adev->psp.toc.start_addr);
 
 	/*
-	 * RaeenOS wall-8 (2026-07-10): size the autoload buffer to the true SPAN
+	 * AthenaOS wall-8 (2026-07-10): size the autoload buffer to the true SPAN
 	 * max(offset+size), NOT the sum of sizes. The stock code sums sizes and then
 	 * guards with rlc_autoload_info[MAX-1] on the assumption the highest firmware
 	 * id also has the highest offset — true for navi's gc_11_0_0 TOC, but NOT for
@@ -1501,7 +1501,7 @@ static void gfx_v11_0_rlc_backdoor_autoload_copy_toc_ucode(struct amdgpu_device 
 
 	DRM_DEBUG("rlc autoload enabled fw: 0x%llx\n", *(uint64_t *)fw_autoload_mask);
 
-	/* RaeenOS wall-7: copy the RLC_TOC from the REAL entry array (past the $PS1
+	/* AthenaOS wall-7: copy the RLC_TOC from the REAL entry array (past the $PS1
 	 * signature), matching what gfx_v11_0_parse_rlc_toc measured — start_addr
 	 * itself points at the signature block (see gfx_v11_0_rae_find_toc_entries). */
 	data = gfx_v11_0_rae_find_toc_entries(adev->psp.toc.start_addr);

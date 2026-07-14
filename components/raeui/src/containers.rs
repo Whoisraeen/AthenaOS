@@ -1,4 +1,4 @@
-//! Container widgets for RaeUI.
+//! Container widgets for AthUI.
 //!
 //! ScrollView, SplitView, CollapsibleSection, Card, StackView, Popover,
 //! Modal, Drawer, ContextMenu — all theme-aware, keyboard-navigable,

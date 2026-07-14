@@ -1,13 +1,13 @@
 //! Unified RGB control API — Concept §Customization Engine:
 //!
 //! > "RGB unified — every motherboard, every fan, every keyboard, one API,
-//! >  one config. RGB hell is a Windows problem; RaeenOS solves it."
+//! >  one config. RGB hell is a Windows problem; AthenaOS solves it."
 //!
 //! Windows users run NVIDIA Aurora, ASUS Aura Sync, MSI Mystic Light,
 //! Gigabyte Fusion, Corsair iCUE, Razer Synapse, Logitech G Hub, ASRock
 //! Polychrome, Cooler Master MasterPlus, NZXT CAM, and OpenRGB to control
 //! lights — sometimes simultaneously, fighting each other for the same I²C
-//! bus. RaeenOS ships one API.
+//! bus. AthenaOS ships one API.
 //!
 //! Each light-emitting peripheral is a `Device` with a stable id, a `Kind`,
 //! and one or more `Zone`s. A zone is the smallest unit you can address
@@ -63,7 +63,7 @@ pub enum Effect {
     Pulse = 4,
     Wave = 5,
     ReactiveType = 6, // keyboard: light up keys as user types
-    AudioReact = 7,   // tied to RaeAudio waveform peak
+    AudioReact = 7,   // tied to AthAudio waveform peak
     GameLink = 8,     // driven by per-game profile / game state
 }
 
@@ -454,7 +454,7 @@ pub fn dump_text() -> String {
     let mut out = String::new();
     let total_zones: usize = reg.devices.values().map(|d| d.zone_colors.len()).sum();
     out.push_str(&alloc::format!(
-        "# RaeenOS unified RGB ({} devices, {} zones, {} commands since boot)\n",
+        "# AthenaOS unified RGB ({} devices, {} zones, {} commands since boot)\n",
         reg.devices.len(),
         total_zones,
         reg.commands_total,

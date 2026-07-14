@@ -1,4 +1,4 @@
-# RaeShell
+# AthShell
 
 The default desktop shell. Familiar enough to switch from Windows or Mac in 10
 minutes. Swappable — the OS doesn't care which shell you run.

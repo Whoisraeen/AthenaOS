@@ -2,7 +2,7 @@
 
 **Goal:** reach **G1 (Daily Driver)** from `PRODUCTION_CHECKLIST.md` — a machine the owner can install, log into, network, file-manage, configure, run apps on, and live in without a terminal.
 
-**Anti-stale contract:** this is an *execution plan*, not a status owner. Every item cites its `MasterChecklist.md` line; **MasterChecklist owns the `[x]`/`[~]`/`[ ]`**. When they disagree, MasterChecklist wins and this plan is stale — re-derive it. Precedence: `RaeenOS_Concept.md` > `MasterChecklist.md` > this file.
+**Anti-stale contract:** this is an *execution plan*, not a status owner. Every item cites its `MasterChecklist.md` line; **MasterChecklist owns the `[x]`/`[~]`/`[ ]`**. When they disagree, MasterChecklist wins and this plan is stale — re-derive it. Precedence: `LEGACY_GAMING_CONCEPT.md` > `MasterChecklist.md` > this file.
 
 ---
 
@@ -18,7 +18,7 @@ Three of the four long poles are **userspace components**, so they ship as packa
 |---|---|---|
 | AMD GPU acceleration | `amdgpud` userspace daemon (LinuxKPI Path C) | userspace package update |
 | Wi-Fi | `iwlwifi` userspace LinuxKPI port | userspace package update |
-| Web browser | userspace app (`raeweb` / native engine) | RaeStore / package update |
+| Web browser | userspace app (`raeweb` / native engine) | AthStore / package update |
 | S3 sleep/wake | **kernel-side** | A/B kernel slot update (Phase 3.6) |
 
 This is exactly the Concept model — *"atomic CoW updates that never half-apply"* (§Core 2). The SW compositor renders the desktop today on iron; GPU/Wi-Fi/browser layer on top without rearchitecting. The only kernel-side deferral (S3) rides the A/B slot mechanism you've already built.
@@ -30,10 +30,10 @@ This is exactly the Concept model — *"atomic CoW updates that never half-apply
 ## v0.1 ship cut (the fastest dogfood-able build)
 
 **IN v0.1:**
-- Install to internal NVMe, reboot into installed OS, persistent RaeFS
+- Install to internal NVMe, reboot into installed OS, persistent AthFS
 - Live USB keyboard + mouse on iron
 - **Software-composited** desktop at 1080p (taskbar, start, alt-tab, notifications, search)
-- Files (browse real RaeFS), Settings (change + persist wallpaper), Terminal, native apps
+- Files (browse real AthFS), Settings (change + persist wallpaper), Terminal, native apps
 - **Ethernet** networking → DHCP Bound → DNS
 - Clean shutdown / reboot, no data loss
 
@@ -117,7 +117,7 @@ These are iron-verify items on already-written fixes. Until they're confirmed on
 - [~] **Kernel mounts root from real NVMe partition** — install + boot-from-disk **QEMU-verified 5/5**; iron pending. MasterChecklist **3.5** line 482.
 - [~] **Second power-on without USB boots to user_init** — the one-shot bare-metal test. MasterChecklist **3.5** line 484.
 - [~] **User data boot N → N+1** — MasterChecklist **3.5** line 485.
-- [~] **First-run setup persists to RaeFS** — account/password proven; on-disk RaeFS formatted. MasterChecklist **3.5** line 483.
+- [~] **First-run setup persists to AthFS** — account/password proven; on-disk AthFS formatted. MasterChecklist **3.5** line 483.
 - [~] **Graphical install wizard** (`installer_ui.rs`) — live keyboard on iron pending (← WS1). MasterChecklist **16.1** line 1086.
 - **3.9 acceptance** lines 515–517.
 - ⚠️ **SAFETY (cardinal rule):** the *only* internal-disk write path. Follow `docs/SAFE_ATHENA_BOOT.md`; every byte routes through `block_io::safe_mode_guard_write`; the real install is a deliberate, explicitly-confirmed non-safe boot. memory `install-spine-code-complete`, `athena-install-path`.
@@ -125,8 +125,8 @@ These are iron-verify items on already-written fixes. Until they're confirmed on
 **Depends on:** WS1 (wizard UI) — headless `raeinstaller` path does not. **Effort:** M, verification + one careful real install.
 
 ### WS4 — Shell usable with no terminal
-- [~] **RaeShell as default shell** (login→desktop, taskbar, start, WM). MasterChecklist **14.1** line 1016.
-- [~] **Files browses real RaeFS** + [~] **Settings changes + persists wallpaper** — MasterChecklist **14.4** acceptance line 1044 (*"Files/settings ELF + RaeFS browse still `[ ]`"*) + **14.2** lines 1025–1026.
+- [~] **AthShell as default shell** (login→desktop, taskbar, start, WM). MasterChecklist **14.1** line 1016.
+- [~] **Files browses real AthFS** + [~] **Settings changes + persists wallpaper** — MasterChecklist **14.4** acceptance line 1044 (*"Files/settings ELF + AthFS browse still `[ ]`"*) + **14.2** lines 1025–1026.
 - [~] Notifications (1019) · Search bar (1021) · App switcher (1020) · tray clock (1018) — polish on iron with live input.
 
 **Depends on:** WS1. **Effort:** M, integration.
@@ -146,8 +146,8 @@ These are iron-verify items on already-written fixes. Until they're confirmed on
 **Depends on:** nothing in Waves 0–2 (independent). **Effort:** L, highest risk. **Ships as:** Update 1 (userspace, no kernel reflash).
 
 ### WS6 — Web browser (Phase 14.2)
-- [ ] **Web browser** — MasterChecklist **14.2** line 1030 (*"Chromium via RaeBridge or native?"*). `raeweb` component exists (~4.9k LOC, thin).
-- **DECISION LOCKED (2026-06-15): defer to fast-follow Update 4.** v0.1 ships no full browser (web on another machine until then; an optional trivial link-opener is the only v0.1 web surface). The engine choice (Servo-class native vs minimal native web view) is itself deferred to Update-4 scheduling. RaeBridge+Chromium stays off the table (years out). **WS6 is parked** — do not schedule engine work until Update 4.
+- [ ] **Web browser** — MasterChecklist **14.2** line 1030 (*"Chromium via AthBridge or native?"*). `raeweb` component exists (~4.9k LOC, thin).
+- **DECISION LOCKED (2026-06-15): defer to fast-follow Update 4.** v0.1 ships no full browser (web on another machine until then; an optional trivial link-opener is the only v0.1 web surface). The engine choice (Servo-class native vs minimal native web view) is itself deferred to Update-4 scheduling. AthBridge+Chromium stays off the table (years out). **WS6 is parked** — do not schedule engine work until Update 4.
 
 **Depends on:** networking (WS2) + TLS (10.2) + fonts (`raefont`) + ideally GPU (WS5). **Effort:** L. **Ships as:** Update 4 (userspace app).
 
@@ -175,7 +175,7 @@ These are iron-verify items on already-written fixes. Until they're confirmed on
 - [ ] **24-hour soak** — MasterChecklist **4.9**.
 - [ ] **BOOT-BENCH < 6000 ms** — currently ~11s on iron. MasterChecklist maintenance line 1186 + Concept §Core 3.
 - [ ] **Multi-SKU coverage** — MasterChecklist **Phase 17** (≥2 SKUs for the Ship Gate).
-- Re-enable SCHED_GAME for the compositor once EDF runtime-budget throttling lands (currently CFS-normal).
+- Re-enable SCHED_BODY for the compositor once EDF runtime-budget throttling lands (currently CFS-normal).
 
 ---
 
@@ -186,7 +186,7 @@ These are iron-verify items on already-written fixes. Until they're confirmed on
 | **1** | AMD GPU acceleration | WS5 | userspace pkg | biggest perf/battery jump; unblocks HDR/VRR/multi-mon later |
 | **2** | Wi-Fi | WS7 | userspace pkg | un-tethers the machine |
 | **3** | S3 sleep/wake | WS8 | kernel A/B slot | laptop-grade power behavior |
-| **4** | Full browser | WS6 | RaeStore app | closes the last "daily" gap |
+| **4** | Full browser | WS6 | AthStore app | closes the last "daily" gap |
 | **5** | OTA update+rollback, multi-monitor, HDR/VRR | WS9 + 6.4 | mixed | needed to ship to *other* people |
 
 ---

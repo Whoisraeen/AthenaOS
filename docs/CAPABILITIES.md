@@ -1,4 +1,4 @@
-# RaeenOS capability table
+# AthenaOS capability table
 
 **Authoritative source.** Required by `kernelchecklist.md` R10: every new
 `Cap` flavor MUST add a row here in the same commit.

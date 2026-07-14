@@ -1,6 +1,6 @@
-//! TLS 1.3 crypto surface — Concept §"RaeNet: real TLS 1.3, not a toy".
+//! TLS 1.3 crypto surface — Concept §"AthNet: real TLS 1.3, not a toy".
 //!
-//! The vetted RustCrypto primitives the RaeNet userspace TLS path uses to go
+//! The vetted RustCrypto primitives the AthNet userspace TLS path uses to go
 //! from a bare handshake to a verified connection: the HKDF key schedule
 //! (RFC 8446 §7.1 `HKDF-Expand-Label`), the AES-GCM record cipher, and X.509
 //! certificate parsing + ECDSA(P-256/P-384)/RSA signature verification for the
@@ -104,7 +104,7 @@ pub fn parse_cert_serial(der_bytes: &[u8]) -> Option<Vec<u8>> {
 // identical to the real server. These functions are the authentication gate:
 // parse the server's Certificate flight, walk leaf→intermediate→trusted-root
 // verifying each issuer signature, bind the leaf to the hostname, and verify the
-// server's CertificateVerify signature over the transcript. Concept §"RaeNet:
+// server's CertificateVerify signature over the transcript. Concept §"AthNet:
 // real TLS 1.3, not a toy" — this is the line between "encrypted" and "safe".
 
 use der::oid::ObjectIdentifier;
@@ -352,7 +352,7 @@ pub fn verify_cert_signature(cert_der: &[u8], issuer_key: &CertPublicKey) -> Res
 
 /// Check a single certificate's validity window against `now_unix` (seconds since
 /// the Unix epoch). `None` skips the check (caller has no clock yet — documented
-/// follow-up: wire RaeNet's monotonic time so this is never skipped in
+/// follow-up: wire AthNet's monotonic time so this is never skipped in
 /// production). When supplied, both notBefore<=now and now<=notAfter must hold.
 fn cert_time_valid(cert_der: &[u8], now_unix: Option<u64>) -> Result<(), CertError> {
     let now = match now_unix {
@@ -582,7 +582,7 @@ pub fn rsa_pkcs1_sha256_verify(pubkey_der: &[u8], msg: &[u8], sig: &[u8]) -> boo
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// TLS 1.3 handshake state machine — Concept §"RaeNet: real TLS 1.3, not a toy".
+// TLS 1.3 handshake state machine — Concept §"AthNet: real TLS 1.3, not a toy".
 //
 // The primitives above (HKDF-Expand-Label, AES-GCM, X.509 + sig verify) are the
 // building blocks; the pieces below are the *orchestration* that an HTTPS client
@@ -2484,7 +2484,7 @@ mod tests {
             Err(CertError::Expired)
         );
         // No clock supplied → check intentionally skipped (documented follow-up:
-        // wire RaeNet's wall clock so this branch never runs in production).
+        // wire AthNet's wall clock so this branch never runs in production).
         assert!(cert_time_valid(&ED25519_CERT, None).is_ok());
         // Malformed DER with a clock → MalformedCert, never a panic, never Ok.
         assert_eq!(
@@ -2638,13 +2638,13 @@ mod tests {
     //
     // Real openssl-issued P-384 PKI (external oracle — generated with
     // `openssl ecparam -name secp384r1` + `openssl x509 -req ... -sha384`):
-    //   P384_ROOT_CERT — self-signed CA "CN=RaeNet P384 Test Root", ecdsa-with-SHA384.
+    //   P384_ROOT_CERT — self-signed CA "CN=AthNet P384 Test Root", ecdsa-with-SHA384.
     //   P384_LEAF_CERT — "CN=raenet-p384.example.com" (SAN dNSName), signed by root.
     //   P384_CV_SIG    — an ecdsa_secp384r1_sha384 signature by the LEAF key over the
     //                    RFC 8446 §4.4.3 CertificateVerify content for the fixed
     //                    transcript hash `(0u8..32u8)`.
     // Both certs verify with `openssl verify -CAfile root.pem leaf.pem` → OK.
-    // These close the gap where RaeNet could not validate P-384 chains (enterprise
+    // These close the gap where AthNet could not validate P-384 chains (enterprise
     // / government / some CDN leaf+intermediate certs).
 
     // Self-signed P-384 CA (ecdsa-with-SHA384). Its own key verifies its signature.

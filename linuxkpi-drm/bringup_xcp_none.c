@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MPL-2.0 */
 /*
- * RaeenOS' first supported accelerator is Phoenix 1002:15bf, which has no XCP
+ * AthenaOS' first supported accelerator is Phoenix 1002:15bf, which has no XCP
  * partition manager. Upstream amdgpu still references the XCP helpers from
  * generic open/reset/teardown code. This translation unit implements the exact
  * no-manager branches and rejects every partitioned-device operation instead

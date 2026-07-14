@@ -1,4 +1,4 @@
-//! RaeUI Accessibility Tree — auto-generated from the widget tree.
+//! AthUI Accessibility Tree — auto-generated from the widget tree.
 //!
 //! Provides semantic accessibility nodes, focus management, screen reader
 //! output, high-contrast mode, and reduced-motion support. The tree mirrors
@@ -477,7 +477,7 @@ pub fn draw_focus_ring(
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
-/// The concrete RaeUI widget kinds the layout tree (`tree.rs`) actually
+/// The concrete AthUI widget kinds the layout tree (`tree.rs`) actually
 /// instantiates, plus the richer kinds from `inputs.rs`/`containers.rs`/
 /// `feedback.rs`. This is the bridge between the opaque `Widget2` boxes in the
 /// `WidgetNode` tree (which carry no type tag) and a real accessibility role:
@@ -511,7 +511,7 @@ pub enum WidgetKind {
     Group,
 }
 
-/// Map a concrete RaeUI widget kind to its semantic accessibility role. This is
+/// Map a concrete AthUI widget kind to its semantic accessibility role. This is
 /// the real role inference that the old `infer_role_from_widget_id` stub faked.
 pub fn role_for_widget_kind(kind: WidgetKind) -> AccessibilityRole {
     match kind {
@@ -540,7 +540,7 @@ pub fn role_for_widget_kind(kind: WidgetKind) -> AccessibilityRole {
     }
 }
 
-/// Per-widget semantic metadata RaeUI publishes for the accessibility tree. A
+/// Per-widget semantic metadata AthUI publishes for the accessibility tree. A
 /// widget contributes one of these (with its real kind/label/value) so the tree
 /// can name it. `build_from_widget_tree` consults the registry keyed by widget
 /// id; the kernel widget-provider seam (`a11y::set_widget_provider`) consumes
@@ -576,16 +576,16 @@ impl WidgetSemantics {
 // ── Widget semantics registry ───────────────────────────────────────────
 // The `Widget2` boxes in the layout tree carry no type tag, so a widget that
 // wants to be named registers its semantics here when built. This is a small
-// process-local table (RaeUI runs per-process in userspace), not a kernel
+// process-local table (AthUI runs per-process in userspace), not a kernel
 // shadow tree.
 
 use core::cell::RefCell;
 
-// A minimal single-threaded slot. RaeUI's widget tree is single-threaded per
+// A minimal single-threaded slot. AthUI's widget tree is single-threaded per
 // process; we keep the registry in a plain static RefCell guarded by the
 // build/read discipline (never re-entrant).
 struct Registry(RefCell<Vec<WidgetSemantics>>);
-// SAFETY: RaeUI's widget tree is built and queried on one UI thread per
+// SAFETY: AthUI's widget tree is built and queried on one UI thread per
 // process. The registry is only touched from `register_widget_semantics` /
 // `clear_widget_semantics` / the lookups below, never re-entrantly and never
 // across threads. This mirrors the existing single-thread `NEXT_ID` static in
@@ -640,7 +640,7 @@ fn infer_label(node: &WidgetNode) -> String {
 
 // ── Kernel widget-provider seam (the userspace half) ────────────────────
 // `a11y.rs::set_widget_provider(fn(window_id) -> Vec<AccessNode>)` is the kernel
-// seam (foundation §6). RaeUI is a separate (userspace) crate from the kernel
+// seam (foundation §6). AthUI is a separate (userspace) crate from the kernel
 // `a11y` module and cannot construct kernel `AccessNode`s directly, so it emits
 // a wire-shaped [`ProviderNode`] that maps 1:1 onto `rae_abi::A11yNode` via the
 // `A11Y_ROLE_*` / `A11Y_STATE_*` / `A11Y_ACTIONBIT_*` numeric vocabulary. The
@@ -859,7 +859,7 @@ mod tests {
     }
 
     // NOTE: these exercises share the process-global `WIDGET_REGISTRY` (a
-    // static `RefCell`, sound because RaeUI runs one UI thread per process —
+    // static `RefCell`, sound because AthUI runs one UI thread per process —
     // see the `unsafe impl Sync` safety note above). cargo runs `#[test]`s
     // multi-threaded, so EVERY registry-touching assertion must live inside
     // ONE `#[test]` or they race the shared `RefCell` ("already borrowed").

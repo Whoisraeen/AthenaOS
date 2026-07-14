@@ -1,6 +1,6 @@
 //! # RaeMP4 — a never-panic, `no_std` MP4 / ISO-BMFF container demuxer.
 //!
-//! RaeenOS_Concept.md (§creators / media): a daily driver must "play my movies"
+//! LEGACY_GAMING_CONCEPT.md (§creators / media): a daily driver must "play my movies"
 //! and "play my music." MP4 (ISO/IEC 14496-12, the ISO Base Media File Format)
 //! is the dominant container for both — phone video, downloaded video, and AAC
 //! audio (`.m4a`/`.mp4`) all ship as BMFF. This crate is the from-scratch

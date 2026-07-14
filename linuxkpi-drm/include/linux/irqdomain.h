@@ -3,7 +3,7 @@
  * <linux/irqdomain.h> shim (MPL-2.0, original work).
  *
  * IRQ-domain (interrupt-controller virtual->hw mapping). amdgpu's IH ring wraps
- * its source decoding behind a domain. In the RaeenOS userspace-daemon model a
+ * its source decoding behind a domain. In the AthenaOS userspace-daemon model a
  * device IRQ is delivered as IPC (raeen_linuxkpi's IRQ-doorbell facade, P2), not
  * a kernel irq line, so the mapping calls are backed by that facade at M4. This
  * is the type/decl surface the IH header needs. License boundary: API surface.

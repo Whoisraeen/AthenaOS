@@ -1,6 +1,6 @@
 //! USB Mass Storage Class (MSC) — Bulk-Only Transport (BOT) driver.
 //!
-//! Concept §Storage: "RaeenOS supports USB storage as a hot-pluggable block
+//! Concept §Storage: "AthenaOS supports USB storage as a hot-pluggable block
 //! device source"; this module is the in-kernel MSC layer that sits between
 //! xHCI and the block_io BlockDevice trait.
 //!
@@ -923,7 +923,7 @@ pub fn run_boot_smoketest() {
     };
     let mut sec = alloc::vec![0u8; block_size as usize];
     let read_ok = probe.read_sector(0, &mut sec).is_ok();
-    let sig = b"RAEENOS-USB-MSC-SECTOR0";
+    let sig = b"ATHENAOS-USB-MSC-SECTOR0";
     let sig_ok = read_ok && sec.len() >= sig.len() && &sec[..sig.len()] == sig;
 
     // Non-destructive write+readback on a scratch sector (the last block):

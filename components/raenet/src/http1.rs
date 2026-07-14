@@ -1,6 +1,6 @@
 //! Native HTTP/1.1 client — request build + streaming response parse.
 //!
-//! RaeenOS Concept §RaeNet / "web apps that feel native": the browser pillar and
+//! AthenaOS Concept §AthNet / "web apps that feel native": the browser pillar and
 //! every app that fetches over the network rests on a correct, hostile-input-safe
 //! HTTP/1.1 implementation. This module is the foundation — pure protocol logic
 //! (request serialization, response parsing, chunked decoding, URL parsing) kept
@@ -1662,7 +1662,7 @@ data\r\n\
     /// high-level fetch, using rae_deflate's own gzip writer as the server.
     #[test]
     fn gzip_content_encoding_decoded_round_trip() {
-        let plain = b"<!doctype html><title>RaeenOS</title><h1>hi</h1>";
+        let plain = b"<!doctype html><title>AthenaOS</title><h1>hi</h1>";
         let gz = rae_deflate::gzip_compress(plain);
         let mut raw: Vec<u8> = Vec::new();
         raw.extend_from_slice(b"HTTP/1.1 200 OK\r\n");
@@ -1922,7 +1922,7 @@ data\r\n\
             139, 36, 216, 65, 136, 159, 208, 127, 40, 218, 48, 235, 25, 100, 120, 84, 68, 45, 217,
             190, 243, 230, 89, 24, 125,
         ];
-        const PLAIN: &[u8] = b"<!doctype html><title>RaeenOS</title><h1>brotli works</h1><p>the quick brown fox jumps over the lazy dog repeatedly and at length to make it compressible</p>";
+        const PLAIN: &[u8] = b"<!doctype html><title>AthenaOS</title><h1>brotli works</h1><p>the quick brown fox jumps over the lazy dog repeatedly and at length to make it compressible</p>";
         let mut raw: Vec<u8> = Vec::new();
         raw.extend_from_slice(b"HTTP/1.1 200 OK\r\nContent-Encoding: br\r\n");
         raw.extend_from_slice(format!("Content-Length: {}\r\n\r\n", REAL_BR.len()).as_bytes());
@@ -1958,7 +1958,7 @@ data\r\n\
             0x00, 0x00, 0x00,
         ];
         const PLAIN: &[u8] =
-            b"<!doctype html><title>RaeenOS</title><h1>hello from a gzipped server</h1>";
+            b"<!doctype html><title>AthenaOS</title><h1>hello from a gzipped server</h1>";
         let mut raw: Vec<u8> = Vec::new();
         raw.extend_from_slice(b"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\n");
         raw.extend_from_slice(format!("Content-Length: {}\r\n\r\n", REAL_GZIP.len()).as_bytes());

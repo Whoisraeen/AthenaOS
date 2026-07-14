@@ -1,4 +1,4 @@
-//! DirectWrite text rendering API emulation for RaeBridge.
+//! DirectWrite text rendering API emulation for AthBridge.
 #![no_std]
 
 extern crate alloc;

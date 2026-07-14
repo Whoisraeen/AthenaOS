@@ -1,15 +1,15 @@
-//! RaeWeb — web rendering engine for RaeenOS.
+//! RaeWeb — web rendering engine for AthenaOS.
 //!
 //! A from-scratch HTML/CSS rendering pipeline: tokenizer → parser → DOM → style
 //! resolution → layout → paint.  Designed for `no_std` environments with alloc.
 //!
 //! > "Native everywhere. No Electron tax. No web wrappers. Native rendering,
 //! > native input, native audio — sub-frame latency end to end."
-//! > — RaeenOS Concept, §Design Principles #1
+//! > — AthenaOS Concept, §Design Principles #1
 //!
 //! The web is a *contained app surface*, not an OS primitive: this engine parses and
 //! lays out HTML/CSS itself and paints through [`raegfx::Canvas`] (the same crisp-AA
-//! path as every RaeUI surface), with the resource loader riding the real
+//! path as every AthUI surface), with the resource loader riding the real
 //! `raenet::http1` client. No JS in Phase 1 (the `EventListener` hooks stay inert) —
 //! the useful 80% of PWA/static content ships years before a JS engine, which is the
 //! whole point of the no-JS-as-system-language stance. See
@@ -6344,7 +6344,7 @@ impl PwaNotification {
     }
 }
 
-/// Bridge between web notifications and RaeShell notification daemon.
+/// Bridge between web notifications and AthShell notification daemon.
 pub struct NotificationBridge {
     pending: Vec<PwaNotification>,
     next_id: u64,

@@ -1,6 +1,6 @@
 //! Kernel futex table — the cross-process blocking primitive.
 //!
-//! Concept (§"Gaming isn't a mode" / RaeBridge): every Win32 synchronization
+//! Concept (§"Gaming isn't a mode" / AthBridge): every Win32 synchronization
 //! object (Event / Mutex / Semaphore / CriticalSection → `WaitForSingleObject`)
 //! bottoms out on a futex word in a page shared between two processes. For a
 //! wait to truly *block* (not spin/yield) and for a wake in one process to
@@ -12,7 +12,7 @@
 //!
 //! MasterChecklist Phase 11, item 1828 (Slice 2b kernel half): re-key SYS_FUTEX
 //! by shared-frame physical identity + a real blocking `futex_wait`. Landed with
-//! explicit owner authorization (the RaeBridge kernel-half human-gate lifted).
+//! explicit owner authorization (the AthBridge kernel-half human-gate lifted).
 
 use crate::task::TaskId;
 use alloc::collections::BTreeMap;
@@ -152,7 +152,7 @@ pub fn phys_key(virt_addr: u64) -> Option<u64> {
 pub fn dump_text() -> String {
     let g = FUTEX_MANAGER.lock();
     let mut out = String::new();
-    out.push_str("# RaeenOS futex table (phys-frame-keyed cross-process wait queue)\n");
+    out.push_str("# AthenaOS futex table (phys-frame-keyed cross-process wait queue)\n");
     out.push_str(&alloc::format!("keys: {}\n", g.key_count()));
     out.push_str(&alloc::format!("waiters: {}\n", g.waiter_count()));
     out

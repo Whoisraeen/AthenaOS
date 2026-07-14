@@ -1,7 +1,7 @@
 //! Crisp grayscale-AA text rendering — the one wired text path.
 //!
-//! *"Built for people who care about how things feel."* — `RaeenOS_Concept.md`
-//! §RaeUI ("a cohesive and visually stunning UI"). The 8×8 bitmap block font was
+//! *"Built for people who care about how things feel."* — `LEGACY_GAMING_CONCEPT.md`
+//! §AthUI ("a cohesive and visually stunning UI"). The 8×8 bitmap block font was
 //! raeen-visual-qa's single dominant "basic / not crisp" signal; this module is
 //! the fix (`docs/design/typography-rendering.md`). It owns the two embedded
 //! `raefont` faces (RaeSans = Inter, RaeMono = JetBrains Mono), a per-(family,
@@ -42,7 +42,7 @@ struct CacheEntry {
 
 /// The text engine: two parsed faces + a bounded LRU-ish coverage cache. Built
 /// once on first use (`ensure_init`) from the `include_bytes!`-embedded faces —
-/// no filesystem dependency, so it works at first boot before RaeFS mounts.
+/// no filesystem dependency, so it works at first boot before AthFS mounts.
 pub struct TextEngine {
     sans: Option<FontHandle>,
     mono: Option<FontHandle>,

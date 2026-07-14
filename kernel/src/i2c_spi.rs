@@ -1,4 +1,4 @@
-//! I2C + SPI Bus Drivers for RaeenOS
+//! I2C + SPI Bus Drivers for AthenaOS
 //! Full I2C adapter, SMBus, bitbanging, mux, slave mode,
 //! SPI controller, modes, bitbanging, and NOR flash support.
 

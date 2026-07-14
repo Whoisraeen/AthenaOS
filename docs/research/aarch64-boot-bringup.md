@@ -9,11 +9,11 @@ gets control and discovers its hardware **without `bootloader_api` and without A
 
 ## Concept promise served
 
-> "macOS got locked behind a walled garden of Apple silicon. ... RaeenOS is the third path —
-> a from-scratch, gaming-first, native-feeling OS that treats power users like adults"
-> (RaeenOS_Concept.md §The OS Manifesto)
+> "macOS got locked behind a walled garden of Apple silicon. ... AthenaOS is the third path —
+> a from-scratch, embodiment-first, native-feeling OS that treats power users like adults"
+> (LEGACY_GAMING_CONCEPT.md §The OS Manifesto)
 
-aarch64 support is the *anti-"locked behind Apple silicon"* property made literal: RaeenOS
+aarch64 support is the *anti-"locked behind Apple silicon"* property made literal: AthenaOS
 runs on ARM64 silicon as a peer architecture, not welded to one ISA. ADR 0007 added a
 north-star "Architecture Reach" clause to §Architecture; the aarch64 entry/MMU module's R10
 docstring MUST quote one of these lines.

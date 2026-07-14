@@ -1,9 +1,9 @@
-//! RaeenOS Calendar & Contacts — *"bring my calendar & contacts over"*
-//! (RaeenOS_Concept.md §Compatibility Strategy criterion #5: "import my calendar
+//! AthenaOS Calendar & Contacts — *"bring my calendar & contacts over"*
+//! (LEGACY_GAMING_CONCEPT.md §Compatibility Strategy criterion #5: "import my calendar
 //! & contacts from Google / Apple / Outlook").
 //!
 //! A first-party, fully-LOCAL calendar + address book — the macOS Calendar +
-//! Contacts of RaeenOS, with zero networking. A switcher arrives with a Google /
+//! Contacts of AthenaOS, with zero networking. A switcher arrives with a Google /
 //! Apple export: every one of those platforms emits its calendar as iCalendar
 //! (`.ics`, RFC 5545) and its contacts as vCard (`.vcf`, RFC 6350 v3.0/4.0). This
 //! app imports both off disk and makes them clickable — the offline on-ramp.
@@ -115,13 +115,13 @@ const LOCAL_TZ_IANA: &str = "America/New_York";
 const SAMPLE_ICS: &str = "\
 BEGIN:VCALENDAR\r
 VERSION:2.0\r
-PRODID:-//RaeenOS//calendar//EN\r
+PRODID:-//AthenaOS//calendar//EN\r
 BEGIN:VEVENT\r
 UID:welcome-001@raeen.os\r
 DTSTART;TZID=America/New_York:20260601T090000\r
 DTEND;TZID=America/New_York:20260601T093000\r
-SUMMARY:Welcome to RaeenOS Calendar\r
-LOCATION:RaeShell\r
+SUMMARY:Welcome to AthenaOS Calendar\r
+LOCATION:AthShell\r
 RRULE:FREQ=WEEKLY;BYDAY=MO;COUNT=12\r
 END:VEVENT\r
 BEGIN:VEVENT\r
@@ -140,7 +140,7 @@ FN:Rae Support\r
 N:Support;Rae;;;\r
 EMAIL;TYPE=work:hello@raeen.os\r
 TEL;TYPE=cell:+1-555-0100\r
-ORG:RaeenOS\r
+ORG:AthenaOS\r
 END:VCARD\r
 ";
 
@@ -1282,7 +1282,7 @@ mod tests {
     const ICS: &str = "\
 BEGIN:VCALENDAR\r
 VERSION:2.0\r
-PRODID:-//RaeenOS//calendar-test//EN\r
+PRODID:-//AthenaOS//calendar-test//EN\r
 BEGIN:VEVENT\r
 UID:standup@raeen.os\r
 DTSTART;TZID=America/New_York:20260601T093000\r

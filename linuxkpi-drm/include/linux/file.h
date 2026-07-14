@@ -5,7 +5,7 @@
  * File-descriptor table helpers. amdgpu_cs uses these to hand sync-file / syncobj
  * fds across the command-submission boundary. The fd table is owned by the guest
  * process; the daemon-side calls are backed by raeen_linuxkpi at M4 (mapped onto
- * the RaeenOS handle/IPC surface). License boundary (../../README.md): API.
+ * the AthenaOS handle/IPC surface). License boundary (../../README.md): API.
  */
 #ifndef _LINUXKPI_LINUX_FILE_H
 #define _LINUXKPI_LINUX_FILE_H

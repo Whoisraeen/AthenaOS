@@ -7,7 +7,7 @@ use spin::Mutex;
 
 use crate::tpm;
 
-// ─── PCR Assignments (TCG PC Client spec + RaeShield extensions) ─────────────
+// ─── PCR Assignments (TCG PC Client spec + AthGuard extensions) ─────────────
 
 pub const PCR_FIRMWARE: u32 = 0;
 pub const PCR_BOOTLOADER: u32 = 4;
@@ -25,7 +25,7 @@ pub enum BootStage {
     SecureBootPolicy,
     Kernel,
     KernelCommandLine,
-    RaeShieldPolicy,
+    AthGuardPolicy,
     InitProcess,
     Compositor,
     UserSpace,
@@ -39,7 +39,7 @@ impl BootStage {
             BootStage::SecureBootPolicy => PCR_SECURE_BOOT_POLICY,
             BootStage::Kernel => PCR_KERNEL_IMAGE,
             BootStage::KernelCommandLine => PCR_KERNEL_CMDLINE,
-            BootStage::RaeShieldPolicy => PCR_RAESHIELD_POLICY,
+            BootStage::AthGuardPolicy => PCR_RAESHIELD_POLICY,
             BootStage::InitProcess => PCR_KERNEL_IMAGE,
             BootStage::Compositor => PCR_KERNEL_IMAGE,
             BootStage::UserSpace => PCR_KERNEL_IMAGE,
@@ -329,16 +329,16 @@ pub fn init() {
     // at this point in boot, we record placeholder measurements that
     // the bootloader should have already extended into real hardware PCRs.
     sb.measure_stage(BootStage::Firmware, tpm::sha256(b"uefi-firmware"), 0);
-    sb.measure_stage(BootStage::Bootloader, tpm::sha256(b"raeenos-bootloader"), 0);
+    sb.measure_stage(BootStage::Bootloader, tpm::sha256(b"athenaos-bootloader"), 0);
     sb.measure_stage(
         BootStage::SecureBootPolicy,
         tpm::sha256(b"secure-boot-policy"),
         0,
     );
-    sb.measure_stage(BootStage::Kernel, tpm::sha256(b"raeenos-kernel"), 0);
+    sb.measure_stage(BootStage::Kernel, tpm::sha256(b"athenaos-kernel"), 0);
     sb.measure_stage(BootStage::KernelCommandLine, tpm::sha256(b""), 0);
     sb.measure_stage(
-        BootStage::RaeShieldPolicy,
+        BootStage::AthGuardPolicy,
         tpm::sha256(b"raeshield-policy-v1"),
         0,
     );

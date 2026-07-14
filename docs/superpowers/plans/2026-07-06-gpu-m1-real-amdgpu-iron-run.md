@@ -13,12 +13,12 @@
 ## Global Constraints
 
 - **Iron boots use the `--safe` image ONLY** (CLAUDE.md §9 — a non-safe image once wiped a Windows partition).
-- **Build tree for this plan is the WSL checkout `~/raeenos`** (clang + `~/m4-obj` + `/dev/kvm` live there; the Windows git-bash has no clang). Its `origin` is the Windows checkout (`file:///mnt/c/Users/woisr/Documents/Projects/RaeenOS`).
+- **Build tree for this plan is the WSL checkout `~/athenaos`** (clang + `~/m4-obj` + `/dev/kvm` live there; the Windows git-bash has no clang). Its `origin` is the Windows checkout (`file:///mnt/c/Users/woisr/Documents/Projects/AthenaOS`).
 - **Never discard the WSL tree's uncommitted WIP** — it is the 07-04 session's post-reloc-fix debug work (`rae_dbg_ptrs`, `kernel/src/linuxkpi_host.rs` +93 lines, new syscall plumbing). Commit it before anything else (multi-agent memory: commit slices immediately).
 - **Gates before every commit:** `export RAEEN_AGENT=opus && bash scripts/ownership-lock.sh && bash scripts/architecture-gate.sh`. If the staged diff touches `components/rae_abi/`, the commit subject MUST carry `[interface]`.
 - Stage **explicit paths** only — never `git add .` (OneDrive/multi-agent hazard).
 - Netlog listener runs on the **Windows** side (`scripts\netlog-listen.ps1`) — WSL2 NAT does not receive LAN UDP broadcasts.
-- Athena: `whoisraeen@192.168.1.244`, passwordless sudo, GPU `c4:00.0` (`1002:15bf` Phoenix1). RaeenOS boot entry = `Boot0003` "RaeenOS-test", fired only via `efibootmgr --bootnext 0003` (never in BootOrder).
+- Athena: `whoisraeen@192.168.1.244`, passwordless sudo, GPU `c4:00.0` (`1002:15bf` Phoenix1). AthenaOS boot entry = `Boot0003` "AthenaOS-test", fired only via `efibootmgr --bootnext 0003` (never in BootOrder).
 - **NEVER live unbind/rebind the APU** on Athena (wedges the iGPU; recovery = physical power button).
 - Serial sentinels print as `[user-thread] msg: N` (9000 = amdgpud start, 9098 = real-init done, 9099 = no GPU/skip).
 
@@ -30,18 +30,18 @@
 - Modify (commit, WSL tree): the 17 dirty files (`amdgpud/*`, `components/raeen_linuxkpi/*`, `components/rae_abi/src/lib.rs`, `kernel/src/linuxkpi_host.rs`, `kernel/src/syscall.rs`, `kernel/src/interrupts.rs`, `linuxkpi-drm/m4-link.sh`, `linuxkpi-drm/m4c-link.sh`, `xtask/src/main.rs`, + rest of `git status`)
 
 **Interfaces:**
-- Produces: WSL `~/raeenos` at Windows-main HEAD (contains `c0e350d` reloc fix, `d4887f0` spec, `1453ee0` amendment) + the 07-04 debug WIP committed on top. All later tasks build from this tree.
+- Produces: WSL `~/athenaos` at Windows-main HEAD (contains `c0e350d` reloc fix, `d4887f0` spec, `1453ee0` amendment) + the 07-04 debug WIP committed on top. All later tasks build from this tree.
 
 - [ ] **Step 1: Inspect and commit the WIP in WSL**
 
 ```bash
-wsl -e bash -lc 'cd ~/raeenos && git status --short && git diff --stat | tail -3'
+wsl -e bash -lc 'cd ~/athenaos && git status --short && git diff --stat | tail -3'
 ```
 
 Expected: ~17 modified files, ~481 insertions. Then commit it (subject carries `[interface]` because `components/rae_abi/src/lib.rs` is in the diff — verify with `git diff --stat components/rae_abi/` first; if rae_abi shows 0 lines changed, drop the tag):
 
 ```bash
-wsl -e bash -lc 'cd ~/raeenos && export RAEEN_AGENT=opus && bash scripts/ownership-lock.sh && git add -u && bash scripts/architecture-gate.sh && git commit -m "[interface] amdgpu: 07-04 real-init debug WIP — rae_dbg_ptrs hook + linuxkpi_host C-debug syscalls
+wsl -e bash -lc 'cd ~/athenaos && export RAEEN_AGENT=opus && bash scripts/ownership-lock.sh && git add -u && bash scripts/architecture-gate.sh && git commit -m "[interface] amdgpu: 07-04 real-init debug WIP — rae_dbg_ptrs hook + linuxkpi_host C-debug syscalls
 
 Why:
 - MasterChecklist Phase 6.1 — real amdgpu M5 run: diagnostics for the soc21 nbio.funcs wall
@@ -62,7 +62,7 @@ Expected: gates green, commit created. NOTE: `git add -u` is acceptable here ONL
 - [ ] **Step 2: Fetch Windows main and rebase the WIP onto it**
 
 ```bash
-wsl -e bash -lc 'cd ~/raeenos && git fetch origin && git log --oneline origin/main -3 && git rebase origin/main'
+wsl -e bash -lc 'cd ~/athenaos && git fetch origin && git log --oneline origin/main -3 && git rebase origin/main'
 ```
 
 Expected: `origin/main` shows `1453ee0` (spec amendment) at tip; rebase applies the nvidia-skeleton commit + the WIP commit cleanly.
@@ -71,7 +71,7 @@ Expected: `origin/main` shows `1453ee0` (spec amendment) at tip; rebase applies 
 - [ ] **Step 3: Verify the tree state**
 
 ```bash
-wsl -e bash -lc 'cd ~/raeenos && git log --oneline -4 && git status --short | wc -l'
+wsl -e bash -lc 'cd ~/athenaos && git log --oneline -4 && git status --short | wc -l'
 ```
 
 Expected: WIP commit on top, `1453ee0` in ancestry, 0 dirty files.
@@ -81,16 +81,16 @@ Expected: WIP commit on top, `1453ee0` in ancestry, 0 dirty files.
 ### Task 2: Build the M1 iron image (`--safe`, real amdgpu) in WSL
 
 **Files:**
-- Create (build artifacts, WSL): `~/raeenos/target/kernel.uefi.img`, `~/raeenos/target/x86_64-unknown-none/release/amdgpud`
+- Create (build artifacts, WSL): `~/athenaos/target/kernel.uefi.img`, `~/athenaos/target/x86_64-unknown-none/release/amdgpud`
 
 **Interfaces:**
 - Consumes: Task 1's synced tree; `/home/raeen/m4-obj/` (m4c rebuilds it).
-- Produces: `~/raeenos/target/kernel.uefi.img` — the ONLY image Task 5 deploys.
+- Produces: `~/athenaos/target/kernel.uefi.img` — the ONLY image Task 5 deploys.
 
 - [ ] **Step 1: Full safe UEFI build with the real amdgpu set**
 
 ```bash
-wsl -e bash -lc 'cd ~/raeenos && RAEEN_AMDGPU_REAL=1 cargo run -p xtask --release -- build --release --safe --uefi 2>&1 | tail -30; echo EXIT=$?'
+wsl -e bash -lc 'cd ~/athenaos && RAEEN_AMDGPU_REAL=1 cargo run -p xtask --release -- build --release --safe --uefi 2>&1 | tail -30; echo EXIT=$?'
 ```
 
 Expected:
@@ -103,7 +103,7 @@ If m4c fails: read `/tmp/m4-link.log` (its step-0 compile log) — clang or the 
 - [ ] **Step 2: Verify the image actually carries the real-init daemon**
 
 ```bash
-wsl -e bash -lc 'cd ~/raeenos && nm target/x86_64-unknown-none/release/amdgpud | grep -cE " T (rae_amdgpu_device_init|amdgpu_device_init)" && readelf -r target/x86_64-unknown-none/release/amdgpud | grep -c "R_X86_64_64" || true'
+wsl -e bash -lc 'cd ~/athenaos && nm target/x86_64-unknown-none/release/amdgpud | grep -cE " T (rae_amdgpu_device_init|amdgpu_device_init)" && readelf -r target/x86_64-unknown-none/release/amdgpud | grep -c "R_X86_64_64" || true'
 ```
 
 Expected: first count = `2` (both symbols defined as text); second count = `0` (the `c0e350d` -Bsymbolic guarantee — any nonzero means the 0x77 reloc fault class is back: STOP, re-check `amdgpud/build.rs` has `cargo:rustc-link-arg=-Bsymbolic` and m4-link.sh has `-fvisibility=hidden`).
@@ -111,7 +111,7 @@ Expected: first count = `2` (both symbols defined as text); second count = `0` (
 - [ ] **Step 3: Confirm safe mode is baked in**
 
 ```bash
-wsl -e bash -lc 'cd ~/raeenos && ls -la target/kernel.uefi.img && strings target/x86_64-unknown-none/release/kernel 2>/dev/null | grep -m1 "safe-mode" || echo "strings-check skipped (marker optional)"'
+wsl -e bash -lc 'cd ~/athenaos && ls -la target/kernel.uefi.img && strings target/x86_64-unknown-none/release/kernel 2>/dev/null | grep -m1 "safe-mode" || echo "strings-check skipped (marker optional)"'
 ```
 
 Expected: image exists, dated now. (The authoritative safe-mode proof is the boot banner in Task 5's capture: `[safe-mode]` lines + the write-guard messages.)
@@ -130,7 +130,7 @@ Expected: image exists, dated now. (The authoritative safe-mode proof is the boo
 - [ ] **Step 1: Boot the exact real-amdgpu image in QEMU CI mode**
 
 ```bash
-wsl -e bash -lc 'cd ~/raeenos && RAEEN_AMDGPU_REAL=1 cargo run -p xtask --release -- run --release --ci 2>&1 | tail -5; echo EXIT=$?'
+wsl -e bash -lc 'cd ~/athenaos && RAEEN_AMDGPU_REAL=1 cargo run -p xtask --release -- run --release --ci 2>&1 | tail -5; echo EXIT=$?'
 ```
 
 Expected: `EXIT=0` (booted). Runtime note: KVM in WSL makes this fast; if it runs under TCG expect minutes, not seconds.
@@ -159,7 +159,7 @@ Expected: `0` panics, `[ OS ] System successfully booted.`, `[amdgpu] no AMD GPU
 ssh whoisraeen@192.168.1.244 "sudo efibootmgr | grep -i 0003; mount | grep ' /boot '; ls -la /boot/kernel-x86_64 /boot/EFI/RAEEN/ 2>/dev/null"
 ```
 
-Expected: `Boot0003* RaeenOS-test`, `/boot` mounted `rw` (NOT `ro` — `ro` means the FAT went errors=remount-ro: run `sudo umount /boot && sudo fsck.fat -a /dev/nvme0n1p1 && sudo mount /boot` first), and the existing deployed kernel files listed.
+Expected: `Boot0003* AthenaOS-test`, `/boot` mounted `rw` (NOT `ro` — `ro` means the FAT went errors=remount-ro: run `sudo umount /boot && sudo fsck.fat -a /dev/nvme0n1p1 && sudo mount /boot` first), and the existing deployed kernel files listed.
 
 - [ ] **Step 2: Start the netlog listener on Windows (background, ≥20 min)**
 
@@ -178,13 +178,13 @@ Expected: listener binds UDP 51514 and prints a waiting banner. Confirm the outp
 - Modify (Athena): `/boot/kernel-x86_64`, `/boot/EFI/RAEEN/kernel-x86_64`
 
 **Interfaces:**
-- Consumes: Task 2's `~/raeenos/target/kernel.uefi.img`, Task 4's running listener.
+- Consumes: Task 2's `~/athenaos/target/kernel.uefi.img`, Task 4's running listener.
 - Produces: the M1 netlog capture (Task 6's evidence).
 
 - [ ] **Step 1: Ship the image to Athena (from WSL — it built there)**
 
 ```bash
-wsl -e bash -lc 'scp ~/raeenos/target/kernel.uefi.img whoisraeen@192.168.1.244:/tmp/raeen-m1.img && ssh whoisraeen@192.168.1.244 "ls -la /tmp/raeen-m1.img"'
+wsl -e bash -lc 'scp ~/athenaos/target/kernel.uefi.img whoisraeen@192.168.1.244:/tmp/raeen-m1.img && ssh whoisraeen@192.168.1.244 "ls -la /tmp/raeen-m1.img"'
 ```
 
 Expected: file lands, size matches the local image.
@@ -207,7 +207,7 @@ Expected: ssh drops as the box reboots. `BootNext: 0003` printed before the drop
 
 - [ ] **Step 4: Wait and watch the listener**
 
-Watch the Windows netlog terminal. Timeline: firmware+RaeenOS boot ~30 s → amdgpud starts (sentinel 9000, SCHED_GAME self-promote) → checkpoints stream → either the init completes/fails fast, or the watchdog fires at ~480 s and Athena reboots back to Arch. **Do nothing for 10 minutes.** If NO netlog packets arrive by +4 min: the boot may have wedged pre-network — wait for the watchdog return anyway; if Athena is not back on ssh by +15 min, it needs the physical power button (owner) — report and stop.
+Watch the Windows netlog terminal. Timeline: firmware+AthenaOS boot ~30 s → amdgpud starts (sentinel 9000, SCHED_BODY self-promote) → checkpoints stream → either the init completes/fails fast, or the watchdog fires at ~480 s and Athena reboots back to Arch. **Do nothing for 10 minutes.** If NO netlog packets arrive by +4 min: the boot may have wedged pre-network — wait for the watchdog return anyway; if Athena is not back on ssh by +15 min, it needs the physical power button (owner) — report and stop.
 
 - [ ] **Step 5: Confirm Athena returned to Arch + post-run ESP health check**
 
@@ -255,13 +255,13 @@ Copy-Item .\BOOTLOG.netlog.txt "docs\gpu-oracle\netlog-M1-REAL-AMDGPU-20260706.t
 Then update `MasterChecklist.md`'s Phase 6.1 AMDGPU row with the verdict (honest ladder: iron evidence only), append the verdict to the memory topic file (`amdgpu-iron-hang-uc-firmware-read.md`), and commit from the **Windows** tree:
 
 ```powershell
-cd C:\Users\woisr\Documents\Projects\RaeenOS
+cd C:\Users\woisr\Documents\Projects\AthenaOS
 $env:RAEEN_AGENT="opus"; bash scripts/ownership-lock.sh; bash scripts/architecture-gate.sh
 git add docs/gpu-oracle/netlog-M1-REAL-AMDGPU-20260706.txt MasterChecklist.md
 git commit -m "gpu: M1 real-amdgpu iron run — <VERDICT BRANCH + one-line evidence>"
 ```
 
-(Also `wsl -e bash -lc 'cd ~/raeenos && git fetch origin'` afterward so the WSL tree sees the verdict commit.)
+(Also `wsl -e bash -lc 'cd ~/athenaos && git fetch origin'` afterward so the WSL tree sees the verdict commit.)
 
 - [ ] **Step 4: Report to owner**
 

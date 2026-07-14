@@ -1,4 +1,4 @@
-//! Shell runner — boots the RaeShell desktop into the compositor.
+//! Shell runner — boots the AthShell desktop into the compositor.
 //!
 //! Creates a full-screen kernel-owned compositor surface, instantiates
 //! `raeshell::DesktopShell`, renders the taskbar + desktop chrome, and
@@ -134,7 +134,7 @@ struct ShellRunnerState {
     /// FPS + frametime graph + CPU/GPU temps over whatever runs underneath. Fed
     /// from the LIVE `crate::perf` (FPS/frametime) + `crate::thermal` (temps).
     game_bar: raeshell::game_bar::GameBar,
-    /// RaeWeb browser surface (Concept §3 "renders through RaeUI", §Core
+    /// RaeWeb browser surface (Concept §3 "renders through AthUI", §Core
     /// Principles #1 "No Electron tax"). When Some, the kernel-drawn web view owns
     /// the screen and the keyboard drives the address bar / link activation. Toggled
     /// from the desktop with F7, mirroring how `couch` (GameOS) is toggled with F11.
@@ -1246,7 +1246,7 @@ fn next_vibe_theme() -> u64 {
 /// Build the couch-mode shell: big tiles, controller-first (Concept §GameOS).
 /// The library seeds from the start menu's app list so every installed app
 /// is launchable from the couch; real store aggregation (Steam/Epic/GOG)
-/// rides RaeBridge.
+/// rides AthBridge.
 /// Bridge a raeshell `CouchProfile` (the couch editor's logical mirror) into
 /// the kernel's canonical `game_profile::GameProfileAbi` record — a 1:1
 /// field copy with no reinterpretation. raeshell can't depend on the kernel
@@ -1305,7 +1305,7 @@ fn build_couch(state: &ShellRunnerState) -> raeshell::gameos::GameOsShell {
                 title: app.name.clone(),
                 banner_color: 0xFF_2D_5A_9E,
                 icon_char: app.icon_char,
-                store: raeshell::gameos::GameStoreName::RaeStore,
+                store: raeshell::gameos::GameStoreName::AthStore,
                 installed: true,
                 last_played: 0,
                 playtime_hours: 0.0,
@@ -1442,7 +1442,7 @@ fn toggle_game_bar(state: &mut ShellRunnerState) {
 /// Toggle the RaeWeb browser surface over the desktop (F7). Mirrors `toggle_gameos`:
 /// the web view becomes a modal kernel-drawn surface that owns the keyboard until
 /// dismissed. (Concept §3 "Web apps via PWA support that actually feels native
-/// (renders through RaeUI)"; §Core Principles #1 "No Electron tax".)
+/// (renders through AthUI)"; §Core Principles #1 "No Electron tax".)
 fn toggle_webview(state: &mut ShellRunnerState) {
     if state.webview.is_some() {
         state.webview = None;
@@ -1672,7 +1672,7 @@ pub fn force_login_screen() {
 /// shape (offer-then-enter, never a silent yank) applies.
 ///
 /// > *"GameOS Mode — couch UI, big-picture, controller-first. Toggle into it
-/// > instantly."* — RaeenOS_Concept.md §Gaming-First Design.
+/// > instantly."* — LEGACY_GAMING_CONCEPT.md §Gaming-First Design.
 pub fn gamepad_bound(vid: u16, pid: u16) -> bool {
     // Only a real controller-family or generic HID pad is a valid signal.
     if !raeshell::gameos::should_offer_gameos_on_padbind(vid, pid) {
@@ -1847,7 +1847,7 @@ extern "C" fn installer_worker_entry() {
 
     // Create the account (real backend; succeeds even in safe mode — it is
     // session/config state, not a disk write). Persisting the account record
-    // onto the freshly-formatted target RaeFS is a Phase 3 follow-up; the
+    // onto the freshly-formatted target AthFS is a Phase 3 follow-up; the
     // installed system's first-boot OOBE is the safety net until then.
     let uid = if !user.is_empty() {
         let mut display = user.clone();
@@ -1863,7 +1863,7 @@ extern "C" fn installer_worker_entry() {
         crate::config_registry::set_text("/session/last_user", &user);
     }
 
-    // Run the install pipeline for the CHOSEN plan: DualBoot carves RaeFS into
+    // Run the install pipeline for the CHOSEN plan: DualBoot carves AthFS into
     // free space without touching the existing OS/ESP; FullDisk seeds the whole
     // disk. Every write routes through safe_mode_guard_write, so on a --safe
     // image this is a logged dry run.
@@ -2495,7 +2495,7 @@ pub fn handle_key(scancode: u8) {
         return;
     }
     // RaeWeb browser surface is modal: while open, the keyboard drives the
-    // address bar / scroll / link activation (Concept §3 "renders through RaeUI").
+    // address bar / scroll / link activation (Concept §3 "renders through AthUI").
     if state.webview.is_some() {
         webview_handle_key(state, extended, code);
         return;
@@ -2551,7 +2551,7 @@ pub fn handle_key(scancode: u8) {
     // blind Super+C→Enter pastes the last copy. The Super+V the spec names is
     // already claimed by other chords on this PS/2 set, so the shell binds the
     // adjacent Super+C (the "clipboard" mnemonic) — documented here as the
-    // RaeShell Win+V analog.
+    // AthShell Win+V analog.
     if state.shell.is_some() {
         let panel_open = state
             .shell
@@ -3508,7 +3508,7 @@ fn sync_control_center_backends(shell: &mut raeshell::DesktopShell) {
         TileKind::NightLight,
         crate::notify::quick_settings::is_on(crate::notify::quick_settings::Control::NightLight),
     );
-    // Game Mode reflects the live SCHED_GAME foreground-entry counter posture.
+    // Game Mode reflects the live SCHED_BODY foreground-entry counter posture.
     cc.set_tile_enabled(
         TileKind::GameMode,
         crate::game_session::stats().game_mode_entries > 0,
@@ -3527,8 +3527,8 @@ fn sync_control_center_backends(shell: &mut raeshell::DesktopShell) {
 /// Publish the Control Center's tiles as widget-tier accessibility nodes under
 /// the desktop surface (Phase 19 audit P0 #1 — apps/chrome name their controls).
 ///
-/// This is the LIVE drive of the RaeUI widget-provider seam: the kernel shell
-/// builds a `raeui::accessibility::AccessibilityTree` from the live tiles (RaeUI
+/// This is the LIVE drive of the AthUI widget-provider seam: the kernel shell
+/// builds a `raeui::accessibility::AccessibilityTree` from the live tiles (AthUI
 /// does the role inference — a toggle tile is a `Switch`, a Wi-Fi/RGB row a
 /// `Button` because it expands), runs `provider_nodes_for_window`, and publishes
 /// the result through `a11y::publish_window_widgets_from_provider`. When focus is
@@ -3561,7 +3561,7 @@ fn publish_control_center_a11y(state: &mut ShellRunnerState) {
     const CC_TILE_BASE: u32 = 0x00C0_0000;
     let mut focused_id: Option<u64> = None;
     for (i, tile) in cc.tiles.iter().enumerate() {
-        // RaeUI role: an expandable tile (Wi-Fi/Bluetooth/RGB/Performance) opens
+        // AthUI role: an expandable tile (Wi-Fi/Bluetooth/RGB/Performance) opens
         // a sub-panel -> Button; a plain on/off tile -> Switch. The registry-free
         // path: construct the node with the inferred role + the tile's real label.
         let role = if tile.expandable {
@@ -4159,7 +4159,7 @@ pub fn run_boot_smoketest() {
     // so it reads procfs via the in-kernel accessors), then assert the layout:
     // panes=2, the 10-category sidebar, the About panel renders >0 live fields
     // (OS/kernel/CPU/SMP/RAM/board), and the Storage panel renders either a real
-    // capacity bar (mounted) or the empty-state InfoBar (QEMU virtio = no RaeFS).
+    // capacity bar (mounted) or the empty-state InfoBar (QEMU virtio = no AthFS).
     raeshell::control_panel::init();
     raeshell::control_panel::set_system_info_from_proc(
         &crate::procfs::proc_version(),
@@ -4288,7 +4288,7 @@ pub fn run_boot_smoketest() {
                 title: alloc::format!("Game {}", i + 1),
                 banner_color: 0xFF_2D_5A_9E,
                 icon_char: 'G',
-                store: raeshell::gameos::GameStoreName::RaeStore,
+                store: raeshell::gameos::GameStoreName::AthStore,
                 installed: true,
                 last_played: 0,
                 playtime_hours: 0.0,
@@ -4461,7 +4461,7 @@ pub fn run_boot_smoketest() {
                     title: alloc::string::String::from("CS"),
                     banner_color: 0,
                     icon_char: 'G',
-                    store: raeshell::gameos::GameStoreName::RaeStore,
+                    store: raeshell::gameos::GameStoreName::AthStore,
                     installed: true,
                     last_played: 0,
                     playtime_hours: 0.0,
@@ -4542,7 +4542,7 @@ pub fn run_boot_smoketest() {
                     title: alloc::string::String::from("operae"),
                     banner_color: 0,
                     icon_char: 'G',
-                    store: raeshell::gameos::GameStoreName::RaeStore,
+                    store: raeshell::gameos::GameStoreName::AthStore,
                     installed: true,
                     last_played: 0,
                     playtime_hours: 0.0,

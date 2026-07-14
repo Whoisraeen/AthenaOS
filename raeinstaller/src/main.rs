@@ -1,18 +1,18 @@
-//! raeinstaller — RaeenOS premium installer (MasterChecklist Phase 3.1 + 16.1).
+//! raeinstaller — AthenaOS premium installer (MasterChecklist Phase 3.1 + 16.1).
 //!
 //! "Like Windows, but better." A staged install flow:
 //!   1. Welcome
 //!   2. Hardware compatibility check
 //!   3. Target disk selection
 //!   4. Partition layout (full disk vs keep-data)
-//!   5. **Local account creation** (username + password, Argon2-hashed in RaeID)
+//!   5. **Local account creation** (username + password, Argon2-hashed in AthID)
 //!   6. Locale / timezone / keyboard
-//!   7. Install (partition → format ESP/RaeFS → write EFI boot tree)
+//!   7. Install (partition → format ESP/AthFS → write EFI boot tree)
 //!   8. First-boot ready
 //!
 //! Spawned in place of the normal shell when the kernel boots in installer mode.
 //! Block I/O + account registration live in the kernel; this process drives the
-//! flow and reports per-stage results. The graphical screens (compositor + RaeUI)
+//! flow and reports per-stage results. The graphical screens (compositor + AthUI)
 //! are the presentation layer over this exact pipeline; today the daemon runs the
 //! pipeline headless with serial-sentinel progress so the install path is proven
 //! end to end.
@@ -84,7 +84,7 @@ unsafe fn sys_exit(code: u64) -> ! {
 /// pipeline below is identical regardless of where the strings originate.
 const ACCOUNT_USER: &[u8] = b"raeenuser";
 const ACCOUNT_PASS: &[u8] = b"changeme";
-const ACCOUNT_DISPLAY: &[u8] = b"RaeenOS User";
+const ACCOUNT_DISPLAY: &[u8] = b"AthenaOS User";
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
@@ -114,7 +114,7 @@ pub extern "C" fn _start() -> ! {
         // ── Stage 6: Locale / timezone / keyboard (defaults applied) ─────
         sys_print(10060);
 
-        // ── Stage 7: Install (partition → format → boot tree → RaeFS) ────
+        // ── Stage 7: Install (partition → format → boot tree → AthFS) ────
         let result = sys_install_run();
         if result & STAGE_GPT != 0 {
             sys_print(10001);

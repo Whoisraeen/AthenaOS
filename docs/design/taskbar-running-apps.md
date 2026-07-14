@@ -1,6 +1,6 @@
 # Design Spec: Taskbar Running-App Affordances (previews · jump lists · indicators · badges)
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > The taskbar's running-app *interaction model* — what a button tells you about an
 > app (running / focused / how many windows / unread count) and what it lets you do
@@ -28,7 +28,7 @@ primitive that `window-management.md` §1 introduces.
 
 ## Concept promise + bar to clear
 
-> "Familiar enough to switch from Windows or Mac in 10 minutes." — RaeenOS_Concept.md
+> "Familiar enough to switch from Windows or Mac in 10 minutes." — LEGACY_GAMING_CONCEPT.md
 > (§Three User Experiences) + "The user owns the machine" (you pin and arrange
 > what *you* use).
 
@@ -41,7 +41,7 @@ primitive that `window-management.md` §1 introduces.
     previews** (a row of small live captures with close ×); grouped buttons when an
     app has multiple windows; **jump lists** on right-click (recent files, app
     tasks, pin/unpin); **badge counts** (unread) on the icon; drag-to-reorder + pin.
-- **The RaeenOS-specific promise:** the running indicator + previews use the **same
+- **The AthenaOS-specific promise:** the running indicator + previews use the **same
   live `snapshot_surface` buffers** the overview/switcher use (zero re-render,
   compositor-cheap — `window-management.md` §1), the jump list is **capability-aware**
   (only actions the app actually granted), and what's pinned/arranged is **yours**
@@ -78,7 +78,7 @@ the `snapshot_surface` primitive the switcher already needs. **Not a rebuild.**
   fluid; minimized windows live separately on the Dock's right with a live
   thumbnail. **Take:** the running dot, the window-list context menu, drag-to-pin,
   click-to-cycle. **Avoid:** the Dock *hiding* window management (you can't see
-  per-window previews without Mission Control) — RaeenOS adds hover previews.
+  per-window previews without Mission Control) — AthenaOS adds hover previews.
 - **Windows 11 24H2:** hover → a **flyout of live per-window thumbnails** (with a
   close × on each and an app title header); buttons **group** an app's windows
   (with a "combine" setting); **jump lists** (right-click) show pinned/recent files
@@ -86,24 +86,24 @@ the `snapshot_surface` primitive the switcher already needs. **Not a rebuild.**
   to reorder + pin. **Take:** per-window hover thumbnails with close ×, grouped
   buttons, jump lists, badge counts, drag-to-reorder. **Avoid:** the historically
   flaky "never combine / show labels" toggles and the "recommended" churn —
-  RaeenOS: grouping is consistent, ordering is user-owned.
+  AthenaOS: grouping is consistent, ordering is user-owned.
 - **GNOME Dash / KDE Task Manager:** dash shows running dots; KDE offers
   thumbnails-on-hover and grouping options, proving these are achievable as policy.
   **Take:** thumbnails-on-hover as policy; running-dot legibility. **Avoid:** GNOME
-  hiding the dash off the desktop by default (RaeenOS taskbar is always-on, Win11
+  hiding the dash off the desktop by default (AthenaOS taskbar is always-on, Win11
   familiar).
 - **SteamOS/couch:** the running surface must be d-pad navigable with a 3m-legible
   focus glow; no hover. **Take:** every preview/jump-list affordance has a focus
   equivalent (`elev.focus`); couch uses 48px floor. **Avoid:** desktop density.
 
-**RaeenOS synthesis:** Win11's **per-window hover thumbnails + jump lists + badges
+**AthenaOS synthesis:** Win11's **per-window hover thumbnails + jump lists + badges
 + drag-to-reorder** and macOS's **running dot + window-list context menu +
 click-to-cycle + drag-to-pin**, on live `snapshot_surface` buffers, capability-aware
 jump lists, and user-owned ordering — one accent, one glass.
 
 ---
 
-## RaeenOS design tokens this surface uses
+## AthenaOS design tokens this surface uses
 
 Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 
@@ -200,10 +200,10 @@ popover anchored above the button:
      its IPC; absent if the app declares none — never fabricated.)
   3. **Footer (fixed):** "Pin to taskbar" / "Unpin from taskbar", and (if running)
      "Close all windows".
-- **Capability-aware (the RaeenOS delta):** Tasks and Recent only appear if the app
+- **Capability-aware (the AthenaOS delta):** Tasks and Recent only appear if the app
   granted the corresponding capability over its declared IPC; an app with no
   declared tasks/recents shows just the pin + close footer. The jump list **never
-  fabricates** entries and never bypasses RaeShield.
+  fabricates** entries and never bypasses AthGuard.
 - **States:** row hover `bg.elevated`; press `accent.subtle` flash; focus ring +
   glow; disabled `text.tertiary`; submenu on `→`/hover.
 - **reduced-motion:** appears instantly.
@@ -370,10 +370,10 @@ capture artifact — memory `ui-glass-design-system`):
   popovers; thumbnails still present.
 
 ### Unblocks (MasterChecklist)
-- **Phase 14 (RaeShell + apps):** the running-app interaction model — from one-item-
+- **Phase 14 (AthShell + apps):** the running-app interaction model — from one-item-
   per-window buttons to grouped buttons with previews, jump lists, badges, and
   drag-to-pin (the dock/taskbar parity gap).
-- **Phase 8 (RaeUI/RaeKit):** the preview-flyout + jump-list reusable widgets;
+- **Phase 8 (AthUI/AthKit):** the preview-flyout + jump-list reusable widgets;
   shares `snapshot_surface` with the switcher.
 - **Phase 13 (Customization):** user-owned pinning/ordering + accent-coherent
   indicators/badges.

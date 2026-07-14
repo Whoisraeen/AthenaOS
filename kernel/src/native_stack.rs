@@ -1,4 +1,4 @@
-//! Minimal initial user stack for native RaeenOS ELF tasks (relibc crt0).
+//! Minimal initial user stack for native AthenaOS ELF tasks (relibc crt0).
 //!
 //! crt0 `_start` passes `rsp` to `relibc_crt0` as a pointer to `argc` on the
 //! stack (SysV psABI). Without this image, relibc startup reads garbage.

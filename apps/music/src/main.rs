@@ -1,4 +1,4 @@
-//! RaeenOS Music — *"play my music"* (RaeenOS_Concept.md §creators/media).
+//! AthenaOS Music — *"play my music"* (LEGACY_GAMING_CONCEPT.md §creators/media).
 //!
 //! The daily-driver music player that completes the "play my music" parity with
 //! Windows Media Player / macOS Music on day one: a **track list** of a Music
@@ -477,7 +477,7 @@ impl Repeat {
 
 // ── Persistent preferences (rae_toml) ─────────────────────────────────────────
 //
-// RaeenOS_Concept.md §"The user owns the machine": "remember my settings" must be
+// LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. Music persists its user-visible state to `<home>/.config/music.toml` and
 // restores it on launch. Every load is hostile-input-tolerant: a missing, corrupt,
 // or out-of-range config falls back to TYPED DEFAULTS and NEVER panics — the app

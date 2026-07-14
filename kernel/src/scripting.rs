@@ -6,7 +6,7 @@
 //! Most automation stories on desktop OSes are awful: PowerShell on
 //! Windows is its own forbidden cuneiform, AppleScript on macOS is half
 //! deprecated, bash on Linux is great for power users and impossible for
-//! everyone else. RaeenOS ships a single first-class scripting surface:
+//! everyone else. AthenaOS ships a single first-class scripting surface:
 //! you write Rae script, the system runs it sandboxed under your
 //! capability set, and you can invoke it from the shell, the Settings UI,
 //! a keyboard shortcut, or a calendar trigger.
@@ -24,7 +24,7 @@
 //!
 //! Inline scripts get a [`KernelHost`]: every call the script makes that
 //! isn't script-defined lands here and is gated on the submitting user's
-//! `cap_mask` (RaeShield model — deny by default, the user authorizes a
+//! `cap_mask` (AthGuard model — deny by default, the user authorizes a
 //! script's capability set at submit):
 //!
 //! | binding | cap bit | backs onto |
@@ -204,7 +204,7 @@ impl raelang::Host for KernelHost {
             }
             "osVersion" => {
                 self.require(SCRIPT_CAP_SYSINFO, name)?;
-                Ok(Value::Str(String::from("RaeenOS 0.0.1")))
+                Ok(Value::Str(String::from("AthenaOS 0.0.1")))
             }
             // ── notifications ──
             "notify" => {
@@ -666,7 +666,7 @@ pub fn dump_text() -> String {
     };
     let mut out = String::new();
     out.push_str(&alloc::format!(
-        "# RaeenOS scripting layer ({} scripts ever, {} failures, {} live)\n",
+        "# AthenaOS scripting layer ({} scripts ever, {} failures, {} live)\n",
         e.total_runs,
         e.total_failures,
         e.scripts.len(),
@@ -768,7 +768,7 @@ pub fn run_boot_smoketest() {
         .map(|s| s.state == State::Completed as u32 && s.exit_code == 1)
         .unwrap_or(false);
 
-    // 7. Capability-DENIED binding fails the script CLOSED (RaeShield:
+    // 7. Capability-DENIED binding fails the script CLOSED (AthGuard:
     // deny by default — cap_mask=0 grants nothing).
     let denied = submit(br#"setConfig("/scripting/smoketest", "no")"#, 0);
     let denied_ok = status(denied)

@@ -1,4 +1,4 @@
-//! RaeenOS Browser — userspace ELF entry shim.
+//! AthenaOS Browser — userspace ELF entry shim.
 //!
 //! All the app (the navigation model, the load/render path over the LIVE `raeweb`
 //! engine + the `rae_js` interpreter, the chrome draw, the host-KAT'd

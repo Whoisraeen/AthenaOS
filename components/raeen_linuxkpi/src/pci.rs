@@ -2,7 +2,7 @@
 //!
 //! Linux drivers call `pci_enable_device`, `pci_iomap`/`ioremap`, and
 //! `pci_read_config_dword` believing they have Ring-0 PCI access. These shims
-//! route to the RaeenOS LinuxKPI host syscalls (132-134, 130, 139), which gate
+//! route to the AthenaOS LinuxKPI host syscalls (132-134, 130, 139), which gate
 //! every access behind a device claim + IOMMU sandbox.
 
 use crate::host;

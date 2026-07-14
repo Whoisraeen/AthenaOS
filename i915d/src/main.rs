@@ -1,4 +1,4 @@
-//! i915d — RaeenOS userspace Intel GPU driver daemon (Path C).
+//! i915d — AthenaOS userspace Intel GPU driver daemon (Path C).
 //!
 //! Mirrors the i915 bring-up sequence on the LinuxKPI host + `raeen_drm` KMS island:
 //!   1. PCI enable + BAR0 MMIO map

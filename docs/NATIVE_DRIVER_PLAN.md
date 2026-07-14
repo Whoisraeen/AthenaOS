@@ -1,4 +1,4 @@
-# Native Rust Driver Plan (RaeenOS)
+# Native Rust Driver Plan (AthenaOS)
 
 **Status:** Plan / framework design. Companion to `docs/LINUX_DRIVER_STRATEGY.md`.
 That doc covers *borrowing* Linux drivers via the LinuxKPI shim (breadth).
@@ -24,8 +24,8 @@ real, inspectable setting — not a hardcode.
 | Storage (NVMe, AHCI, virtio-blk) | **Yes — already done** | Stable, public specs; hot path; small surface. |
 | NIC (e1000/igc, virtio-net, RTL8169) | **Yes — partly done** | Public datasheets; native already beats a shim here. |
 | USB (xHCI + MSC/HID/hub) | **Yes — in progress** | Spec is public (xHCI/USB); class drivers are tractable. |
-| Input (PS/2, HID, gamepad) | **Yes** | Tiny, well-documented; latency-critical (SCHED_GAME). |
-| Audio (HD Audio codec walk + PCM) | **Yes** | HDA spec is public; native fits RaeAudio's sub-3ms goal. |
+| Input (PS/2, HID, gamepad) | **Yes** | Tiny, well-documented; latency-critical (SCHED_BODY). |
+| Audio (HD Audio codec walk + PCM) | **Yes** | HDA spec is public; native fits AthAudio's sub-3ms goal. |
 | Platform (ACPI EC, RTC, GPIO, I²C/SMBus, thermal/fan) | **Yes** | Board glue; ACPI describes it; no vendor secrets. |
 | **GPU (AMD/Intel/NVIDIA 3D)** | **No — keep LinuxKPI** | Command ISA, shader compiler, display engine, PM are undocumented/enormous. A from-scratch GPU driver is a multi-year effort even for one vendor. Native applies only to **modeset/scanout/cursor** (small, doable), not 3D. |
 | **Wi-Fi (iwlwifi, etc.)** | **No — keep LinuxKPI** | Opaque firmware command interfaces; huge regulatory + MLME surface. |
@@ -185,10 +185,10 @@ Difficulty: 🟢 small / 🟡 medium / 🔴 large. Status from the current tree.
 | 1 | **ACPI EC** (0x62/0x66) | 🟢 | open (Phase 1.4) | Battery/thermal/lid; needs the AML namespace populated first. |
 | 2 | **RTC / CMOS** | 🟢 | partial | Wall clock; trivial, good warm-up. |
 | 3 | **PS/2 (i8042) kbd+mouse** | 🟢 | partial | Fallback input when no USB; tiny. |
-| 4 | **USB HID (boot+report)** | 🟡 | partial | Keyboard/mouse/gamepad over xHCI; SCHED_GAME latency. |
+| 4 | **USB HID (boot+report)** | 🟡 | partial | Keyboard/mouse/gamepad over xHCI; SCHED_BODY latency. |
 | 5 | **USB MSC** | 🟡 | open (Phase 2.1) | Install media; bulk-only transport over xHCI. |
 | 6 | **USB hub** | 🟡 | open | Needed for real-world port trees (Athena HID debug). |
-| 7 | **HD Audio codec walk + PCM** | 🔴 | open (Phase 7) | Widget graph + ring-buffer DMA; native fits RaeAudio. |
+| 7 | **HD Audio codec walk + PCM** | 🔴 | open (Phase 7) | Widget graph + ring-buffer DMA; native fits AthAudio. |
 | 8 | **I²C/SMBus + DDC/EDID** | 🟡 | open (Phase 2.3) | Monitor detect; also RGB/fan controllers. |
 | 9 | **NIC: RTL8125/8169 native** | 🟡 | LinuxKPI today | Public datasheet; native would drop the shim for Realtek. |
 | 10 | **GPU modeset/scanout (per vendor)** | 🔴 | LinuxKPI/SW today | *Only* display path (set a mode, flip a buffer, move cursor) — NOT 3D. Doable native; unlocks a real framebuffer before the full LinuxKPI 3D stack. |

@@ -1328,23 +1328,23 @@ pub fn apply_kaslr(base_offset: u64) {
 //  SYS_MPROTECT (283) — flip protection flags on mapped user pages
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// Concept §Compatibility — "RaeBridge runs Windows apps natively". A real
-// MSVC-CRT `.exe` is loaded by RaeBridge into an RW mapping (copy + relocate +
+// Concept §Compatibility — "AthBridge runs Windows apps natively". A real
+// MSVC-CRT `.exe` is loaded by AthBridge into an RW mapping (copy + relocate +
 // IAT patch), then its `.text` is flipped RW→RX. There was no mprotect; this
 // is it. Mirrors `posix::sys_mmap`'s page-flag convention (PROT R=1/W=2/X=4)
 // and uses the ACTIVE page table — mprotect edits the CALLER's own user
 // mapping (same address space as the syscalling task), exactly like sys_mmap.
 
-/// Whether RaeShield's W^X policy is enforced. When true, `sys_mprotect`
+/// Whether AthGuard's W^X policy is enforced. When true, `sys_mprotect`
 /// refuses any request that asks for WRITE and EXEC simultaneously (a page may
-/// be writable OR executable, never both). Off during bring-up so RaeBridge
+/// be writable OR executable, never both). Off during bring-up so AthBridge
 /// can come up before the policy lands.
-// MasterChecklist Phase 9: flip this on when RaeShield enforces W^X, and make
+// MasterChecklist Phase 9: flip this on when AthGuard enforces W^X, and make
 // SYS_MMAP stop mapping pages executable by default.
 static WX_POLICY_ENFORCED: core::sync::atomic::AtomicBool =
     core::sync::atomic::AtomicBool::new(false);
 
-/// Enable/disable the W^X enforcement gate (RaeShield Phase 9 hook).
+/// Enable/disable the W^X enforcement gate (AthGuard Phase 9 hook).
 pub fn set_wx_policy_enforced(on: bool) {
     WX_POLICY_ENFORCED.store(on, core::sync::atomic::Ordering::SeqCst);
 }
@@ -1408,7 +1408,7 @@ pub fn sys_mprotect(addr: u64, len: u64, prot: u64) -> u64 {
         _ => return u64::MAX,
     }
 
-    // 3. RaeShield W^X gate: refuse simultaneous W+X under an active policy.
+    // 3. AthGuard W^X gate: refuse simultaneous W+X under an active policy.
     if WX_POLICY_ENFORCED.load(core::sync::atomic::Ordering::Relaxed) && prot_is_w_and_x(prot) {
         return u64::MAX;
     }

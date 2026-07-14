@@ -1,6 +1,6 @@
 //! # RaeMail — never-panic, `no_std` email client protocol core (SMTP/IMAP/POP3).
 //!
-//! RaeenOS_Concept.md §"the common apps people rely on, available and just work"
+//! LEGACY_GAMING_CONCEPT.md §"the common apps people rely on, available and just work"
 //! (charter app #5, "mail"): a daily driver has to send and read email. This
 //! crate is the protocol core a RaeMail app sits on — it speaks the wire
 //! protocols and models the messages, but performs **no I/O itself**.

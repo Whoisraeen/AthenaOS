@@ -1,4 +1,4 @@
-//! Windows Registry Hive Emulator for RaeBridge.
+//! Windows Registry Hive Emulator for AthBridge.
 //!
 //! Provides a tree-based in-memory Windows registry with sensible Windows 10
 //! defaults. Many Windows applications check registry keys for OS version,
@@ -312,7 +312,7 @@ impl RegistryHive {
         );
         cv.set_value(
             "RegisteredOrganization",
-            RegistryValue::Sz(String::from("RaeenOS")),
+            RegistryValue::Sz(String::from("AthenaOS")),
         );
         cv.set_value("RegisteredOwner", RegistryValue::Sz(String::from("user")));
         cv.set_value(
@@ -360,7 +360,7 @@ impl RegistryHive {
             "HKLM",
             r"SYSTEM\CurrentControlSet\Control\ComputerName\ActiveComputerName",
         );
-        csd.set_value("ComputerName", RegistryValue::Sz(String::from("RAEENOS")));
+        csd.set_value("ComputerName", RegistryValue::Sz(String::from("ATHENAOS")));
 
         let tz = self.ensure_key_mut(
             "HKLM",
@@ -427,7 +427,7 @@ impl RegistryHive {
         let cpu0 = self.ensure_key_mut("HKLM", r"HARDWARE\DESCRIPTION\System\CentralProcessor\0");
         cpu0.set_value(
             "ProcessorNameString",
-            RegistryValue::Sz(String::from("RaeenOS Virtual Processor")),
+            RegistryValue::Sz(String::from("AthenaOS Virtual Processor")),
         );
         cpu0.set_value(
             "Identifier",
@@ -443,7 +443,7 @@ impl RegistryHive {
         let bios = self.ensure_key_mut("HKLM", r"HARDWARE\DESCRIPTION\System\BIOS");
         bios.set_value(
             "SystemManufacturer",
-            RegistryValue::Sz(String::from("RaeenOS")),
+            RegistryValue::Sz(String::from("AthenaOS")),
         );
         bios.set_value(
             "SystemProductName",
@@ -451,7 +451,7 @@ impl RegistryHive {
         );
         bios.set_value(
             "BIOSVendor",
-            RegistryValue::Sz(String::from("RaeenOS BIOS")),
+            RegistryValue::Sz(String::from("AthenaOS BIOS")),
         );
         bios.set_value("BIOSVersion", RegistryValue::Sz(String::from("1.0.0")));
 
@@ -463,7 +463,7 @@ impl RegistryHive {
         sys.set_value(
             "SystemBiosVersion",
             RegistryValue::MultiSz(alloc::vec![
-                String::from("RAEENOS - 1"),
+                String::from("ATHENAOS - 1"),
                 String::from("1.0.0")
             ]),
         );

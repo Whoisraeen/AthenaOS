@@ -1,4 +1,4 @@
-# RaeenOS amdgpu status — 2026-06-27 (GFX FIRST LIGHT achieved)
+# AthenaOS amdgpu status — 2026-06-27 (GFX FIRST LIGHT achieved)
 
 The session that turned the AMD GPU bring-up from "intractable / host-wedging" into
 **a live graphics engine with one precisely-localized remaining gate.** Everything
@@ -158,7 +158,7 @@ writes them too) yet the queue is never scheduled → the CP never fetches (RPTR
 `amdgpu.async_gfx_ring=0` (force the legacy raw-CP_RB0 path) → amdgpu **failed to probe
 entirely** (`error -110`) with repeated `MES failed to respond to msg=MISC (WAIT_REG_MEM)`.
 So amdgpu depends on MES even in legacy gfx mode; the default async=1 boot works
-*because* MES is up and schedules the queue. **RaeenOS never starts the MES engine
+*because* MES is up and schedules the queue. **AthenaOS never starts the MES engine
 (we load mes_2.bin/mes1.bin but never bring up the MES microengine + ring), so the
 gfx queue is never scheduled and the CP never fetches.** This is THE root cause of
 the CP-fetch gate — not addressing, clock, gating, or the PFP init.
@@ -248,7 +248,7 @@ the dma_write/doorbell/poll is GpuOps, iron-verified.)
 
 `CP_MES_CNTL readback=0x0c000000 (PIPE0_ACTIVE=true) — MES engine ALIVE` — the EXACT
 value the working amdgpu driver reads (PIPE0+PIPE1 active). The MES microengine is now
-running on RaeenOS for the first time. The fix was the direct-load: copy mes_2.bin's
+running on AthenaOS for the first time. The fix was the direct-load: copy mes_2.bin's
 ucode (127040 B) + data into GART-mapped buffers, point `CP_MES_IC_BASE` at the ucode's
 GART VA (`0x7fff00710000`), prime the I-cache, set the PC (`0xffffffff_f0005000>>2`),
 then activate. Commit ec4195d.

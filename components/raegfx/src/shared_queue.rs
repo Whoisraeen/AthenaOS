@@ -2,7 +2,7 @@ use core::sync::atomic::AtomicU32;
 
 /// Memory-mapped shared control structure for the zero-syscall GPU command ring.
 ///
-/// This struct is mapped directly between user-space (RaeGFX) and the kernel's
+/// This struct is mapped directly between user-space (AthGFX) and the kernel's
 /// GPU driver (or the hardware directly if supported). It allows user-space
 /// to push command packets without executing a costly ring 0 context switch.
 #[repr(C, align(64))]

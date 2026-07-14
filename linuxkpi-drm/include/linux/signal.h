@@ -4,7 +4,7 @@
  *
  * Signal-number constants. The DRM scheduler checks a dying task's exit_code
  * against SIGKILL to decide whether to discard its still-queued jobs rather
- * than wait for them (drm_sched_entity_flush). RaeenOS has no POSIX signal
+ * than wait for them (drm_sched_entity_flush). AthenaOS has no POSIX signal
  * delivery yet — this is just the numeric vocabulary a real kernel header
  * would pull in, so the comparison compiles and behaves like upstream.
  * License boundary (../../README.md): API surface.

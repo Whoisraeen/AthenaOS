@@ -1,17 +1,17 @@
-# RaeenOS App Developer Guide
+# AthenaOS App Developer Guide
 
-How to build, bundle, sign, and ship an app for RaeenOS. Grounded in the real SDK
+How to build, bundle, sign, and ship an app for AthenaOS. Grounded in the real SDK
 (`components/raekit`), manifest parser (`kernel/src/rae_manifest.rs`), bundle format
 (`kernel/src/app_bundle.rs`), and signing chain (xtask + `keys/`).
 
 > **Status honesty:** the SDK (`view!` macro, widgets, syscall surface) works; permission
 > manifests + Ed25519 signing work end-to-end today; the one-command packager
-> (`raekit bundle`) and the RaeStore submission flow are **planned** — for now apps are
+> (`raekit bundle`) and the AthStore submission flow are **planned** — for now apps are
 > bundled by xtask into the initramfs. Each section flags what's real vs planned.
 
 ---
 
-## 1. What a RaeenOS app *is*
+## 1. What a AthenaOS app *is*
 
 A bundle — a directory that ships as `apps/<name>/`:
 
@@ -39,16 +39,16 @@ the bundle is rejected (tampered ≠ unsigned).
 
 | Path | Use when | How it runs |
 |---|---|---|
-| **RaeKit (native Rust)** ← recommended | New apps, best integration, declarative UI | ELF tagged `osabi = 0xAE` → native syscalls |
+| **AthKit (native Rust)** ← recommended | New apps, best integration, declarative UI | ELF tagged `osabi = 0xAE` → native syscalls |
 | **Raw native syscalls** | Tiny tools, you want full control | same native ABI, no SDK |
-| **Port a POSIX/Linux app (relibc)** | Bringing existing C/Rust software | relibc speaks RaeenOS **native** syscalls under a Linux-looking ELF; `SYS_SPAWN` routes by the `osabi` byte |
+| **Port a POSIX/Linux app (relibc)** | Bringing existing C/Rust software | relibc speaks AthenaOS **native** syscalls under a Linux-looking ELF; `SYS_SPAWN` routes by the `osabi` byte |
 
-RaeenOS dispatches `SYS_SPAWN` on the ELF `osabi` byte: `0xAE` = native, anything else =
+AthenaOS dispatches `SYS_SPAWN` on the ELF `osabi` byte: `0xAE` = native, anything else =
 the Linux-ABI translation path. So both native and ported apps coexist.
 
 ---
 
-## 3. Quickstart — a RaeKit app
+## 3. Quickstart — a AthKit app
 
 `apps/myapp/src/main.rs`:
 
@@ -63,7 +63,7 @@ pub extern "C" fn _start() -> ! {
     // Declarative UI tree via the view! macro.
     let _ui = view! {
         VStack {
-            Text("Hello, RaeenOS")
+            Text("Hello, AthenaOS")
             Button("Click me") { App::print_debug(0x1234) }
             Spacer()
         }
@@ -122,7 +122,7 @@ forward-compat.
   engine, blits) — see `apps/calculator/src/main.rs`.
 - **Input:** `App::read_key()`, `App::poll_mouse()` (and the full input pipeline routes
   focus to you — see `INPUT_PIPELINE.md`).
-- **Higher-level:** the RaeKit `view!` tree + layout engine is the SwiftUI-style path;
+- **Higher-level:** the AthKit `view!` tree + layout engine is the SwiftUI-style path;
   Skia/wgpu backends are Phase 8 (`raeui.md`).
 
 The app syscall surface (`raekit::syscalls` / `App`): `exit`, `write`, `spawn`,
@@ -133,7 +133,7 @@ The app syscall surface (`raekit::syscalls` / `App`): `exit`, `write`, `spawn`,
 
 ## 7. Storage, data & limits
 
-- **Per-app data bucket:** an isolated RaeFS subtree per app id (`raefs::create_bucket`),
+- **Per-app data bucket:** an isolated AthFS subtree per app id (`raefs::create_bucket`),
   with a quota. Your app can't see another app's bucket — sandboxing at the FS layer.
 - **Memory limit:** a per-bundle address-space cap (`process::set_bundle_memory_limit`);
   `mmap`/`brk` past it return `MemoryLimitExceeded`. Visible at `/proc/raeen/memlimits`.
@@ -194,10 +194,10 @@ own developer cert + revocation is the planned store-PKI step.)
 
 ---
 
-## 11. Shipping on RaeStore  *(planned)*
+## 11. Shipping on AthStore  *(planned)*
 
 `raestore` is the store service. The intended flow: `raekit bundle` produces a signed
-`.raeapp` → submit to RaeStore → automated checks (manifest sanity, declared-permission
+`.raeapp` → submit to AthStore → automated checks (manifest sanity, declared-permission
 review, signature) → store countersign → users install with one click, auto-updated.
 First-year developers get **free signing** (build-system support). Today this path is
 scaffolding; the kernel-side trust + bundle format it depends on are real.
@@ -212,7 +212,7 @@ scaffolding; the kernel-side trust + bundle format it depends on are real.
    valid manifest).
 3. `SYS_SPAWN` routes by `osabi` (native `0xAE` vs Linux).
 4. The kernel sets up the address space, the per-task TLS (`Task::fs_base`), the data
-   bucket, and the memory limit; RaeShield arms the syscall-edge gate for the assigned
+   bucket, and the memory limit; AthGuard arms the syscall-edge gate for the assigned
    level.
 5. App runs; sensitive permissions prompt on first use; everything is auditable
    (`/proc/raeen/sandbox`, `/proc/raeen/manifests`).
@@ -224,7 +224,7 @@ scaffolding; the kernel-side trust + bundle format it depends on are real.
 
 | Capability | Status |
 |---|---|
-| RaeKit `view!` + widgets + state/layout | 🟡 works (Skia/wgpu backend = Phase 8) |
+| AthKit `view!` + widgets + state/layout | 🟡 works (Skia/wgpu backend = Phase 8) |
 | Native syscall surface (`App::*`) | ✅ |
 | `RaeManifest.toml` parse + sandbox assign | ✅ |
 | Permission gating (device/net/install) | ✅ |
@@ -233,7 +233,7 @@ scaffolding; the kernel-side trust + bundle format it depends on are real.
 | Hashed-dependency verify (`.raeapp`) | 🟡 |
 | POSIX port via relibc | 🟡 |
 | `raekit bundle` one-command packager | ⬜ planned |
-| RaeStore submission / review / auto-update | ⬜ planned |
+| AthStore submission / review / auto-update | ⬜ planned |
 | Unverified-developer warning UI | ⬜ (kernel posture exists; UI pending) |
 
 ---
@@ -241,12 +241,12 @@ scaffolding; the kernel-side trust + bundle format it depends on are real.
 ## 14. From-zero checklist
 
 1. Copy `apps/calculator/` → `apps/myapp/`; add it as a workspace member.
-2. Write `src/main.rs` (`#![no_std] #![no_main]`, `_start`, RaeKit `view!` or `raegfx`).
+2. Write `src/main.rs` (`#![no_std] #![no_main]`, `_start`, AthKit `view!` or `raegfx`).
 3. Write `RaeManifest.toml` (name = dir, version, sandbox level, only the permissions you
    need — least privilege).
 4. Build via xtask; it bundles into the initramfs and signs with the dev key.
-5. Boot QEMU; launch from RaeShell; check `/proc/raeen/manifests` shows your bundle
+5. Boot QEMU; launch from AthShell; check `/proc/raeen/manifests` shows your bundle
    `signed=true` and the right level.
 6. Verify least-privilege: a denied class should log `[sandbox] DENY ... pid=<you>`.
-7. (Planned) `raekit bundle` → submit to RaeStore.
+7. (Planned) `raekit bundle` → submit to AthStore.
 ```

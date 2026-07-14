@@ -364,7 +364,7 @@ impl DhcpClient {
                 DhcpOption::RebindTime as u8,
                 DhcpOption::BroadcastAddr as u8,
             ],
-            hostname: Some(String::from("raeenos")),
+            hostname: Some(String::from("athenaos")),
             retries: 0,
             max_retries: 5,
             xid_counter: seed,
@@ -1045,7 +1045,7 @@ pub fn dump_text() -> alloc::string::String {
         }
         Some(c) => {
             out.push_str(&alloc::format!(
-                "# RaeenOS DHCP client (iface=\"{}\")\n\
+                "# AthenaOS DHCP client (iface=\"{}\")\n\
                  mac:   {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}\n\
                  state: {:?}\n",
                 c.interface,

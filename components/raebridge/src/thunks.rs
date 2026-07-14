@@ -1,4 +1,4 @@
-//! RaeBridge Phase-B thunk dispatch table.
+//! AthBridge Phase-B thunk dispatch table.
 //!
 //! Concept §Compatibility Strategy: 15k Win32 *names* are reachable as
 //! resolvable imports (see `pe_dll_registry`), but until a name is wired

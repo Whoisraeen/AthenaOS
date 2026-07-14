@@ -1149,7 +1149,7 @@ impl VirtioGpuDriver {
     }
 
     /// Returns the physical address of the lockless command ring (GpuRingControl)
-    /// to be mapped into the user-space RaeGFX process.
+    /// to be mapped into the user-space AthGFX process.
     pub fn get_command_ring_phys(&self) -> Option<u64> {
         self.cmd_ring.as_ref().map(|ring| ring.base_phys)
     }
@@ -1766,7 +1766,7 @@ pub fn present_gpu_scanout() {
 /// full cached speed and the display engine scans the identical bytes out — no
 /// per-frame copy. Returns true iff the scanout was attached to the compositor.
 ///
-/// Phase 6 (RaeGFX): the seam from the userspace KMS path (amdgpud →
+/// Phase 6 (AthGFX): the seam from the userspace KMS path (amdgpud →
 /// `raeen_drm::kms::atomic_commit` → `SYS_LINUXKPI_REGISTER_SCANOUT`) to the
 /// compositor's `ScanoutBackend::GpuFb`. SAFE FALLBACK: invalid geometry or no
 /// physical-memory direct map returns false WITHOUT touching `GPU_SCANOUT`, so a

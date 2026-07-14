@@ -2,11 +2,11 @@
 
 ## Concept promise served
 
-> "Windows became bloated chasing enterprise. macOS got locked behind a walled garden of Apple silicon. Linux never figured out gaming or design coherence. RaeenOS is the third path…" (§Thesis)
+> "Windows became bloated chasing enterprise. macOS got locked behind a walled garden of Apple silicon. Linux never figured out gaming or design coherence. AthenaOS is the third path…" (§Thesis)
 
 > "Memory tagging on supported CPUs (ARMv8.5 MTE, Intel/AMD equivalent as it ships)" (§Security Model)
 
-The credibility of "the answer to macOS being locked to Apple silicon" requires that RaeenOS itself run on ARM. Goal #3 (owner directive) makes this falsifiable: **RaeenOS must boot + run + install on x86_64 (done), aarch64, and i686 — each proven independently in QEMU.** aarch64 is at 0%. This document is the *executable* version of the prior abstraction spec — it turns the boundary design into a staged, buildable sequence with the exact boot-log line that proves each step.
+The credibility of "the answer to macOS being locked to Apple silicon" requires that AthenaOS itself run on ARM. Goal #3 (owner directive) makes this falsifiable: **AthenaOS must boot + run + install on x86_64 (done), aarch64, and i686 — each proven independently in QEMU.** aarch64 is at 0%. This document is the *executable* version of the prior abstraction spec — it turns the boundary design into a staged, buildable sequence with the exact boot-log line that proves each step.
 
 This is **research only**. It writes no kernel code. It builds directly on `docs/research/arch-abstraction-layer.md` (the Phase-0 `arch/` boundary spec) and does not re-derive it — read that first. Where this doc says "the boundary," it means the `kernel/src/arch/{x86_64,aarch64,i686}/` + `arch/mod.rs` structure defined there.
 
@@ -42,10 +42,10 @@ Re-verified against the current tree on 2026-06-17. Confidence column: **V** = I
 | QEMU acceleration logic (main.rs:776-804) is generic (TCG/KVM/WHPX) but always invokes `qemu-system-x86_64` (`find_qemu()` main.rs:1106) | needs `qemu-system-aarch64` | **V** |
 | **`qemu-system-aarch64.exe` IS present** at `C:\Program Files\qemu\` | available | **V** |
 | **`edk2-aarch64-code.fd` IS present** at `C:\Program Files\qemu\share\` (also `edk2-arm-code.fd` / `edk2-arm-vars.fd`) | available | **V** |
-| MasterChecklist has NO aarch64/arm64/multi-arch section. Phase 15 = "RaeStore/RaeID/RaeSync"; highest phase is **Phase 19** (Accessibility). Only ARM mention: a deferred MTE line. | net-new section | **V** |
+| MasterChecklist has NO aarch64/arm64/multi-arch section. Phase 15 = "AthStore/AthID/AthSync"; highest phase is **Phase 19** (Accessibility). Only ARM mention: a deferred MTE line. | net-new section | **V** |
 | `kernel/Cargo.toml` deps `x86_64`, `x2apic`, `pic8259`, `uart_16550`, `bootloader_api` are unconditional (not `[target.'cfg(...)']`-gated) | must be arch-gated | **I** (per prior spec; not re-read this session) |
 
-**Correction to the prior spec:** it proposed adding "Phase 15: Multi-arch reach." Phase 15 is already taken by RaeStore/RaeID/RaeSync. **This work is Phase 20.** (See Handoff.)
+**Correction to the prior spec:** it proposed adding "Phase 15: Multi-arch reach." Phase 15 is already taken by AthStore/AthID/AthSync. **This work is Phase 20.** (See Handoff.)
 
 ---
 
@@ -113,11 +113,11 @@ Each stage names the exact serial line that proves it. **x86_64 stays GREEN at e
 |---|---|---|---|
 | **S0** | Land the `arch/` boundary (re-export shells → body moves); **x86_64 boots byte-identically**. | raeen-architect (mod.rs surface) + raeen-kernel (moves) | x86 QEMU still prints `[ OS ] System successfully booted.`, all PASS lines unchanged, `[BOOT-BENCH]` not regressed. *(This is Phase 0 of the prior spec — its gate is the prerequisite for everything below.)* |
 | **S0.1** | xtask `--arch` + per-arch target/QEMU/firmware wiring; default stays x86_64. | raeen-architect | `xtask build` (no flag) unchanged; `xtask build --arch=aarch64` invokes the right triple (may fail-to-link until S1 — acceptable). |
-| **S1** | **First light.** `_start` (EL1) → `arch::aarch64::serial::init` (PL011 @ 0x0900_0000) → one marker → `wfi` loop. No MMU, no exceptions, no heap. Built `--target aarch64-unknown-none-softfloat`, run with `-kernel`. | **raeen-arch** | `qemu-system-aarch64 -M virt` serial shows **`[arch:aarch64] PL011 up — RaeKernel first light (EL1)`** then idles — no repeating fault, no reset. |
+| **S1** | **First light.** `_start` (EL1) → `arch::aarch64::serial::init` (PL011 @ 0x0900_0000) → one marker → `wfi` loop. No MMU, no exceptions, no heap. Built `--target aarch64-unknown-none-softfloat`, run with `-kernel`. | **raeen-arch** | `qemu-system-aarch64 -M virt` serial shows **`[arch:aarch64] PL011 up — AthKernel first light (EL1)`** then idles — no repeating fault, no reset. |
 | **S2** | **MMU + heap.** Build EL1 translation tables (identity-map the PL011 + RAM, set TCR_EL1/MAIR_EL1/TTBR1_EL1, enable SCTLR_EL1.M), then init the existing linked-list heap on the ARM memory map. | raeen-arch | serial shows **`[arch:aarch64] MMU on (TTBR1_EL1, 4KiB/48-bit) — heap up`** and a post-MMU `alloc` test line (`[arch:aarch64] heap alloc/free -> PASS`). |
 | **S3** | **Exceptions + timer + GIC.** Install VBAR_EL1 vector table; init GICv3 (distributor + redistributor + ICC sysregs); program the generic timer (CNTP_TVAL_EL0) for a periodic tick; take + EOI ≥3 ticks. | raeen-arch | serial shows **`[arch:aarch64] VBAR+GICv3+generic-timer online -> PASS (ticks=3)`** and survives without an exception loop (no repeating `ESR_EL1`/`FAR_EL1`). |
 | **S4** | **Arch-neutral smoketests + boot marker.** Build via UEFI (edk2-aarch64-code.fd → `BootHandoff` from GOP + UEFI memmap + ACPI RSDP). Run the generic R10 smoketests that are silicon-independent (crypto KAT, scheduler spawn, vfs, raefs in-memory) and reach the success marker. | raeen-arch + raeen-kernel | serial shows **`[ OS ] System successfully booted.`** plus the SAME generic-module PASS lines x86 prints (`[crypto] … -> PASS`, `[sched] … -> PASS`). `--ci` exits 0 via marker-poll. |
-| **S5** | **Install on aarch64** (Goal #3's third verb). GPT + ESP + RaeFS mkfs on a QEMU virtio-blk disk, write→readback under the safe-mode guard, reach the installer marker. | raeen-arch + raeen-fs | serial shows the existing installer proof line on aarch64 (`[installer] RaeFS mkfs + ESP written -> PASS`) — proving boot+run+**install** all three on ARM. |
+| **S5** | **Install on aarch64** (Goal #3's third verb). GPT + ESP + AthFS mkfs on a QEMU virtio-blk disk, write→readback under the safe-mode guard, reach the installer marker. | raeen-arch + raeen-fs | serial shows the existing installer proof line on aarch64 (`[installer] AthFS mkfs + ESP written -> PASS`) — proving boot+run+**install** all three on ARM. |
 | **S6** *(stretch)* | **SMP + desktop.** PSCI `CPU_ON` for secondaries; reach the compositor/desktop. (Deferred — see Risks; not required for the Goal #3 "boot+run+install" bar.) | raeen-arch | `[smp] aarch64 N CPUs online via PSCI -> PASS`; later a composited frame. |
 
 **Sequencing:** S0 gates everything. S1→S2→S3 are strictly serial (each needs the prior). S4 needs S3 (timer/interrupts for the scheduler) + the UEFI entry. S5 needs S4. S6 is independent stretch after S4.
@@ -157,7 +157,7 @@ This restates the prior spec's mechanism only where it bears on the aarch64 migr
 **Rationale:**
 1. **Maximum code reuse.** The kernel's device discovery is already ACPI (`acpi_full.rs` + vendored `aml`). The `arm64 SBBR`/`SBSA` server-platform standard mandates ACPI+UEFI, and QEMU `virt`-via-UEFI supplies ACPI tables. Reusing the iron-proven AML parser (0→159 devices on Athena) across both arches is worth far more than a second discovery path.
 2. **GOP + memory map come free.** UEFI gives the same GOP framebuffer + memory-map handoff as x86 UEFI, so `BootHandoff` construction is near-identical across arches — the compositor/framebuffer code doesn't fork.
-3. **Real ARM laptops/handhelds (the Concept's target) ship UEFI+ACPI**, not bare DT — so this matches where RaeenOS actually wants to run (the anti-"locked to Apple silicon" pitch). Bare-DT is the embedded/SoC world RaeenOS is not chasing.
+3. **Real ARM laptops/handhelds (the Concept's target) ship UEFI+ACPI**, not bare DT — so this matches where AthenaOS actually wants to run (the anti-"locked to Apple silicon" pitch). Bare-DT is the embedded/SoC world AthenaOS is not chasing.
 
 **Cost / counter-argument:** DTB is simpler for the `virt` board alone and is handed to us free in `x0`. **Accommodation:** Stages S1–S3 (`-kernel`) hardcode the well-known `virt` MMIO bases (PL011 0x0900_0000, GICD 0x0800_0000, ECAM 0x4010_0000) — no DTB parse needed — and only S4 onward goes through UEFI+ACPI. So we get the cheap bring-up without forking discovery, and the production path is ACPI. **Rejected:** a DT-primary discovery path (forks `acpi_full.rs` and the device model for no strategic gain).
 
@@ -187,11 +187,11 @@ For **raeen-architect**:
 
 ## Acceptance criteria (the exact proof)
 
-- **S1 (first light):** `qemu-system-aarch64 -M virt` serial MUST show `[arch:aarch64] PL011 up — RaeKernel first light (EL1)` and the VM MUST NOT enter an exception loop (no repeating `ESR_EL1`/`FAR_EL1`, no reset).
+- **S1 (first light):** `qemu-system-aarch64 -M virt` serial MUST show `[arch:aarch64] PL011 up — AthKernel first light (EL1)` and the VM MUST NOT enter an exception loop (no repeating `ESR_EL1`/`FAR_EL1`, no reset).
 - **S2:** serial MUST show `[arch:aarch64] MMU on (TTBR1_EL1, 4KiB/48-bit) — heap up` + `[arch:aarch64] heap alloc/free -> PASS`.
 - **S3:** serial MUST show `[arch:aarch64] VBAR+GICv3+generic-timer online -> PASS (ticks=3)` asserting ≥3 timer IRQs taken + EOI'd.
 - **S4:** serial MUST show `[ OS ] System successfully booted.` plus the arch-neutral KAT PASS lines (`[crypto] … -> PASS`, `[sched] … -> PASS`); `--ci` MUST exit 0.
-- **S5:** serial MUST show `[installer] RaeFS mkfs + ESP written -> PASS` on aarch64 (boot+run+install, all three, proving Goal #3 on ARM).
+- **S5:** serial MUST show `[installer] AthFS mkfs + ESP written -> PASS` on aarch64 (boot+run+install, all three, proving Goal #3 on ARM).
 - **`/proc/raeen/arch` MUST report** (new arch-neutral procfs line in `vfs.rs`, populated from `arch::cpu`/`arch::time`): `arch: aarch64`, `cpus_online: <n>`, `page_size: 4096`, `interrupt_controller: GICv3`, `timer: generic`.
 - **x86 no-regression at every stage:** the x86 CI boot MUST be byte-identical (S0 gate) — aarch64 stages cannot change it because the x86 build never compiles `arch/aarch64`.
 - **Docstring:** `arch/aarch64/mod.rs` MUST quote the §Thesis "third path / locked behind Apple silicon" promise.
@@ -218,7 +218,7 @@ qemu-system-aarch64 \
 Stage 1 passes iff the serial output contains:
 
 ```
-[arch:aarch64] PL011 up — RaeKernel first light (EL1)
+[arch:aarch64] PL011 up — AthKernel first light (EL1)
 ```
 
 …and the guest then idles in `wfi` (no QEMU reset, no repeating exception). Equivalently, the xtask form once S0.1 lands:
@@ -234,5 +234,5 @@ cargo run -p xtask --release -- run --arch=aarch64 --ci
 
 1. **`-kernel` first-light vs UEFI from the start?** This plan recommends `-kernel` for S1–S3 (cheapest serial marker) then UEFI for S4+. Confirm — the alternative (UEFI from S1) is more realistic but front-loads the `uefi`-crate entry shim before any ARM code has run.
 2. **GICv3 vs GICv2 for S3?** Recommend v3 (the `virt` default, matches real ARM server/laptop). If v3 init stalls during bring-up, is falling back to `gic-version=2` acceptable for the proof, or must S3 be v3?
-3. **Phase number:** this doc assigns **Phase 20**. The prior spec said Phase 15 — that slot is taken (RaeStore/RaeID/RaeSync). Confirm Phase 20.
+3. **Phase number:** this doc assigns **Phase 20**. The prior spec said Phase 15 — that slot is taken (AthStore/AthID/AthSync). Confirm Phase 20.
 4. **i686 (S/20.7):** still worth building, or defer the "third arch" proof to RISC-V (more strategic for the Rae Station)? (Carried over from the prior spec's open question — unresolved.)

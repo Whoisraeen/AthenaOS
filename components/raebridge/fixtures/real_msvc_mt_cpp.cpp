@@ -1,6 +1,6 @@
 // Real MSVC /MT C++ console exe — the C++-runtime broadening fixture.
 //
-// Concept §Compatibility: "RaeBridge runs Windows apps on day one." Most real
+// Concept §Compatibility: "AthBridge runs Windows apps on day one." Most real
 // Windows software is C++, not C. This fixture proves the C++ runtime runs:
 //   - g_init is a NAMESPACE-SCOPE object with a non-trivial constructor, so the
 //     MSVC /MT CRT must walk the static-initializer table (`_initterm` over the

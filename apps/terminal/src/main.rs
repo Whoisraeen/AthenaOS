@@ -131,7 +131,7 @@ impl Term {
         canvas.draw_text_aa(
             8,
             -1,
-            "RaeenOS Terminal",
+            "AthenaOS Terminal",
             rae_tokens::TYPE_CAPTION,
             DARK.text_secondary,
             FontFamily::Mono,
@@ -252,7 +252,7 @@ pub extern "C" fn _start() -> ! {
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
     let mut term = Term::new();
 
-    term.put_bytes(b"RaeenOS Terminal (PTY)\n", accent());
+    term.put_bytes(b"AthenaOS Terminal (PTY)\n", accent());
     term.put_bytes(b"Attached to rae-sh.\n\n", FG);
 
     canvas.clear(BG);

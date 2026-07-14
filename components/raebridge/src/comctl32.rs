@@ -1,6 +1,6 @@
 //! comctl32.dll — Windows common controls: ListView, TreeView, ToolBar,
 //! StatusBar, ProgressBar, TabControl, Tooltip, ImageList, PropertySheet,
-//! UpDown, Header, and Rebar for RaeBridge.
+//! UpDown, Header, and Rebar for AthBridge.
 
 use alloc::string::String;
 use alloc::vec::Vec;

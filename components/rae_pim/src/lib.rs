@@ -1,11 +1,11 @@
 //! # RaePim — a never-panic, `no_std` iCalendar (.ics) + vCard (.vcf) parser.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy ("how to actually win" — let people
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy ("how to actually win" — let people
 //! switch without conscious effort): switcher criterion #5 is "import my calendar
 //! & contacts from Google / Apple / Outlook." Every one of those platforms exports
 //! its calendar as **iCalendar** (`.ics`, RFC 5545) and its contacts as **vCard**
 //! (`.vcf`, RFC 6350 v4.0, with Google/Apple still emitting v3.0). Those two text
-//! formats ARE the import path; without them RaeenOS cannot honestly claim a
+//! formats ARE the import path; without them AthenaOS cannot honestly claim a
 //! frictionless switch. This crate is the from-scratch data layer that the
 //! Calendar app, the Contacts app, and the OOBE "bring your stuff over" wizard sit
 //! on.
@@ -1093,7 +1093,7 @@ mod tests {
     const ICS_TWO_EVENTS: &str = "\
 BEGIN:VCALENDAR\r
 VERSION:2.0\r
-PRODID:-//RaeenOS//rae_pim//EN\r
+PRODID:-//AthenaOS//rae_pim//EN\r
 BEGIN:VEVENT\r
 UID:event-001@raeen.os\r
 DTSTART;TZID=America/New_York:20260615T093000\r
@@ -1120,7 +1120,7 @@ END:VCALENDAR\r
     fn ics_two_events_exact_fields() {
         let cal = parse_ics(ICS_TWO_EVENTS).expect("parse");
         assert_eq!(cal.version, "2.0");
-        assert_eq!(cal.prodid, "-//RaeenOS//rae_pim//EN");
+        assert_eq!(cal.prodid, "-//AthenaOS//rae_pim//EN");
         assert_eq!(cal.events.len(), 2);
 
         let e0 = &cal.events[0];

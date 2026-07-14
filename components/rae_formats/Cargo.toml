@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS content-type sniffer — "detect a file's TRUE type by its bytes, never
-# trust an extension" (RaeenOS_Concept.md criterion #5 cohesion seam + #6 security:
+# AthenaOS content-type sniffer — "detect a file's TRUE type by its bytes, never
+# trust an extension" (LEGACY_GAMING_CONCEPT.md criterion #5 cohesion seam + #6 security:
 # Files / Quick Look / decoders must pick the right handler, and the security layer
 # must never decide what a file IS from its name). This is the COHESION SEAM: one
 # crate that answers "what IS this?" and "which decoder handles it?" — the caller

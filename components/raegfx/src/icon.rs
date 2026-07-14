@@ -1,7 +1,7 @@
-//! RaeGFX line-icon system — data-driven, crisp, scalable vector icons.
+//! AthGFX line-icon system — data-driven, crisp, scalable vector icons.
 //!
-//! *"Built for people who care about how things feel."* — `RaeenOS_Concept.md`
-//! §RaeUI. The visual-QA pixel critique (`docs/design/visual-qa-critique-2026-06-21.md`,
+//! *"Built for people who care about how things feel."* — `LEGACY_GAMING_CONCEPT.md`
+//! §AthUI. The visual-QA pixel critique (`docs/design/visual-qa-critique-2026-06-21.md`,
 //! findings #1/#2) flagged the single worst "looks basic" defect: Control Center
 //! tiles and the Files window draw single LETTER placeholders (W/B/F/N/A/X/G/R/P,
 //! H/D/L/M) where icons belong. That reads "1995 terminal," not Sequoia.

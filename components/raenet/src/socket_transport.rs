@@ -1,6 +1,6 @@
 //! Live TCP/DNS transport adapter for the HTTP/1.1 client.
 //!
-//! RaeenOS Concept §RaeNet / "web apps that feel native": `http1.rs` is the
+//! AthenaOS Concept §AthNet / "web apps that feel native": `http1.rs` is the
 //! pure, host-KAT'd protocol engine; this module is the thin bridge that makes
 //! it talk to a REAL socket. It implements [`http1::HttpTransport`] over the
 //! userspace socket syscalls (`SYS_NET_SOCKET`/`CONNECT`/`SEND`/`RECV`/`CLOSE`

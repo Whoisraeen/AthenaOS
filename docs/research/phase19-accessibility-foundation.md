@@ -47,10 +47,10 @@ Concept-doc lines this serves (module docstring quote):
   TCC permission.
 - Windows UI Automation: provider tree of AutomationElement; client reads via the UIA core.
 
-Adopted model: AccessKit vocabulary, RaeenOS-native types. We do NOT vendor the AccessKit
+Adopted model: AccessKit vocabulary, AthenaOS-native types. We do NOT vendor the AccessKit
 crate into the kernel (std/alloc-heavy, adapter-oriented). We mirror its data shape
 (Node/NodeId/Role/Bounds/Action) as small no_std kernel types so the tree maps 1:1 to a future
-userspace AccessKit adapter. The RaeenOS boundary is the capability + syscall edge (the
+userspace AccessKit adapter. The AthenaOS boundary is the capability + syscall edge (the
 analogue of macOS TCC / UIA core).
 
 ## 1b. Verify-before-implement — what already exists (do NOT rebuild)
@@ -62,7 +62,7 @@ analogue of macOS TCC / UIA core).
   AccessibilityRole (23 roles incl. Window/Button/Slider/...), AccessibilityTraits,
   AccessibilityAction, AccessibilityNode {id,role,label,value,bounds,children,actions},
   AccessibilityTree (build_from_widget_tree, focus_next/prev, describe_focused, high-contrast
-  palette). ~~STATUS [ ]: it builds from the RaeUI WidgetNode tree and is NOT wired to anything
+  palette). ~~STATUS [ ]: it builds from the AthUI WidgetNode tree and is NOT wired to anything
   on-screen~~ (STALE — role inference now real: `role_from_widget_kind`, NOT a `Group` stub).
   The remaining live gap is the PROVIDER WIRING (`provider_nodes_for_window` has no caller yet),
   not the role stubs — see audit Top-5 #1.
@@ -82,7 +82,7 @@ role+name+state+bounds+z for every window today. Foundation tier builds the a11y
 — no new compositor state required.
 
 Foundation = window-level tree. Each Surface -> one Node with Role::Window. Widget-level child
-nodes (Button/Label/TextInput inside a window) require RaeUI/RaeShell to report per-widget
+nodes (Button/Label/TextInput inside a window) require AthUI/AthShell to report per-widget
 role+name+bounds; that is a declared extension point (sec 6), not built in this tier. The
 smoketest and procfs prove the window tier; the widget hook is wired but empty until raeen-ui
 populates it.
@@ -146,7 +146,7 @@ is populated.
 
 ## 6. Extension point for widget-level nodes (declared, not built here)
 a11y.rs exposes set_widget_provider(f: fn(window_id: u64) -> Vec<AccessNode>). When raeen-ui
-later reports per-widget role+name+bounds (a RaeUI item, Phase 8/19 follow-up), build_tree()
+later reports per-widget role+name+bounds (a AthUI item, Phase 8/19 follow-up), build_tree()
 calls the provider per window and parents the returned widget nodes under that windows
 Surface.id. Until then the provider is None and the tree is window-tier only. This is the seam
 for the screen reader (19.2) and keyboard nav (19.3).
@@ -186,7 +186,7 @@ Mark [~] on QEMU pass; [x] only on iron (paused).
 > interface (sec 7) landed (ABI 277/278, `Cap::Accessibility`), `kernel/src/a11y.rs` is built
 > with the smoketest + host KAT, and all five followups (screen reader, magnifier, high-contrast,
 > keyboard nav, widget provider) are at least partially built — see the audit for per-item state.
-> The ONE remaining big dependency called out here ("RaeUI widget provider — the biggest
+> The ONE remaining big dependency called out here ("AthUI widget provider — the biggest
 > dependency for real screen-reader value") is still the live #1 gap (provider has no caller).
 - First: raeen-architect lands the NEEDS-INTERFACE block (sec 7) in an [interface] commit (Cap
   variant + 2 syscalls + A11yNode repr + ABI_VERSION bump + SYSCALL_TABLE).
@@ -200,4 +200,4 @@ Mark [~] on QEMU pass; [x] only on iron (paused).
   - 19.2 magnifier: compositor-level region scale.
   - 19.2 high-contrast / color-filter themes (ties to the Phase 13 theme engine).
   - 19.3 full keyboard navigation; sticky/slow keys in input.rs.
-  - RaeUI widget provider (sec 6) — the biggest dependency for real screen-reader value.
+  - AthUI widget provider (sec 6) — the biggest dependency for real screen-reader value.

@@ -1,4 +1,4 @@
-//! RaeShell — default desktop shell for RaeenOS.
+//! AthShell — default desktop shell for AthenaOS.
 //!
 //! Provides: Taskbar, Start Menu / App Launcher, System Tray, Notification
 //! Center, multi-mode Window Manager, and a built-in Settings panel.
@@ -1288,7 +1288,7 @@ impl SettingsPanel {
         // Gaming
         self.add_entry(
             "game.sched_game",
-            "SCHED_GAME Priority",
+            "SCHED_BODY Priority",
             "Hard real-time scheduling for games",
             SettingsPage::Gaming,
             SettingValue::Toggle(true),

@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeShell — the default desktop shell. Familiar enough to switch from Windows or Mac in 10 minutes."
+description = "AthShell — the default desktop shell. Familiar enough to switch from Windows or Mac in 10 minutes."
 
 [dependencies]
 raegfx = { path = "../raegfx" }
@@ -19,7 +19,7 @@ rae_tokens = { path = "../rae_tokens" }
 # bare-metal no_std link of raeshell picks up nothing new heavy.
 rae_crypto = { path = "../rae_crypto" }
 # vte — pure-Rust ANSI/VT escape parser (the Alacritty engine), the base for
-# RaeShell's terminal emulator. vte 0.13 still pulls std, so it is OPTIONAL
+# AthShell's terminal emulator. vte 0.13 still pulls std, so it is OPTIONAL
 # behind `terminal_vt` — off for the kernel's no_std link of raeshell, on for the
 # userspace terminal (and the host KAT). The emulator only models grid + state.
 vte = { version = "0.13", optional = true }

@@ -1,6 +1,6 @@
 //! Storage controller IRQ mode tracking (MSI-X vs legacy INTx).
 //!
-//! RaeenOS_Concept.md §Windows Pain Points → "Driver Wild West":
+//! LEGACY_GAMING_CONCEPT.md §Windows Pain Points → "Driver Wild West":
 //! > All drivers signed and IOMMU-sandboxed
 //!
 //! `kernelchecklist.md` §M-A requires MSI-X on at least one PCI device on
@@ -83,7 +83,7 @@ pub fn records() -> Vec<DeviceIrqRecord> {
 
 pub fn dump_text() -> String {
     let recs = records();
-    let mut out = String::from("# RaeenOS storage IRQ modes\n");
+    let mut out = String::from("# AthenaOS storage IRQ modes\n");
     if recs.is_empty() {
         out.push_str("devices: 0\n");
         out.push_str("note: no NVMe/AHCI controllers probed (normal in virtio-only QEMU)\n");

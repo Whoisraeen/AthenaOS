@@ -1,4 +1,4 @@
-//! Full POSIX-style process model for RaeenOS.
+//! Full POSIX-style process model for AthenaOS.
 //!
 //! Provides process lifecycle (fork/exec/wait/exit), signal delivery,
 //! virtual memory management, file descriptor tables, resource limits,
@@ -1289,7 +1289,7 @@ pub fn read_proc_entry(entry: &ProcEntry) -> String {
         }
         ProcEntryType::SystemCpuinfo => {
             alloc::format!(
-                "processor\t: 0\nvendor_id\t: RaeenOS\nmodel name\t: RaeenOS Virtual CPU\ncpu MHz\t\t: 3000.000\ncache size\t: 8192 KB\n"
+                "processor\t: 0\nvendor_id\t: AthenaOS\nmodel name\t: AthenaOS Virtual CPU\ncpu MHz\t\t: 3000.000\ncache size\t: 8192 KB\n"
             )
         }
         ProcEntryType::SystemLoadavg => {
@@ -1302,7 +1302,7 @@ pub fn read_proc_entry(entry: &ProcEntry) -> String {
             }
         }
         ProcEntryType::SystemVersion => {
-            String::from("RaeenOS version 0.0.1 (raeen@raeenos) (rustc 1.80.0) #1 SMP")
+            String::from("AthenaOS version 0.0.1 (raeen@athenaos) (rustc 1.80.0) #1 SMP")
         }
         ProcEntryType::SystemMounts => {
             String::from("raefs / raefs rw,relatime 0 0\nproc /proc proc rw,nosuid,nodev,noexec 0 0\nsysfs /sys sysfs rw,nosuid,nodev,noexec 0 0\ntmpfs /tmp tmpfs rw,nosuid,nodev 0 0\n")
@@ -1320,7 +1320,7 @@ pub fn read_proc_entry(entry: &ProcEntry) -> String {
 // Cgroup-equivalent per-bundle memory limits (Phase 4.1)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// Concept: every app ships as a *bundle* with a manifest. RaeShield reads the
+// Concept: every app ships as a *bundle* with a manifest. AthGuard reads the
 // manifest's RAM budget and registers it here keyed by bundle id. When the
 // bundle's first process is created, the spawn path looks the limit up and
 // stamps it onto the new `MemorySpace` via `set_memory_limit`. Thereafter any
@@ -1354,7 +1354,7 @@ pub fn bundle_memory_limit(bundle: &str) -> u64 {
 /// `/proc/raeen/memlimits` body: one `bundle = bytes` line per registered cap.
 pub fn dump_memlimits() -> String {
     use core::fmt::Write;
-    let mut out = String::from("# RaeenOS per-bundle memory limits (Phase 4.1)\n");
+    let mut out = String::from("# AthenaOS per-bundle memory limits (Phase 4.1)\n");
     let guard = BUNDLE_MEMORY_LIMITS.lock();
     match guard.as_ref() {
         Some(map) if !map.is_empty() => {

@@ -1,4 +1,4 @@
-//! Kexec and crash dump subsystem for RaeenOS.
+//! Kexec and crash dump subsystem for AthenaOS.
 //!
 //! Fast kernel reboot via kexec_load / kexec_execute, crash kernel reservation
 //! with `crashkernel=` parsing, kdump with /proc/vmcore ELF core format,
@@ -349,7 +349,7 @@ pub struct VmcoreInfo {
 impl VmcoreInfo {
     pub fn new() -> Self {
         let mut entries = BTreeMap::new();
-        entries.insert(String::from("OSRELEASE"), String::from("RaeenOS-0.0.1"));
+        entries.insert(String::from("OSRELEASE"), String::from("AthenaOS-0.0.1"));
         entries.insert(String::from("PAGESIZE"), String::from("4096"));
         entries.insert(String::from("CRASHTIME"), String::from("0"));
         Self { entries }

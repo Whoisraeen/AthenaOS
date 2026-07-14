@@ -4,7 +4,7 @@
 //! same proven implementation the kernel's `crypto::Ed25519Context` already
 //! ships (RFC 8032 §7.1 KAT-verified). Carrying it here, in the shared crate,
 //! means the host `raesign` tool, future `raeupdate` signature checks, and
-//! RaeShield code signing all derive from ONE implementation, so signer and
+//! AthGuard code signing all derive from ONE implementation, so signer and
 //! verifier are guaranteed interoperable. Validated by the `#[cfg(test)]` RFC
 //! 8032 §7.1 vectors below and the `tools/raesign` host harness.
 //!

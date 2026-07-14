@@ -1,6 +1,6 @@
 //! # RaeEncode — never-panic, `no_std` web codecs: base64, URL percent, hex.
 //!
-//! RaeenOS_Concept.md §"Web apps via PWA support that actually feels native":
+//! LEGACY_GAMING_CONCEPT.md §"Web apps via PWA support that actually feels native":
 //! the web is the universal app runtime, and base64 / URL percent-encoding / hex
 //! are the lingua franca of every layer of that stack — `data:` URIs in HTML and
 //! CSS, HTTP `Basic` auth headers (`base64(user:pass)`), URL query-string and

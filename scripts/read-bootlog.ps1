@@ -1,4 +1,4 @@
-# read-bootlog.ps1 - extract BOOTLOG.TXT from a RaeenOS boot stick without
+# read-bootlog.ps1 - extract BOOTLOG.TXT from a AthenaOS boot stick without
 # mounting it.
 #
 # Why: Windows refuses to assign a drive letter to an ESP-typed partition on

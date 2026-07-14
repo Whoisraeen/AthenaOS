@@ -1,4 +1,4 @@
-# RaeenOS boot log (RAM ring, 1024 KiB capacity)
+# AthenaOS boot log (RAM ring, 1024 KiB capacity)
 # bytes_logged: 49781  wrapped: false  oldest_lost: 0 bytes
 # === transcript follows ===
 [fb] geometry OK: 1920x1080 stride=1920 bpp=4 need=8294400B have=8294400B
@@ -14,7 +14,7 @@
   ║   ██║  ██║██║  ██║███████╗███████╗██║ ╚████║╚██████╔╝███████║    ║
   ║   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝    ║
   ║                                                                  ║
-  ║              RaeKernel v0.0.1  —  RaeenOS                        ║
+  ║              AthKernel v0.0.1  —  AthenaOS                        ║
   ║       "Built for people who care about how things feel."         ║
   ║                                                                  ║
   ╚══════════════════════════════════════════════════════════════════╝
@@ -129,7 +129,7 @@
 [acpi] SSDT #20 ("GPP0") parsed: 51 bytes of AML
 [acpi] SSDT #21 ("UPEP") parsed: 5085 bytes of AML
 [acpi] AML tables: DSDT + 22 SSDT(s) parsed into interpreter
-RaeKernel: Native PCIe control successfully transferred from SMM to OS.
+AthKernel: Native PCIe control successfully transferred from SMM to OS.
 [acpi] Platform bring-up audit: starting method invocation sequence
 [acpi] AML method \_OSI -> Integer(0)
 [acpi] AML method \_OSI -> Integer(0)
@@ -420,11 +420,11 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [compositor] VRR: requested 48..144 Hz — pending GPU driver
 [compositor] HDR: 400nit, colorspace=9 — pending GPU driver
 [compositor] VRR+HDR capabilities registered (pending GPU driver hookup)
-[compositor] SCHED_GAME thread spawned (VRR-aware, deadline=14ms, task=TaskId(65))
+[compositor] SCHED_BODY thread spawned (VRR-aware, deadline=14ms, task=TaskId(65))
 [INFO] Memory regions reported by bootloader: 54
 
   [boot] ┌─────────────────────────────────────┐
-  [boot] │  RaeKernel v0.0.1 — all systems go  │
+  [boot] │  AthKernel v0.0.1 — all systems go  │
   [boot] ├─────────────────────────────────────┤
   [boot] │  Serial ........... ✓  COM1 0x3F8   │
   [boot] │  GDT/TSS .......... ✓  IST[0]      │
@@ -487,7 +487,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Config registry: 29 default keys seeded (versioned, with snapshots)
 [ OK ] Per-app data buckets (/data/apps/self/)
 [buckets] run_boot_smoketest: store=true vfs_deny=true deny_foreign=true allow_owner=true self_needs_task=true -> PASS
-[session] RaeID ready — default user 'raeen' (password: raeen)
+[session] AthID ready — default user 'raeen' (password: raeen)
 [session] persistence smoketest: records=1 hash_match=true reload_auth=true -> PASS
 [compositor] kernel surface 1 created: 1920x1080 (z=0, desktop)
 [shell_runner] safe-mode diag refresh thread spawned
@@ -519,7 +519,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Userspace Driver Framework (RaeDriver) initialized
 [TIER] Tier 1 complete: core infrastructure  (t=3729ms)
 [ OK ] Block I/O layer initialized
-[storage] *** SAFE IMAGE: storage is READ-ONLY for this entire boot — writes are never enabled AND the safe-mode guard is active. RaeenOS cannot write any real disk (only its own pre-allocated bootlog file). Safe to run on real hardware. ***
+[storage] *** SAFE IMAGE: storage is READ-ONLY for this entire boot — writes are never enabled AND the safe-mode guard is active. AthenaOS cannot write any real disk (only its own pre-allocated bootlog file). Safe to run on real hardware. ***
 [storage_irq] IRQ mode registry ready
 [nvme] scanning PCI for NVMe controllers...
 [nvme] check dev 01:00.0
@@ -573,7 +573,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Network manager initialized (2 interfaces, 3 routes, status=Connected)
 [netlog] initialized: UDP-broadcast log channel on port 51514 (boot_id=0xddfd33d1)
 [netlog] smoketest: frame=70B ip_header=valid tx=submitted -> PASS
-[ OK ] RaeShield firewall initialized (4 rules, profile=DefaultDeny, conntrack 64k, rate-limit 1k pps)
+[ OK ] AthGuard firewall initialized (4 rules, profile=DefaultDeny, conntrack 64k, rate-limit 1k pps)
 [ OK ] firewall selftest: 7/7 verdicts correct, per-app rule added, cap-gate enforced, telemetry-logged yes (profile=GamingOptimized, 9 rules)
 [ OK ] Tunnel subsystem initialized
 [ OK ] Traffic shaper initialized (Game/Interactive/Bulk)
@@ -618,7 +618,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] POSIX compatibility layer initialized
 [ OK ] Linux syscall translation layer initialized
 [linux_syscall] smoketest PASS: linux tasks tracked=0 counters ready
-[ OK ] Shell API initialized (RaeShell + GameOS registered)
+[ OK ] Shell API initialized (AthShell + GameOS registered)
 [secure-ipc] smoketest: forged_denied=true real_ok=true spoof_denied=true open_ok=true -> PASS
 [ OK ] Secure IPC (authenticated channels) initialized
 [ OK ] Runtime permission prompt system initialized
@@ -882,7 +882,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 
 
 # === ring tail at last flush (early transcript preserved above) ===
-# RaeenOS boot log (RAM ring, 1024 KiB capacity)
+# AthenaOS boot log (RAM ring, 1024 KiB capacity)
 # bytes_logged: 72075  wrapped: false  oldest_lost: 0 bytes
 # === transcript follows ===
 [fb] geometry OK: 1920x1080 stride=1920 bpp=4 need=8294400B have=8294400B
@@ -898,7 +898,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
   ║   ██║  ██║██║  ██║███████╗███████╗██║ ╚████║╚██████╔╝███████║    ║
   ║   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝    ║
   ║                                                                  ║
-  ║              RaeKernel v0.0.1  —  RaeenOS                        ║
+  ║              AthKernel v0.0.1  —  AthenaOS                        ║
   ║       "Built for people who care about how things feel."         ║
   ║                                                                  ║
   ╚══════════════════════════════════════════════════════════════════╝
@@ -1013,7 +1013,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [acpi] SSDT #20 ("GPP0") parsed: 51 bytes of AML
 [acpi] SSDT #21 ("UPEP") parsed: 5085 bytes of AML
 [acpi] AML tables: DSDT + 22 SSDT(s) parsed into interpreter
-RaeKernel: Native PCIe control successfully transferred from SMM to OS.
+AthKernel: Native PCIe control successfully transferred from SMM to OS.
 [acpi] Platform bring-up audit: starting method invocation sequence
 [acpi] AML method \_OSI -> Integer(0)
 [acpi] AML method \_OSI -> Integer(0)
@@ -1304,11 +1304,11 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [compositor] VRR: requested 48..144 Hz — pending GPU driver
 [compositor] HDR: 400nit, colorspace=9 — pending GPU driver
 [compositor] VRR+HDR capabilities registered (pending GPU driver hookup)
-[compositor] SCHED_GAME thread spawned (VRR-aware, deadline=14ms, task=TaskId(65))
+[compositor] SCHED_BODY thread spawned (VRR-aware, deadline=14ms, task=TaskId(65))
 [INFO] Memory regions reported by bootloader: 54
 
   [boot] ┌─────────────────────────────────────┐
-  [boot] │  RaeKernel v0.0.1 — all systems go  │
+  [boot] │  AthKernel v0.0.1 — all systems go  │
   [boot] ├─────────────────────────────────────┤
   [boot] │  Serial ........... ✓  COM1 0x3F8   │
   [boot] │  GDT/TSS .......... ✓  IST[0]      │
@@ -1371,7 +1371,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Config registry: 29 default keys seeded (versioned, with snapshots)
 [ OK ] Per-app data buckets (/data/apps/self/)
 [buckets] run_boot_smoketest: store=true vfs_deny=true deny_foreign=true allow_owner=true self_needs_task=true -> PASS
-[session] RaeID ready — default user 'raeen' (password: raeen)
+[session] AthID ready — default user 'raeen' (password: raeen)
 [session] persistence smoketest: records=1 hash_match=true reload_auth=true -> PASS
 [compositor] kernel surface 1 created: 1920x1080 (z=0, desktop)
 [shell_runner] safe-mode diag refresh thread spawned
@@ -1403,7 +1403,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Userspace Driver Framework (RaeDriver) initialized
 [TIER] Tier 1 complete: core infrastructure  (t=3729ms)
 [ OK ] Block I/O layer initialized
-[storage] *** SAFE IMAGE: storage is READ-ONLY for this entire boot — writes are never enabled AND the safe-mode guard is active. RaeenOS cannot write any real disk (only its own pre-allocated bootlog file). Safe to run on real hardware. ***
+[storage] *** SAFE IMAGE: storage is READ-ONLY for this entire boot — writes are never enabled AND the safe-mode guard is active. AthenaOS cannot write any real disk (only its own pre-allocated bootlog file). Safe to run on real hardware. ***
 [storage_irq] IRQ mode registry ready
 [nvme] scanning PCI for NVMe controllers...
 [nvme] check dev 01:00.0
@@ -1457,7 +1457,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Network manager initialized (2 interfaces, 3 routes, status=Connected)
 [netlog] initialized: UDP-broadcast log channel on port 51514 (boot_id=0xddfd33d1)
 [netlog] smoketest: frame=70B ip_header=valid tx=submitted -> PASS
-[ OK ] RaeShield firewall initialized (4 rules, profile=DefaultDeny, conntrack 64k, rate-limit 1k pps)
+[ OK ] AthGuard firewall initialized (4 rules, profile=DefaultDeny, conntrack 64k, rate-limit 1k pps)
 [ OK ] firewall selftest: 7/7 verdicts correct, per-app rule added, cap-gate enforced, telemetry-logged yes (profile=GamingOptimized, 9 rules)
 [ OK ] Tunnel subsystem initialized
 [ OK ] Traffic shaper initialized (Game/Interactive/Bulk)
@@ -1502,7 +1502,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] POSIX compatibility layer initialized
 [ OK ] Linux syscall translation layer initialized
 [linux_syscall] smoketest PASS: linux tasks tracked=0 counters ready
-[ OK ] Shell API initialized (RaeShell + GameOS registered)
+[ OK ] Shell API initialized (AthShell + GameOS registered)
 [secure-ipc] smoketest: forged_denied=true real_ok=true spoof_denied=true open_ok=true -> PASS
 [ OK ] Secure IPC (authenticated channels) initialized
 [ OK ] Runtime permission prompt system initialized
@@ -1898,7 +1898,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [audio] STATESTS=0x0001
 [audio] codec 0 discovered
 [audio] HDA controller initialised at BAR 0xdc5c8000
-[audio] SCHED_GAME audio thread spawned (period=128frames, ~2.67ms)
+[audio] SCHED_BODY audio thread spawned (period=128frames, ~2.67ms)
 [audio] test-tone smoketest: wrote_samples=960 hda_playback=1 -> PASS
 [usb-audio] UAC1/UAC2 class driver ready (isoch playback+capture)
 [usb-audio] run_boot_smoketest: uac1=true playback=true fmt48k_stereo=true isoch_ep=true -> PASS
@@ -1959,16 +1959,16 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [wallpaper] smoketest: frames_total=10 frames_skipped=7 (battery-saver path works)
 [ OK ] Capability audit ring initialized (capacity 256 events)
 [cap_audit] smoketest: 7 events recorded (grants=3 revokes=1 denied=1)
-[sandbox] enforcement online (RaeShield PolicyEnforcer; default level = Trusted)
+[sandbox] enforcement online (AthGuard PolicyEnforcer; default level = Trusted)
 [sandbox] task 1526595585 level set to Strict
-[sandbox] DENY pid=1526595585 syscall=111 abi=native level=Strict (RaeShield policy)
-[sandbox] DENY pid=1526595585 syscall=41 abi=linux level=Strict (RaeShield policy)
+[sandbox] DENY pid=1526595585 syscall=111 abi=native level=Strict (AthGuard policy)
+[sandbox] DENY pid=1526595585 syscall=41 abi=linux level=Strict (AthGuard policy)
 [sandbox] run_boot_smoketest: strict_deny=true trusted_allow=true benign_allow=true linux_gate=true app_classify=true -> PASS
 [ OK ] RaeManifest registry: 3 app manifest(s) in boot media
 [manifest] 'totally_unknown_app' declares sandbox="trusted" unsigned and without first-party standing — capped to AppSandbox
 [sandbox] task 1526595587 level set to AppSandbox
 [manifest] 'calculator' pid 1526595587 grants: net=true dev=false install=false
-[sandbox] DENY pid=1526595587 syscall=111 abi=native level=AppSandbox (RaeShield policy)
+[sandbox] DENY pid=1526595587 syscall=111 abi=native level=AppSandbox (AthGuard policy)
 [manifest] run_boot_smoketest: found=true parsed=true signed=true trust_cap=true signed_trust=true reject_garbage=true reject_tamper=true spawn_gate=true -> PASS
 [cpu] vendor=AMD family=0x19 model=0x74 stepping=1 brand="AMD Ryzen 5 7640HS w/ Radeon 760M Graphics"  [Zen 4 detected — Athena profile]
 [cpu] core ISA: SSE2=true SSE4.2=true AVX=true AVX2=true AVX-512F=true AES=true SHA=true RDRAND=true RDSEED=true
@@ -1981,7 +1981,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [cpu] L3 Unified cache: 16384 KB, 16 ways, 16384 sets, 64 line, shared by 12 core(s)
 [ OK ] CPU feature detection complete
 [msr-amd] CPPC: supported enabled=true highest=0 nominal=32 lowest_nonlinear=128 lowest=2
-[msr-amd] SVM (AMD-V): supported EFER.SVME=false (not enabled by RaeenOS — we are not a hypervisor)
+[msr-amd] SVM (AMD-V): supported EFER.SVME=false (not enabled by AthenaOS — we are not a hypervisor)
 [msr-amd] SMCA: supported banks=32 mc0_status=0x0
 [ OK ] AMD MSR detection complete
 [clipboard] session text buffer ready (max 65536 B)
@@ -1992,7 +1992,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [syscall] guard smoketest OK
 [storage_irq] smoketest OK: 1 device(s) — MSI-X=1 INTx=0
 [windows_gap] smoketest OK: 15 Concept-doc rows mapped
-[ OK ] RaeBridge DLL registry: 158 DLLs, 16137 Win32 names reachable for PE imports
+[ OK ] AthBridge DLL registry: 158 DLLs, 16137 Win32 names reachable for PE imports
 [raebridge] minimal PE32+ parsed: machine=x86_64(true), entry=0x1000, 1 section(s), 0 import(s)
 [raebridge] reachability sample: 11/11 top-tier Win32 names resolved
 [raebridge] thunks Phase-B: 20/20 registered, 20/20 in name registry, 0 failure(s)
@@ -2031,9 +2031,9 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [TIER] Tier 9 complete: overclock/watchdog/diagnostics/kmod  (t=7172ms)
 [bootlog-persist] flush OK (tail region): 67957 log bytes + zero-pad -> 1024 sectors (1024 KiB file), cache_sync=OK
 [BOOT] All 9 tiers initialized successfully
-[storage] scanning active block device for RaeFS partition...
+[storage] scanning active block device for AthFS partition...
 [storage] partition table: Gpt
-[raefs] no RaeFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via raeinstaller)
+[raefs] no AthFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via raeinstaller)
 [raefs] tiered storage detected 0 distinct tier(s): NVMe=0 SATA(spinning)=0 Virtio=0 (4KiB blocks)
 [raefs] Registered NVMe tier with 16 blocks
 [raefs] Registered Sata tier with 16 blocks
@@ -2055,7 +2055,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [raefs] encryption selftest: aes256_kat=true xts_changed=true xts_roundtrip=true tweak_sensitive=true kdf_deterministic=true aes_ni=true -> PASS
 [raefs] bucket-key selftest: distinct=true deterministic=true cross_app_unreadable=true own_key_recovers=true -> PASS
 [raefs] compression-flag smoketest: skipped (safe-mode, read-only)
-[session] load_persisted_accounts: no accounts.dat on RaeFS (fresh system)
+[session] load_persisted_accounts: no accounts.dat on AthFS (fresh system)
 [crash] persist smoketest: skipped (safe-mode, read-only)
 [virtio-net] device not present, skipping demo
 [virtio-net] rx-probe SKIP: no device

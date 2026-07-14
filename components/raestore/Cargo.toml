@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeStore — app store. 12% revenue share, sideloading allowed."
+description = "AthStore — app store. 12% revenue share, sideloading allowed."
 
 [dependencies]
 # Real SHA-256 + Ed25519 signature verification for package integrity /

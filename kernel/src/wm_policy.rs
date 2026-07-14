@@ -1,4 +1,4 @@
-//! Swappable window-manager policy (Concept §RaeUI: "your desktop, your
+//! Swappable window-manager policy (Concept §AthUI: "your desktop, your
 //! rules — tiling, stacking, floating are POLICIES over the compositor, not
 //! forks of it; switching is one call, not a different OS").
 //! MasterChecklist Phase 13.2 — "Swappable window manager API (tile, stack,

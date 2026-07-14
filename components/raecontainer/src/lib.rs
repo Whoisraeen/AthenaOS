@@ -1263,7 +1263,7 @@ impl ImageConfig {
             created: String::new(),
             author: String::new(),
             architecture: String::from("amd64"),
-            os: String::from("raeenos"),
+            os: String::from("athenaos"),
             os_version: String::new(),
             os_features: Vec::new(),
             variant: String::new(),
@@ -2302,7 +2302,7 @@ impl ContainerRuntime {
     pub fn pull_image(&mut self, name: &str, tag: &str) -> Result<ImageId> {
         let registry =
             self.registries.first().cloned().unwrap_or_else(|| {
-                RegistryConfig::new(String::from("https://registry.raeenos.dev"))
+                RegistryConfig::new(String::from("https://registry.athenaos.dev"))
             });
         self.image_manager.pull_image(&registry, name, tag)
     }

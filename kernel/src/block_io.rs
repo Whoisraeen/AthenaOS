@@ -97,7 +97,7 @@ pub fn safe_mode_guard_write(lba: u64, len: usize, source: &str) -> Result<(), &
         return Ok(()); // fast path: writes permitted
     }
     // A gate is active. The bootlog_persist pre-allocated log file is a FIXED,
-    // RaeenOS-owned LBA range (baked into the image's ESP) that cannot reach a
+    // AthenaOS-owned LBA range (baked into the image's ESP) that cannot reach a
     // user partition — allow only it, so a safe boot can still flush its
     // diagnostic log to the stick for retrieval. Every other sector stays blocked.
     if within_log_carveout(lba, len) {
@@ -993,7 +993,7 @@ impl PartitionType {
             0xA2, 0xA0, 0xD0, 0xEB, 0xE5, 0xB9, 0x33, 0x44, 0x87, 0xC0, 0x68, 0xB6, 0xB7, 0x26,
             0x99, 0xC7,
         ];
-        // RaeFS (provisional): 52414546-534F-2147-5241-45454E4F5321  "RaeFS!RaeenOS!"
+        // AthFS (provisional): 52414546-534F-2147-5241-45454E4F5321  "AthFS!AthenaOS!"
         const RAEFS_GUID: [u8; 16] = [
             0x46, 0x45, 0x41, 0x52, 0x4F, 0x53, 0x47, 0x21, 0x41, 0x52, 0x45, 0x45, 0x4E, 0x4F,
             0x53, 0x21,

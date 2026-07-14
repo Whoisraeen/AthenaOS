@@ -1,4 +1,4 @@
-//! MSVC C Runtime Library (CRT) compatibility layer for RaeBridge.
+//! MSVC C Runtime Library (CRT) compatibility layer for AthBridge.
 //!
 //! Provides C standard library functions expected by Windows executables.
 
@@ -3488,14 +3488,14 @@ mod format_tests {
 
     #[test]
     fn narrow_string_arg_with_precision_and_width() {
-        let s = b"RaeBridge\0";
+        let s = b"AthBridge\0";
         let p = s.as_ptr() as u64;
-        assert_eq!(f("%s", &[p]), "RaeBridge");
+        assert_eq!(f("%s", &[p]), "AthBridge");
         // Precision truncates to N chars.
         assert_eq!(f("%.3s", &[p]), "Rae");
         // Width right-justifies.
-        assert_eq!(f("%12s", &[p]), "   RaeBridge");
-        assert_eq!(f("%-12s|", &[p]), "RaeBridge   |");
+        assert_eq!(f("%12s", &[p]), "   AthBridge");
+        assert_eq!(f("%-12s|", &[p]), "AthBridge   |");
         // NULL pointer → "(null)".
         assert_eq!(f("%s", &[0]), "(null)");
     }

@@ -1,8 +1,8 @@
-# RaeUI: retained layer tree + compositor-driven animation (the "macOS feel")
+# AthUI: retained layer tree + compositor-driven animation (the "macOS feel")
 
 **Goal:** deliver the macOS/iOS *feel* — buttery, GPU-composited, declarative
 animation that stays at refresh rate even when the app thread is busy. Per
-`RaeenOS_Concept.md §RaeUI` ("compositor-aware, GPU-accelerated, glassmorphic by
+`LEGACY_GAMING_CONCEPT.md §AthUI` ("compositor-aware, GPU-accelerated, glassmorphic by
 default, SwiftUI-style API").
 
 **Key insight (why this doc exists):** the feel is NOT the 2D library (Skia /
@@ -13,7 +13,7 @@ Core-Graphics-equivalent; this plan is our Core-Animation-equivalent.
 
 ## Current state (2026-06-11)
 
-RaeUI already has the logical pieces — but wired the wrong way for the feel:
+AthUI already has the logical pieces — but wired the wrong way for the feel:
 
 | Module | Has | Gap for the feel |
 |---|---|---|
@@ -26,13 +26,13 @@ RaeUI already has the logical pieces — but wired the wrong way for the feel:
 So content is redrawn every frame through a software canvas, and animation runs
 on the app thread — the exact opposite of the Core Animation model. The fix is
 to **split content rendering from compositing**, **back nodes with cached layer
-textures**, and **move animation execution to the compositor's SCHED_GAME
+textures**, and **move animation execution to the compositor's SCHED_BODY
 thread**.
 
 ## Target architecture
 
 ```
-  App thread                        Compositor (SCHED_GAME, off app thread)
+  App thread                        Compositor (SCHED_BODY, off app thread)
   ──────────                        ───────────────────────────────────────
   WidgetTree (retained)             Layer tree (transform, opacity, material)
     │ layout (taffy)                  │ per-frame:
@@ -51,7 +51,7 @@ jank when the app is busy. That is the whole trick.
 
 ## Workstreams
 
-### A. Layer backing (RaeUI — `tree.rs`, new `layer.rs`)
+### A. Layer backing (AthUI — `tree.rs`, new `layer.rs`)
 - **A1.** Add `Layer { surface: SurfaceHandle, transform: Affine, opacity: f32,
   corner_radius: f32, material: Material, needs_redraw: bool }`. A `WidgetNode`
   owns an optional `Layer` (leaf widgets + anything animated get one).
@@ -61,9 +61,9 @@ jank when the app is busy. That is the whole trick.
 - **A3.** Backing-store cache: keep layer surfaces across frames; invalidate on
   content/size/scale change. This is what makes scrolling/animation cheap.
 
-### B. Compositor-driven animation (kernel `compositor.rs` + RaeUI `animation.rs`)
+### B. Compositor-driven animation (kernel `compositor.rs` + AthUI `animation.rs`)
 - **B1.** Move the `Animation` registry into a compositor-side `AnimationDriver`
-  ticked on the **SCHED_GAME** thread (it already runs the VRR pacer there).
+  ticked on the **SCHED_BODY** thread (it already runs the VRR pacer there).
 - **B2.** Animations target **layer** properties (transform/opacity/radius/blur),
   not widget content — so a running animation never re-rasterizes or calls app
   code.
@@ -80,7 +80,7 @@ jank when the app is busy. That is the whole trick.
 ### C. Real content rendering (swap the placeholder)
 - **C1. NOW (no GPU needed):** replace the rectangle font rasterizer + software
   fills with **`tiny-skia`** (CPU, `no_std`+alloc) → real anti-aliased paths,
-  gradients, blends into layer surfaces. Makes RaeUI *look* good immediately,
+  gradients, blends into layer surfaces. Makes AthUI *look* good immediately,
   before any GPU work.
 - **C2. Text:** integrate **`cosmic-text`** (shaping/BiDi/ligatures/fallback) →
   glyph runs → tiny-skia raster. (Already recommended in OSS doc.)
@@ -116,8 +116,8 @@ cosmic-text text — achievable entirely on the software path before the GPU.
 
 ## Crate dependencies
 
-See `docs/OSS_RECOMMENDATIONS.md` "RaeUI rendering + feel stack" — `tiny-skia`,
+See `docs/OSS_RECOMMENDATIONS.md` "AthUI rendering + feel stack" — `tiny-skia`,
 `taffy`, `cosmic-text`/`swash`, `palette`, and the Linebender primitives
-(`kurbo`/`peniko`/`vello`) for the GPU path. Align RaeUI's geometry/paint types
+(`kurbo`/`peniko`/`vello`) for the GPU path. Align AthUI's geometry/paint types
 with `kurbo`/`peniko` so the eventual Skia-or-Vello swap is a backend change,
 not a rewrite.

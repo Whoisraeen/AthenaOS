@@ -318,7 +318,7 @@ pub unsafe extern "C" fn pcie_find_root_port(_dev: *mut c_void) -> *mut c_void {
 }
 
 // ───────────────────────── runtime PM ─────────────────────────
-// Runtime PM is managed by the RaeenOS power subsystem, not by amdgpu's autosuspend
+// Runtime PM is managed by the AthenaOS power subsystem, not by amdgpu's autosuspend
 // during bring-up. The device is kept resumed; these are no-ops.
 
 #[no_mangle]
@@ -395,7 +395,7 @@ pub unsafe extern "C" fn firmware_request_nowarn(
 /// Phoenix has no PCI-ROM VBIOS; the VFCT path is how amdgpu gets ATOMBIOS on an
 /// APU. The table is served from the bundled `firmware/acpi/.../VFCT.dat` capture
 /// (the same raw table `raeen_amdgpu::atombios` parses natively). Any other
-/// signature reports `AE_NOT_FOUND` — the live RaeenOS ACPI namespace is the
+/// signature reports `AE_NOT_FOUND` — the live AthenaOS ACPI namespace is the
 /// kernel's, and only VFCT is on the bring-up path. `AE_OK`=0, `AE_NOT_FOUND`=5.
 #[no_mangle]
 pub unsafe extern "C" fn acpi_get_table(
@@ -643,7 +643,7 @@ pub unsafe extern "C" fn drmm_mode_config_init(_dev: *mut c_void) -> c_int {
 }
 
 // ───────────────────────── vga_switcheroo (disabled) ─────────────────────────
-// Dual-GPU laptop muxing — disabled on RaeenOS (RaeShield owns GPU arbitration).
+// Dual-GPU laptop muxing — disabled on AthenaOS (AthGuard owns GPU arbitration).
 
 #[no_mangle]
 pub unsafe extern "C" fn vga_client_unregister(_pdev: *mut c_void) {}
@@ -663,7 +663,7 @@ pub unsafe extern "C" fn vga_switcheroo_fini_domain_pm_ops(_dev: *mut c_void) {}
 // subset features (kthread/sync-file/fd/i2c/hmm/xarray-irq) report the "absent"
 // answer the caller treats as not-present.
 
-// ── capability (RaeShield grants the bring-up daemon its device caps) ──
+// ── capability (AthGuard grants the bring-up daemon its device caps) ──
 #[no_mangle]
 pub unsafe extern "C" fn capable(_cap: c_int) -> bool {
     true
@@ -955,7 +955,7 @@ pub unsafe extern "C" fn dma_resv_locking_ctx(_obj: *mut c_void) -> *mut c_void 
     core::ptr::null_mut()
 }
 
-// ── IRQ domain: the RaeenOS kernel owns interrupt delivery; the daemon receives
+// ── IRQ domain: the AthenaOS kernel owns interrupt delivery; the daemon receives
 // already-demuxed IRQ events over its IRQ-wait syscall. The domain maps hwirq->
 // virq 1:1 (a stable token), and the chip/flow wiring is inert here. ──
 static mut IRQ_DOMAIN_TOKEN: u8 = 0;

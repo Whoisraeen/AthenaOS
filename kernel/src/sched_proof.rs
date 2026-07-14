@@ -1,4 +1,4 @@
-//! `sched_proof` — a live SCHED_GAME/EDF deadline-adherence proof under load.
+//! `sched_proof` — a live SCHED_BODY/EDF deadline-adherence proof under load.
 //!
 //! Concept §Gaming-First: "Gaming isn't a mode — it's the foundation." The
 //! Concept promises a hard real-time class above SCHED_FIFO so the
@@ -11,14 +11,14 @@
 //! ~6 ms "input" task, a ~2.67 ms "audio" task) against a competing pack of
 //! SCHED_NORMAL CPU hogs, then reads the scheduler's OWN dispatch-path pick
 //! counters and asserts the DETERMINISTIC, provable-in-QEMU property the Concept
-//! promises: SCHED_GAME has HARD PRIORITY over SCHED_NORMAL — the EDF class
+//! promises: SCHED_BODY has HARD PRIORITY over SCHED_NORMAL — the EDF class
 //! preempts the running Normal hogs and wins the pick race (picks_game >
 //! picks_normal), with no priority inversion and no catastrophic starvation. The
 //! absolute deadline-miss counts (frame/input/audio) are MEASURED and REPORTED
 //! honestly but iron-gated, NOT used as the gate (the 10 ms QEMU-TCG LAPIC tick
 //! is below the sub-period budgets — see the Time-base note). It is genuinely
 //! FAIL-able: if EDF stops preempting the Normal load, or Normal wins over
-//! SCHED_GAME (inversion), or the frame task never runs, it prints FAIL.
+//! SCHED_BODY (inversion), or the frame task never runs, it prints FAIL.
 //!
 //! Time-base note (load-bearing — UPDATED after the EDF-clock 1/10-defect fix):
 //! the EDF deadline clock is now TSC WALL-TIME microseconds
@@ -32,7 +32,7 @@
 //! Per-class adherence here is measured directly in wall time (each worker stamps
 //! `edf_now_us` and compares its inter-dispatch gap to its period+deadline budget),
 //! because the global perf miss counter (`record_game_dispatch`) is shared across
-//! ALL SCHED_GAME tasks and cannot attribute a miss to one period class.
+//! ALL SCHED_BODY tasks and cannot attribute a miss to one period class.
 //!
 //! Keystones honored:
 //!  * All proof threads are BSP-pinned (affinity mask = CPU 0): the AP cores
@@ -46,7 +46,7 @@
 //!
 //! Measured under QEMU-TCG (SMP=1 and SMP=2): the frame EDF task (16.67 ms period)
 //! is dispatched ahead of the competing 3-hog SCHED_NORMAL load (picks.game >>
-//! picks.normal) — SCHED_GAME provably preempts Normal. THAT preemption property
+//! picks.normal) — SCHED_BODY provably preempts Normal. THAT preemption property
 //! is the PASS gate (deterministic, provable in QEMU): preempted_normal &&
 //! picks_game>picks_normal && liveness && no-starvation. It is NOT gated on the
 //! absolute frame-miss count: the QEMU-TCG 10 ms LAPIC tick (timers.rs HZ=100) is
@@ -56,7 +56,7 @@
 //! SAME tick floor as the sub-6 ms input + sub-3 ms audio periods. We REPORT the
 //! frame/input/audio wall-time miss + lateness numbers honestly (the now-correct
 //! EDF clock records them truthfully) but iron (finer tick + real µs HW audio
-//! round-trip, RaeAudio Phase 7, PERFORMANCE_TARGETS L72/L106) is the real
+//! round-trip, AthAudio Phase 7, PERFORMANCE_TARGETS L72/L106) is the real
 //! sub-period deadline proof. We do NOT fake a PASS the 10 ms TCG tick cannot
 //! deliver, and we do NOT hide the misses behind the preemption gate.
 
@@ -123,7 +123,7 @@ static HOG_RUNS: AtomicU64 = AtomicU64::new(0);
 
 // ─── Per-class deadline-adherence (wall-time, per-period) ────────────────────
 // The global perf miss counter (record_game_dispatch) is shared across ALL
-// SCHED_GAME tasks and cannot attribute a miss to a specific period class. These
+// SCHED_BODY tasks and cannot attribute a miss to a specific period class. These
 // per-worker atoms let the short-period (input/audio) tasks measure their OWN
 // dispatch lateness against TRUE wall time (scheduler::edf_now_us): a "miss" is a
 // dispatch that arrived more than (period + deadline) µs after the previous one,
@@ -232,7 +232,7 @@ fn edf_worker(
     }
 }
 
-/// The orchestrator — a separate SCHED_GAME deadline task (NOT the boot/idle
+/// The orchestrator — a separate SCHED_BODY deadline task (NOT the boot/idle
 /// thread, which is special-cased out of the runqueues and would starve). It is
 /// given an EARLIER absolute deadline (5 ms) than the system compositor's (14 ms)
 /// so the EDF order dispatches it reliably even while the compositor is a
@@ -272,7 +272,7 @@ extern "C" fn audio_worker() {
 /// yield. This is deliberate and is the crux of the test: a real CPU hog holds
 /// the core until the 10 ms timer IRQ preempts it, and at that preemption point
 /// `pick_next` must hand the CPU to a ready EDF task instead of back to a hog.
-/// That is exactly the SCHED_GAME guarantee under proof — EDF preempts a running
+/// That is exactly the SCHED_BODY guarantee under proof — EDF preempts a running
 /// Normal task to meet its deadline.
 ///
 /// Why not cooperatively yield: every `yield_task` advances the scheduler's EDF
@@ -317,7 +317,7 @@ fn spawn_hog() {
     crate::scheduler::spawn(t);
 }
 
-/// The orchestrator IS the frame EDF task. It runs as a SCHED_GAME deadline task
+/// The orchestrator IS the frame EDF task. It runs as a SCHED_BODY deadline task
 /// at the frame period (16.67 ms), so the scheduler's own dispatch-path counter
 /// (`record_game_dispatch`, bumped every time `pick_next` selects it) measures
 /// EXACTLY this task's frame-deadline adherence — its dispatches/misses ARE the
@@ -345,7 +345,7 @@ fn run_window() {
     );
 
     // Snapshot the scheduler's dispatch-path counters BEFORE the workload so we
-    // measure only what this workload produced (other SCHED_GAME tasks — the
+    // measure only what this workload produced (other SCHED_BODY tasks — the
     // compositor/HID EDF threads — also bump these globally).
     let (disp0, miss0, worst0, _last0) = crate::perf::sched_game_snapshot();
     let (pg0, pn0) = crate::perf::pick_class_snapshot();
@@ -389,7 +389,7 @@ fn run_window() {
     // dispatch it does a bounded chunk of frame work, bumps FRAME_RUNS, then
     // `hlt`s — the timer then `finish()`es this period and runs the Normal hogs
     // until the next frame period opens, at which point `pick_next` PREEMPTS a
-    // running hog to dispatch us (the SCHED_GAME guarantee). Its own dispatches
+    // running hog to dispatch us (the SCHED_BODY guarantee). Its own dispatches
     // (record_game_dispatch) ARE the frame-deadline measurement.
     //
     // The window is bounded by a fixed number of frame-task DISPATCHES
@@ -409,7 +409,7 @@ fn run_window() {
     // count is the deterministic termination guarantee.
     const ORCH_PERIODS: u64 = 20; // 20 frame-task dispatches under load (sized to
                                   // complete within the QEMU-TCG CI drain window;
-                                  // a SCHED_GAME EDF task dispatched 20 periods
+                                  // a SCHED_BODY EDF task dispatched 20 periods
                                   // ahead of the Normal hogs with 0 misses is a
                                   // valid adherence demonstration — more periods
                                   // are iron-gated on the slower TCG clock)
@@ -505,7 +505,7 @@ fn run_window() {
     // ── PASS GATE: the PROVABLE-IN-QEMU EDF property, not a timing ceiling ──────
     //
     // What QEMU-TCG CAN prove deterministically (and what the Concept promises the
-    // harness can verify): SCHED_GAME has HARD PRIORITY over SCHED_NORMAL — the EDF
+    // harness can verify): SCHED_BODY has HARD PRIORITY over SCHED_NORMAL — the EDF
     // class preempts a running Normal hog and wins the `pick_next` race. What QEMU
     // CANNOT prove is an absolute sub-period dispatch deadline: the LAPIC tick is
     // 10 ms (timers.rs HZ=100) and the frame's 14 ms deadline sits only ~1.3 ticks
@@ -531,9 +531,9 @@ fn run_window() {
     //   2. preempted_normal  — picks_game>0 AND picks_normal>0: the EDF class
     //                          PREEMPTED a genuinely-dispatched Normal load. FAILs
     //                          if EDF stops preempting Normal at all.
-    //   3. no_inversion      — picks_game > picks_normal: SCHED_GAME wins the CPU
+    //   3. no_inversion      — picks_game > picks_normal: SCHED_BODY wins the CPU
     //                          MORE than Normal under contention. FAILs on priority
-    //                          inversion (Normal beating SCHED_GAME).
+    //                          inversion (Normal beating SCHED_BODY).
     //   4. dispatched        — dispatches>0 AND frame_runs>0: a real dispatch
     //                          denominator (liveness for the deadline subject).
     //   5. no_starvation     — the deadline-starvation guard did NOT trip. The
@@ -562,8 +562,8 @@ fn run_window() {
     // a full work-chunk to bump HOG_RUNS before the window closes, which produced
     // a flaky false-FAIL.
     let preempted_normal = picks_game > 0 && picks_normal > 0;
-    // No priority inversion: SCHED_GAME must win the CPU MORE than Normal under
-    // contention. This is the deterministic SCHED_GAME-over-Normal guarantee the
+    // No priority inversion: SCHED_BODY must win the CPU MORE than Normal under
+    // contention. This is the deterministic SCHED_BODY-over-Normal guarantee the
     // Concept promises and that QEMU-TCG CAN prove (every boot showed
     // picks_game=109–122 >> picks_normal=18–20). FAILs on inversion.
     let no_inversion = picks_game > picks_normal;
@@ -592,7 +592,7 @@ fn run_window() {
         picks_game, picks_normal, dispatches, worst_lateness_ns,
     );
     // The headline FAIL-able marker. The PASS gate is the DETERMINISTIC, provable-
-    // in-QEMU EDF property (SCHED_GAME preempts Normal, no inversion, no
+    // in-QEMU EDF property (SCHED_BODY preempts Normal, no inversion, no
     // starvation, liveness) — NOT the absolute frame_misses count, whose sub-period
     // late dispatches are the QEMU-TCG 10 ms LAPIC-tick re-dispatch floor (the
     // frame's 14 ms deadline is only ~1.3 ticks below its 16.67 ms period, so one
@@ -624,7 +624,7 @@ fn run_window() {
         );
         if audio_misses > 0 || input_misses > 0 {
             crate::serial_println!(
-                "[sched-proof] FINDING (HONEST, NOT a fail): sub-10ms EDF periods miss under QEMU-TCG — the LAPIC tick is 10ms (timers.rs HZ=100), below the 2.67ms audio / 6ms input period, so re-dispatch cannot keep cadence. The wall-clock now RECORDS this truthfully (it was hidden by the 1/10 tick clock). Iron (finer tick + real us HW round-trip) is the sub-3ms proof — see RaeAudio Phase 7."
+                "[sched-proof] FINDING (HONEST, NOT a fail): sub-10ms EDF periods miss under QEMU-TCG — the LAPIC tick is 10ms (timers.rs HZ=100), below the 2.67ms audio / 6ms input period, so re-dispatch cannot keep cadence. The wall-clock now RECORDS this truthfully (it was hidden by the 1/10 tick clock). Iron (finer tick + real us HW round-trip) is the sub-3ms proof — see AthAudio Phase 7."
             );
         } else {
             crate::serial_println!(
@@ -635,7 +635,7 @@ fn run_window() {
     if frame_misses > 0 {
         // HONEST finding (NOT a fail): EDF DID preempt — the misses are the TCG
         // re-dispatch floor, NOT a preemption failure. The previous wording here
-        // ("SCHED_GAME EDF did not preempt as required") was factually WRONG:
+        // ("SCHED_BODY EDF did not preempt as required") was factually WRONG:
         // preempted_normal is true and picks_game >> picks_normal on every boot,
         // so EDF is provably preempting Normal correctly. The frame's 16.67 ms
         // period with a 14 ms deadline sits only ~1.3 of the 10 ms QEMU-TCG LAPIC
@@ -658,7 +658,7 @@ fn run_window() {
     PROOF_DONE.store(true, Ordering::Release);
 }
 
-/// Run the SCHED_GAME/EDF deadline-adherence proof INLINE from the boot tail.
+/// Run the SCHED_BODY/EDF deadline-adherence proof INLINE from the boot tail.
 ///
 /// Called AFTER `BOOT_COMPLETE` is set (CPU 0 now preemptible, `yield_task`
 /// live) and with interrupts ENABLED, but BEFORE the success marker — so the
@@ -743,7 +743,7 @@ pub fn dump_text() -> alloc::string::String {
         _ => "PENDING",
     };
     alloc::format!(
-        "# RaeenOS SCHED_GAME/EDF deadline-adherence proof\n\
+        "# AthenaOS SCHED_BODY/EDF deadline-adherence proof\n\
          # EDF clock: TSC wall-time microseconds (scheduler::edf_monotonic_us)\n\
          result: {}\n\
          frame_period_us: {}\n\

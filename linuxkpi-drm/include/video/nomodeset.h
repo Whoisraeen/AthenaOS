@@ -3,7 +3,7 @@
  * <video/nomodeset.h> shim (MPL-2.0, original work).
  *
  * The `nomodeset` boot-flag query — drm_drv.h checks it to refuse loading when the
- * user booted with modesetting disabled. In the RaeenOS daemon model there is no
+ * user booted with modesetting disabled. In the AthenaOS daemon model there is no
  * such boot flag, so it honestly reports false (modesetting is allowed). Not a
  * fake of a functional path. License boundary (../../README.md): API surface.
  */

@@ -1,4 +1,4 @@
-//! Firmware Interface Layer for RaeenOS.
+//! Firmware Interface Layer for AthenaOS.
 //!
 //! Platform firmware abstraction covering DMI/SMBIOS queries, CMOS/RTC,
 //! PIT 8254, PIC 8259A, PS/2 8042, PC speaker, BIOS data area,

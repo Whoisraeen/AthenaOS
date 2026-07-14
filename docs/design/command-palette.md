@@ -1,6 +1,6 @@
 # Design Spec: Command Palette (instant launcher + action runner)
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > A single keystroke summons a floating glass field; you type, and the OS answers
 > instantly — launch an app, jump to a setting, open a file, do a sum. It must
@@ -16,12 +16,12 @@ is a local constant composed from `space.*`, explicitly NOT a new global token.
 
 ## Concept promise + bar to clear
 
-> "Familiar enough to switch from Windows or Mac in 10 minutes." — RaeenOS_Concept.md
+> "Familiar enough to switch from Windows or Mac in 10 minutes." — LEGACY_GAMING_CONCEPT.md
 > (§Three User Experiences) + "Fast is a feature."
 
 - **Bar to clear:** macOS Spotlight (`Cmd+Space` → instant fuzzy launch + inline
   calculator + system actions) **and** the VSCode command palette / rofi (run an
-  *action*, not just open a thing). RaeenOS fuses them: one surface that both
+  *action*, not just open a thing). AthenaOS fuses them: one surface that both
   **launches** (apps, files) and **runs** (settings jumps, system actions),
   ranked together, dispatched by one Enter.
 
@@ -60,7 +60,7 @@ hotkey, (b) a floating glass surface, and (c) the Enter→dispatch mapping.
   characters are **bolded** in each row; arrow + Enter; a one-line "no results".
   **Take:** match-span emphasis (`SearchResult.highlights` already provides it),
   the run-an-action model, keyboard-only flow. **Avoid:** the mode-prefix
-  (`>`/`@`/`#`) cognitive load — RaeenOS ranks apps/actions/files in *one* list,
+  (`>`/`@`/`#`) cognitive load — AthenaOS ranks apps/actions/files in *one* list,
   no prefix required (a category filter is optional, not mandatory).
 - **rofi / Albert (Linux):** dmenu-style, extremely fast, plugin actions, strong
   keyboard focus line. **Take:** the "everything is an action" breadth + the
@@ -70,13 +70,13 @@ hotkey, (b) a floating glass surface, and (c) the Enter→dispatch mapping.
   *slow to appear* and web-biased. **Take:** the unified categories. **Avoid:**
   the latency and the web bias (`SearchEngine` already targets <100ms p99).
 
-**RaeenOS synthesis:** Spotlight's *placement and instancy* + VSCode's *match
+**AthenaOS synthesis:** Spotlight's *placement and instancy* + VSCode's *match
 emphasis and action-running* + rofi's *keyboard-first breadth*, rendered as one
 glass surface that reads the live accent — no mode prefixes, local-first ranking.
 
 ---
 
-## RaeenOS design tokens this surface uses
+## AthenaOS design tokens this surface uses
 
 Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 
@@ -230,7 +230,7 @@ single match on `SearchAction`:
   auto-selected.
 
 **`Cap`-gating:** every dispatch routes through the shell's existing
-capability-checked launch/open handlers — the palette never bypasses `RaeShield`.
+capability-checked launch/open handlers — the palette never bypasses `AthGuard`.
 
 ---
 
@@ -335,6 +335,6 @@ returns an error.) A second line asserts cohesion:
   the taskbar/Start.
 
 ### Unblocks (MasterChecklist)
-- Phase 8 (RaeUI/RaeKit): the shared result-row widget + glass-popover pattern.
-- Phase 14 (RaeShell + apps): the launcher/command surface; activates the
+- Phase 8 (AthUI/AthKit): the shared result-row widget + glass-popover pattern.
+- Phase 14 (AthShell + apps): the launcher/command surface; activates the
   currently-dead `search_indexer`.

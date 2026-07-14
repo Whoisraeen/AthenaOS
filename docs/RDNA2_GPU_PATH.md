@@ -22,10 +22,10 @@ by architecture, not by us out-engineering them:**
 | **SoC self-resets at GPU power-up** — the GPU shares the CPU's power/reset domain; powering up GFX can reboot the whole machine. Not fixable in software. | **Gone.** A discrete card is its own power domain. GPU power-up does nothing to the CPU. |
 | **APU won't cold-reset over the wire** — once a boot reaches PSP, the APU is left dirty and *warm* reboots don't clear it; the daemon then can't even re-claim it (`usdriver claim failed 0x503`). Only a physical power-cycle resets it. (Hit live 2026-07-04.) | **Clean FLR / bus reset.** Discrete cards reset properly every run → a fast, repeatable, *remote* test loop. No power-cycle roulette. |
 | **UMA carveout VRAM** — VRAM is stolen from system RAM; CPU-written buffers and the GPU's DMA view must be kept coherent by the still-in-progress TTM/`mm.rs` path. **This is the current PSP blocker** (the `LOAD_TOC` command buffer isn't coherent between the CPU write and the PSP's DMA read). | **Dedicated VRAM + a standard BAR aperture.** No carveout-coherency puzzle — the exact thing blocking PSP today simply isn't present. |
-| **gfx11 MES firmware scheduler halts** (the original `0x7654` wall the whole C-driver strategy exists to bypass). | **KIQ-based queue mapping** (RDNA2's `gfx10.3` path), which RaeenOS has *already proven*. The finicky MES scheduler isn't on the critical path. |
+| **gfx11 MES firmware scheduler halts** (the original `0x7654` wall the whole C-driver strategy exists to bypass). | **KIQ-based queue mapping** (RDNA2's `gfx10.3` path), which AthenaOS has *already proven*. The finicky MES scheduler isn't on the critical path. |
 
 **Bottom line:** on the APU we're defusing a bomb wired into the CPU. On a discrete
-card the bomb isn't there. Proving 3D on *any* AMD GPU unblocks the entire RaeGFX
+card the bomb isn't there. Proving 3D on *any* AMD GPU unblocks the entire AthGFX
 submit pipeline (compositor → wgpu/Vulkan-equivalent → games); the APU then becomes a
 "make the fragile one behave later" problem instead of a total blocker.
 
@@ -68,7 +68,7 @@ Used RX 6600: **~$150–200**.
 
 1. **A cheap used desktop tower with a PCIe x16 slot + a ≥400 W PSU** — *recommended*.
    Most reliable dev vehicle; clean VFIO + FLR; ~$100–200 used. Run Arch (mirror the
-   Athena loop) or bare-metal RaeenOS directly.
+   Athena loop) or bare-metal AthenaOS directly.
 2. **An eGPU enclosure over USB4/Thunderbolt** — keeps the UM760 as the host (the
    7640HS has USB4), but adds TB/USB4 passthrough quirks and lower bandwidth. Workable,
    not preferred for first bring-up.
@@ -97,11 +97,11 @@ Milestones mirror the Strategy-B M-series. Each is compile-and-verify against th
   path should clear the carveout-coherency wall that blocks Phoenix today. Watch PSP
   `LOAD_TOC` / `SETUP_TMR` succeed (the discrete VRAM MC addresses are BAR-coherent).
 - **R4 — KIQ ring bring-up + a GFX submit.** RDNA2 maps queues via the KIQ/MEC (proven
-  in RaeenOS), not the gfx11 MES. Bring up the GFX/compute rings, submit a trivial
+  in AthenaOS), not the gfx11 MES. Bring up the GFX/compute rings, submit a trivial
   packet, confirm the fence signals.
 - **R5 — First triangle → scanout.** A `vkQueueSubmit`-equivalent draw → direct scanout
   on a real panel (modeset + EDID) → the Concept Year-1 "Vulkan demo on real GPU."
-- **R6 — Wire to RaeGFX / Mesa (RADV lineage) → Proton/Steam.** The gaming payoff.
+- **R6 — Wire to AthGFX / Mesa (RADV lineage) → Proton/Steam.** The gaming payoff.
 
 ---
 

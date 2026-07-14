@@ -4,7 +4,7 @@
  *
  * Aperture-ownership handoff — on Linux a real GPU driver evicts the firmware
  * framebuffer (efifb/vesafb) from the PCI aperture before taking over. In the
- * RaeenOS model the compositor/scanout handoff is handled elsewhere (no fbdev to
+ * AthenaOS model the compositor/scanout handoff is handled elsewhere (no fbdev to
  * evict), so this reports success-of-nothing to do; the real removal, if needed,
  * is backed by raeen_linuxkpi at M5. License boundary (../../README.md): surface.
  */

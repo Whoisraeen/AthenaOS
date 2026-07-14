@@ -204,7 +204,7 @@ fn matches_qemu(manufacturer: &str, product: &str, bios_vendor: &str) -> bool {
         || bv.contains("bochs")
 }
 
-/// True when the DMI block is still the RaeenOS placeholder — the SMBIOS
+/// True when the DMI block is still the AthenaOS placeholder — the SMBIOS
 /// scanner couldn't read real tables. Happens on BOTH QEMU-UEFI stages and
 /// real UEFI boards: the legacy 0xF0000 scan misses tables that live in the
 /// EFI config table. An unread DMI therefore proves nothing about being
@@ -213,7 +213,7 @@ fn matches_qemu(manufacturer: &str, product: &str, bios_vendor: &str) -> bool {
 fn dmi_unread(manufacturer: &str) -> bool {
     manufacturer
         .to_ascii_lowercase()
-        .contains("raeenos virtual")
+        .contains("athenaos virtual")
 }
 
 /// Run the match logic. Returns the best-fit `HardwareProfile`.
@@ -460,7 +460,7 @@ pub fn run_boot_smoketest() {
 pub fn dump_text() -> String {
     let dmi = get_dmi();
     let mut out = String::new();
-    out.push_str("# RaeenOS hardware profile + DMI snapshot\n");
+    out.push_str("# AthenaOS hardware profile + DMI snapshot\n");
     out.push_str(&alloc::format!(
         "system_manufacturer: {}\n",
         dmi.system_manufacturer

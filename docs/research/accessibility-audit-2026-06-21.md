@@ -75,10 +75,10 @@ raeui widget role inference + `provider_nodes_for_window`. Status `[~]` in PARIT
 **GAP vs Win/macOS:**
 - **Widget provider not connected (P0).** `publish_window_widgets` / `provider_nodes_for_window`
   exist but have **zero callers** — the live tree is window-tier only. VoiceOver/Narrator name
-  every control; RaeenOS names only window titles. A reader is near-useless until apps publish
+  every control; AthenaOS names only window titles. A reader is near-useless until apps publish
   their widget subtrees.
 - **No real TTS (P1).** `LogSpeechSink` proves logic in QEMU; there is no `AudioSpeechSink` to
-  RaeAudio PCM, so nothing is actually *spoken*. Iron/audio-gated (Phase 7).
+  AthAudio PCM, so nothing is actually *spoken*. Iron/audio-gated (Phase 7).
 - **No reader navigation commands / gestures (P1):** no "next heading/link/form-field" verbs
   driven by live keys (the verbs exist in the unused `raeaccessibility` crate, not the live path).
 
@@ -98,7 +98,7 @@ cue = four redundant signals — exemplary). Token `elev.focus` + HC `focus_ring
 - **No unified desktop focus order (P0).** The main desktop shell (taskbar, start, system tray,
   notification center, control center) has **no Tab traversal across chrome elements** and no
   consistent visible focus ring on them — keyboard nav is ad-hoc per overlay. macOS Full
-  Keyboard Access / Windows Tab+arrows reach every chrome affordance; RaeenOS does not.
+  Keyboard Access / Windows Tab+arrows reach every chrome affordance; AthenaOS does not.
 - **No focus trapping contract in modals (P1):** modal flag exists in raeui traits; the
   Tab-wrap-within-dialog behavior is not enforced at the shell level.
 - **"No mouse required" is unproven (P1):** no audit asserts every flow is keyboard-reachable.

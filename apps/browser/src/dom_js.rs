@@ -1,7 +1,7 @@
 //! Browser JS↔DOM bridge — wiring `rae_js`'s host-object API to `raeweb`'s live DOM.
 //!
-//! RaeenOS_Concept.md §"3. Web apps via PWA support that actually feels native (renders
-//! through RaeUI)": a page is only interactive if its script can read and mutate the
+//! LEGACY_GAMING_CONCEPT.md §"3. Web apps via PWA support that actually feels native (renders
+//! through AthUI)": a page is only interactive if its script can read and mutate the
 //! document. The two engines now each ship half of that — `rae_js` exposes a host-object
 //! embedder API ([`rae_js::HostObject`]) and `raeweb` exposes a mutable document
 //! ([`raeweb::DomDocument`]). This module is the join that lives where both crates are in

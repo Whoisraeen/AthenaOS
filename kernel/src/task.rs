@@ -1,7 +1,7 @@
 use crate::arch::VirtAddr;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-// 64 KiB. The synchronous RaeFS path stacks multiple BLOCK_SIZE (4 KiB)
+// 64 KiB. The synchronous AthFS path stacks multiple BLOCK_SIZE (4 KiB)
 // buffers per frame (write_at -> insert_extent -> insert_into_node (recursive)
 // -> allocate_block), which overflowed a 16 KiB stack and silently corrupted
 // saved registers (there is no guard page on heap-backed kernel stacks).
@@ -101,7 +101,7 @@ pub enum TaskPriority {
     Game,
 }
 
-/// Deadline scheduling parameters for SCHED_GAME hard real-time tasks.
+/// Deadline scheduling parameters for SCHED_BODY hard real-time tasks.
 /// Attached to Game-priority tasks that need guaranteed timing (compositor, audio, game threads).
 #[derive(Debug, Clone, Copy)]
 pub struct DeadlineTask {
@@ -271,7 +271,7 @@ pub struct Task {
     /// guest can own its GS base. `arch_prctl(ARCH_SET_GS)` stays refused for
     /// the Linux ABI (Linux libcs use FS); Win32 uses the native SYS_SET_GS_BASE.
     pub fs_base: u64,
-    /// Win32 TEB pointer for RaeBridge guests (the user-visible GS base).
+    /// Win32 TEB pointer for AthBridge guests (the user-visible GS base).
     /// 0 for native/Linux tasks. Saved/restored across context switches like
     /// `fs_base` (see scheduler.rs) so a guest's `gs:[0x30]` TEB self-pointer
     /// survives reschedules. `SYS_SET_GS_BASE` (282) writes it. Unlike

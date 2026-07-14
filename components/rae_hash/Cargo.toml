@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS hashing / checksum core: SHA-256, SHA-1, MD5, CRC32 + lowercase hex
-# (RaeenOS_Concept.md §"security by default, not by friction" / "the user owns
+# AthenaOS hashing / checksum core: SHA-256, SHA-1, MD5, CRC32 + lowercase hex
+# (LEGACY_GAMING_CONCEPT.md §"security by default, not by friction" / "the user owns
 # the machine") — so a downloaded file's integrity can be verified locally
 # against a publisher's posted checksum, on the user's own machine, with no
 # network round-trip and no trust in a third party.

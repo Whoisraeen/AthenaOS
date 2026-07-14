@@ -1,6 +1,6 @@
 //! # RaeMarkdown — a never-panic CommonMark-subset render model (`no_std`).
 //!
-//! RaeenOS_Concept.md — *"Built for people who care about how things feel."*
+//! LEGACY_GAMING_CONCEPT.md — *"Built for people who care about how things feel."*
 //! Markdown is the text format that powers the Notes app, the in-OS docs
 //! viewer, README rendering in the file browser, and chat message bodies. This
 //! crate turns a string of Markdown into a typed [`Document`] — a tree of

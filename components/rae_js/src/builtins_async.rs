@@ -1,6 +1,6 @@
 //! # RaeJs async runtime: `Promise` + a microtask/macrotask EVENT LOOP.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy (criterion #5 — "the web browser is the
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy (criterion #5 — "the web browser is the
 //! universal app runtime; PWAs that feel native"): real web JavaScript is **asynchronous** —
 //! `fetch().then(...)`, `setTimeout`, event handlers, and `await` all rest on the
 //! Promise/microtask machinery and the host event loop. The [interpreter](crate::interp)

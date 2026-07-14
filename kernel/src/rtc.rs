@@ -374,7 +374,7 @@ pub fn dump_text() -> alloc::string::String {
     };
     let mut out = String::new();
     out.push_str(&alloc::format!(
-        "# RaeenOS wall clock (CMOS RTC + {} delta)\n\
+        "# AthenaOS wall clock (CMOS RTC + {} delta)\n\
          boot_wall: {:04}-{:02}-{:02} {:02}:{:02}:{:02} UTC\n\
          boot_epoch: {}\n\
          now_epoch:  {}\n\

@@ -1,6 +1,6 @@
-//! Declarative view tree — the core abstraction for RaeKit UIs.
+//! Declarative view tree — the core abstraction for AthKit UIs.
 //!
-//! Every RaeKit app builds its interface by composing `ViewNode` values.
+//! Every AthKit app builds its interface by composing `ViewNode` values.
 //! `ViewNode` is a pure data description of what should appear on screen;
 //! the framework diffs and renders it against the compositor surface.
 
@@ -70,7 +70,7 @@ impl Color {
         Self::rgb(175, 82, 222)
     }
 
-    // ── RaeenOS semantic colors ──────────────────────────────────────
+    // ── AthenaOS semantic colors ──────────────────────────────────────
     pub const fn surface() -> Self {
         Self::from_hex(0xFF_1A_1A_22)
     }

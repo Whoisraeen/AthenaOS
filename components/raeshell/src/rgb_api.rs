@@ -1,7 +1,7 @@
 //! RGB Unified API — one API for all RGB hardware.
 //!
 //! Every motherboard, every fan, every keyboard, one API, one config.
-//! RGB hell is a Windows problem; RaeenOS solves it.
+//! RGB hell is a Windows problem; AthenaOS solves it.
 //!
 //! The `RgbDevice` trait abstracts over USB HID RGB devices.
 //! `RgbManager` discovers devices and provides unified control.

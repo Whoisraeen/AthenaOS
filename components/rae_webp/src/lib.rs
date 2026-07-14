@@ -1,15 +1,15 @@
 //! # RaeWebP — a never-panic, `no_std` WebP image decoder (VP8L lossless).
 //!
-//! RaeenOS_Concept.md §creators / media (criterion #5: "show my photos" / web
+//! LEGACY_GAMING_CONCEPT.md §creators / media (criterion #5: "show my photos" / web
 //! images): a daily driver must display the images people actually encounter.
 //! WebP is the **dominant modern web image format** — Google serves it across the
 //! web, and a browser/Photos viewer that can't decode WebP looks broken on a huge
-//! fraction of real pages. RaeenOS already decodes BMP/GIF/PNG/JPEG; this crate is
+//! fraction of real pages. AthenaOS already decodes BMP/GIF/PNG/JPEG; this crate is
 //! the from-scratch WebP path that completes the still-image stack.
 //!
-//! Output is a flat ARGB8888 `Vec<u32>` (`0xAARRGGBB`) — the RaeGFX compositor /
+//! Output is a flat ARGB8888 `Vec<u32>` (`0xAARRGGBB`) — the AthGFX compositor /
 //! Canvas pixel format, **matching [`rae_png`]/`rae_bmp`/`rae_gif`** so a gallery,
-//! a tab-strip, or a Quick Look preview can blit any RaeenOS image format through
+//! a tab-strip, or a Quick Look preview can blit any AthenaOS image format through
 //! one uniform pixel model.
 //!
 //! ## What it decodes
@@ -89,7 +89,7 @@ pub enum WebpError {
 /// A decoded image: a flat ARGB8888 buffer plus dimensions.
 ///
 /// `pixels.len() == (width * height) as usize`. Each `u32` is `0xAARRGGBB` —
-/// identical to [`rae_png`]/`rae_bmp`/`rae_gif` so callers consume every RaeenOS
+/// identical to [`rae_png`]/`rae_bmp`/`rae_gif` so callers consume every AthenaOS
 /// still-image decoder through one pixel model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WebpImage {

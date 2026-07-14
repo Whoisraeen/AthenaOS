@@ -1,4 +1,4 @@
-//! RaeKit — application development SDK for RaeenOS.
+//! AthKit — application development SDK for AthenaOS.
 //!
 //! Declarative, Rust-first. SwiftUI-style ergonomics without the Apple lock-in.
 //!
@@ -28,7 +28,7 @@
 //!     fn on_launch(&mut self) -> ViewNode {
 //!         VStack::new()
 //!             .spacing(12.0)
-//!             .child(Text::new("Hello, RaeenOS!").font_size(24.0).bold())
+//!             .child(Text::new("Hello, AthenaOS!").font_size(24.0).bold())
 //!             .child(ButtonBuilder::new("Click me").action(1))
 //!             .padding(16.0)
 //!             .build()
@@ -117,7 +117,7 @@ macro_rules! view {
 pub fn run_boot_smoketest() -> bool {
     // Test basic tree construction via builders (avoiding macro issues for now)
     let _tree = crate::builders::VStack::new()
-        .child(crate::builders::Text::new("RaeKit Test").build())
+        .child(crate::builders::Text::new("AthKit Test").build())
         .build();
 
     // Test layout engine
@@ -138,7 +138,7 @@ pub fn run_boot_smoketest() -> bool {
 // ── Prelude ──────────────────────────────────────────────────────────────
 
 /// Convenience re-exports for app development. `use raekit::prelude::*;`
-/// brings in everything needed to build a typical RaeKit app.
+/// brings in everything needed to build a typical AthKit app.
 pub mod prelude {
     pub use crate::app::{AppDescriptor, AppEvent, AppRunner, LifecycleState, MouseButton, RaeApp};
     pub use crate::builders::{
@@ -268,7 +268,7 @@ pub mod sys {
     pub const SYS_NET_DNS: u64 = 264;
     /// Live theme read (rae_abi::syscall::SYS_THEME_GET). rdi=out ptr, rsi=cap.
     pub const SYS_THEME_GET: u64 = 266;
-    /// Feed PCM into the RaeAudio mixer (rae_abi::syscall::SYS_AUDIO_SUBMIT).
+    /// Feed PCM into the AthAudio mixer (rae_abi::syscall::SYS_AUDIO_SUBMIT).
     /// rdi=samples ptr (*const i16), rsi=frame_count, rdx=format_flags.
     pub const SYS_AUDIO_SUBMIT: u64 = 267;
 
@@ -415,7 +415,7 @@ pub mod sys {
         }
     }
 
-    /// Feed interleaved 48 kHz i16-stereo PCM into the RaeAudio mixer via
+    /// Feed interleaved 48 kHz i16-stereo PCM into the AthAudio mixer via
     /// `SYS_AUDIO_SUBMIT` (267) — the app → mixer → ring → HDA path. `samples`
     /// is interleaved L,R pairs, so `samples.len()` must be even; a trailing
     /// odd sample is dropped from the frame count. Returns the number of frames
@@ -752,7 +752,7 @@ pub mod sys {
     // ── Userspace TCP/UDP sockets + DNS (rae_abi net block 121-125 + 264) ─────
     // Thin, never-panicking wrappers over the EXISTING socket syscalls. These
     // are the live-network seam the HTTP client (`raenet::http1`) rides on, the
-    // RaeNet Concept pillar's userspace path above L3. No new syscall numbers —
+    // AthNet Concept pillar's userspace path above L3. No new syscall numbers —
     // every wrapper matches docs/SYSCALL_TABLE.md exactly.
 
     /// `SYS_NET_SOCKET` (121). Socket protocol selector (`rdi`).
@@ -1186,7 +1186,7 @@ pub mod sys {
         }
     }
 
-    /// Move/rename `old` → `new` (a CoW move within the session home on RaeFS).
+    /// Move/rename `old` → `new` (a CoW move within the session home on AthFS).
     /// Returns `Ok(())`, or [`E_VFS_EXISTS`] when `new` is taken (the source is
     /// preserved, so the caller can disambiguate and retry).
     pub fn rename(old: &str, new: &str) -> Result<(), u64> {
@@ -1454,8 +1454,8 @@ pub extern "C" fn __rust_alloc_error_handler(_: Layout) -> ! {
 
 #[cfg(test)]
 mod hello_raekit_app_tests {
-    //! The "Hello-RaeKit" sample app, host-KAT'd: a declarative button with a click
-    //! handler. Proves the RaeKit app pattern (on_launch builds a declarative view
+    //! The "Hello-AthKit" sample app, host-KAT'd: a declarative button with a click
+    //! handler. Proves the AthKit app pattern (on_launch builds a declarative view
     //! tree with a Button; a click `AppEvent::Action` invokes the handler). In the
     //! live shell the handler fires a syscall (`raekit::syscalls`); host-side those
     //! are not issued (see the crate docs), so the KAT records the click instead.
@@ -1465,19 +1465,19 @@ mod hello_raekit_app_tests {
 
     const SAVE_ACTION: u32 = 1;
 
-    struct HelloRaeKit {
+    struct HelloAthKit {
         clicks: u32,
     }
 
-    impl RaeApp for HelloRaeKit {
+    impl RaeApp for HelloAthKit {
         fn name(&self) -> &str {
-            "Hello RaeKit"
+            "Hello AthKit"
         }
         fn on_launch(&mut self) -> ViewNode {
             // Declarative UI — a heading + a button bound to SAVE_ACTION.
             VStack::new()
                 .spacing(12.0)
-                .child(Text::new("Hello, RaeenOS!").build())
+                .child(Text::new("Hello, AthenaOS!").build())
                 .child(ButtonBuilder::new("Save").action(SAVE_ACTION).build())
                 .build()
         }
@@ -1506,8 +1506,8 @@ mod hello_raekit_app_tests {
 
     #[test]
     fn declares_a_button_and_handles_its_click() {
-        let mut app = HelloRaeKit { clicks: 0 };
-        assert_eq!(app.name(), "Hello RaeKit");
+        let mut app = HelloAthKit { clicks: 0 };
+        assert_eq!(app.name(), "Hello AthKit");
 
         // on_launch builds a declarative tree that contains the Save button.
         let tree = app.on_launch();

@@ -6,7 +6,7 @@ use crate::block_io::ACTIVE_BLOCK_DEVICE;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering};
 
-const RAEFS_MAGIC: u64 = 0x526165465321; // "RaeFS!"
+const RAEFS_MAGIC: u64 = 0x526165465321; // "AthFS!"
 const BLOCK_SIZE: usize = 4096;
 const MAX_SNAPSHOTS: usize = 16;
 const MAX_JOURNAL_ENTRIES: usize = 64;
@@ -126,7 +126,7 @@ const EXTENT_FLAG_ENCRYPTED: u32 = 1 << 0;
 const EXTENT_FLAG_COMPRESSED: u32 = 1 << 1;
 const EXTENT_FLAG_GAME: u32 = 1 << 2;
 
-/// Syscall / VFS errors for RaeFS-specific surfaces (see docs/SYSCALL_TABLE.md nr 99).
+/// Syscall / VFS errors for AthFS-specific surfaces (see docs/SYSCALL_TABLE.md nr 99).
 pub const E_RAEFS_NO_MOUNT: u64 = 0xFFFF_FFFF_FFFF_F901;
 pub const E_RAEFS_EXTENT_FAIL: u64 = 0xFFFF_FFFF_FFFF_F902;
 pub const E_RAEFS_BAD_PATH: u64 = 0xFFFF_FFFF_FFFF_F903;
@@ -208,14 +208,14 @@ pub struct OrphanCleanupReport {
 
 // ─── Filesystem ────────────────────────────────────────────────────────────────
 
-pub struct RaeFS {
+pub struct AthFS {
     pub superblock: Superblock,
 }
 
-/// Aggregated RaeFS capacity for the Settings → Storage panel, read safely.
+/// Aggregated AthFS capacity for the Settings → Storage panel, read safely.
 ///
 /// Returns `(total_bytes, free_bytes, block_size)` if a volume is mounted, or
-/// `None` if RaeFS is unmounted or the `RAEFS` lock is contended. Uses a
+/// `None` if AthFS is unmounted or the `RAEFS` lock is contended. Uses a
 /// non-blocking `try_lock` so a procfs dump can never deadlock on a held
 /// filesystem lock (the same discipline as `proc_dump_text`). Read-only.
 pub fn capacity_bytes() -> Option<(u64, u64, u64)> {
@@ -247,13 +247,13 @@ pub fn proc_dump_text() -> alloc::string::String {
         match attempt {
             Some(g) => g,
             None => {
-                out.push_str("RaeFS Status: <busy — could not acquire lock>\n");
+                out.push_str("AthFS Status: <busy — could not acquire lock>\n");
                 return out;
             }
         }
     };
     if let Some(ref fs) = *lock {
-        out.push_str("RaeFS Status: Mounted\n");
+        out.push_str("AthFS Status: Mounted\n");
         out.push_str(&alloc::format!("  Magic: 0x{:X}\n", fs.superblock.magic));
         out.push_str(&alloc::format!(
             "  Total Blocks: {}\n",
@@ -265,13 +265,13 @@ pub fn proc_dump_text() -> alloc::string::String {
         ));
         out.push_str(&alloc::format!(
             "  Bitmap Blocks:   {} (covers {} blocks)\n",
-            RaeFS::bitmap_span_blocks(&fs.superblock),
-            RaeFS::bitmap_span_blocks(&fs.superblock) * (BLOCK_SIZE as u64 * 8)
+            AthFS::bitmap_span_blocks(&fs.superblock),
+            AthFS::bitmap_span_blocks(&fs.superblock) * (BLOCK_SIZE as u64 * 8)
         ));
         out.push_str(&alloc::format!(
             "  Refcount Blocks: {} (covers {} blocks)\n",
-            RaeFS::refcount_span_blocks(&fs.superblock),
-            RaeFS::refcount_span_blocks(&fs.superblock) * (BLOCK_SIZE as u64)
+            AthFS::refcount_span_blocks(&fs.superblock),
+            AthFS::refcount_span_blocks(&fs.superblock) * (BLOCK_SIZE as u64)
         ));
         out.push_str(&alloc::format!(
             "  Snapshots:    {}\n",
@@ -381,12 +381,12 @@ pub fn proc_dump_text() -> alloc::string::String {
             .unwrap_or(0);
         out.push_str(&alloc::format!("  Game Extents:      {}\n", extent_count));
     } else {
-        out.push_str("RaeFS Status: Not Mounted\n");
+        out.push_str("AthFS Status: Not Mounted\n");
     }
     out
 }
 
-pub static RAEFS: spin::Mutex<Option<RaeFS>> = spin::Mutex::new(None);
+pub static RAEFS: spin::Mutex<Option<AthFS>> = spin::Mutex::new(None);
 
 /// Human-readable label for each snapshot id (Phase 5.1). The on-disk
 /// `SnapshotEntry` stores only `id`+`timestamp`; userspace passes a name via
@@ -486,14 +486,14 @@ pub fn run_snapshot_smoketest() {
     snapshot_smoketest_body();
 }
 
-/// Install a freshly formatted RaeFS on a RAM block device as the ACTIVE
+/// Install a freshly formatted AthFS on a RAM block device as the ACTIVE
 /// device + global mount, run `f`, then restore the real storage state.
 /// `RamBlockDevice` is pure memory — its `write_sector` involves no real disk
 /// and no safe-mode guard — so this is safe-mode-compatible by construction
 /// (how the rollback round-trip test has always worked). Boot-phase only:
 /// the swap assumes single-threaded access to the storage globals.
 /// pub(crate): crash_dump's persist smoketest proves its write+readback here
-/// when no on-disk mount exists (default QEMU disk has no RaeFS partition).
+/// when no on-disk mount exists (default QEMU disk has no AthFS partition).
 pub(crate) fn with_ram_raefs<R>(f: impl FnOnce() -> R) -> Option<R> {
     use alloc::boxed::Box;
     with_custom_raefs_device(Box::new(RamBlockDevice::new(4096)), f)
@@ -502,7 +502,7 @@ pub(crate) fn with_ram_raefs<R>(f: impl FnOnce() -> R) -> Option<R> {
 /// Same swap-format-run-restore dance as [`with_ram_raefs`], but over a
 /// caller-supplied device. The device must be memory-backed (or wrap one):
 /// the RAM window exempts the volume from the safe-mode write gate, so
-/// nothing here may reach real storage. fde.rs mounts RaeFS through its
+/// nothing here may reach real storage. fde.rs mounts AthFS through its
 /// AES-XTS wrapper this way to prove full-volume encryption.
 pub(crate) fn with_custom_raefs_device<R>(
     dev: alloc::boxed::Box<dyn crate::block_io::BlockDevice>,
@@ -520,7 +520,7 @@ pub(crate) fn with_custom_raefs_device<R>(
     crate::block_io::set_active_block_device(dev);
     *crate::block_io::ROOT_PARTITION_LBA.lock() = 0;
 
-    let result = match RaeFS::format() {
+    let result = match AthFS::format() {
         Some(fs) => {
             *RAEFS.lock() = Some(fs);
             Some(f())
@@ -584,7 +584,7 @@ pub fn is_err_sentinel(rax: u64) -> bool {
 }
 
 /// Phase 5 verify: snapshot → write → restore round-trip end to end, on a
-/// self-contained in-memory RaeFS. Proves the Concept's "one-click rollback":
+/// self-contained in-memory AthFS. Proves the Concept's "one-click rollback":
 /// take a snapshot, modify a file, roll back, and confirm the OLD content
 /// returns (and the CoW write between snapshot and rollback genuinely diverged
 /// — the post-snapshot data block has refcount > 1 so the modify allocates a
@@ -615,7 +615,7 @@ pub fn run_rollback_roundtrip_smoketest() {
     let v2: &[u8] = b"MODIFIED-after-snapshot-v2-xx";
 
     let result = (|| {
-        let mut fs = RaeFS::format()?;
+        let mut fs = AthFS::format()?;
         // Write v1, snapshot it, then overwrite with v2.
         if !fs.write_file_bytes_on("rollback.txt", v1) {
             return Some((false, false, false));
@@ -630,7 +630,7 @@ pub fn run_rollback_roundtrip_smoketest() {
         let rolled = fs.rollback_to_snapshot(snap).is_ok();
         // The mount's superblock changed on rollback — re-open the volume so we
         // read through the restored metadata, exactly as a remount would.
-        let after = RaeFS::mount().and_then(|m| m.read_file_bytes_on("rollback.txt"));
+        let after = AthFS::mount().and_then(|m| m.read_file_bytes_on("rollback.txt"));
         let recovered_v1 = after.as_deref() == Some(v1);
         Some((mid_is_v2, rolled, recovered_v1))
     })();
@@ -706,7 +706,7 @@ fn cow_journal_crash_smoketest_body() {
         let old_phys = ext0.physical_block;
         // Precondition: the post-snapshot block must be shared, or there is no
         // divergence to journal and the test would be vacuously green.
-        let rc = RaeFS::read_refcount(&fs.superblock, old_phys).unwrap_or(1);
+        let rc = AthFS::read_refcount(&fs.superblock, old_phys).unwrap_or(1);
         if rc <= 1 {
             return Some((false, false));
         }
@@ -721,7 +721,7 @@ fn cow_journal_crash_smoketest_body() {
 
         let new_phys = fs.allocate_block()?;
         let jslot = fs.journal_begin(inode_id, 0, old_phys, new_phys).ok()?;
-        RaeFS::write_data_block(new_phys, &new_block).ok()?;
+        AthFS::write_data_block(new_phys, &new_block).ok()?;
         let mut ino2 = fs.get_inode(inode_id)?;
         let updated = BTreeLeafEntry {
             logical_start: 0,
@@ -743,7 +743,7 @@ fn cow_journal_crash_smoketest_body() {
 
         // ── REPLAY (what a remount does) ──
         let sb = fs.superblock;
-        RaeFS::replay_journal(&sb);
+        AthFS::replay_journal(&sb);
 
         // ── ASSERT THE REWIND ──
         // (a) the extent for logical block 0 points back at the original block.
@@ -753,9 +753,9 @@ fn cow_journal_crash_smoketest_body() {
 
         // (b) the speculative block was freed (bitmap bit clear AND refcount 0).
         let mut bm = [0u8; BLOCK_SIZE];
-        RaeFS::read_block(sb.block_bitmap_block, &mut bm).ok()?;
+        AthFS::read_block(sb.block_bitmap_block, &mut bm).ok()?;
         let bit_clear = (bm[new_phys as usize / 8] & (1 << (new_phys as usize % 8))) == 0;
-        let spec_rc = RaeFS::read_refcount(&sb, new_phys).unwrap_or(255);
+        let spec_rc = AthFS::read_refcount(&sb, new_phys).unwrap_or(255);
         let spec_freed = bit_clear && spec_rc == 0;
 
         let crash_reverted = was_torn && pointer_reverted && spec_freed;
@@ -800,11 +800,11 @@ pub fn run_large_volume_bound_smoketest() {
 
     // (1) Sizing: a 40000-block volume (~156 MiB) needs 2 bitmap blocks
     // (40000 > 32768) and 10 refcount blocks (40000 / 4096 = 9.76 → 10).
-    let bm2 = RaeFS::bitmap_blocks_for(40000);
-    let rc10 = RaeFS::refcount_blocks_for(40000);
+    let bm2 = AthFS::bitmap_blocks_for(40000);
+    let rc10 = AthFS::refcount_blocks_for(40000);
     // A small 256-block volume stays single-block (the byte-identical path).
-    let bm1 = RaeFS::bitmap_blocks_for(256);
-    let rc1 = RaeFS::refcount_blocks_for(256);
+    let bm1 = AthFS::bitmap_blocks_for(256);
+    let rc1 = AthFS::refcount_blocks_for(256);
     let sizing_ok = bm2 == 2 && rc10 == 10 && bm1 == 1 && rc1 == 1;
 
     // (2) Defensive bound, multi-block volume: a coherent 40000-block volume
@@ -816,8 +816,8 @@ pub fn run_large_volume_bound_smoketest() {
         sb.refcount_blocks = rc10;
         sb
     };
-    let big_bm_limit = RaeFS::bitmap_index_limit(&big);
-    let big_rc_limit = RaeFS::refcount_index_limit(&big);
+    let big_bm_limit = AthFS::bitmap_index_limit(&big);
+    let big_rc_limit = AthFS::refcount_index_limit(&big);
     let big_ok = big_bm_limit == 40000 && big_rc_limit == 40000;
 
     // (3) Defensive bound, HOSTILE superblock: total_blocks lies (100000) but
@@ -831,8 +831,8 @@ pub fn run_large_volume_bound_smoketest() {
         sb.refcount_blocks = 1;
         sb
     };
-    let h_bm_limit = RaeFS::bitmap_index_limit(&hostile);
-    let h_rc_limit = RaeFS::refcount_index_limit(&hostile);
+    let h_bm_limit = AthFS::bitmap_index_limit(&hostile);
+    let h_rc_limit = AthFS::refcount_index_limit(&hostile);
     let no_oob = h_bm_limit == bits_per_block && h_rc_limit == bytes_per_block;
 
     let pass = sizing_ok && big_ok && no_oob;
@@ -1012,7 +1012,7 @@ pub fn read_flat_file(name: &str) -> Option<alloc::vec::Vec<u8>> {
 
 /// Cached mirror of `superblock.compression_enabled`. Block-I/O helpers such as
 /// `write_data_block` must check the compression flag WITHOUT re-locking
-/// `RAEFS`: callers like `RaeFSInode::write_at` already hold `RAEFS.lock()`
+/// `RAEFS`: callers like `AthFSInode::write_at` already hold `RAEFS.lock()`
 /// across the whole operation, and `spin::Mutex` is non-reentrant, so a re-lock
 /// inside `write_data_block` self-deadlocks. Kept in sync at mount/format and in
 /// `enable_compression`.
@@ -1027,7 +1027,7 @@ pub static COMPRESS_LOGICAL_BYTES: AtomicU64 = AtomicU64::new(0);
 pub static COMPRESS_STORED_BYTES: AtomicU64 = AtomicU64::new(0);
 pub static COMPRESS_BLOCKS: AtomicU64 = AtomicU64::new(0);
 
-impl RaeFS {
+impl AthFS {
     /// Read a 4096-byte block from the disk (8 × 512-byte sectors).
     fn read_block(block_idx: u64, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), ()> {
         let lock = ACTIVE_BLOCK_DEVICE.lock();
@@ -1109,7 +1109,7 @@ impl RaeFS {
             // SAFETY GATE — auto-format ONLY a demonstrably blank device.
             // The old unconditional format was a host-data landmine: on
             // Athena the active device is the internal NVMe carrying the
-            // owner's Windows install, and "no RaeFS magic" sent a format
+            // owner's Windows install, and "no AthFS magic" sent a format
             // straight at it (LBA 0 GPT/MBR area) — only the --safe build's
             // write guard stopped it (photographed: "[safe-mode] BLOCKED
             // nvme write lba=0"). Formatting a non-blank disk is the
@@ -1119,12 +1119,12 @@ impl RaeFS {
             // smoketests keep their volume.
             if !Self::device_blank_for_autoformat(&sb_buf) {
                 crate::serial_println!(
-                    "[raefs] no RaeFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via raeinstaller)"
+                    "[raefs] no AthFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via raeinstaller)"
                 );
                 return None;
             }
             crate::serial_println!(
-                "[raefs] blank device, no RaeFS volume — formatting with CoW support..."
+                "[raefs] blank device, no AthFS volume — formatting with CoW support..."
             );
             return Self::format();
         }
@@ -1132,13 +1132,13 @@ impl RaeFS {
         Self::replay_journal(&sb);
 
         crate::serial_println!(
-            "[raefs] Mounted RaeFS (CoW). root={}, free={}/{}",
+            "[raefs] Mounted AthFS (CoW). root={}, free={}/{}",
             sb.root_inode,
             sb.free_blocks,
             sb.total_blocks,
         );
         RAEFS_COMPRESSION_ENABLED.store(sb.compression_enabled != 0, Ordering::Relaxed);
-        let fs = RaeFS { superblock: sb };
+        let fs = AthFS { superblock: sb };
         if let Some(bytes) = fs.read_file_bytes_on("boot_persist.chk") {
             if bytes.len() >= 8 {
                 if let Ok(arr) = bytes[0..8].try_into() {
@@ -1154,7 +1154,7 @@ impl RaeFS {
                 "[raefs] on-disk persistence marker absent (first boot on this volume)"
             );
         }
-        *RAEFS.lock() = Some(RaeFS { superblock: sb });
+        *RAEFS.lock() = Some(AthFS { superblock: sb });
         Some(fs)
     }
 
@@ -1248,15 +1248,15 @@ impl RaeFS {
         Self::write_block(sb.bucket_table_block, &zero).ok()?;
         Self::write_block(sb.versioned_meta_block, &zero).ok()?;
 
-        crate::serial_println!("[raefs] Formatted 1MB RaeFS with CoW + snapshots.");
+        crate::serial_println!("[raefs] Formatted 1MB AthFS with CoW + snapshots.");
         RAEFS_COMPRESSION_ENABLED.store(sb.compression_enabled != 0, Ordering::Relaxed);
-        let fs = RaeFS { superblock: sb };
-        *RAEFS.lock() = Some(RaeFS { superblock: sb });
+        let fs = AthFS { superblock: sb };
+        *RAEFS.lock() = Some(AthFS { superblock: sb });
         Some(fs)
     }
 
     /// Re-read block 0 (the superblock) from the device using the current
-    /// `ROOT_PARTITION_LBA` and confirm the RaeFS magic. The installer calls
+    /// `ROOT_PARTITION_LBA` and confirm the AthFS magic. The installer calls
     /// this right after an on-disk `format()` to prove the freshly-written
     /// root actually reads back (a real write→readback loop) before claiming
     /// the install persisted — not just that the writes returned `Ok`.
@@ -1283,7 +1283,7 @@ impl RaeFS {
         let fsck = fs.fsck_integrity();
         assert_eq!(
             fsck.bitmap_refcount_mismatches, 0,
-            "RaeFS fsck found bitmap/refcount mismatches"
+            "AthFS fsck found bitmap/refcount mismatches"
         );
 
         // 2. B-tree integrity check on referenced inodes.
@@ -2714,7 +2714,7 @@ impl RaeFS {
                     // B-tree extent revert: only if the live extent for this
                     // logical block currently points at the speculative block.
                     if e.new_block != 0 {
-                        let mut tmp = RaeFS { superblock: *sb };
+                        let mut tmp = AthFS { superblock: *sb };
                         let points_at_new = tmp
                             .lookup_extent(&ino, e.block_idx_in_inode)
                             .map(|ext| ext.physical_block == e.new_block)
@@ -2779,7 +2779,7 @@ impl RaeFS {
     }
 
     /// Pre-allocate a large contiguous extent for a game install target.
-    /// Concept §RaeFS game-aware extents: callers pass a flat root-dir path
+    /// Concept §AthFS game-aware extents: callers pass a flat root-dir path
     /// (same namespace as `find_or_create_file`) and an expected byte size.
     pub fn game_install_hint(
         &mut self,
@@ -2865,7 +2865,7 @@ impl RaeFS {
 
     // ─── File Lookup ───────────────────────────────────────────────────────
 
-    /// Resolve or create a flat-name file under the RaeFS root directory.
+    /// Resolve or create a flat-name file under the AthFS root directory.
     /// Caller must hold `RAEFS` when invoking this variant (avoids re-lock).
     /// Look up a flat file name in the root directory (no create).
     pub fn find_flat_inode_on(&self, name: &str) -> Option<u64> {
@@ -3031,14 +3031,14 @@ impl RaeFS {
             };
             let mut block_buf = [0u8; BLOCK_SIZE];
             if offset_in_block != 0 || buf.len() - buf_pos < BLOCK_SIZE {
-                if RaeFS::read_data_block(disk_block, &mut block_buf).is_err() {
+                if AthFS::read_data_block(disk_block, &mut block_buf).is_err() {
                     break;
                 }
             }
             let to_copy = core::cmp::min(BLOCK_SIZE - offset_in_block, buf.len() - buf_pos);
             block_buf[offset_in_block..offset_in_block + to_copy]
                 .copy_from_slice(&buf[buf_pos..buf_pos + to_copy]);
-            let rc = RaeFS::read_refcount(&self.superblock, disk_block).unwrap_or(1);
+            let rc = AthFS::read_refcount(&self.superblock, disk_block).unwrap_or(1);
             if rc > 1 {
                 // Shared with a snapshot — diverge through the SAME journaled
                 // CoW primitive cow_write_block uses, so a crash mid-divergence
@@ -3046,7 +3046,7 @@ impl RaeFS {
                 // persist-inode→commit→dec_refcount/free, all envelope-ordered).
                 // Preserve the per-extent compression flag for the rewritten
                 // block (the old in-line path dropped it).
-                let cow_flags = if RaeFS::block_stored_compressed(&block_buf) {
+                let cow_flags = if AthFS::block_stored_compressed(&block_buf) {
                     EXTENT_FLAG_COMPRESSED
                 } else {
                     0
@@ -3063,7 +3063,7 @@ impl RaeFS {
                 {
                     break;
                 }
-            } else if RaeFS::write_data_block(disk_block, &block_buf).is_err() {
+            } else if AthFS::write_data_block(disk_block, &block_buf).is_err() {
                 break;
             }
             buf_pos += to_copy;
@@ -3178,13 +3178,13 @@ impl RaeFS {
         fs.find_or_create_file_on(path)
     }
 
-    /// Remove a flat-name file from the RaeFS root directory.
+    /// Remove a flat-name file from the AthFS root directory.
     pub fn delete_file(path: &str) -> bool {
         let name = path.trim_start_matches('/');
         if name.contains('/') || name.is_empty() || name.len() > 55 {
             return false;
         }
-        let root_inode = RaeFSInode { id: 0 };
+        let root_inode = AthFSInode { id: 0 };
         use crate::vfs::Inode;
         let root_size = root_inode.size() as usize;
         let mut buf = alloc::vec![0u8; root_size];
@@ -3205,7 +3205,7 @@ impl RaeFS {
         false
     }
 
-    /// Rename a flat-name file in the RaeFS root directory.
+    /// Rename a flat-name file in the AthFS root directory.
     pub fn rename_file(old_path: &str, new_path: &str) -> bool {
         let old_name = old_path.trim_start_matches('/');
         let new_name = new_path.trim_start_matches('/');
@@ -3215,7 +3215,7 @@ impl RaeFS {
         if new_name.is_empty() || new_name.len() > 55 {
             return false;
         }
-        let root_inode = RaeFSInode { id: 0 };
+        let root_inode = AthFSInode { id: 0 };
         use crate::vfs::Inode;
         let root_size = root_inode.size() as usize;
         let mut buf = alloc::vec![0u8; root_size];
@@ -3569,7 +3569,7 @@ pub static FILE_KEY_SELFTEST: AtomicU8 = AtomicU8::new(0);
 
 /// Phase 5.2 R10 proof: verify per-file (FSCRYPT-equivalent) key isolation.
 ///
-/// Concept §RaeFS: "Per-app data buckets — apps see their own data only, system
+/// Concept §AthFS: "Per-app data buckets — apps see their own data only, system
 /// enforces isolation at the FS layer"; §Security: "a system that resists
 /// ransomware structurally". Per-file keys make the blast radius of any leaked
 /// key a single file, not a bucket or the disk.
@@ -3915,7 +3915,7 @@ fn classify_tier(dev: &crate::block_io::BlockDeviceInfo) -> StorageTier {
 }
 
 /// Detect present block-device tiers from the live drivers and bring up the
-/// tiered-storage engine. Concept §RaeFS tiering: "Detect NVMe + SATA +
+/// tiered-storage engine. Concept §AthFS tiering: "Detect NVMe + SATA +
 /// spinning rust as distinct tiers." Detection sources: the block-device
 /// registry (`BLOCK_LAYER`) plus the AHCI controller list (rotational/SATA).
 pub fn tiered_storage_init() {
@@ -4234,7 +4234,7 @@ impl ExtentManager {
 
     /// Allocate a contiguous extent of `block_count` blocks from the free bitmap.
     /// Returns the starting block number, or None if no contiguous region exists.
-    pub fn allocate_extent(fs: &mut RaeFS, block_count: u64, inode_id: u64) -> Option<GameExtent> {
+    pub fn allocate_extent(fs: &mut AthFS, block_count: u64, inode_id: u64) -> Option<GameExtent> {
         // Scan for a contiguous free run across the (possibly multi-block)
         // bitmap. Bits are tested via `is_block_free`, which reads the correct
         // bitmap block — so this never indexes past one 4096-byte buffer (the
@@ -4243,13 +4243,13 @@ impl ExtentManager {
         if needed == 0 {
             return None;
         }
-        let limit = RaeFS::bitmap_index_limit(&fs.superblock);
+        let limit = AthFS::bitmap_index_limit(&fs.superblock);
 
         let mut run_start: u64 = 0;
         let mut run_len: u64 = 0;
 
         for i in 0..limit {
-            let in_use = !RaeFS::is_block_free(&fs.superblock, i).unwrap_or(false);
+            let in_use = !AthFS::is_block_free(&fs.superblock, i).unwrap_or(false);
             if !in_use {
                 if run_len == 0 {
                     run_start = i;
@@ -4258,10 +4258,10 @@ impl ExtentManager {
                 if run_len >= needed {
                     // Mark all blocks used + refcount 1 across the spans.
                     for b in run_start..run_start + needed {
-                        if RaeFS::set_block_used(&fs.superblock, b).is_err() {
+                        if AthFS::set_block_used(&fs.superblock, b).is_err() {
                             return None;
                         }
-                        let _ = RaeFS::write_refcount(&fs.superblock, b, 1);
+                        let _ = AthFS::write_refcount(&fs.superblock, b, 1);
                     }
                     fs.superblock.free_blocks -= block_count;
                     let _ = fs.flush_superblock();
@@ -4327,7 +4327,7 @@ impl ExtentManager {
                 continue;
             }
             let mut buf = [0u8; BLOCK_SIZE];
-            if RaeFS::read_block(target, &mut buf).is_ok() {
+            if AthFS::read_block(target, &mut buf).is_ok() {
                 cache.push((target, buf));
                 prefetched += 1;
             }
@@ -4346,7 +4346,7 @@ pub static EXTENT_MANAGER: spin::Mutex<Option<ExtentManager>> = spin::Mutex::new
 
 // ─── Transparent Data Block I/O (encryption + compression wrappers) ───────────
 
-impl RaeFS {
+impl AthFS {
     /// Read a data block with transparent decryption and decompression.
     pub fn read_data_block(block_idx: u64, buf: &mut [u8; BLOCK_SIZE]) -> Result<(), ()> {
         let mut raw = [0u8; BLOCK_SIZE];
@@ -4508,8 +4508,8 @@ fn compression_flag_smoketest_body() {
         lcg = lcg.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
         *b = (lcg >> 24) as u8;
     }
-    let comp_pos = RaeFS::block_stored_compressed(&compressible);
-    let comp_neg = !RaeFS::block_stored_compressed(&incompressible);
+    let comp_pos = AthFS::block_stored_compressed(&compressible);
+    let comp_neg = !AthFS::block_stored_compressed(&incompressible);
     RAEFS_COMPRESSION_ENABLED.store(prev_comp, Ordering::Relaxed);
 
     // 2. Extent-layer flag round-trip through the B-tree.
@@ -4613,11 +4613,11 @@ pub fn sys_raefs_game_install_hint(
 
 // ─── VFS Inode Wrapper ─────────────────────────────────────────────────────────
 
-pub struct RaeFSInode {
+pub struct AthFSInode {
     pub id: u64,
 }
 
-impl crate::vfs::Inode for RaeFSInode {
+impl crate::vfs::Inode for AthFSInode {
     fn read_at(&self, offset: usize, buf: &mut [u8]) -> usize {
         let raefs_lock = RAEFS.lock();
         let fs = match raefs_lock.as_ref() {
@@ -4727,7 +4727,7 @@ impl crate::vfs::Inode for RaeFSInode {
             // Build the full-block buffer for CoW
             let mut block_buf = [0u8; BLOCK_SIZE];
             if offset_in_block != 0 || buf.len() - buf_pos < BLOCK_SIZE {
-                if RaeFS::read_data_block(disk_block, &mut block_buf).is_err() {
+                if AthFS::read_data_block(disk_block, &mut block_buf).is_err() {
                     break;
                 }
             }
@@ -4743,9 +4743,9 @@ impl crate::vfs::Inode for RaeFSInode {
             // replay_journal rather than leaving the inode pointing at a freed
             // block. Preserve the per-extent compression flag (the old in-line
             // path dropped it).
-            let rc = RaeFS::read_refcount(&fs.superblock, disk_block).unwrap_or(1);
+            let rc = AthFS::read_refcount(&fs.superblock, disk_block).unwrap_or(1);
             if rc > 1 {
-                let cow_flags = if RaeFS::block_stored_compressed(&block_buf) {
+                let cow_flags = if AthFS::block_stored_compressed(&block_buf) {
                     EXTENT_FLAG_COMPRESSED
                 } else {
                     0
@@ -4762,7 +4762,7 @@ impl crate::vfs::Inode for RaeFSInode {
                 {
                     break;
                 }
-            } else if RaeFS::write_data_block(disk_block, &block_buf).is_err() {
+            } else if AthFS::write_data_block(disk_block, &block_buf).is_err() {
                 break;
             }
 
@@ -4880,7 +4880,7 @@ pub struct AppBucket {
     pub capabilities: BucketCaps,
 }
 
-impl RaeFS {
+impl AthFS {
     // ─── Bucket Table I/O ─────────────────────────────────────────────────
 
     fn read_bucket_entry(&self, slot: usize) -> Option<DiskBucketEntry> {
@@ -5349,7 +5349,7 @@ pub struct VersionInfo {
     pub size: u64,
 }
 
-impl RaeFS {
+impl AthFS {
     // ─── Versioned Index I/O ──────────────────────────────────────────────
 
     fn read_versioned_index(&self, slot: usize) -> Option<DiskVersionedIndex> {
@@ -5733,7 +5733,7 @@ impl RaeFS {
 
 // ─── Shared Data Region ───────────────────────────────────────────────────────
 
-impl RaeFS {
+impl AthFS {
     /// Open (or create) a file in the `/shared/` virtual subtree.
     /// The caller's bucket must have the appropriate `read_shared` / `write_shared` cap.
     pub fn open_shared(&mut self, path: &str, write: bool) -> Option<u64> {
@@ -6031,7 +6031,7 @@ pub fn check_shared_access(app_id: u64, need_write: bool) -> bool {
 
 // ─── Standalone formatter (takes any BlockDevice) ────────────────────────────
 
-/// Write a fresh RaeFS filesystem to `dev` starting at LBA 0.
+/// Write a fresh AthFS filesystem to `dev` starting at LBA 0.
 ///
 /// Layout (blocks, 4 KiB each):
 ///   0  superblock
@@ -6077,8 +6077,8 @@ pub fn format(dev: &dyn crate::block_io::BlockDevice, label: &str) -> Result<(),
     // (bitmap@2, refcount@4, root-dir@9) so existing small images are
     // byte-identical. For larger volumes the runs are relocated to a
     // contiguous extended region after the fixed metadata blocks (0..=8).
-    let bitmap_blocks = RaeFS::bitmap_blocks_for(total_blocks);
-    let refcount_blocks = RaeFS::refcount_blocks_for(total_blocks);
+    let bitmap_blocks = AthFS::bitmap_blocks_for(total_blocks);
+    let refcount_blocks = AthFS::refcount_blocks_for(total_blocks);
     let extended = bitmap_blocks > 1 || refcount_blocks > 1;
 
     // Fixed single-block metadata always lives at these indices.
@@ -6348,7 +6348,7 @@ impl crate::block_io::BlockDevice for RamBlockDevice {
 /// Smoke-test for `format()`: format an in-memory device and verify the
 /// superblock magic + key fields round-trip correctly.
 ///
-/// Returns `true` on success. Called from `RaeFS::run_format_smoketest()`.
+/// Returns `true` on success. Called from `AthFS::run_format_smoketest()`.
 pub fn format_smoketest() -> bool {
     // 256 blocks x 8 sectors/block = 2048 sectors of 512 B = 1 MiB
     let ram = RamBlockDevice::new(2048);

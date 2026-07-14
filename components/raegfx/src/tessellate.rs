@@ -1,9 +1,9 @@
-//! Vector path tessellation — Concept §"RaeUI: glassmorphic, GPU-accelerated".
+//! Vector path tessellation — Concept §"AthUI: glassmorphic, GPU-accelerated".
 //!
 //! Rounded rectangles, strokes, and arbitrary UI paths must become triangle
 //! meshes to hit the GPU (or the SW rasterizer). `lyon` is the pure-Rust
 //! tessellator that does it; this module wraps the fill path the compositor and
-//! RaeUI use. Behind the `tessellate` feature so the bare Canvas/font path stays
+//! AthUI use. Behind the `tessellate` feature so the bare Canvas/font path stays
 //! lean.
 
 extern crate alloc;

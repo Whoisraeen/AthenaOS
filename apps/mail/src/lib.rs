@@ -1,6 +1,6 @@
-//! RaeenOS Mail — *"the common apps people rely on, available and just work"*
-//! (RaeenOS_Concept.md charter app #5, "mail"). The macOS Mail / Windows Mail of
-//! RaeenOS: a clickable mailbox + reading pane + compose flow over the LIVE,
+//! AthenaOS Mail — *"the common apps people rely on, available and just work"*
+//! (LEGACY_GAMING_CONCEPT.md charter app #5, "mail"). The macOS Mail / Windows Mail of
+//! AthenaOS: a clickable mailbox + reading pane + compose flow over the LIVE,
 //! already-host-KAT'd [`rae_mail`] protocol core.
 //!
 //! Standalone userspace ELF launched from the start menu (`exec_path = "mail"`).

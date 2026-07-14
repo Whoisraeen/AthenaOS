@@ -1,5 +1,5 @@
-//! RaeenOS Clock + Calendar — *"what time is it, and what's the date?"*
-//! (RaeenOS_Concept.md §Three User Experiences — the daily-driver parity bar vs
+//! AthenaOS Clock + Calendar — *"what time is it, and what's the date?"*
+//! (LEGACY_GAMING_CONCEPT.md §Three User Experiences — the daily-driver parity bar vs
 //! Windows 11 Clock (world-clock / alarms / timer / stopwatch) and macOS Clock +
 //! Calendar).
 //!
@@ -443,7 +443,7 @@ const MAX_ALARMS: usize = 16;
 
 // ── Persistent preferences (rae_toml) ─────────────────────────────────────────
 //
-// RaeenOS_Concept.md §"The user owns the machine": "remember my settings" must be
+// LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. Clock persists its active tab AND — most importantly — the ALARM LIST
 // (HH:MM + enabled per alarm) to `<home>/.config/clock.toml`, restoring them on
 // launch. Alarms that vanish on relaunch are useless, so each is serialized as a

@@ -1,6 +1,6 @@
 //! # Formula evaluator — turning a grid back into a *spreadsheet*.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy (criterion #5, "edit my spreadsheet"):
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy (criterion #5, "edit my spreadsheet"):
 //! a spreadsheet a switcher can only *read* is a grid of frozen numbers — the moment
 //! they change a cell, every formula that depended on it is a lie. The reader in
 //! [`crate`] captures Excel's cached `<v>`; this module is the recalc engine that

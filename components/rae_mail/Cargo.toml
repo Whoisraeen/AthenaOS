@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeMail client protocol core — "mail just works" (RaeenOS_Concept.md
+# RaeMail client protocol core — "mail just works" (LEGACY_GAMING_CONCEPT.md
 # §"the common apps people rely on, available and just work" / charter app #5).
 # A daily driver has to send and read email. This crate is the protocol core a
 # RaeMail app sits on: the SMTP (RFC 5321) send dialog, the IMAP (RFC 3501)

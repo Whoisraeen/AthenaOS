@@ -1,4 +1,4 @@
-//! RaeUI v0 — minimal widget toolkit drawn through raegfx::Canvas.
+//! AthUI v0 — minimal widget toolkit drawn through raegfx::Canvas.
 //!
 //! Today's surface is intentionally tiny: a Widget trait + Label + Button +
 //! Frame (window-with-chrome). Layout is absolute coordinates. Color is
@@ -41,7 +41,7 @@ pub mod wgpu_canvas;
 
 // ── Theme ────────────────────────────────────────────────────────────────
 
-/// RaeenOS default palette in ARGB8888. Tweak here to re-skin the whole UI.
+/// AthenaOS default palette in ARGB8888. Tweak here to re-skin the whole UI.
 pub mod theme {
     pub const WINDOW_BG: u32 = 0xFF_1A_1A_22; // deep blue-black
     pub const CHROME_BG: u32 = 0xFF_0A_0E_1A; // a notch darker than the body
@@ -160,7 +160,7 @@ impl Widget for Button {
 
 /// A Frame draws the window-chrome that wraps a body widget:
 ///   ┌──────────────── title ──────────────────┐
-///   │ Hello RaeenOS                         × │
+///   │ Hello AthenaOS                         × │
 ///   ├─────────────────────────────────────────┤
 ///   │                                         │
 ///   │  (body content)                         │
@@ -234,7 +234,7 @@ pub const fn body_y_start() -> usize {
 
 // ── Declarative Theme Engine / Vibe Mode ─────────────────────────────────
 
-/// A complete colour palette that skins every RaeUI primitive.
+/// A complete colour palette that skins every AthUI primitive.
 #[derive(Clone, Copy, Debug)]
 pub struct Theme {
     pub window_bg: u32,

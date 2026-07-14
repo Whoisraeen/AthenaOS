@@ -1,4 +1,4 @@
-# Linux driver compatibility strategy (RaeenOS)
+# Linux driver compatibility strategy (AthenaOS)
 
 **Status:** Planning / scaffolding only. **Linux driver compatibility is not a
 shipped feature** and must not be advertised as one until Phase 3 criteria
@@ -6,17 +6,17 @@ below are met on real hardware.
 
 ## Context
 
-RaeenOS targets modern desktop gaming hardware (NVMe, xHCI, Intel/AMD GPU,
+AthenaOS targets modern desktop gaming hardware (NVMe, xHCI, Intel/AMD GPU,
 PCIe MSI-X). The Concept doc mandates **IOMMU-sandboxed user-space drivers**
 for anything that can fail without taking the system down. Bare-metal boot
 still depends on a small set of in-kernel drivers today; closing the gap to
-“vendor driver on RaeenOS” is a multi-year arc, not a single module.
+“vendor driver on AthenaOS” is a multi-year arc, not a single module.
 
 ## Options A–D (summary)
 
 ## Current GPU accelerator decision (2026-07-10)
 
-**The LinuxKPI-hosted upstream amdgpu daemon is RaeenOS's sole hardware
+**The LinuxKPI-hosted upstream amdgpu daemon is AthenaOS's sole hardware
 acceleration path for Phoenix-class AMD GPUs.** It is the only path authorized
 to grow toward Mesa/RADV, Vulkan, DXVK/VKD3D, and game workloads. The native
 Rust `raeen_amdgpu` implementation remains supported only as the DCN scanout
@@ -32,9 +32,9 @@ submit path unless the documented LinuxKPI M1 fallback trigger is reached.
 | Option | Approach | Pros | Cons |
 |--------|----------|------|------|
 | **A** | Userspace Linux ABI only (`linux_compat.rs`, `linux_syscall.rs`, ELF `.so`) | Aligns with Concept §Architecture; MPL-clean; crash isolation | Does not load `.ko` kernel modules |
-| **B** | In-kernel kABI shim (symbol stubs → RaeenOS implementations) | Familiar to porting `.ko` blobs | GPL boundary, large surface, kernel attack surface |
+| **B** | In-kernel kABI shim (symbol stubs → AthenaOS implementations) | Familiar to porting `.ko` blobs | GPL boundary, large surface, kernel attack surface |
 | **C** | FreeBSD-style **LinuxKPI** partition (separate license island) | Proven for Mesa on BSD | Heavy maintenance; license partitioning complexity |
-| **D** | **RaeenOS recommendation:** targeted bootable-vendor scaffolding + native Rust hot paths | Honest scope; name registry + tooling first; userspace drivers for isolation | No universal “run any Linux driver” promise |
+| **D** | **AthenaOS recommendation:** targeted bootable-vendor scaffolding + native Rust hot paths | Honest scope; name registry + tooling first; userspace drivers for isolation | No universal “run any Linux driver” promise |
 
 **Recommendation (Option D):** Phase 1 symbol registry (`linux_kabi.rs`), Phase 2
 userspace driver framework (IOMMU + capability IPC), Phase 3 native Rust shims
@@ -45,7 +45,7 @@ required. Reject universal Linux-driver compat as a product claim.
 
 | Area | Current state | Blocker for vendor drivers |
 |------|---------------|------------------------------|
-| Boot / storage | NVMe/AHCI in kernel; MSI-X probe | Real HW validation, tiered RaeFS on disk |
+| Boot / storage | NVMe/AHCI in kernel; MSI-X probe | Real HW validation, tiered AthFS on disk |
 | PCIe / IRQ | Legacy I/O on QEMU; MSI-X hooks | ECAM (MCFG) on UEFI hardware |
 | GPU | Bochs VBE / scanout path | No Intel/AMD/NVIDIA native or shimmed DRM |
 | USB | xHCI framework | Full stack still evolving |
@@ -57,7 +57,7 @@ required. Reject universal Linux-driver compat as a product claim.
 - **R7 (workspace rules):** No Linux clones (ext4, ALSA, DRM/KMS as Linux,
   netfilter, procfs as Linux, etc.). `linux_kabi.rs` is **symbol name +
   metadata only** — not struct layouts, not epoll, not a monolithic kernel.
-- **No GPL Linux kernel source** in the RaeenOS tree. Stubs are MPL-2.0.
+- **No GPL Linux kernel source** in the AthenaOS tree. Stubs are MPL-2.0.
 - **`EXPORT_SYMBOL_GPL`:** Even with stubs, loading GPL-only Linux modules into
   a non-GPL kernel raises compliance questions. Supported path: userspace
   drivers + attestation, or native Rust device classes.
@@ -82,7 +82,7 @@ required. Reject universal Linux-driver compat as a product claim.
 ### Phase 3 — Native Rust hot-path shims
 
 - Implement only symbols profiling shows on the frame/audio/storage hot path.
-- Prefer RaeGFX / RaeNet / native block path over Linux DRM/ALSA shims.
+- Prefer AthGFX / AthNet / native block path over Linux DRM/ALSA shims.
 - Success criterion: one certified device class on real hardware (e.g. one GPU
   generation or one NVMe quirk), not “all of lspci works.”
 

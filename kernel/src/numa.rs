@@ -1,4 +1,4 @@
-//! NUMA (Non-Uniform Memory Access) Topology & Memory Policies for RaeenOS.
+//! NUMA (Non-Uniform Memory Access) Topology & Memory Policies for AthenaOS.
 //!
 //! Full NUMA implementation covering:
 //! - ACPI SRAT/SLIT table parsing for topology discovery

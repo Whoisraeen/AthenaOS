@@ -1,6 +1,6 @@
-//! WebAuthn (FIDO2) relying-party ceremony core for RaeID.
+//! WebAuthn (FIDO2) relying-party ceremony core for AthID.
 //!
-//! The Concept's account pillar: *"RaeID — passkeys first, optional, never
+//! The Concept's account pillar: *"AthID — passkeys first, optional, never
 //! required for local use."* This module is the **relying-party** half of the
 //! WebAuthn/FIDO2 ceremonies (registration/attestation + authentication/
 //! assertion) made real: it parses `authenticatorData`, `clientDataJSON`, and
@@ -10,18 +10,18 @@
 //!
 //! ## "Never required for local use"
 //!
-//! This is OPT-IN. Local login on a RaeenOS box does **not** touch this module:
+//! This is OPT-IN. Local login on a AthenaOS box does **not** touch this module:
 //! guest mode, local password, and PIN (all in `lib.rs`) provide complete
 //! offline functionality with no account and no passkey. WebAuthn here exists so
 //! apps and web origins that *want* phishing-resistant passkeys can use one, and
-//! so RaeID can act as an authenticator-backed relying party — never as a gate on
+//! so AthID can act as an authenticator-backed relying party — never as a gate on
 //! using your own machine.
 //!
 //! ## Credential algorithms
 //!
 //! - **EdDSA / Ed25519** (COSE alg `-8`, the `OKP`/Ed25519 key type) is fully
 //!   implemented: registration extracts the key, authentication verifies the
-//!   signature via `rae_crypto::ed25519`. This is the algorithm RaeID requests.
+//!   signature via `rae_crypto::ed25519`. This is the algorithm AthID requests.
 //! - **ES256 / P-256** (COSE alg `-7`) is fully implemented: registration
 //!   extracts the EC2 public key, authentication verifies the assertion
 //!   signature via `rae_crypto::p256_ecdsa::verify`. This is the algorithm
@@ -295,7 +295,7 @@ pub enum UserVerification {
     Discouraged,
 }
 
-/// `PublicKeyCredentialCreationOptions` (registration), the subset RaeID uses.
+/// `PublicKeyCredentialCreationOptions` (registration), the subset AthID uses.
 #[derive(Clone, Debug)]
 pub struct CredentialCreationOptions {
     pub rp_id: String,
@@ -303,14 +303,14 @@ pub struct CredentialCreationOptions {
     pub user_handle: Vec<u8>,
     pub user_name: String,
     pub challenge: [u8; 32],
-    /// COSE alg identifiers the RP accepts, in preference order. RaeID requests
+    /// COSE alg identifiers the RP accepts, in preference order. AthID requests
     /// EdDSA (`-8`) first; ES256 (`-7`) may be listed but is verification-deferred.
     pub pub_key_cred_params: Vec<i64>,
     pub user_verification: UserVerification,
 }
 
 impl CredentialCreationOptions {
-    /// The default RaeID registration request: EdDSA-only, UV preferred.
+    /// The default AthID registration request: EdDSA-only, UV preferred.
     pub fn new(
         rp_id: String,
         rp_name: String,
@@ -332,7 +332,7 @@ impl CredentialCreationOptions {
     }
 }
 
-/// `PublicKeyCredentialRequestOptions` (authentication), the subset RaeID uses.
+/// `PublicKeyCredentialRequestOptions` (authentication), the subset AthID uses.
 #[derive(Clone, Debug)]
 pub struct CredentialRequestOptions {
     pub rp_id: String,
@@ -370,7 +370,7 @@ pub struct StoredCredential {
 }
 
 /// In-memory credential store keyed by credential id. The OS layer can snapshot
-/// these to RaeFS for persistence; this type holds no I/O.
+/// these to AthFS for persistence; this type holds no I/O.
 #[derive(Clone, Debug, Default)]
 pub struct CredentialStore {
     creds: Vec<StoredCredential>,
@@ -1212,8 +1212,8 @@ mod tests {
     use alloc::vec;
 
     const AAGUID: [u8; 16] = [0xAA; 16];
-    const RP_ID: &str = "raeenos.local";
-    const ORIGIN: &str = "https://raeenos.local";
+    const RP_ID: &str = "athenaos.local";
+    const ORIGIN: &str = "https://athenaos.local";
 
     // A deterministic Ed25519 test credential: seed -> public key. The signature
     // vectors are computed in-test by signing with this key (so the KAT is
@@ -1257,7 +1257,7 @@ mod tests {
         let challenge = challenge();
         let opts = CredentialCreationOptions::new(
             String::from(RP_ID),
-            String::from("RaeenOS"),
+            String::from("AthenaOS"),
             vec![0xDE, 0xAD],
             String::from("alice"),
             challenge,
@@ -1711,7 +1711,7 @@ mod tests {
         let challenge = challenge();
         let opts = CredentialCreationOptions::new(
             String::from(RP_ID),
-            String::from("RaeenOS"),
+            String::from("AthenaOS"),
             vec![0xDE, 0xAD],
             String::from("alice"),
             challenge,
@@ -1768,7 +1768,7 @@ mod tests {
     //
     // These are REAL signatures produced by the Python `cryptography` oracle
     // (openssl-equivalent) over the EXACT WebAuthn signed data this test suite
-    // reconstructs: authData(`SHA-256("raeenos.local") || 0x05 || signCount=5`)
+    // reconstructs: authData(`SHA-256("athenaos.local") || 0x05 || signCount=5`)
     // || SHA-256(clientDataJSON) for `webauthn.get`, challenge `challenge()`,
     // origin `ORIGIN`. The oracle self-verified each signature with the same
     // library before the bytes were embedded (cross-checked, not a blind blob).
@@ -1848,7 +1848,7 @@ mod tests {
         let challenge = challenge();
         let opts = CredentialCreationOptions::new(
             String::from(RP_ID),
-            String::from("RaeenOS"),
+            String::from("AthenaOS"),
             vec![0xDE, 0xAD],
             String::from("alice"),
             challenge,
@@ -2080,7 +2080,7 @@ mod tests {
         let challenge = challenge();
         let opts = CredentialCreationOptions::new(
             String::from(RP_ID),
-            String::from("RaeenOS"),
+            String::from("AthenaOS"),
             vec![0xDE],
             String::from("alice"),
             challenge,

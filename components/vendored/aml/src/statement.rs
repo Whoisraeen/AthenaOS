@@ -39,7 +39,7 @@ where
             def_if_else(),
             def_noop(),
             def_return(),
-            // RaeenOS additions (Phase 1.4): method-runtime statements real
+            // AthenaOS additions (Phase 1.4): method-runtime statements real
             // firmware uses (Athena's \_PIC chain died on the first Acquire).
             def_release(),
             def_sleep(),
@@ -49,7 +49,7 @@ where
     )
 }
 
-/// RaeenOS addition (Phase 1.4): `DefRelease := ExtOpPrefix 0x27 MutexObject`.
+/// AthenaOS addition (Phase 1.4): `DefRelease := ExtOpPrefix 0x27 MutexObject`.
 /// Boot-time AML runs single-threaded under the interpreter lock, so mutex
 /// ownership is trivially exclusive: parse + resolve the operand, release is
 /// a no-op (matching the always-succeeds Acquire in expression.rs).
@@ -66,7 +66,7 @@ where
         .discard_result()
 }
 
-/// RaeenOS addition (Phase 1.4): `DefSleep := ExtOpPrefix 0x22 MsecTime`.
+/// AthenaOS addition (Phase 1.4): `DefSleep := ExtOpPrefix 0x22 MsecTime`.
 /// Delegates to [`crate::Handler::sleep`] (default no-op; the OS provides a
 /// real timer-backed implementation).
 fn def_sleep<'a, 'c>() -> impl Parser<'a, 'c, ()>
@@ -86,7 +86,7 @@ where
         .discard_result()
 }
 
-/// RaeenOS addition (Phase 1.4): `DefStall := ExtOpPrefix 0x21 UsecTime`.
+/// AthenaOS addition (Phase 1.4): `DefStall := ExtOpPrefix 0x21 UsecTime`.
 /// Delegates to [`crate::Handler::stall`] (default no-op; the OS provides a
 /// real busy-wait implementation).
 fn def_stall<'a, 'c>() -> impl Parser<'a, 'c, ()>

@@ -1,6 +1,6 @@
-//! RaeUI Text Rendering
+//! AthUI Text Rendering
 //!
-//! Wires the `raefont` glyph rasterizer into RaeUI. Provides text measurement,
+//! Wires the `raefont` glyph rasterizer into AthUI. Provides text measurement,
 //! line breaking, and glyph caching for efficient rendering into a Canvas.
 
 extern crate alloc;

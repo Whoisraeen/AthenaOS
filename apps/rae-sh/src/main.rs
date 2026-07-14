@@ -13,7 +13,7 @@ fn write_out(bytes: &[u8]) {
 }
 
 fn write_err(bytes: &[u8]) {
-    // RaeenOS PTY currently exposes a single byte stream; treat this as stderr-equivalent.
+    // AthenaOS PTY currently exposes a single byte stream; treat this as stderr-equivalent.
     let _ = raekit::sys::pty_slave_write(bytes);
 }
 
@@ -206,7 +206,7 @@ fn execute_line(line: &[u8], cwd: &mut alloc::string::String, home: &str) {
             }
         }
         "sysinfo" => {
-            write_out(b"RaeenOS rae-sh\n");
+            write_out(b"AthenaOS rae-sh\n");
             let ns = raekit::sys::time_ns();
             write_out(b"uptime_s ");
             print_u64(ns / 1_000_000_000);
@@ -303,7 +303,7 @@ fn read_file(path: &str) -> Option<alloc::vec::Vec<u8>> {
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    write_out(b"RaeenOS shell (rae-sh)\n");
+    write_out(b"AthenaOS shell (rae-sh)\n");
     let home_owned = {
         let mut info = [0u8; 96];
         if let Some(_) = raekit::sys::session_info(&mut info) {

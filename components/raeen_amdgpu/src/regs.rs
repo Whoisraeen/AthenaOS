@@ -67,7 +67,7 @@ pub const REG_RLC_SRM_CNTL: (u32, usize) = (0x4c80, 1);
 pub const REG_RLC_PG_CNTL: (u32, usize) = (0x4c43, 1);
 // RLC_CSIB_ADDR_LO/HI + LENGTH — the RLC Clear-State Buffer descriptor (init_csb).
 // amdgpu writes these RIGHT BEFORE the MES enable (oracle trace 2026-06-27:
-// ADDR_LO=0x1ec000 HI=0x80 LENGTH=0x3c0); RaeenOS skipped it, and the MES stalls one
+// ADDR_LO=0x1ec000 HI=0x80 LENGTH=0x3c0); AthenaOS skipped it, and the MES stalls one
 // instruction into boot waiting for the RLC. GC seg1 0x0987/0x0988/0x0989.
 pub const REG_RLC_CSIB_ADDR_LO: (u32, usize) = (0x0987, 1);
 pub const REG_RLC_CSIB_ADDR_HI: (u32, usize) = (0x0988, 1);
@@ -118,7 +118,7 @@ const REG_CP_RB_DOORBELL_RANGE_UPPER: (u32, usize) = (0x1dfb, 0);
 // CP_MEC_DOORBELL_RANGE_LOWER/UPPER — the COMPUTE/MES-class doorbell byte range the
 // MEC/MES monitors to WAKE on a doorbell ring (distinct from the gfx CP_RB range above).
 // The MES SCHED (byte 0x58) + KIQ (byte 0x60) doorbells live here. Iron 2026-06-28: the
-// working amdgpu sets this to [0x0, 0x450]; RaeenOS omitted it entirely, so the KIQ
+// working amdgpu sets this to [0x0, 0x450]; AthenaOS omitted it entirely, so the KIQ
 // doorbell HIT latched in the HQD but the MES microengine was NEVER woken (KIQ rptr=0,
 // SCHED ring never mapped). Offsets 0x1dfc/0x1dfd (umr 0x0305c/0x0305d - the 0x1260 const).
 const REG_CP_MEC_DOORBELL_RANGE_LOWER: (u32, usize) = (0x1dfc, 0);
@@ -350,7 +350,7 @@ const REG_SDMA0_F32_CNTL: (u32, usize) = (0x589a, 1);
 // fence GPU addresses through VMID0 (else it cannot fetch and RB_RPTR stays 0).
 const REG_SDMA0_UTCL1_CNTL: (u32, usize) = (0x003c, 0);
 // SDMA RS64 broadcast microcode-load window (GC SEG1, like F32_CNTL). The PSP on
-// this Phoenix REJECTS SDMA via the gfx LOAD_IP_FW path (0xffff0010), so RaeenOS
+// this Phoenix REJECTS SDMA via the gfx LOAD_IP_FW path (0xffff0010), so AthenaOS
 // DIRECT-loads the dual-thread RS64 ucode itself (sdma_v6_0_load_microcode): write
 // ADDR then stream the ucode dwords to DATA (auto-increment). Broadcast = all SDMA
 // instances at once. umr db: BROADCAST_UCODE_ADDR 0x5886, DATA 0x5887, base_idx 1.

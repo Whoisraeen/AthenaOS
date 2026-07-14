@@ -339,7 +339,7 @@ pub fn proc_cpuinfo() -> String {
              vendor_id\t: GenuineIntel\n\
              cpu family\t: 6\n\
              model\t\t: 142\n\
-             model name\t: RaeenOS Virtual CPU @ 3.00GHz\n\
+             model name\t: AthenaOS Virtual CPU @ 3.00GHz\n\
              stepping\t: 10\n\
              microcode\t: 0xde\n\
              cpu MHz\t\t: 3000.000\n\
@@ -504,7 +504,7 @@ pub fn proc_loadavg() -> String {
 
 /// /proc/version
 pub fn proc_version() -> String {
-    String::from("RaeenOS version 0.0.1 (raeen@raeenos) (rustc 1.80.0) #1 SMP RaeenOS 0.0.1 (Linux compat)\n")
+    String::from("AthenaOS version 0.0.1 (raeen@athenaos) (rustc 1.80.0) #1 SMP AthenaOS 0.0.1 (Linux compat)\n")
 }
 
 /// /proc/raeen/caps — capability audit log (kernelchecklist.md §5.9).
@@ -609,7 +609,7 @@ pub fn proc_raeen_apic() -> String {
 /// is either offline or wedged in a non-interruptible region.
 pub fn proc_raeen_smp() -> String {
     let mut out = String::new();
-    out.push_str("# RaeenOS SMP heartbeat (per-CPU timer IRQ counters)\n");
+    out.push_str("# AthenaOS SMP heartbeat (per-CPU timer IRQ counters)\n");
     let n = crate::gdt::MAX_CPUS;
     let mut alive = 0usize;
     let mut working = 0usize;
@@ -724,12 +724,12 @@ pub fn proc_raeen_hardening_truth() -> String {
     out
 }
 
-/// /proc/raeen/raefs — RaeFS mount + journal + snapshot entry listing.
+/// /proc/raeen/raefs — AthFS mount + journal + snapshot entry listing.
 pub fn proc_raeen_raefs() -> String {
     crate::raefs::proc_dump_text()
 }
 
-/// /proc/raeen/network — smoltcp + DHCP + RaeShield summary.
+/// /proc/raeen/network — smoltcp + DHCP + AthGuard summary.
 pub fn proc_raeen_network() -> String {
     crate::net::dump_text()
 }
@@ -748,7 +748,7 @@ pub fn proc_raeen_thermal() -> String {
     crate::thermal::dump_text()
 }
 
-/// /proc/raeen/audio — RaeAudio kernel-side state.
+/// /proc/raeen/audio — AthAudio kernel-side state.
 pub fn proc_raeen_audio() -> String {
     crate::audio::dump_text()
 }
@@ -761,13 +761,13 @@ pub fn proc_raeen_usb_audio() -> String {
 /// /proc/raeen/syscalls — runtime mirror of docs/SYSCALL_TABLE.md.
 pub fn proc_raeen_syscalls() -> String {
     let mut out = String::new();
-    out.push_str("# RaeenOS syscall table (98 live syscalls across 18+ blocks)\n");
+    out.push_str("# AthenaOS syscall table (98 live syscalls across 18+ blocks)\n");
     out.push_str("# Full layout with rdi/rsi/rdx/r10: see docs/SYSCALL_TABLE.md\n\n");
     out.push_str("  1-14   foundational + IPC + capability + driver + process\n");
     out.push_str(" 15-23   file I/O\n");
     out.push_str(" 24-27   compositor surfaces\n");
     out.push_str(" 28-34   yield/getpid/time/input/readdir/screen_info\n");
-    out.push_str(" 40-49   gaming-first surface (game_session)\n");
+    out.push_str(" 40-49   embodiment-first surface (game_session)\n");
     out.push_str(" 50-53   versioned config registry\n");
     out.push_str(" 54-57   local-first search index\n");
     out.push_str(" 58-61   per-game profile\n");
@@ -793,7 +793,7 @@ pub fn proc_raeen_syscalls() -> String {
 pub fn proc_raeen_memory() -> String {
     let pinned = crate::memory::pinned_page_count();
     let mut out = String::new();
-    out.push_str("# RaeenOS memory subsystem\n");
+    out.push_str("# AthenaOS memory subsystem\n");
     out.push_str(&format!(
         "heap_start: 0x{:x}\n",
         crate::memory::allocator::HEAP_START
@@ -832,17 +832,17 @@ pub fn proc_raeen_memory() -> String {
     out
 }
 
-/// /proc/raeen/storage — aggregated RaeFS capacity for the Settings → Storage
+/// /proc/raeen/storage — aggregated AthFS capacity for the Settings → Storage
 /// panel.
 ///
 /// Concept §"The user owns the machine": transparency about the machine's
 /// storage. Emits both human-readable and machine-parseable `key: value` lines
 /// (total/free/used bytes, block size) so userspace can render a real capacity
 /// bar without minting a syscall. Read-only; reads the mounted superblock via a
-/// non-blocking accessor so the dump can never deadlock the RaeFS lock.
+/// non-blocking accessor so the dump can never deadlock the AthFS lock.
 pub fn proc_raeen_storage() -> String {
     let mut out = String::new();
-    out.push_str("# RaeenOS storage capacity (RaeFS, aggregated)\n");
+    out.push_str("# AthenaOS storage capacity (AthFS, aggregated)\n");
     match crate::raefs::capacity_bytes() {
         Some((total, free, block_size)) => {
             let used = total.saturating_sub(free);
@@ -898,7 +898,7 @@ pub fn run_boot_smoketest() {
 pub fn proc_raeen_sched_stats() -> String {
     let ds = crate::scheduler::deadline_stats();
     let mut out = String::new();
-    out.push_str("# RaeenOS scheduler counters\n");
+    out.push_str("# AthenaOS scheduler counters\n");
     out.push_str(&format!("deadline_tasks: {}\n", ds.total_tasks));
     out.push_str(&format!("deadline_invocations: {}\n", ds.total_invocations));
     out.push_str(&format!("deadline_misses: {}\n", ds.total_misses));
@@ -951,7 +951,7 @@ pub fn proc_raeen_sched_stats() -> String {
 /// /proc/raeen/compositor — compositor surface + present counters.
 pub fn proc_raeen_compositor() -> String {
     let mut out = String::new();
-    out.push_str("# RaeenOS compositor\n");
+    out.push_str("# AthenaOS compositor\n");
     if let Some((w, h)) = crate::compositor::screen_dimensions() {
         out.push_str(&format!("resolution: {}x{}\n", w, h));
     } else {
@@ -1016,12 +1016,12 @@ pub fn proc_raeen_compositor() -> String {
     out
 }
 
-/// /proc/raeen/index — every RaeenOS-native introspection endpoint.
+/// /proc/raeen/index — every AthenaOS-native introspection endpoint.
 /// Discoverability: `cat /proc/raeen/index` enumerates all the others.
 /// Per `kernelchecklist.md` R3 (every module gets a procfs entry).
 pub fn proc_raeen_index() -> String {
     let mut out = String::new();
-    out.push_str("# RaeenOS introspection endpoints (cat any of these)\n");
+    out.push_str("# AthenaOS introspection endpoints (cat any of these)\n");
     out.push_str("/proc/raeen/index           — this file\n");
     out.push_str("/proc/raeen/boot            — boot benchmark vs concept-doc targets\n");
     out.push_str("/proc/raeen/gaming          — game-mode / NULL_LATENCY / deadline stats\n");
@@ -1040,7 +1040,7 @@ pub fn proc_raeen_index() -> String {
     out.push_str("/proc/raeen/pci_irq         — PCI legacy IRQ routing table\n");
     out.push_str("/proc/raeen/acpi            — ACPI tables and AML status\n");
     out.push_str("/proc/raeen/gpe             — General Purpose Event (GPE) counts\n");
-    out.push_str("/proc/raeen/session         — RaeID login/session state\n");
+    out.push_str("/proc/raeen/session         — AthID login/session state\n");
     out.push_str("/proc/raeen/wireguard       — WireGuard tunnel registry\n");
     out.push_str("/proc/raeen/wallpaper       — live wallpaper + occlusion stats\n");
     out.push_str("/proc/raeen/caps            — capability audit log\n");
@@ -1053,17 +1053,17 @@ pub fn proc_raeen_index() -> String {
     out.push_str("/proc/raeen/hardening       — KASLR/SMEP/SMAP/CFI/W^X/Spectre status\n");
     out.push_str("/proc/raeen/heap_guard      — kernel-heap freelist integrity guard\n");
     out.push_str("/proc/raeen/hardening_truth — IOMMU/AER/MCE/OOM runtime counters\n");
-    out.push_str("/proc/raeen/raefs           — RaeFS mount + journal + snapshot entries\n");
+    out.push_str("/proc/raeen/raefs           — AthFS mount + journal + snapshot entries\n");
     out.push_str("/proc/raeen/network         — net stack + firewall summary\n");
     out.push_str("/proc/raeen/power           — battery/AC periodic telemetry\n");
-    out.push_str("/proc/raeen/audio           — RaeAudio kernel-side state\n");
+    out.push_str("/proc/raeen/audio           — AthAudio kernel-side state\n");
     out.push_str("/proc/raeen/syscalls        — runtime syscall table mirror\n");
     out.push_str("/proc/raeen/windows_gap     — Concept-doc Windows pain-point kernel map\n");
     out.push_str("/proc/raeen/clipboard       — session text clipboard stats\n");
     out.push_str("/proc/raeen/clipboard-panel — clipboard-history flyout (Super+C) state\n");
     out.push_str("/proc/raeen/capture         — compositor screen-capture sessions\n");
     out.push_str("/proc/raeen/storage_irq     — NVMe/AHCI MSI-X vs INTx fallback\n");
-    out.push_str("/proc/raeen/storage         — RaeFS aggregated capacity (total/free/used)\n");
+    out.push_str("/proc/raeen/storage         — AthFS aggregated capacity (total/free/used)\n");
     out.push_str("/proc/raeen/ahci           — AHCI controllers and SATA ports\n");
     out.push_str("/proc/raeen/nvme           — NVMe controllers and namespaces\n");
     out.push_str("/proc/raeen/syscall_guard   — syscall hardening counters + limits\n");
@@ -1096,7 +1096,7 @@ pub fn proc_raeen_linux_syscall() -> String {
     crate::linux_syscall::dump_text()
 }
 
-/// /proc/raeen/session — RaeID login/session status.
+/// /proc/raeen/session — AthID login/session status.
 pub fn proc_raeen_session() -> String {
     crate::session::dump_text()
 }
@@ -1267,8 +1267,8 @@ pub fn proc_raeen_syscall_guard() -> String {
 ///
 /// Concept-doc-aligned introspection: how often has the user been in game
 /// mode, how often has the scheduler been in NULL_LATENCY, and how many
-/// SCHED_GAME deadlines have we hit vs. missed since boot. Userspace tools
-/// (RaePlay overlay, Game Bar, the Settings → Performance pane) read this
+/// SCHED_BODY deadlines have we hit vs. missed since boot. Userspace tools
+/// (AthPlay overlay, Game Bar, the Settings → Performance pane) read this
 /// to render a "your system has missed N frames out of M" indicator.
 pub fn proc_raeen_gaming() -> String {
     let s = crate::game_session::stats();
@@ -1281,7 +1281,7 @@ pub fn proc_raeen_gaming() -> String {
         s.deadline_misses.saturating_mul(10_000) / s.deadline_total
     };
     let mut out = String::new();
-    out.push_str("# RaeenOS gaming session counters\n");
+    out.push_str("# AthenaOS gaming session counters\n");
     out.push_str(&format!("game_mode_active: {}\n", game_mode_active as u32));
     out.push_str(&format!(
         "null_latency_active: {}\n",
@@ -1491,7 +1491,7 @@ pub fn proc_raeen_games() -> String {
 pub fn proc_raeen_search() -> String {
     let s = crate::search_index::stats();
     let mut out = String::new();
-    out.push_str("# RaeenOS local search index\n");
+    out.push_str("# AthenaOS local search index\n");
     out.push_str(&format!("items: {}\n", s.items));
     out.push_str(&format!("tokens: {}\n", s.tokens));
     out.push_str(&format!("queries_total: {}\n", s.queries_total));

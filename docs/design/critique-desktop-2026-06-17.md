@@ -126,7 +126,7 @@ boot-log smoketests assert it.
 ### 2. Headings/labels rendered in blue instead of neutral text tokens — owner: raeen-ui (+ raeen-shell-apps for the surface)
 - **Surface:** OOBE card title, subtitle, and field labels (shared chrome
   pattern — likely affects Settings group headers and other labels too).
-- **Observed:** title "Welcome to RaeenOS" stems measure `(115,134,167)` — a
+- **Observed:** title "Welcome to AthenaOS" stems measure `(115,134,167)` — a
   desaturated navy; subtitle "Let's set up your account" and the "Username" /
   "Password" labels render in **accent blue** (see zoom crops).
 - **Should be:** on the light palette, `text.primary = 0xFF_14_18_22` (near-black)
@@ -146,9 +146,9 @@ boot-log smoketests assert it.
   a11y requirement. Currently indistinguishable-at-a-glance from a plain border.
 
 ### 4. Title weight reads heavy and letter-spacing is uneven — owner: raeen-ui
-- **Surface:** title "Welcome to RaeenOS" (`type.title` = 22px / weight 600).
+- **Surface:** title "Welcome to AthenaOS" (`type.title` = 22px / weight 600).
 - **Observed (3× zoom):** stems look a touch bold/dark for 600 at 22px, and the
-  caps run "RaeenOS" shows uneven inter-letter spacing; the word "to" sits a hair
+  caps run "AthenaOS" shows uneven inter-letter spacing; the word "to" sits a hair
   tight. Reads as either a slightly-off gamma in the AA blend (stems over-dark) or
   the wrong static weight instance / missing kerning pair application.
 - **Should be:** gamma-correct grayscale blend (typography-rendering spec), the
@@ -169,11 +169,11 @@ boot-log smoketests assert it.
 ## Reference comparison (macOS Sequoia / Windows 11)
 
 - **Shadow (vs both):** macOS and Win11 cards/dialogs use a wide, soft,
-  low-alpha, neutral ambient shadow. RaeenOS's current hard blue offset block is
+  low-alpha, neutral ambient shadow. AthenaOS's current hard blue offset block is
   the clearest gap — name it the top fix. (Spec target: `elev.4`, quadratic
   falloff, `0x66_00_00_00`.)
 - **Chrome color (vs macOS):** macOS keeps chrome text neutral (label grays /
-  near-black) and tints only controls/selection with the system accent. RaeenOS
+  near-black) and tints only controls/selection with the system accent. AthenaOS
   is currently tinting static headings+labels blue — off the spec's own
   "restraint in chrome color" rule.
 - **Type (vs Win11 DirectWrite / macOS Core Text):** the new Inter AA is in the

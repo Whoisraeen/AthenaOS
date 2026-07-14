@@ -1,7 +1,7 @@
 //! ui_screenshot — HOST-render UI screenshot harness (ADR 0004, host-render path).
 //!
-//! *"Built for people who care about how things feel."* — `RaeenOS_Concept.md`
-//! §RaeUI. Goal #1 requires the UI be "proven by raeen-visual-qa screenshots."
+//! *"Built for people who care about how things feel."* — `LEGACY_GAMING_CONCEPT.md`
+//! §AthUI. Goal #1 requires the UI be "proven by raeen-visual-qa screenshots."
 //! The live desktop is unreachable in headless CI and the QEMU
 //! `screendump`->PPM pipeline stripes (project memory: a 24bpp-read-as-32bpp /
 //! stride capture artifact — NOT the real render; iron + HOST-RENDER are clean).
@@ -433,7 +433,7 @@ fn render_focus_rings_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, Str
     );
 }
 
-/// The RaeGFX line-icon set (`raegfx::icon::Icon`) — the real glyphs that
+/// The AthGFX line-icon set (`raegfx::icon::Icon`) — the real glyphs that
 /// replace the W/B/F/N/A/X/G/R/P + H/D/L/M LETTER placeholders visual-QA flagged
 /// (`visual-qa-critique-2026-06-21.md` #1/#2). Renders every icon:
 ///   * Row block 1 — at Control-Center TILE size (28px), text.secondary tint,
@@ -488,7 +488,7 @@ fn render_icon_sheet_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, Stri
         c.draw_text_aa(
             pad as i32,
             (pad - 4) as i32,
-            "RaeGFX line icons — crisp vector glyphs (NOT letters, NOT bitmaps)",
+            "AthGFX line icons — crisp vector glyphs (NOT letters, NOT bitmaps)",
             TYPE_SUBTITLE,
             txt_primary,
             FontFamily::Sans,
@@ -596,7 +596,7 @@ fn render_icon_sheet_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, Stri
         dir,
         "atom-icons.png",
         manifest,
-        "RaeGFX line-icon set: CC-tile size in glass tiles + 72px scaling proof + token-tinted strip (replaces letter placeholders)",
+        "AthGFX line-icon set: CC-tile size in glass tiles + 72px scaling proof + token-tinted strip (replaces letter placeholders)",
     );
 }
 
@@ -676,7 +676,7 @@ fn render_notification_toasts_surface(dir: &PathBuf, manifest: &mut Vec<(String,
         -1, now, 21, 14,
     );
     nd.notify(
-        "RaeStore", 0, "download",
+        "AthStore", 0, "download",
         "Update ready", "Celeste 1.4 finished downloading.",
         &[("install", "Install")],
         NotificationHints::new().with_urgency(Urgency::Low),

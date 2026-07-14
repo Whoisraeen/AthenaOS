@@ -1,6 +1,6 @@
 //! # RaeFormats — a never-panic, `no_std` content-type sniffer.
 //!
-//! RaeenOS_Concept.md criterion #5 (the cohesion seam — every part of the OS
+//! LEGACY_GAMING_CONCEPT.md criterion #5 (the cohesion seam — every part of the OS
 //! agrees on what a file *is*) and criterion #6 (security never trusts a file
 //! extension): a daily driver must detect a file's **true** type from its bytes so
 //! that Files, Quick Look, and the decoder dispatch all pick the same correct
@@ -45,7 +45,7 @@
 
 extern crate alloc;
 
-/// The detected type of a file. Covers the formats RaeenOS already handles plus
+/// The detected type of a file. Covers the formats AthenaOS already handles plus
 /// the common daily-driver set; [`FileKind::Unknown`] is the honest fallback.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FileKind {
@@ -269,7 +269,7 @@ impl FileKind {
         }
     }
 
-    /// The RaeenOS crate name that decodes / handles this kind, if one exists, as
+    /// The AthenaOS crate name that decodes / handles this kind, if one exists, as
     /// a **string** (NOT a dependency — the caller links the decoder, not us).
     /// `None` for kinds with no in-tree decoder yet.
     pub fn recommended_decoder(self) -> Option<&'static str> {

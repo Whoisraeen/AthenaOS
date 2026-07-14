@@ -4,7 +4,7 @@
 //! (CPU not responding to NMIs), and ensures panic handlers complete within
 //! a timeout. All critical paths are interrupt-safe (no allocation in NMI).
 //!
-//! Concept: a shipping gaming OS must never wedge the machine. RaeenOS pairs a
+//! Concept: a shipping gaming OS must never wedge the machine. AthenaOS pairs a
 //! lightweight software "kernel alive" heartbeat (incremented by the BSP timer
 //! tick) with chipset hardware watchdogs (Intel TCO on ICH/PCH SMBus, AMD
 //! SP5100 MMIO) so that a fully hung kernel is rebooted by silicon even when no
@@ -52,7 +52,7 @@ const ACPI_WDAT_BASE: u16 = 0x400;
 const PCI_VENDOR_INTEL: u16 = 0x8086;
 const PCI_VENDOR_AMD: u16 = 0x1022;
 const PCI_CLASS_SERIAL_BUS: u8 = 0x0C; // Serial bus controller
-                                       // RaeenOS fix (Phase 4.6): SMBus is subclass 0x05 (0x07 is IPMI). The old
+                                       // AthenaOS fix (Phase 4.6): SMBus is subclass 0x05 (0x07 is IPMI). The old
                                        // value meant find_smbus_controller() NEVER matched — on Athena the AMD
                                        // EFCH probe never even ran ("software watchdog only" on iron).
 const PCI_SUBCLASS_SMBUS: u8 = 0x05; // SMBus
@@ -1224,7 +1224,7 @@ pub static WATCHDOG_TRIGGERED: AtomicBool = AtomicBool::new(false);
 /// SAFE-MODE bare-metal RELIABLE auto-return backstop: arm the hardware watchdog for a
 /// system reset and NEVER pet it. The software auto-return threads (late-flush +
 /// `safe_autoreset_thread_entry`) both depend on the LAPIC IRQ / scheduler advancing
-/// (JIFFIES); a HARD hang that kills interrupts strands the box (RaeenOS up but no
+/// (JIFFIES); a HARD hang that kills interrupts strands the box (AthenaOS up but no
 /// SSH/auto-reboot, needing a human power-cycle — exactly the GPU-bring-up hang seen
 /// 2026-06-29 x3). The EFCH/SP5100 watchdog counts in HARDWARE, independent of
 /// CPU/IRQ/scheduler state, so it resets the machine after `seconds` no matter how wedged

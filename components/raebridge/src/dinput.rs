@@ -4,7 +4,7 @@
 //!
 //! Provides the input and audio APIs that Windows games use for controller,
 //! keyboard, mouse, and sound buffer access. These are intercepted by
-//! RaeBridge and mapped to RaeenOS native input/audio subsystems.
+//! AthBridge and mapped to AthenaOS native input/audio subsystems.
 
 extern crate alloc;
 
@@ -410,7 +410,7 @@ impl DirectInputDevice {
         Self {
             guid,
             device_type: DInputDeviceType::Keyboard,
-            name: String::from("RaeenOS Keyboard"),
+            name: String::from("AthenaOS Keyboard"),
             axes: Vec::new(),
             buttons,
             povs: Vec::new(),
@@ -461,7 +461,7 @@ impl DirectInputDevice {
         Self {
             guid,
             device_type: DInputDeviceType::Mouse,
-            name: String::from("RaeenOS Mouse"),
+            name: String::from("AthenaOS Mouse"),
             axes,
             buttons,
             povs: Vec::new(),

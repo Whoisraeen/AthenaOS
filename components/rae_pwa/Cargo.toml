@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS Web App Manifest parser (W3C `manifest.json`) — the data model behind
-# PWA "install to desktop" (RaeenOS_Concept.md §"web apps via PWA support that
+# AthenaOS Web App Manifest parser (W3C `manifest.json`) — the data model behind
+# PWA "install to desktop" (LEGACY_GAMING_CONCEPT.md §"web apps via PWA support that
 # actually feels native"). A PWA ships a JSON manifest; this crate turns those
 # untrusted bytes into a typed `WebAppManifest` (name/icons/display/colors) that
 # the OS's install-to-desktop path consumes — so a web app gets a real desktop

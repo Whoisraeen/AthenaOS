@@ -1,4 +1,4 @@
-//! RaeenOS Passwords & Authenticator — userspace ELF entry shim.
+//! AthenaOS Passwords & Authenticator — userspace ELF entry shim.
 //!
 //! All the app (vault model, draw path, syscall wiring, the host-KAT'd
 //! `VaultModel`) lives in the `passwords` LIBRARY crate (`src/lib.rs`) so a host

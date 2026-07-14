@@ -1,4 +1,4 @@
-# RaeFS
+# AthFS
 
 Copy-on-write filesystem optimized for a gaming desktop's access patterns.
 

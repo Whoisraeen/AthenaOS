@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# amdgpu-rlc-backdoor-patches.sh — re-apply the RaeenOS bring-up adaptations to
+# amdgpu-rlc-backdoor-patches.sh — re-apply the AthenaOS bring-up adaptations to
 # the VENDORED (git-ignored) amdgpu C tree. Firmware-loader selection remains
 # upstream-auto so Phoenix uses the same PSP/SMU path as native Linux; failures
 # must propagate instead of being converted into successful initialization.

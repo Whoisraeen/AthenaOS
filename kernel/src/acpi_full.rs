@@ -4575,7 +4575,7 @@ pub unsafe fn negotiate_pcie_control(ctx: &mut aml::AmlContext) -> Result<(), &'
             }
 
             crate::serial_println!(
-                "RaeKernel: Native PCIe control successfully transferred from SMM to OS."
+                "AthKernel: Native PCIe control successfully transferred from SMM to OS."
             );
             Ok(())
         }

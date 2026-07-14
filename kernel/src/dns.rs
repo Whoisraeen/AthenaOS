@@ -500,7 +500,7 @@ fn dnskey_rdata(dnskey: &Dnskey) -> Vec<u8> {
 /// Compute a DNSKEY's key tag (RFC 4034 Appendix B) — the 16-bit checksum that
 /// links an RRSIG (its `key_tag` field) and a DS record to the DNSKEY that
 /// signed / is delegated to. Defined for every algorithm except the historic
-/// alg 1 (RSA/MD5), which RaeenOS does not support.
+/// alg 1 (RSA/MD5), which AthenaOS does not support.
 pub fn dnskey_key_tag(dnskey: &Dnskey) -> u16 {
     let rdata = dnskey_rdata(dnskey);
     let mut ac: u32 = 0;
@@ -1923,7 +1923,7 @@ pub fn add_static_host(hostname: String, addr: [u8; 4]) {
 /// ZERO network I/O: name encode/decode round-trip, header serialize/parse,
 /// compression-pointer decompression, query construction, and static-host
 /// resolution. MasterChecklist Phase 10 (supports the `curl` acceptance);
-/// Concept §RaeNet name resolution.
+/// Concept §AthNet name resolution.
 pub fn run_boot_smoketest() {
     let mut pass = 0u32;
     let mut total = 0u32;
@@ -3228,7 +3228,7 @@ pub fn run_boot_smoketest() {
 pub fn dump_text() -> String {
     let guard = DNS_RESOLVER.lock();
     let mut out = String::new();
-    out.push_str("# RaeNet DNS resolver\n");
+    out.push_str("# AthNet DNS resolver\n");
     match *guard {
         Some(ref r) => {
             out.push_str(&alloc::format!("upstream_servers: {}\n", r.server_count()));

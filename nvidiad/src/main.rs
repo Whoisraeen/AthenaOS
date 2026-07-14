@@ -1,4 +1,4 @@
-//! nvidiad — RaeenOS native userspace NVIDIA GPU driver daemon.
+//! nvidiad — AthenaOS native userspace NVIDIA GPU driver daemon.
 //!
 //! The from-scratch NVIDIA path, built to the same shape as `i915d`/`amdgpud`:
 //! an IOMMU-sandboxed userspace daemon that claims the GPU and walks the

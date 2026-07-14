@@ -23,7 +23,7 @@ DMABUF=$SRC/drivers/dma-buf
 PM=$AMD/pm
 TGT=${CARGO_TARGET_DIR:-$HOME/m4-target}
 OBJ=$HOME/m4-obj
-# FREESTANDING=1 -> the bare-metal (RaeenOS daemon) build: freestanding objects +
+# FREESTANDING=1 -> the bare-metal (AthenaOS daemon) build: freestanding objects +
 # the x86_64-unknown-none staticlib. Default -> the host link-test build.
 # gcc 14+ promotes implicit-function-declaration and implicit-int from WARNING to a
 # hard ERROR. The WSL toolchain that authored this build treated them as warnings —
@@ -34,7 +34,7 @@ GCC_COMPAT="-fpermissive -Wno-implicit-function-declaration -Wno-implicit-int"
 # RELOC FIX: -fvisibility=hidden makes amdgpu's global symbols non-interposable, so
 # every .data.rel.ro vtable slot (`X_funcs.op = x_op`) that references another amdgpu
 # global emits R_X86_64_RELATIVE at the final daemon link instead of a symbol-based
-# R_X86_64_64. The RaeenOS ELF loader (kernel/src/elf.rs) applies ONLY RELATIVE, so a
+# R_X86_64_64. The AthenaOS ELF loader (kernel/src/elf.rs) applies ONLY RELATIVE, so a
 # symbol-based slot stays null -> `nbio.funcs->set_reg_remap` jumps through 0 (the
 # Athena 0x77 fault). Everything statically merges into the one daemon, so nothing
 # needs to stay exported. Belt-and-suspenders with build.rs's -Bsymbolic final link.
@@ -140,7 +140,7 @@ for F in $BRINGUP; do
   # amdgpu_bios.c: the only file that needs CONFIG_ACPI (the VFCT VBIOS path).
   XCF=""; [ "$F" = amdgpu_bios ] && XCF="-DCONFIG_ACPI"
   # gmc_v11_0.c: the APU visible-VRAM override (aper_base = mmhub get_mc_fb_offset,
-  # aper_size = real_vram_size) is gated on #ifdef CONFIG_X86_64. RaeenOS IS x86-64;
+  # aper_size = real_vram_size) is gated on #ifdef CONFIG_X86_64. AthenaOS IS x86-64;
   # without the define visible_vram_size stays at the 256M PCI BAR while the PSP TMR
   # reserves near the top of real VRAM (~1920M) -> ttm placement fails -EINVAL(-22).
   # Athena is an APU (GC 11.0.1, in amdgpu_discovery's AMD_IS_APU list), so the branch

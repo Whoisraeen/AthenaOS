@@ -1,4 +1,4 @@
-//! Swappable Window Managers for RaeenOS.
+//! Swappable Window Managers for AthenaOS.
 //!
 //! Provides three first-class window management strategies behind a
 //! unified `WmStrategy` trait:

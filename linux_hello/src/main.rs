@@ -31,7 +31,7 @@ const SYS_EXIT_GROUP: u64 = 231;
 const ARCH_SET_FS: u64 = 0x1002;
 const ARCH_GET_FS: u64 = 0x1003;
 
-const TLS_MAGIC: u64 = 0x5241_4545_4E4F_5321; // "RAEENOS!"
+const TLS_MAGIC: u64 = 0x5241_4545_4E4F_5321; // "ATHENAOS!"
 
 /// Minimal TLS block. Linux convention: `fs:0` holds the TCB self-pointer;
 /// we keep a magic at `fs:8` to detect a clobbered or stale FS base.

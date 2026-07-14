@@ -1,6 +1,6 @@
 # Third-Party Licenses
 
-RaeenOS may include or adapt components from other open-source projects. This file tracks **substantial** vendored or forked trees.
+AthenaOS may include or adapt components from other open-source projects. This file tracks **substantial** vendored or forked trees.
 
 ## Redox OS (MIT)
 
@@ -32,7 +32,7 @@ The Kanata project is itself a multi-license tree. We vendored two of its crates
 | Vendored crate                                        | License        | Currently linked? | Notes |
 |-------------------------------------------------------|----------------|-------------------|-------|
 | `components/kanata_daemon/vendor/kanata-keyberon/`    | **MIT**        | yes (layout engine) | Fork of TeXitoi's `keyberon`. `no_std`-clean. Used as the daemon's actual key-event state machine. |
-| `components/kanata_daemon/vendor/kanata-parser/`      | **LGPL-3.0**   | **no — gated off** | `.kbd` config file parser. Requires `std`; daemon Cargo.toml comment marks it disabled until Phase 11 RaeBridge brings full `std` userspace. |
+| `components/kanata_daemon/vendor/kanata-parser/`      | **LGPL-3.0**   | **no — gated off** | `.kbd` config file parser. Requires `std`; daemon Cargo.toml comment marks it disabled until Phase 11 AthBridge brings full `std` userspace. |
 
 **Linkage policy.** `kanata_daemon` is — and must remain — a **separate userspace ELF**, talking to the kernel only over capability-IPC. The kernel itself never links any kanata crate (verify with `grep kanata kernel/Cargo.toml` — must be empty). This keeps the LGPL-3.0 obligation scoped to the daemon binary: the kernel + first-party userspace can stay MIT/Apache-style, and the daemon ships its own `LICENSE` (LGPL-3.0) preserved verbatim at `components/kanata_daemon/LICENSE`.
 

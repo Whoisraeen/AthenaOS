@@ -1,8 +1,8 @@
-# RaeenOS Production Checklist — Consumer-OS Feature Parity
+# AthenaOS Production Checklist — Consumer-OS Feature Parity
 
-**What this document is:** the *top-down, consumer-OS* readiness lens for RaeenOS. It is organized the way Windows and macOS are actually **experienced and shipped** — by user-facing surface area — and for each surface it names the Windows equivalent, the macOS equivalent, the RaeenOS answer, an honest parity status, and the owning `MasterChecklist.md` phase.
+**What this document is:** the *top-down, consumer-OS* readiness lens for AthenaOS. It is organized the way Windows and macOS are actually **experienced and shipped** — by user-facing surface area — and for each surface it names the Windows equivalent, the macOS equivalent, the AthenaOS answer, an honest parity status, and the owning `MasterChecklist.md` phase.
 
-**What this document is NOT:** the live engineering source of truth. That is **`MasterChecklist.md`**, always. This file is a *parity index* — a way to ask "would a person switching from Windows or a Mac find this OS complete?" When this file and `MasterChecklist.md` disagree on status, **`MasterChecklist.md` wins** and this file is stale — fix it. Precedence overall: `RaeenOS_Concept.md` > `MasterChecklist.md` > this file.
+**What this document is NOT:** the live engineering source of truth. That is **`MasterChecklist.md`**, always. This file is a *parity index* — a way to ask "would a person switching from Windows or a Mac find this OS complete?" When this file and `MasterChecklist.md` disagree on status, **`MasterChecklist.md` wins** and this file is stale — fix it. Precedence overall: `LEGACY_GAMING_CONCEPT.md` > `MasterChecklist.md` > this file.
 
 > Anti-stale contract: do not turn this into a second backlog. It mirrors status *from* the MasterChecklist and the Concept doc; it does not own it. Every row links the phase that does.
 
@@ -20,7 +20,7 @@
 - `[x]` — Done and measurable on the bar that surface demands. For anything touching hardware, `[x]` means **proven on Athena/iron**, not QEMU.
 - `[~]` — Partial: infrastructure exists, end-to-end consumer experience not proven.
 - `[ ]` — Not started.
-- `[N/A]` — Deliberately out of scope for RaeenOS by Concept design (e.g. forced telemetry, ads, registry archaeology).
+- `[N/A]` — Deliberately out of scope for AthenaOS by Concept design (e.g. forced telemetry, ads, registry archaeology).
 
 "Compiles" is never a status. When in doubt, downgrade.
 
@@ -28,12 +28,12 @@
 
 ## What "production" means for a consumer OS
 
-Windows and macOS are not "done" because the kernel boots — they are done because a non-technical person can **unbox, set up, and live in them for a year** without a terminal. RaeenOS reaches consumer production when it clears three escalating gates, mapped to the Concept's *Three User Experiences*:
+Windows and macOS are not "done" because the kernel boots — they are done because a non-technical person can **unbox, set up, and live in them for a year** without a terminal. AthenaOS reaches consumer production when it clears three escalating gates, mapped to the Concept's *Three User Experiences*:
 
 | Gate | Persona (Concept §Three User Experiences) | The bar | Today |
 |---|---|---|---|
 | **G1 — Daily Driver** | Average User | Install, log in, browse files, get on Wi-Fi, change a setting, run an app, sleep/wake, update, shut down. No terminal. | `[ ]` — blocked on real GPU present, live input on iron end-to-end, browser, installer-to-installed-disk |
-| **G2 — Switcher** | Custom-PC Builder | Everything in G1 + run their existing Windows apps (RaeBridge), see hardware telemetry, theme the system, manage drivers. | `[ ]` |
+| **G2 — Switcher** | Custom-PC Builder | Everything in G1 + run their existing Windows apps (AthBridge), see hardware telemetry, theme the system, manage drivers. | `[ ]` |
 | **G3 — Gamer** | Game Station | Everything in G2 + Steam works, a AAA title runs, controller-only living-room flow, VRR/HDR, per-game profiles. | `[ ]` |
 
 These three gates are the consumer-facing restatement of the engineering **Ship Gate** at the bottom of `MasterChecklist.md`. They do not replace it; they translate it into "what a person can do."
@@ -46,14 +46,14 @@ Legend for the **Phase** column: links to the owning section in `MasterChecklist
 
 The first 15 minutes. Windows = OOBE; macOS = Setup Assistant.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Bootable install media | USB / ISO | USB / Recovery | `--safe`/UEFI image, `flash-usb.ps1` | `[~]` | 16.2 |
 | Graphical setup wizard | OOBE | Setup Assistant | `installer_ui.rs` 7-screen flow | `[~]` | 16.1 |
 | Language / region / keyboard pick | ✓ | ✓ | locale stage exists, no graphical picker | `[~]` | 16.1 |
 | Network setup during install | ✓ | ✓ | DHCP runs at boot; no install screen | `[ ]` | 16.1 |
 | Local account creation | ✓ | ✓ | `create_local_account` + Argon2 hash, iron-proven | `[x]` | 16.1 |
-| Cloud account sign-in | Microsoft account | Apple ID | RaeID (passkeys-first, **optional**); WebAuthn EdDSA+ES256 ceremony core host-KAT'd; sign-in UX + server + iron pending | `[~]` | 15.2 |
+| Cloud account sign-in | Microsoft account | Apple ID | AthID (passkeys-first, **optional**); WebAuthn EdDSA+ES256 ceremony core host-KAT'd; sign-in UX + server + iron pending | `[~]` | 15.2 |
 | Privacy/permission disclosure screen | ✓ | ✓ | telemetry off by default (Concept §Core 2) | `[ ]` | 16.1 |
 | Migration from old machine | (weak) | Migration Assistant | not planned for 1.0 | `[ ]` | — |
 | Install-to-internal-disk completes & reboots into OS | ✓ | ✓ | full-disk plan bootable in sim; iron end-to-end pending | `[~]` | 3.5 / 16.1 |
@@ -66,11 +66,11 @@ The first 15 minutes. Windows = OOBE; macOS = Setup Assistant.
 
 The thing you stare at all day. Windows = Shell/Explorer (taskbar, Start); macOS = Finder/Dock/menu bar.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Desktop + wallpaper | ✓ | ✓ | compositor desktop; rendered on iron | `[~]` | 14.1 |
-| Taskbar / Dock | Taskbar | Dock | RaeShell taskbar | `[~]` | 14.1 |
-| App launcher / Start | Start menu | Launchpad | RaeShell start menu | `[~]` | 14.1 |
+| Taskbar / Dock | Taskbar | Dock | AthShell taskbar | `[~]` | 14.1 |
+| App launcher / Start | Start menu | Launchpad | AthShell start menu | `[~]` | 14.1 |
 | System tray / menu bar status | tray | menu bar | tray w/ live RTC clock | `[~]` | 14.1 |
 | Clock reads real wall time | ✓ | ✓ | `tray_clock_string` ← `sys_wall_clock`, QEMU-proven | `[~]` | 14.1 |
 | Window move/resize/min/max | ✓ | ✓ | compositor multi-window | `[~]` | 14.1 / 8.1 |
@@ -96,7 +96,7 @@ The thing you stare at all day. Windows = Shell/Explorer (taskbar, Start); macOS
 
 Windows = File Explorer; macOS = Finder.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | File manager app | Explorer | Finder | `Files` (basic) | `[~]` | 14.2 |
 | Tabs / split panes | ✓ | ✓ (tabs) | `apps/files` tabs LIVE (`rae_files::TabSet`); no split yet | `[~]` | 14.2 |
@@ -109,7 +109,7 @@ Windows = File Explorer; macOS = Finder.
 | Quick preview | Preview pane | Quick Look | Files Quick Look renders real PNG pixels (`8550989`); BMP/GIF/PNG/JPEG/WebP decoders + `rae_image` dispatcher host-KAT'd, broader-format Quick Look wiring pending | `[~]` | 14.2 |
 | Zip / unzip | ✓ | ✓ | lz4/zstd in kernel; `rae_zip` reader+ZipWriter + `rae_tar` .tar.gz writer host-KAT'd; UI wiring pending | `[~]` | 5.4 |
 | File associations / default apps | ✓ | ✓ | not yet | `[ ]` | 14.2 |
-| Per-app data isolation | (none) | (containers) | RaeFS per-app buckets (Concept §RaeFS) | `[~]` | 5.6 |
+| Per-app data isolation | (none) | (containers) | AthFS per-app buckets (Concept §AthFS) | `[~]` | 5.6 |
 
 ---
 
@@ -117,12 +117,12 @@ Windows = File Explorer; macOS = Finder.
 
 Windows = Settings + (legacy) Control Panel; macOS = System Settings. Concept §Windows Pain Points explicitly demands **one** unified, searchable Settings — no split.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Unified, searchable Settings app | Settings (split w/ Control Panel) | System Settings | `Settings` (basic); catalog in `docs/SETTINGS_CATALOG.md` | `[~]` | 14.2 |
 | Display: resolution / scaling | ✓ | ✓ | EDID parse `[~]`; no settings UI | `[~]` | 2.3 |
 | Display: multi-monitor | ✓ | ✓ | single FB today | `[ ]` | 1.2 / 2.3 |
-| Display: HDR | ✓ | ✓ | Concept §RaeGFX first-class; not built | `[ ]` | 6.4 |
+| Display: HDR | ✓ | ✓ | Concept §AthGFX first-class; not built | `[ ]` | 6.4 |
 | Display: refresh / VRR | ✓ | ✓ (ProMotion) | compositor VRR target | `[ ]` | 6.4 / 12.1 |
 | Display: night light | ✓ | Night Shift | not yet | `[ ]` | 13.1 |
 | Sound device + per-app volume | ✓ | ✓ | HDA playback iron-proven; no mixer UI | `[~]` | 2.6 / 7 |
@@ -135,9 +135,9 @@ Windows = Settings + (legacy) Control Panel; macOS = System Settings. Concept §
 | Users & accounts | ✓ | ✓ | account create `[x]`; mgmt UI pending | `[~]` | 16.1 |
 | Privacy & per-app permissions | ✓ | ✓ | capability syscalls `[x]`; permission UI `[~]` | `[~]` | 9.2 |
 | Update settings + history | ✓ | ✓ | atomic A/B slots `[~]`; no UI | `[~]` | 3.6 |
-| Storage management | ✓ | ✓ | RaeFS exists; no UI | `[~]` | 5 |
+| Storage management | ✓ | ✓ | AthFS exists; no UI | `[~]` | 5 |
 | About / system info | ✓ | ✓ | `/proc/raeen/*` exists; no UI | `[~]` | 0 |
-| Backup & restore | Windows Backup | Time Machine | RaeFS snapshots + one-click rollback iron-proven | `[~]` | 5.1 |
+| Backup & restore | Windows Backup | Time Machine | AthFS snapshots + one-click rollback iron-proven | `[~]` | 5.1 |
 | Recovery / reset | Reset PC / WinRE | Recovery | safe mode exists; recovery env `[ ]` | `[~]` | 4.10 / 16 |
 | RGB / fan / overclock unified | (vendor sprawl) | (none) | one RGB API + fan curves (Concept §Customization) | `[~]` | 13.3 |
 | **No ads / no forced telemetry** | (present) | (some) | forbidden by design (Concept §Core 2) | `[N/A]` | 18 |
@@ -148,7 +148,7 @@ Windows = Settings + (legacy) Control Panel; macOS = System Settings. Concept §
 
 What ships in the box. Concept §Windows Pain Points: "Default install is OS only" — *no bloatware*, but the **essentials** still have to exist.
 
-| App | Windows | macOS | RaeenOS answer | Status | Phase |
+| App | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Web browser | Edge | Safari | raeweb HTML/CSS + a from-scratch JS engine (`rae_js`: parse+execute+collections+RegExp+Promise/event-loop) host-KAT'd; layout/render + DOM bindings + app-wiring pending | `[~]` | 14.2 |
 | File manager | Explorer | Finder | Files (basic) | `[~]` | 14.2 |
@@ -157,11 +157,11 @@ What ships in the box. Concept §Windows Pain Points: "Default install is OS onl
 | Text editor | Notepad | TextEdit | exists (basic) | `[~]` | 14.2 |
 | Calculator | ✓ | ✓ | `apps/calculator` over `rae_calc` (17 KATs) | `[~]` | 14.2 |
 | Photos / viewer | Photos | Photos | `apps/photos`; full decode stack BMP/GIF/PNG/JPEG/WebP-VP8L + PNG/JPEG encode + `rae_image` dispatcher, all host-KAT'd; app-wiring (beyond PNG-in-Files) + iron pending | `[~]` | 14.2 |
-| Media player | Media Player | Music / QuickTime | `apps/music`; WAV/FLAC/MP3/AAC/Opus decoders host-KAT'd (MP3+AAC audible on host), rae_mp4 demux; player open/decode path done; SCHED_GAME GameMixer; iron HDA + app-wiring pending | `[~]` | 7 / 14.2 |
+| Media player | Media Player | Music / QuickTime | `apps/music`; WAV/FLAC/MP3/AAC/Opus decoders host-KAT'd (MP3+AAC audible on host), rae_mp4 demux; player open/decode path done; SCHED_BODY GameMixer; iron HDA + app-wiring pending | `[~]` | 7 / 14.2 |
 | Screenshot / screen record | Snipping Tool | Screenshot | compositor capture (Concept §Gaming) | `[ ]` | 12.2 |
 | System monitor | Task Manager | Activity Monitor | `/proc/raeen/*` data exists; no app | `[~]` | 14.2 |
-| Disk utility | Disk Management | Disk Utility | installer GPT/RaeFS logic exists; no app | `[~]` | 3 |
-| App store client | Microsoft Store | App Store | RaeStore (shell only) | `[~]` | 15.1 |
+| Disk utility | Disk Management | Disk Utility | installer GPT/AthFS logic exists; no app | `[~]` | 3 |
+| App store client | Microsoft Store | App Store | AthStore (shell only) | `[~]` | 15.1 |
 | Clock / alarms | ✓ | ✓ | `apps/clock` (clock/alarms/timer/stopwatch/calendar) | `[~]` | 14.2 |
 | Notes | ✓ | Notes | `apps/notes` (md edit + live rae_markdown preview) | `[~]` | 14.2 |
 | Office docs (Word/Excel/PDF) | Office / WordPad | Pages/Numbers/Preview | `rae_docx`/`rae_xlsx`/`rae_pdf` read + DOCX/XLSX write + XLSX formula compute + `rae_print` PDF-1.7 generator, all host-KAT'd; app UI + iron pending | `[~]` | 14.2 |
@@ -172,9 +172,9 @@ What ships in the box. Concept §Windows Pain Points: "Default install is OS onl
 
 ## Part VI — Graphics & display stack
 
-Windows = DWM + WDDM; macOS = WindowServer + Metal. This is RaeenOS's biggest open Year-1 deliverable.
+Windows = DWM + WDDM; macOS = WindowServer + Metal. This is AthenaOS's biggest open Year-1 deliverable.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | GPU driver (real submit) | WDDM | Metal/IOKit | LinuxKPI userspace (amdgpud/i915d) + Mesa | `[ ]` | 6 |
 | Hardware-accelerated compositor | DWM | WindowServer | compositor on SW raster today | `[~]` | 6 |
@@ -186,21 +186,21 @@ Windows = DWM + WDDM; macOS = WindowServer + Metal. This is RaeenOS's biggest op
 | DPI / fractional scaling | ✓ | ✓ (Retina) | not built | `[ ]` | 8.1 |
 | Color management (ICC) | ✓ | ColorSync | not built | `[ ]` | — |
 | Compositor capture/record | ✓ | ✓ | zero-cost capture (Concept §Gaming) | `[ ]` | 12.2 |
-| Skia + wgpu UI render | (D2D/DWrite) | (CoreGraphics) | RaeUI on Skia+wgpu (Concept §Language Stack) | `[~]` | 8.1 |
+| Skia + wgpu UI render | (D2D/DWrite) | (CoreGraphics) | AthUI on Skia+wgpu (Concept §Language Stack) | `[~]` | 8.1 |
 
 ---
 
 ## Part VII — Audio
 
-Windows = WASAPI/Audio Engine; macOS = CoreAudio. Concept §RaeAudio: sub-3ms round-trip.
+Windows = WASAPI/Audio Engine; macOS = CoreAudio. Concept §AthAudio: sub-3ms round-trip.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Hardware codec playback | ✓ | ✓ | real HDA PCM iron-proven (`hda_playback=1`) | `[x]` | 2.6 |
 | Full codec topology walk | ✓ | ✓ | output-pin widget detection fails on Athena codec | `[~]` | 2.6 |
 | Output/input device mgmt | ✓ | ✓ | not built | `[ ]` | 7.2 |
 | Per-app volume + routing | ✓ | ✓ | VoiceMeeter-class native (Concept §Pro Gaming) | `[ ]` | 7.2 |
-| Low-latency / pro path | ASIO | CoreAudio | SCHED_GAME mix thread, <3ms target | `[ ]` | 7.2 |
+| Low-latency / pro path | ASIO | CoreAudio | SCHED_BODY mix thread, <3ms target | `[ ]` | 7.2 |
 | Bluetooth audio | ✓ | ✓ | no BT stack | `[ ]` | — |
 | System sounds | ✓ | ✓ | not built | `[ ]` | 7 |
 | Hotplug (jack detect) | ✓ | ✓ | not built | `[ ]` | 2.6 |
@@ -209,7 +209,7 @@ Windows = WASAPI/Audio Engine; macOS = CoreAudio. Concept §RaeAudio: sub-3ms ro
 
 ## Part VIII — Input & devices
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | USB keyboard | ✓ | ✓ | HID keyboard armed on iron (Razer); live-typing test pending | `[~]` | 2.1 |
 | USB mouse / pointer | ✓ | ✓ | HID wired; iron cursor pending next flash | `[~]` | 2.1 |
@@ -228,9 +228,9 @@ Windows = WASAPI/Audio Engine; macOS = CoreAudio. Concept §RaeAudio: sub-3ms ro
 
 ## Part IX — Networking
 
-Windows = Network stack + WLAN AutoConfig; macOS = Network framework. Concept §RaeNet.
+Windows = Network stack + WLAN AutoConfig; macOS = Network framework. Concept §AthNet.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Wired Ethernet + DHCP | ✓ | ✓ | RTL8125 TX+RX iron-proven; DHCP→Bound pending capture | `[~]` | 2.2 / 10 |
 | Wi-Fi (scan/connect/WPA2-3) | ✓ | ✓ | AX210 via LinuxKPI; not built | `[ ]` | 2.2 |
@@ -242,7 +242,7 @@ Windows = Network stack + WLAN AutoConfig; macOS = Network framework. Concept §
 | File/printer sharing | SMB | SMB / AirDrop | not planned for 1.0 | `[ ]` | — |
 | Captive portal handling | ✓ | ✓ | not built | `[ ]` | 10 |
 | Hotspot / tethering | ✓ | ✓ | not built | `[ ]` | — |
-| Gaming traffic shaping / QUIC priority | (none) | (none) | QUIC + shaper smoketests iron (Concept §RaeNet) | `[~]` | 10.2 |
+| Gaming traffic shaping / QUIC priority | (none) | (none) | QUIC + shaper smoketests iron (Concept §AthNet) | `[~]` | 10.2 |
 
 ---
 
@@ -250,10 +250,10 @@ Windows = Network stack + WLAN AutoConfig; macOS = Network framework. Concept §
 
 Windows = Defender + BitLocker + SmartScreen + Hello; macOS = Gatekeeper + FileVault + XProtect + Keychain. Concept §Security Model: "iOS-grade security without iOS-grade lockdown."
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Secure boot chain | ✓ | ✓ | boot-chain verify + replay iron | `[~]` | 3.7 |
-| Full-disk encryption | BitLocker | FileVault | RaeFS FDE; TPM-backed where available | `[~]` | 3.8 |
+| Full-disk encryption | BitLocker | FileVault | AthFS FDE; TPM-backed where available | `[~]` | 3.8 |
 | TPM-backed keys | ✓ | (Secure Enclave) | not wired | `[ ]` | 3.8 |
 | Capability-based permissions | (limited) | (TCC) | `Cap` enum enforced at syscall layer `[x]` | `[x]` | 9 |
 | App sandboxing by default | (partial) | (App Sandbox) | sandbox smoketests iron; fail-open for bring-up | `[~]` | 9.2 |
@@ -273,13 +273,13 @@ Windows = Defender + BitLocker + SmartScreen + Hello; macOS = Gatekeeper + FileV
 
 Concept §Core 2 + §Windows Pain Points: **user controls update timing, always**; atomic CoW updates with one-click rollback; no forced restarts.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | OS update mechanism | Windows Update | Software Update | atomic A/B kernel slots | `[~]` | 3.6 |
 | Atomic / never-half-apply | (no — can brick) | (better) | CoW atomic; one-click rollback iron | `[~]` | 3.6 / 5.1 |
 | User-controlled timing (no forced reboot) | (forced) | (nags) | by design (Concept §Core 2) | `[~]` | 3.6 |
-| Rollback after bad update | (System Restore) | (limited) | RaeFS snapshot rollback iron | `[~]` | 5.1 |
-| App updates | Store | App Store | RaeStore auto-update w/ consent; `RaeUpdate` verified transactional A/B delta engine (SHA-256+Ed25519 verify-before-apply, atomic flip, auto-rollback) host-KAT'd; UI + iron pending | `[~]` | 15.1 / 3.6 |
+| Rollback after bad update | (System Restore) | (limited) | AthFS snapshot rollback iron | `[~]` | 5.1 |
+| App updates | Store | App Store | AthStore auto-update w/ consent; `RaeUpdate` verified transactional A/B delta engine (SHA-256+Ed25519 verify-before-apply, atomic flip, auto-rollback) host-KAT'd; UI + iron pending | `[~]` | 15.1 / 3.6 |
 | Driver updates | Windows Update | (bundled) | signed driver pipeline | `[ ]` | — |
 | Update channels | Insider | beta | stable/beta/nightly | `[ ]` | 16.2 |
 | Delta / efficient updates | ✓ | ✓ | not built | `[ ]` | 3.6 |
@@ -291,25 +291,25 @@ Concept §Core 2 + §Windows Pain Points: **user controls update timing, always*
 
 The actual moat. Concept §Compatibility Strategy: this is "how to actually win."
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
-| Native app SDK | Win32/WinUI | Cocoa/SwiftUI | RaeKit (Rust, declarative) | `[~]` | 8.2 |
+| Native app SDK | Win32/WinUI | Cocoa/SwiftUI | AthKit (Rust, declarative) | `[~]` | 8.2 |
 | App package format | MSIX/exe | .app/.pkg | `.raepkg` bounds-checked TLV codec + fail-closed Ed25519 `parse_and_verify` host-KAT'd; hashed deps | `[~]` | 15.1 |
-| App store | Microsoft Store | App Store | RaeStore (12% share, sideload OK); transactional dependency-correct install/uninstall+GC host-KAT'd; client UI + iron pending | `[~]` | 15.1 |
+| App store | Microsoft Store | App Store | AthStore (12% share, sideload OK); transactional dependency-correct install/uninstall+GC host-KAT'd; client UI + iron pending | `[~]` | 15.1 |
 | Sideloading | ✓ | (Gatekeeper) | allowed + supported (Concept) | `[ ]` | 15.1 |
-| **Windows app compatibility** | (native) | (none) | **RaeBridge** (Wine/Proton lineage) | `[~]` | 11 |
+| **Windows app compatibility** | (native) | (none) | **AthBridge** (Wine/Proton lineage) | `[~]` | 11 |
 | Win32 ABI / loader | ✓ | — | LDR/TEB/PEB host-KAT'd 33/33; x64 marshaling/SEH/TLS pending | `[~]` | 11.2 |
-| DirectX → native translation | ✓ | — | DXVK/VKD3D lineage → RaeGFX | `[ ]` | 11.2 |
+| DirectX → native translation | ✓ | — | DXVK/VKD3D lineage → AthGFX | `[ ]` | 11.2 |
 | **Steam day one** | ✓ | (limited) | **non-negotiable** (Concept §Gaming); not yet | `[ ]` | 11.3 |
 | Linux app support | WSL | (none) | POSIX layer; relibc native apps run | `[~]` | 0 / 11 |
-| Web apps / PWA | ✓ | ✓ | `rae_pwa` W3C manifest parse + URL resolution + InstallDescriptor host-KAT'd; render through RaeUI + launch wiring pending | `[~]` | — |
+| Web apps / PWA | ✓ | ✓ | `rae_pwa` W3C manifest parse + URL resolution + InstallDescriptor host-KAT'd; render through AthUI + launch wiring pending | `[~]` | — |
 | Default-app / uninstall mgmt | ✓ | ✓ | not built | `[ ]` | 14.2 |
 
 ---
 
 ## Part XIII — Power & thermal
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Sleep (S3) + wake | ✓ | ✓ | not built | `[ ]` | 2.4 |
 | Hibernate | ✓ | ✓ | not built | `[ ]` | 2.4 |
@@ -324,22 +324,22 @@ The actual moat. Concept §Compatibility Strategy: this is "how to actually win.
 
 ## Part XIV — Performance & gaming (the wedge)
 
-This is where RaeenOS must *beat* Windows/macOS, not match them. Concept §Gaming-First: "where RaeenOS wins or doesn't ship."
+This is where AthenaOS must *beat* Windows/macOS, not match them. Concept §Gaming-First: "where AthenaOS wins or doesn't ship."
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Boot < 6s on NVMe (target 3s) | (slow) | ✓ | iron T0→userspace ~3.1s; **total ~11s, over budget — open** | `[~]` | 1 |
-| Real-time game scheduling | Game Mode (weak) | (none) | **SCHED_GAME** hard deadlines; EDF + deadline-miss telemetry (`/proc/raeen/perf`, verifier-PASS); iron game-thread proof pending | `[~]` | 12.1 |
+| Real-time game scheduling | Game Mode (weak) | (none) | **SCHED_BODY** hard deadlines; EDF + deadline-miss telemetry (`/proc/raeen/perf`, verifier-PASS); iron game-thread proof pending | `[~]` | 12.1 |
 | Background throttling in-game | (weak) | (n/a) | "nothing else gets meaningful CPU" (Concept) | `[ ]` | 12.1 |
 | Sub-frame input latency | (varies) | (varies) | OS adds <1 frame; not yet instrumented | `[ ]` | 12.1 |
 | Game bar / overlay | Xbox Game Bar | (none) | native overlay: FPS, frametime, temps | `[ ]` | 12.2 |
 | Per-game profiles | (3rd party) | (none) | res/refresh/audio/GPU-limit per game | `[~]` | 12.2 |
 | GameOS / Big Picture mode | (none) | (none) | GameOS couch shell; F11 toggle | `[~]` | 14.3 |
-| Library aggregator (Steam/Epic/GOG) | (none) | (none) | RaePlay unified | `[ ]` | 14.3 |
-| Direct-to-GPU fullscreen | ✓ | ✓ | RaeGFX exclusive path | `[ ]` | 6 / 12.1 |
+| Library aggregator (Steam/Epic/GOG) | (none) | (none) | AthPlay unified | `[ ]` | 14.3 |
+| Direct-to-GPU fullscreen | ✓ | ✓ | AthGFX exclusive path | `[ ]` | 6 / 12.1 |
 | Shader cache (OS-level) | (per-driver) | (none) | shared, persistent across reinstalls | `[ ]` | 12.1 |
 | Capture & stream (zero-cost) | (Game Bar) | (none) | at compositor | `[ ]` | 12.2 |
-| Anti-cheat (EAC/BattlEye) | kernel AC | (limited) | RaeShield attestation + sanctioned per-game kernel AC | `[ ]` | 9 / 18 |
+| Anti-cheat (EAC/BattlEye) | kernel AC | (limited) | AthGuard attestation + sanctioned per-game kernel AC | `[ ]` | 9 / 18 |
 | NULL_LATENCY competitive mode | (Reflex, app) | (none) | pure direct-input pipeline (Concept §Pro) | `[ ]` | 12.3 |
 
 ---
@@ -348,13 +348,13 @@ This is where RaeenOS must *beat* Windows/macOS, not match them. Concept §Gamin
 
 A consumer OS survives a year of abuse. Windows = WinRE/SFC/Reliability Monitor; macOS = Recovery/safe boot.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Graceful crash handling | BSOD + recover | panic + reboot | driver crash ≠ kernel crash (Concept) | `[~]` | 4 |
 | Crash dump + report | ✓ | ✓ | crash-dump region iron; reporting `[ ]` | `[~]` | 4.5 |
 | Safe mode | ✓ | ✓ | `--safe` boot path | `[~]` | 4.10 |
 | Recovery environment | WinRE | Recovery | not built | `[ ]` | 16 |
-| System restore points | ✓ | Time Machine | RaeFS snapshots | `[~]` | 5.1 |
+| System restore points | ✓ | Time Machine | AthFS snapshots | `[~]` | 5.1 |
 | Event / log viewer | Event Viewer | Console | `/proc/raeen/*` + bootlog | `[~]` | 0 |
 | 24h soak stability | (assumed) | (assumed) | not run | `[ ]` | 4.9 |
 | Machine-check / hardware-error handling | ✓ | ✓ | AER caps + SMCA banks iron; real handlers `[ ]` | `[~]` | 4.3 / 4.4 |
@@ -375,7 +375,7 @@ Ship-blocking for a mass-market OS; both Windows and macOS treat these as non-op
 > cells left for the MasterChecklist owner to re-stamp (this checklist mirrors MasterChecklist);
 > do not read these three rows as current.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Multiple UI languages | ✓ | ✓ | not built | `[ ]` | 14 |
 | RTL layout | ✓ | ✓ | cosmic-text BiDi available; not wired | `[ ]` | 8.1 |
@@ -394,13 +394,13 @@ Ship-blocking for a mass-market OS; both Windows and macOS treat these as non-op
 
 ## Part XVII — Enterprise & management (post-1.0)
 
-Windows and macOS both ship this; RaeenOS 1.0 is consumer-first and may defer most of it. Listed for completeness so it isn't mistaken for parity.
+Windows and macOS both ship this; AthenaOS 1.0 is consumer-first and may defer most of it. Listed for completeness so it isn't mistaken for parity.
 
-| Capability | Windows | macOS | RaeenOS answer | Status | Phase |
+| Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Device management (MDM) | Intune | MDM | out of 1.0 scope | `[ ]` | 18 |
 | Directory / domain join | AD/Entra | (limited) | out of scope | `[ ]` | — |
-| Policy / config profiles | Group Policy | Profiles | versioned config exists (Concept §RaeFS) | `[~]` | 5.7 |
+| Policy / config profiles | Group Policy | Profiles | versioned config exists (Concept §AthFS) | `[~]` | 5.7 |
 | Remote desktop | RDP | Screen Sharing | out of 1.0 scope | `[ ]` | — |
 | Enterprise licensing | ✓ | ✓ | business model defined (Concept) | `[ ]` | 18 |
 
@@ -415,7 +415,7 @@ These translate the engineering Ship Gate (`MasterChecklist.md`) into "what a pe
 - [ ] Log in with password at the lock screen on iron (Part II, live HID)
 - [ ] Desktop composites on **real GPU** (not SW raster) with a live mouse cursor (Part VI)
 - [ ] Get on Wi-Fi or Ethernet, resolve DNS, load a page (Part IX + browser, Part V)
-- [ ] Open Files, browse RaeFS, open Settings, change wallpaper — no terminal (Parts III–IV)
+- [ ] Open Files, browse AthFS, open Settings, change wallpaper — no terminal (Parts III–IV)
 - [ ] Run a native app and a built-in app; notifications appear (Parts II, V, XII)
 - [ ] Sleep and wake under 1s; battery reports correctly (Part XIII)
 - [ ] Take an OS update and roll it back (Part XI)
@@ -423,7 +423,7 @@ These translate the engineering Ship Gate (`MasterChecklist.md`) into "what a pe
 
 ### G2 — Switcher (Custom-PC Builder brings their software)
 - [ ] Everything in G1
-- [ ] Install and run a real Windows app via RaeBridge (Part XII)
+- [ ] Install and run a real Windows app via AthBridge (Part XII)
 - [ ] See live CPU/GPU temps, fan speed, RGB control in one place (Parts IV, XIV)
 - [ ] Apply a theme / Vibe Mode; swap window manager (Part II)
 - [ ] Manage drivers and permissions from Settings (Parts IV, X)
@@ -451,7 +451,7 @@ These translate the engineering Ship Gate (`MasterChecklist.md`) into "what a pe
 
 1. **Don't update status here first.** Land it in `MasterChecklist.md` (with the phase's own boot/iron proof), then mirror the row here.
 2. **Read it as a gap-finder.** Rows that are `[ ]` with no MasterChecklist phase are *unowned parity gaps* — accessibility, localization, browser, Bluetooth, printing, color management are the current standouts. Raise them into the MasterChecklist before they become 1.0 surprises.
-3. **The Concept doc still wins.** Where Windows/macOS do something RaeenOS deliberately refuses (ads, forced telemetry, registry sprawl, walled garden), the cell is `[N/A]` — that's a feature, not a gap.
+3. **The Concept doc still wins.** Where Windows/macOS do something AthenaOS deliberately refuses (ads, forced telemetry, registry sprawl, walled garden), the cell is `[N/A]` — that's a feature, not a gap.
 
 ---
 

@@ -1,4 +1,4 @@
-# RaeenOS Visual Identity v2 — "Obsidian" (2026-07-01)
+# AthenaOS Visual Identity v2 — "Obsidian" (2026-07-01)
 
 > Supersedes the §2 "Liquid Glass frost" material recipe in `IDENTITY.md`.
 > Everything else in IDENTITY.md (type ramp, icon register, accent discipline,

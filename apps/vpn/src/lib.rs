@@ -1,4 +1,4 @@
-//! RaeenOS VPN — a first-class, friendly WireGuard client over the LIVE `raevpn`
+//! AthenaOS VPN — a first-class, friendly WireGuard client over the LIVE `raevpn`
 //! Noise_IKpsk2 engine.
 //!
 //! The Concept names "built-in WireGuard" as a pillar (§Networking / §Privacy):

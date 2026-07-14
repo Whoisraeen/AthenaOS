@@ -4,7 +4,7 @@
 //!
 //! Deaf and hard-of-hearing users cannot rely on system SOUNDS (alert chimes,
 //! alarm tones, the connect/disconnect beep). Windows ships this as "SoundSentry
-//! / visual notifications" and macOS as "screen flash on alert"; RaeenOS makes
+//! / visual notifications" and macOS as "screen flash on alert"; AthenaOS makes
 //! it a kernel hook so EVERY sound-bearing system event also produces a readable
 //! visual record.
 //!

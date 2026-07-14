@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS diff/patch engine — Myers line diff + unified diff/patch + byte delta.
-# The foundation for DELTA OS updates (RaeenOS_Concept.md §"atomic CoW updates":
+# AthenaOS diff/patch engine — Myers line diff + unified diff/patch + byte delta.
+# The foundation for DELTA OS updates (LEGACY_GAMING_CONCEPT.md §"atomic CoW updates":
 # ship only the changed bytes/lines into the inactive A/B slot instead of a full
 # image) AND editor change-views / version-control. Foundational, zero-dep,
 # never-panic, host-KAT-able pure logic — wired into no consumer this slice.

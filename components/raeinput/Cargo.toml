@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeInput — unified gamepad + input daemon. Normalizes USB/Bluetooth HID for SCHED_GAME dispatch."
+description = "RaeInput — unified gamepad + input daemon. Normalizes USB/Bluetooth HID for SCHED_BODY dispatch."
 
 [dependencies]
 # gilrs: pure-Rust gamepad library. Handles DualSense, Xbox, and generic HID gamepads.

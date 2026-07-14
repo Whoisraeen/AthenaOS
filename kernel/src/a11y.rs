@@ -4,7 +4,7 @@
 //! ... OS enforces at the syscall layer." An assistive-technology client must
 //! not read another app's UI tree (or drive its widgets) unprompted: the
 //! `SYS_A11Y_SNAPSHOT` / `SYS_A11Y_ACTION` surface is gated on
-//! `Cap::Accessibility` — the RaeenOS analogue of macOS TCC Accessibility /
+//! `Cap::Accessibility` — the AthenaOS analogue of macOS TCC Accessibility /
 //! Windows UIA. Concept §"Built for people who care about how things feel":
 //! accessibility is a SHIP GATE (parity §J), not a bolt-on.
 //!
@@ -14,7 +14,7 @@
 //! wire repr and proves the cap gate refuses an un-capped client. The full
 //! window-tier tree walk over the live compositor surface list (the
 //! `build_tree()` body below is intentionally minimal/synthetic for the
-//! interface proof) and the RaeUI widget provider are the implementer's next
+//! interface proof) and the AthUI widget provider are the implementer's next
 //! slice (`docs/research/phase19-accessibility-foundation.md` §3-6).
 
 extern crate alloc;
@@ -33,16 +33,16 @@ static A11Y_ENABLED: AtomicBool = AtomicBool::new(false);
 
 /// Widget-tier provider seam (foundation §6). A registered provider, given a
 /// window's surface id, returns the semantic child widgets (Button/Label/
-/// TextField/…) RaeUI knows about for that window — already in the
+/// TextField/…) AthUI knows about for that window — already in the
 /// `AccessNode` shape, parented under the window id. `build_tree()` calls it per
 /// window and appends the result. `None` => window-tier only (no widgets known
-/// for any window yet). This is the kernel↔RaeUI meeting point: RaeUI walks its
+/// for any window yet). This is the kernel↔AthUI meeting point: AthUI walks its
 /// live widget tree (`raeui::accessibility::provider_nodes_for_window`) and the
 /// publisher feeds the result here; the kernel never holds a shadow copy.
 type WidgetProvider = fn(window_id: u64) -> Vec<AccessNode>;
 static WIDGET_PROVIDER: Mutex<Option<WidgetProvider>> = Mutex::new(None);
 
-/// Kernel-side publication of the widgets RaeUI reports for a window. The
+/// Kernel-side publication of the widgets AthUI reports for a window. The
 /// default provider reads this. Keyed by window (surface) id; the value is the
 /// already-named widget nodes (real roles/labels/bounds — never anonymous
 /// groups). A userspace AT/UI bridge (or the kernel UI layer) publishes here;
@@ -55,7 +55,7 @@ pub fn set_widget_provider(provider: WidgetProvider) {
     *WIDGET_PROVIDER.lock() = Some(provider);
 }
 
-/// Publish (replace) the semantic widget nodes RaeUI reports for `window_id`.
+/// Publish (replace) the semantic widget nodes AthUI reports for `window_id`.
 /// Pass an empty Vec to clear a window's widgets. Nodes must already carry their
 /// real role/state/bounds/actions/name and be parented under `window_id`.
 pub fn publish_window_widgets(window_id: u64, widgets: Vec<AccessNode>) {
@@ -75,10 +75,10 @@ pub fn publish_window_widgets(window_id: u64, widgets: Vec<AccessNode>) {
 /// are kept). 64 covers every real chrome surface with headroom.
 pub const MAX_WIDGETS_PER_WINDOW: usize = 64;
 
-/// Bridge: convert RaeUI's wire-shaped [`raeui::accessibility::ProviderNode`]s
+/// Bridge: convert AthUI's wire-shaped [`raeui::accessibility::ProviderNode`]s
 /// (produced by `provider_nodes_for_window` from a live `AccessibilityTree`) into
 /// kernel [`AccessNode`]s and publish them under `window_id`. This is the
-/// kernel↔RaeUI meeting point (foundation §6): RaeUI does the role/label
+/// kernel↔AthUI meeting point (foundation §6): AthUI does the role/label
 /// inference (the single source of truth — `role_from_widget_kind` + the widget
 /// registry), the kernel only re-parents and records. The `ProviderNode` field
 /// set mirrors `AccessNode` 1:1 over the `A11Y_ROLE_*`/`A11Y_STATE_*`/
@@ -199,7 +199,7 @@ impl AccessNode {
 /// is never held across the return (each accessor locks + drops internally).
 ///
 /// NOTE (interface slice): this is the minimal window-tier walk that backs the
-/// syscall + procfs surface. The widget-tier provider seam (RaeUI feeds
+/// syscall + procfs surface. The widget-tier provider seam (AthUI feeds
 /// per-widget role/label/bounds) and the richer state/action mapping are the
 /// implementer's next slice — they fill in nodes UNDER each window id here.
 pub fn build_tree() -> Vec<AccessNode> {
@@ -418,7 +418,7 @@ pub fn reduced_motion_on() -> bool {
 // a focus-generation counter so a userspace reader can poll "did focus move?"
 // cheaply, and emits the announcement through a pluggable `SpeechSink`. The
 // default `LogSpeechSink` is QEMU-provable (the spoken string lands in the boot
-// log); a real `AudioSpeechSink` (TTS -> RaeAudio PCM) drops in later WITHOUT
+// log); a real `AudioSpeechSink` (TTS -> AthAudio PCM) drops in later WITHOUT
 // touching any of this logic — that tail is audio/iron-gated (Phase 7).
 // ===========================================================================
 
@@ -585,7 +585,7 @@ fn is_container_role(role: u32) -> bool {
 
 /// Pluggable speech output. The announcer never knows how speech is rendered —
 /// it just calls `speak(&str)`. The default sink writes to the durable log
-/// (QEMU/iron-verifiable); a real `AudioSpeechSink` (TTS -> RaeAudio PCM) is a
+/// (QEMU/iron-verifiable); a real `AudioSpeechSink` (TTS -> AthAudio PCM) is a
 /// drop-in that implements this same trait WITHOUT touching the announce logic.
 /// `Send` so the sink can live behind the global `Mutex`.
 pub trait SpeechSink: Send {
@@ -621,7 +621,7 @@ static SPEECH_SINK: Mutex<Option<Box<dyn SpeechSink>>> = Mutex::new(None);
 static LAST_SPOKEN: Mutex<String> = Mutex::new(String::new());
 
 /// Install (replace) the active speech sink. The audio tail calls this once the
-/// RaeAudio PCM path is proven on iron: `set_speech_sink(Box::new(AudioSpeechSink::new()))`.
+/// AthAudio PCM path is proven on iron: `set_speech_sink(Box::new(AudioSpeechSink::new()))`.
 pub fn set_speech_sink(sink: Box<dyn SpeechSink>) {
     *SPEECH_SINK.lock() = Some(sink);
 }
@@ -738,7 +738,7 @@ pub fn announce_focus_if_changed() -> Option<String> {
 // Concept §"Built for people who care about how things feel": a keyboard-only
 // user must be able to traverse the WHOLE desktop. macOS Full Keyboard Access /
 // Windows Tab+arrows reach every chrome affordance; this is the model that makes
-// RaeenOS do the same. The shell chrome bars (taskbar Start button, taskbar
+// AthenaOS do the same. The shell chrome bars (taskbar Start button, taskbar
 // window items, system-tray icons) are PERSISTENT chrome that the live
 // `build_tree()` does NOT enumerate (it walks app *windows* + provider widgets,
 // not the kernel-drawn bars), so the chrome focus order is driven from a
@@ -1047,7 +1047,7 @@ pub fn serialize_snapshot(nodes: &[AccessNode], focused_id: u64) -> Vec<u8> {
 ///
 /// Window tier: FOCUS / ACTIVATE raise+focus the owning surface; DISMISS closes
 /// it. Widget-tier actions (SCROLL / SET_VALUE on a sub-window node) route
-/// through the RaeUI provider in the implementer's next slice — until then they
+/// through the AthUI provider in the implementer's next slice — until then they
 /// return `false` for non-window nodes rather than silently succeeding (no stub
 /// "Ok" arm).
 pub fn dispatch_action(node_id: u64, action: u64, arg: u64, cap_ok: bool) -> bool {
@@ -1103,7 +1103,7 @@ pub fn dispatch_action(node_id: u64, action: u64, arg: u64, cap_ok: bool) -> boo
 }
 
 /// A pending widget-tier action, enqueued by `dispatch_action` for the UI layer
-/// (RaeUI bridge) to drain and apply to the live widget. Keeping the action as a
+/// (AthUI bridge) to drain and apply to the live widget. Keeping the action as a
 /// deliverable event — rather than a kernel no-op that returns `Ok` — is what
 /// keeps the routing honest across the kernel/userspace boundary.
 #[derive(Debug, Clone, Copy)]
@@ -1120,7 +1120,7 @@ fn enqueue_widget_action(a: WidgetAction) {
     WIDGET_ACTION_QUEUE.lock().push(a);
 }
 
-/// Drain pending widget actions (the UI/RaeUI bridge calls this each frame and
+/// Drain pending widget actions (the UI/AthUI bridge calls this each frame and
 /// applies each to the live widget). Returns the queued actions in order.
 pub fn drain_widget_actions() -> Vec<WidgetAction> {
     let mut q = WIDGET_ACTION_QUEUE.lock();
@@ -1146,7 +1146,7 @@ pub fn dump_text() -> String {
         .filter(|n| n.parent != 0 && n.role != abi::A11Y_ROLE_WINDOW)
         .count();
     let mut out = String::new();
-    out.push_str("# RaeenOS accessibility tree (window + widget tier, AccessKit-compatible)\n");
+    out.push_str("# AthenaOS accessibility tree (window + widget tier, AccessKit-compatible)\n");
     out.push_str(&alloc::format!(
         "enabled: {}\nnodes: {}\nwindows: {}\nwidgets: {}\nfocused_id: {}\npending_actions: {}\n",
         A11Y_ENABLED.load(Ordering::Relaxed),
@@ -1229,11 +1229,11 @@ fn role_name(role: u32) -> &'static str {
 pub fn init() {
     A11Y_ENABLED.store(true, Ordering::Relaxed);
     // Register the default widget provider so that any window with published
-    // widgets (via `publish_window_widgets`, fed by the RaeUI bridge) is walked
+    // widgets (via `publish_window_widgets`, fed by the AthUI bridge) is walked
     // into the tree. No widgets are fabricated — windows without published
     // widgets stay window-tier only.
     set_widget_provider(default_widget_provider);
-    // Install the default speech sink (durable log). A real TTS sink (RaeAudio
+    // Install the default speech sink (durable log). A real TTS sink (AthAudio
     // PCM) is an iron/audio-gated drop-in via `set_speech_sink` — the announce
     // logic above is unchanged by that swap.
     set_speech_sink(Box::new(LogSpeechSink));
@@ -1450,8 +1450,8 @@ pub fn run_boot_smoketest() {
     // restores every engine to OFF afterward so a normal boot is unaffected.
     run_onswitch_smoketest();
 
-    // Run the RaeUI widget-provider bridge smoketest (P0 #1) — proves a window's
-    // controls round-trip from a live RaeUI AccessibilityTree through the kernel
+    // Run the AthUI widget-provider bridge smoketest (P0 #1) — proves a window's
+    // controls round-trip from a live AthUI AccessibilityTree through the kernel
     // tree and that `describe_focused()` names the focused CONTROL. Same boot
     // path; clears its synthetic window afterward.
     run_widget_provider_smoketest();
@@ -1571,12 +1571,12 @@ pub fn run_focus_order_smoketest() {
     FOCUS_ORDER.lock().set_chrome(Vec::new());
 }
 
-/// FAIL-able RaeUI widget-provider bridge smoketest (Phase 19 audit P0 #1 — the
+/// FAIL-able AthUI widget-provider bridge smoketest (Phase 19 audit P0 #1 — the
 /// #1 leverage gap: apps name their controls). This proves the END-TO-END seam
 /// the live shell now drives, not a hand-built shadow:
 ///  1. Build a real `raeui::accessibility::AccessibilityTree` with two NAMED
 ///     controls — a Button "OK" and a TextField "Search" — exactly as the shell
-///     render path does (RaeUI does the role/label inference).
+///     render path does (AthUI does the role/label inference).
 ///  2. Run `raeui::accessibility::provider_nodes_for_window` (the userspace half
 ///     of the seam) to get the wire-shaped nodes.
 ///  3. Publish them via `publish_window_widgets_from_provider` (the kernel half),
@@ -1596,7 +1596,7 @@ pub fn run_widget_provider_smoketest() {
     const OK_BTN: u32 = 7;
     const SEARCH_TF: u32 = 8;
 
-    // 1. Build a real RaeUI accessibility tree (window root + two named controls).
+    // 1. Build a real AthUI accessibility tree (window root + two named controls).
     let mut tree = AccessibilityTree::new();
     // A purely-structural window root (no label) — the provider drops it.
     tree.nodes.push(AccessibilityNode::new(

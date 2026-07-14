@@ -1,11 +1,11 @@
 //! # RaeKeychain — an encrypted-at-rest secure credential store.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy ("how to actually win", criterion
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy ("how to actually win", criterion
 //! #5 — *import & keep my stuff*) + the daily-driver table stakes: every desktop
 //! OS ships a keychain — macOS **Keychain**, Windows **Credential Manager**, the
 //! freedesktop **Secret Service** (GNOME Keyring / KWallet). A person switching to
-//! RaeenOS arrives with a browser full of saved logins, app tokens, Wi-Fi keys,
-//! and SSH/API secrets. To be a credible daily driver RaeenOS must store those
+//! AthenaOS arrives with a browser full of saved logins, app tokens, Wi-Fi keys,
+//! and SSH/API secrets. To be a credible daily driver AthenaOS must store those
 //! the way the rest of the system already stores roots-of-trust: **encrypted at
 //! rest under a passphrase, integrity-checked, fail-closed on the wrong key**.
 //! This crate is that vault; it pairs with [`rae_otp`]'s TOTP secrets and

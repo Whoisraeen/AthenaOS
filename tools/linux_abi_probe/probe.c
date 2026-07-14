@@ -1,10 +1,10 @@
-// RaeenOS Linux-ABI probe — nostdlib, raw x86_64 syscalls.
+// AthenaOS Linux-ABI probe — nostdlib, raw x86_64 syscalls.
 //
 // A tiny freestanding static Linux binary (no libc, no CRT startup) that issues
 // the syscalls `kernel/src/linux_syscall.rs` translates (the ~31-syscall vein in
 // memory: linux-syscall-oracle-gap-filling) DIRECTLY via the `syscall`
 // instruction, self-checks each result, and prints a single FAIL-able line to
-// fd 1 (wired to the RaeenOS console by linux_exec), then exits with a matching
+// fd 1 (wired to the AthenaOS console by linux_exec), then exits with a matching
 // code. No glibc startup path means nothing runs before our checks, so a PASS
 // is unambiguously our translation layer working on a real Linux ELF.
 //
@@ -154,7 +154,7 @@ void probe_main(void) {
     out("[linux-abi-probe] start\n");
 
     // statx("/") EARLY (right after the proven write) so its result lands inside
-    // the first few captured burst lines — settles whether RaeenOS's real-path
+    // the first few captured burst lines — settles whether AthenaOS's real-path
     // statx returns promptly. stx_mode (offset 28) must say directory.
     // AT_FDCWD=-100, mask STATX_BASIC_STATS=0x7ff.
     unsigned char stx[256];

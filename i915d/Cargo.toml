@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "i915d — RaeenOS userspace Intel GPU driver daemon (Path C). Runs the i915 bring-up pipeline (PCI → VBT → GGTT → rings → modeset) on the LinuxKPI host."
+description = "i915d — AthenaOS userspace Intel GPU driver daemon (Path C). Runs the i915 bring-up pipeline (PCI → VBT → GGTT → rings → modeset) on the LinuxKPI host."
 
 [dependencies]
 rae_abi = { path = "../components/rae_abi" }

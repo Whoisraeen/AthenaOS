@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-//! Linux Driver Compatibility Layer for RaeenOS.
+//! Linux Driver Compatibility Layer for AthenaOS.
 //!
-//! Provides a shim that translates Linux kernel driver APIs into RaeenOS
+//! Provides a shim that translates Linux kernel driver APIs into AthenaOS
 //! kernel interfaces for **userspace LinuxKPI / vendor driver hosting**
 //! (see `docs/LINUX_DRIVER_STRATEGY.md`). Not a monolithic in-kernel Linux
 //! clone — DMA uses the frame allocator; IOMMU sandboxing is future work.
@@ -1170,7 +1170,7 @@ pub fn timer_pending(timer: &LinuxTimer) -> bool {
 }
 
 /// Check whether a timer has expired and fire it if so. Called from the
-/// RaeenOS tick handler.
+/// AthenaOS tick handler.
 pub fn check_timer(timer: &mut LinuxTimer) {
     if timer.active && time_after(get_jiffies(), timer.expires) {
         timer.active = false;
@@ -2147,7 +2147,7 @@ pub fn dump_text() -> String {
     let irq_vecs = IRQ_HANDLERS.lock().len();
     let jiffies = get_jiffies();
 
-    let mut out = String::from("# RaeenOS Linux driver compat layer\n");
+    let mut out = String::from("# AthenaOS Linux driver compat layer\n");
     out.push_str("# Shims for userspace LinuxKPI hosting — see docs/LINUX_DRIVER_STRATEGY.md\n");
     out.push_str(&alloc::format!("jiffies: {jiffies}\n"));
     out.push_str(&alloc::format!(

@@ -1,5 +1,5 @@
-//! RaeenOS Passwords & Authenticator — *"import & keep my stuff"*
-//! (RaeenOS_Concept.md §Compatibility Strategy criterion #5).
+//! AthenaOS Passwords & Authenticator — *"import & keep my stuff"*
+//! (LEGACY_GAMING_CONCEPT.md §Compatibility Strategy criterion #5).
 //!
 //! A first-party, fully-local password vault + software authenticator — the
 //! macOS Passwords / Windows Credential Manager half of the OS auth story, with
@@ -1582,7 +1582,7 @@ mod tests {
     const RFC_FIXED_TIME: u64 = 59;
     const RFC_EXPECTED_CODE: &str = "287082";
 
-    const SEED: &[u8] = b"raeenos-passwords-host-kat-seed-32by";
+    const SEED: &[u8] = b"athenaos-passwords-host-kat-seed-32by";
     const PASS: &str = "correct horse battery staple";
     const WRONG: &str = "Tr0ub4dor&3";
 
@@ -1744,13 +1744,13 @@ mod tests {
         // Save #1: add a credential, persist with a FRESH nonce seed.
         v.add_password("github.com", "octocat", "hunter2")
             .expect("add #1");
-        let seed1: &[u8] = b"raeenos-save-seed-number-one-32bytes!!";
+        let seed1: &[u8] = b"athenaos-save-seed-number-one-32bytes!!";
         let blob1 = v.to_bytes_with_fresh_nonce(seed1).expect("save #1");
 
         // Save #2: mutate (add another) and persist with a DIFFERENT fresh seed —
         // exactly the live app's per-save `fresh_save_seed()` behavior.
         v.add_password("aws.com", "root", "s3cr3t").expect("add #2");
-        let seed2: &[u8] = b"raeenos-save-seed-number-two-32bytes!!";
+        let seed2: &[u8] = b"athenaos-save-seed-number-two-32bytes!!";
         let blob2 = v.to_bytes_with_fresh_nonce(seed2).expect("save #2");
 
         // THE assert: the two saves did NOT reuse the (key, nonce) pair. Same

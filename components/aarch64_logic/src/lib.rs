@@ -1,9 +1,9 @@
 //! # aarch64_logic — the host-KAT-able aarch64 (ARM64) pure-logic foundation
 //!
 //! Concept clause this crate serves (verbatim from `kernel/src/arch/mod.rs`,
-//! added by ADR 0007 to RaeenOS_Concept.md §Architecture / "Architecture Reach"):
+//! added by ADR 0007 to LEGACY_GAMING_CONCEPT.md §Architecture / "Architecture Reach"):
 //!
-//! > "RaeenOS refuses ISA lock-in: the kernel sits on a clean `arch::`
+//! > "AthenaOS refuses ISA lock-in: the kernel sits on a clean `arch::`
 //! > abstraction layer … so the same OS boots x86_64, aarch64 (ARM 64-bit),
 //! > and i686 (32-bit x86) — each proven independently."
 //!

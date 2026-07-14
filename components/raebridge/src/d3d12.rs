@@ -1,4 +1,4 @@
-//! Direct3D 12 API emulation for RaeBridge.
+//! Direct3D 12 API emulation for AthBridge.
 #![no_std]
 
 extern crate alloc;

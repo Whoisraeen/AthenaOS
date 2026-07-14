@@ -1,4 +1,4 @@
-//! Flexbox-style layout engine for RaeKit.
+//! Flexbox-style layout engine for AthKit.
 //!
 //! Takes a `ViewNode` tree and calculates absolute positions and sizes
 //! based on parent constraints and child preferences.

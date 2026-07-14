@@ -1,4 +1,4 @@
-//! ntdll.dll — NT Native API stubs for RaeBridge.
+//! ntdll.dll — NT Native API stubs for AthBridge.
 //!
 //! These map directly to NT kernel-level operations, below the Win32 layer.
 
@@ -1057,7 +1057,7 @@ pub fn rtl_unwind(
     _exception_record: Option<&ExceptionRecord>,
     _return_value: u64,
 ) {
-    // SEH unwind — no-op in emulation (longjmp semantics handled by RaeBridge runtime)
+    // SEH unwind — no-op in emulation (longjmp semantics handled by AthBridge runtime)
 }
 
 pub fn rtl_capture_context(_context_record: u64) {

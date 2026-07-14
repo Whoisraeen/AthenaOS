@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS ZIP archive reader — a zero-dependency, never-panic, `no_std` decoder
-# for the PKZIP/.zip container (RaeenOS_Concept.md §"The user owns the machine" /
+# AthenaOS ZIP archive reader — a zero-dependency, never-panic, `no_std` decoder
+# for the PKZIP/.zip container (LEGACY_GAMING_CONCEPT.md §"The user owns the machine" /
 # daily-driver table stakes). A computer you can't double-click a downloaded .zip
 # on isn't a daily driver, and ZIP is the substrate under .docx/.xlsx/.pptx,
 # .epub, PWA bundles, `.raepkg` app packages, and countless downloads. One

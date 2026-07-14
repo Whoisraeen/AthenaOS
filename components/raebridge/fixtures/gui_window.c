@@ -1,13 +1,13 @@
-// RaeBridge GUI smoketest fixture — the guest-machine-code half of the
+// AthBridge GUI smoketest fixture — the guest-machine-code half of the
 // notepad-class gate. Pure Win32 (no CRT): a custom entry `rae_entry` that
-// RETURNS to the RaeBridge loader (run_pe_returning), so it needs no ExitProcess
+// RETURNS to the AthBridge loader (run_pe_returning), so it needs no ExitProcess
 // and can run alongside the console fixtures.
 //
 // It registers a class, creates+shows a window, and calls UpdateWindow to drive
 // a SYNCHRONOUS WM_PAINT into the WndProc, which paints a white background +
 // "HI" text. Every import (RegisterClassExW/CreateWindowExW/ShowWindow/
 // UpdateWindow/DefWindowProcW + BeginPaint/EndPaint/FillRect/CreateSolidBrush/
-// TextOutW) is one RaeBridge has IAT-wired, so it resolves fully.
+// TextOutW) is one AthBridge has IAT-wired, so it resolves fully.
 //
 // Build (dev box, from a vcvars64 shell):
 //   cl /nologo /c /O1 /GS- gui_window.c

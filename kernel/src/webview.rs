@@ -2,10 +2,10 @@
 //!
 //! > "Native everywhere. No Electron tax. No web wrappers. Native rendering,
 //! > native input, native audio — sub-frame latency end to end."
-//! > — RaeenOS Concept §Core Principles #1
+//! > — AthenaOS Concept §Core Principles #1
 //!
-//! > "Web apps via PWA support that actually feels native (renders through RaeUI)."
-//! > — RaeenOS Concept §Compatibility Strategy #3
+//! > "Web apps via PWA support that actually feels native (renders through AthUI)."
+//! > — AthenaOS Concept §Compatibility Strategy #3
 //!
 //! This is the Phase-2 browser surface (docs/research/web-engine.md): a minimal but
 //! REAL browser that fetches → parses → lays out → paints a web document through the
@@ -110,7 +110,7 @@ const PAGE_HOME: &str = "<!DOCTYPE html><html><body>\
 const PAGE_ABOUT: &str = "<!DOCTYPE html><html><body>\
     <h1>About</h1>\
     <p>RaeWeb is a from-scratch no_std HTML/CSS/layout/paint engine.</p>\
-    <p>It renders through raegfx::Canvas, the same crisp-AA path as RaeUI.</p>\
+    <p>It renders through raegfx::Canvas, the same crisp-AA path as AthUI.</p>\
     <a href=\"rae://home\">Back home</a>\
     </body></html>";
 
@@ -707,7 +707,7 @@ pub fn dump_text() -> String {
     };
     let passed = SMOKETEST_PASSED.load(Ordering::Relaxed) == 1;
     let mut out = String::new();
-    out.push_str("# RaeWeb — native web surface (renders through RaeUI, no Electron tax)\n");
+    out.push_str("# RaeWeb — native web surface (renders through AthUI, no Electron tax)\n");
     out.push_str(&alloc::format!(
         "engine=raeweb tabs=1 last_url={} dom_nodes={} paint_cmds={} source={} js=disabled\n",
         if url.is_empty() { "-" } else { url.as_str() },
@@ -728,7 +728,7 @@ pub fn dump_text() -> String {
 pub fn init() {
     *LAST_URL.lock() = String::new();
     crate::serial_println!(
-        "[ OK ] RaeWeb surface ready (native web view; renders through RaeUI, no Electron tax)"
+        "[ OK ] RaeWeb surface ready (native web view; renders through AthUI, no Electron tax)"
     );
 }
 

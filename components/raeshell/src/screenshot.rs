@@ -1,4 +1,4 @@
-//! Full-featured screenshot tool for the RaeenOS desktop shell.
+//! Full-featured screenshot tool for the AthenaOS desktop shell.
 //!
 //! Supports multiple capture modes (full screen, active window, region,
 //! freeform, scrolling, delayed), multi-monitor stitching, annotation
@@ -706,7 +706,7 @@ impl ShareOptions {
     pub fn new() -> Self {
         Self {
             target: ShareTarget::SaveFile,
-            upload_url: String::from("https://upload.raeenos.local/screenshot"),
+            upload_url: String::from("https://upload.athenaos.local/screenshot"),
             auto_open_after_save: false,
         }
     }

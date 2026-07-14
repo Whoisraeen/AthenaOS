@@ -5,7 +5,7 @@
 - Owner: raeen-lead (autonomous); spec by raeen-researcher
 
 ## Context
-Goal criterion #3 requires RaeenOS to boot, run, and install on x86_64 (current),
+Goal criterion #3 requires AthenaOS to boot, run, and install on x86_64 (current),
 aarch64 (ARM 64-bit), and i686 (32-bit x86), each proven independently in QEMU.
 raeen-researcher's spec (docs/research/multi-arch-abstraction.md) found: NO `arch::`
 boundary exists — the kernel is monolithically x86_64 (385 `x86_64::` refs, 167 inline-asm
@@ -13,13 +13,13 @@ sites, `bootloader_api` is x86-only = a hard aarch64 wall). The Concept doc had 
 multi-arch clause.
 
 ## Decision
-1. **Multi-arch is a first-class RaeenOS property** ("anti-walled-garden" — don't lock to one
-   silicon vendor). Added a north-star clause to RaeenOS_Concept.md §Architecture ("Architecture
+1. **Multi-arch is a first-class AthenaOS property** ("anti-walled-garden" — don't lock to one
+   silicon vendor). Added a north-star clause to LEGACY_GAMING_CONCEPT.md §Architecture ("Architecture
    Reach") so R10 docstrings have a quote. Reversal: remove that clause.
 2. **Introduce a monomorphized `arch::` abstraction** (free-fns/associated-types, NOT `dyn` —
    keep the context-switch hot path indirection-free) over the seams: boot/early-init, CPU init,
    MMU/paging, interrupts, timers, SMP bring-up, context switch, syscall entry, per-CPU base,
-   port-vs-MMIO I/O, firmware discovery (ACPI vs DeviceTree). Scheduler/MM/IPC/VFS/RaeFS/Rae*
+   port-vs-MMIO I/O, firmware discovery (ACPI vs DeviceTree). Scheduler/MM/IPC/VFS/AthFS/Rae*
    stay shared. The user/syscall ABI stays arch-neutral (NO `rae_abi`/ABI_VERSION change).
 3. **Bring-up order: x86_64 (done) → aarch64 → i686** (charter Step 3.3). Per-arch acceptance =
    the success marker + an `[arch-smoke] <arch> -> PASS` on that arch's QEMU machine

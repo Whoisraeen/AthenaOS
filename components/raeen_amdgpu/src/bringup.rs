@@ -290,7 +290,7 @@ pub trait GpuOps {
         None
     }
     /// The MES scheduler (pipe 0) ucode + data blobs `(ucode, data)` extracted from
-    /// mes_2.bin ([`crate::rlc_autoload::extract_mes_ucode_data`]) — RaeenOS DIRECT-
+    /// mes_2.bin ([`crate::rlc_autoload::extract_mes_ucode_data`]) — AthenaOS DIRECT-
     /// loads them (the PSP-autoloaded copy's address is unknown) so the MES has code
     /// at a GART-mappable address. `None` (default) until the daemon supplies them.
     fn mes_ucode_blobs(&mut self) -> Option<(Vec<u8>, Vec<u8>)> {
@@ -460,7 +460,7 @@ fn verify_claimed<O: GpuOps>(ops: &mut O, handle: u64) -> Option<Device> {
     // the working driver's cold mmiotrace sends NO GFXOFF message at any point before
     // the MES is up (its only GFXOFF traffic is AllowGfxOff ~150 ms AFTER set_hw_res
     // acks) — on Phoenix, GFXOFF is boot-DISALLOWED until the driver's first
-    // AllowGfxOff, which RaeenOS never sends. The "early-probe fabric wedge" this
+    // AllowGfxOff, which AthenaOS never sends. The "early-probe fabric wedge" this
     // guarded against was root-caused to a theme_engine lock self-deadlock (9c4749a),
     // not GFXOFF; the 06-29 GFX regate was self-inflicted by the mistranscribed
     // PrepareMp1ForUnload (0x0C) of that era.
@@ -748,7 +748,7 @@ pub const GFX_FW_TYPE_CP_MEC: u32 = 4;
 pub const GFX_FW_TYPE_RLC_G: u32 = 8;
 // The RLC save/restore + power-management restore lists (rlc.bin v2_1 payloads).
 // amdgpu's iron psp_cmd_submit_buf trace loads BOTH right after IMU, before RLC_IRAM
-// (ftype 20 sz=2560, ftype 21 sz=21104 on Athena). RaeenOS omitted them — without the
+// (ftype 20 sz=2560, ftype 21 sz=21104 on Athena). AthenaOS omitted them — without the
 // SRM/GPM lists the RLC can't fully establish the GFX state the MES per-pipe context
 // depends on. (psp_gfx_if.h GFX_FW_TYPE_RLC_RESTORE_LIST_{GPM,SRM}_MEM.)
 pub const GFX_FW_TYPE_RLC_RESTORE_LIST_GPM_MEM: u32 = 20;
@@ -764,7 +764,7 @@ pub const GFX_FW_TYPE_SDMA_UCODE_TH1: u32 = 72; // SOC21 SDMA ctl thread
                                                 // MES (MicroEngine Scheduler) — gfx11 needs MES in the autoload chain (RLC->CP->MES).
                                                 // `amdgpu_ucode.c::psp_get_fw_type`: pipe0 (scheduler, mes_2.bin) ucode=RS64_MES /
                                                 // data=RS64_MES_STACK; pipe1 (KIQ, mes1.bin) ucode=RS64_KIQ / data=RS64_KIQ_STACK.
-                                                // The working Athena amdgpu loads MES(0x88)+MES_KIQ(0x109) — RaeenOS was missing both,
+                                                // The working Athena amdgpu loads MES(0x88)+MES_KIQ(0x109) — AthenaOS was missing both,
                                                 // a candidate reason RLC_BOOTLOAD never completes (the autoload waits on MES).
 pub const GFX_FW_TYPE_RS64_MES: u32 = 76;
 pub const GFX_FW_TYPE_RS64_MES_STACK: u32 = 77;
@@ -774,7 +774,7 @@ pub const GFX_FW_TYPE_RS64_KIQ_STACK: u32 = 79;
 // working amdgpu's `psp_cmd_submit_buf` payload (docs/gpu-oracle/MES-FWTYPE-FIX-2026-06-28.md).
 // The RS64_* values 76-79 above were REJECTED (0xffff0006): wrong fw-type numbers for THIS
 // PSP/firmware. These are the working ones, identified by size (pipe0 ucode 127040 B, KIQ
-// ucode 104016 B = RaeenOS's extracted sizes). pipe0 = mes_2.bin (scheduler), pipe1 = mes1.bin (KIQ).
+// ucode 104016 B = AthenaOS's extracted sizes). pipe0 = mes_2.bin (scheduler), pipe1 = mes1.bin (KIQ).
 pub const GFX_FW_TYPE_MES_PIPE0_UCODE: u32 = 33;
 pub const GFX_FW_TYPE_MES_PIPE0_DATA: u32 = 34;
 pub const GFX_FW_TYPE_MES_PIPE1_UCODE: u32 = 81;
@@ -1101,7 +1101,7 @@ pub fn psp_load_gfx_firmware<O: GpuOps>(
                     // autoload completes. It powers the GFX/IMU domain so the
                     // PSP-staged RLC autoload can actually EXECUTE. Order on a PSP-load
                     // APU: PSP stages fw + arms autoload -> SMU EnableGfxImu -> GFX
-                    // hw_init polls for complete. RaeenOS was polling immediately on an
+                    // hw_init polls for complete. AthenaOS was polling immediately on an
                     // UNPOWERED GFX (-> RLC_BOOTLOAD_STATUS stayed 0, the ~14-boot
                     // timeout) and only sent EnableGfxImu later in the backdoor
                     // try_imu_core_start fallback — too late, after this poll already
@@ -1247,10 +1247,10 @@ pub struct GfxRegs {
     pub rlc_srm_cntl: u32,
     /// `RLC_PG_CNTL` — the RLC GFX power-gating enables. amdgpu clears it to 0 early in
     /// bring-up so the RLC hardware cannot gate GFX (the SMU DisallowGfxOff alone does
-    /// not hold). RaeenOS was skipping this -> GFX gated -> GRBM/CP/gfxhub read 0.
+    /// not hold). AthenaOS was skipping this -> GFX gated -> GRBM/CP/gfxhub read 0.
     pub rlc_pg_cntl: u32,
     /// `RLC_CSIB_ADDR_LO/HI` + `RLC_CSIB_LENGTH` — the RLC Clear-State Buffer descriptor
-    /// (`gfx_v11_0_init_csb`). amdgpu programs these RIGHT BEFORE the MES enable; RaeenOS
+    /// (`gfx_v11_0_init_csb`). amdgpu programs these RIGHT BEFORE the MES enable; AthenaOS
     /// skipped them and the MES stalls one instruction into boot. Set ADDR to the CSB
     /// buffer + LENGTH=0x3c0.
     pub rlc_csib_addr_lo: u32,
@@ -3198,7 +3198,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
             )),
         }
         // SMU METRICS TABLE (smu_v13_0_4) — amdgpu's cold-init trace sets this up BEFORE
-        // the MES enable and RaeenOS never did; the MES stalls one instruction into boot
+        // the MES enable and AthenaOS never did; the MES stalls one instruction into boot
         // (INSTR_PNTR @entry+1), a likely poll of the GFX power/clock state the SMU
         // publishes here. Give the PMFW a DRAM table address (SetDriverDramAddrHigh/Low)
         // then trigger a metrics transfer (TransferTableSmu2Dram). The buffer is plain
@@ -3228,7 +3228,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
                 500_000,
             );
             ops.log(&format!(
-                "[amdgpu] stage 6 SMU metrics table @ {addr:#x}: SetDramAddrHi->{rh:?} Lo->{rl:?} TransferSmu2Dram->{rt:?} (the pre-MES SMU step RaeenOS skipped)"
+                "[amdgpu] stage 6 SMU metrics table @ {addr:#x}: SetDramAddrHi->{rh:?} Lo->{rl:?} TransferSmu2Dram->{rt:?} (the pre-MES SMU step AthenaOS skipped)"
             ));
             // DmaBuf is a Copy handle — the backing memory is daemon-managed (not freed
             // on drop), so the SMU keeps a valid table to write into after this scope.
@@ -3386,7 +3386,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
                 // (smu_cmn_send_smc_msg_with_param, arg=ENABLE_IMU_ARG_GFXOFF_ENABLE=1) and
                 // WAITS for the PMFW ack — the SMU DOES post a response on this path. The
                 // ack is the PMFW confirming the GFX power rails are up. The old async send
-                // (boot 185829 "resp None") never polled for that ack, so RaeenOS raced past
+                // (boot 185829 "resp None") never polled for that ack, so AthenaOS raced past
                 // the power-up and re-probed a still-gated GFX (GFX_RESET_CTRL=0x10). Only
                 // the DIRECT-load path is fire-and-forget. Wait up to 1s (the GFX rails take
                 // real time to rise). Live SMU mailbox confirmed working (GetSmuVersion OK,
@@ -3752,7 +3752,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
         // BEFORE the MES enable, exactly as amdgpu does (oracle trace 2026-06-27: it
         // writes RLC_CSIB_ADDR_LO/HI + LENGTH right before CP_MES_PRGRM_CNTR_START). The
         // MES stalls one instruction into boot (INSTR_PNTR parked at entry+1) waiting on
-        // the RLC, and this is the one pre-enable step RaeenOS skipped. Point CSIB at our
+        // the RLC, and this is the one pre-enable step AthenaOS skipped. Point CSIB at our
         // GART-mapped buffer + the working-driver LENGTH 0x3c0. Gated on discovery (g) +
         // the buffer; a harmless no-op on QEMU.
         if let (Some(gg), Some(csb)) = (g.as_ref(), csb_buf.as_ref()) {
@@ -3761,13 +3761,13 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
             ops.reg_write(gg.rlc_csib_addr_hi, (csb_va >> 32) as u32);
             ops.reg_write(gg.rlc_csib_length, 0x3c0);
             ops.log(&format!(
-                "[amdgpu] stage 6 init_csb: RLC_CSIB_ADDR={csb_va:#x} LENGTH=0x3c0 (the pre-MES-enable RLC step RaeenOS skipped; MES stalls @entry+1 without it)"
+                "[amdgpu] stage 6 init_csb: RLC_CSIB_ADDR={csb_va:#x} LENGTH=0x3c0 (the pre-MES-enable RLC step AthenaOS skipped; MES stalls @entry+1 without it)"
             ));
         }
-        // REPLAY amdgpu's deterministic pre-MES GFX config that RaeenOS skips (cold-init
+        // REPLAY amdgpu's deterministic pre-MES GFX config that AthenaOS skips (cold-init
         // wreg trace 2026-06-27): per-VMID SH_MEM setup + RLC/CP config registers. The
         // MES stalls one instruction into boot polling for GFX state these establish.
-        // GC seg1 wreg-index = ip_base+reg (same in RaeenOS via discovery); reg_write
+        // GC seg1 wreg-index = ip_base+reg (same in AthenaOS via discovery); reg_write
         // takes the MMIO byte offset = index<<2. Gated on discovery (g).
         if g.is_some() {
             // RLC + CP config (exact values amdgpu writes before the MES).
@@ -3789,7 +3789,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
             }
             ops.reg_write(0xa900 << 2, 0); // restore GRBM selection
                                            // CP_MES setup block (H3, cold-init trace 2026-06-27): the 10 CP_MES config
-                                           // registers the working amdgpu writes that RaeenOS skipped ENTIRELY (RaeenOS
+                                           // registers the working amdgpu writes that AthenaOS skipped ENTIRELY (AthenaOS
                                            // only wrote CNTL/PC/IC_BASE/MDBASE). The MES microengine reads these (pipe /
                                            // doorbell-range / bounds / interrupt config) at boot — without them it parks
                                            // at entry+1 (INSTR_PNTR 0x1401, heartbeat=0, HEADER_DUMP=reset). Exact values
@@ -3807,7 +3807,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
             ops.reg_write(0x2824 << 2, 0x3fff_fffc);
             // WINDOW DIFF (2026-07-01, cold_init_named-20260624 comprehensive pass): every
             // GC write amdgpu makes between EnableGfxImu and the set_hw_resources doorbell
-            // (43.60..43.9102) that RaeenOS still wrote NOWHERE (name+offset grep). All are
+            // (43.60..43.9102) that AthenaOS still wrote NOWHERE (name+offset grep). All are
             // pre-set_hw_res PRECONDITIONS in the working sequence; exact trace values.
             ops.reg_write(0x282f << 2, 0x0000_000f); // GCVM_L2_CONTEXT1_IDENTITY_APERTURE_LOW_ADDR_HI32
             ops.reg_write(0x2830 << 2, 0x0000_0000); // GCVM_L2_CONTEXT1_IDENTITY_APERTURE_HIGH_ADDR_LO32
@@ -3832,7 +3832,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
                 ops.reg_write((0x3330 + vmid) << 2, 0); // GDS_OA_VMIDn
             }
             // ORACLE DIFF (2026-06-30): the GC registers the live amdgpu writes during init
-            // that RaeenOS wrote NOWHERE — found by diffing our register set against amdgpu's
+            // that AthenaOS wrote NOWHERE — found by diffing our register set against amdgpu's
             // full-init wreg trace (docs/gpu-oracle/full_init_named-20260630). Exact values +
             // absolute dword offsets (gc_base baked in) from the live driver. The leading
             // candidates for the SCHED-pipe-halts-after-the-handler-runs/no-ack symptom:
@@ -3853,10 +3853,10 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
                                                      // [cat4] GFX engine config:
             ops.reg_write(0x2285 << 2, 0x0088_0007); // PA_CL_ENHANCE
             ops.reg_write(0x31d2 << 2, 0x0000_0008); // SPI_GDBG_PER_VMID_CNTL
-                                                     // [cat1] sub-block clock gating amdgpu sets that RaeenOS skipped:
+                                                     // [cat1] sub-block clock gating amdgpu sets that AthenaOS skipped:
             ops.reg_write(0x12bc << 2, 0x0040_0000); // SDMA0_RLC_CGCG_CTRL
             ops.reg_write(0xf087 << 2, 0x0000_0010); // CGTT_GS_NGG_CLK_CTRL
-            ops.log("[amdgpu] stage 6 replayed amdgpu pre-MES GFX config + ORACLE-DIFF additions (CP int-routing, TCP/TA cache, PA_CL/SPI_GDBG, SDMA/GS clock-gating) — the init RaeenOS skipped");
+            ops.log("[amdgpu] stage 6 replayed amdgpu pre-MES GFX config + ORACLE-DIFF additions (CP int-routing, TCP/TA cache, PA_CL/SPI_GDBG, SDMA/GS clock-gating) — the init AthenaOS skipped");
         }
         for (reg, val) in crate::mes::build_mes_enable_sequence(&mr, *p0, p1) {
             ops.reg_write(reg, val);
@@ -3937,7 +3937,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
     // compute/MES-class doorbell range the MEC/MES monitors to WAKE on a doorbell ring.
     // The gfx CP_RB range [0x458,0x7f8] (set later in the gfx ring setup) does NOT cover
     // the MES SCHED (byte 0x58) + KIQ (byte 0x60) doorbells. Iron 2026-06-28 (umr on the
-    // working amdgpu): CP_MEC_DOORBELL_RANGE = [0x0, 0x450]; RaeenOS OMITTED it, so the KIQ
+    // working amdgpu): CP_MEC_DOORBELL_RANGE = [0x0, 0x450]; AthenaOS OMITTED it, so the KIQ
     // doorbell HIT latched in the HQD but the MES microengine was never woken (KIQ rptr=0,
     // SCHED ring never mapped). Must precede the KIQ doorbell ring below.
     if let Some((mec_db_lo, mec_db_up)) = ops.cp_mec_doorbell_range_regs() {
@@ -3960,7 +3960,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
         // 4-aligned real instr 0x7654, mcause=0) = a CLOCK-STOP mid-instruction-FETCH,
         // while the fast KIQ pipe survives — the signature of medium-grain clock gating
         // gating the slower SCHED pipe between its longer set_hw_resources processing.
-        // RaeenOS never touches clock gating; the PSP-loaded RLC fw can leave MGCG/CGCG ON.
+        // AthenaOS never touches clock gating; the PSP-loaded RLC fw can leave MGCG/CGCG ON.
         // Disable like amdgpu's enable==false path: SET all RLC_CGTT_MGCG_OVERRIDE override
         // bits (force every clock domain ON) + clear CGCG_EN/CGLS_EN. Regs are GC seg1
         // (gc_base[1]): MGCG_OVERRIDE=0x4c48, CGCG_CGLS_CTRL=0x4c49, _3D=0x4cc5 (umr seg).
@@ -4001,7 +4001,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
         // ROOT CAUSE (iron INV17 probe 2026-06-29): the MES set_hw_resources handler
         // issues a full-flush TLB invalidate on its dedicated engine ENG17 of BOTH hubs
         // (GCVM + MMVM ENG17 REQ=0x2f80000) and spins forever on the ACK (=0) at INSTR
-        // 0x7656. RaeenOS's build_gart_enable_sequence set up CONTEXT0 + ENG0 only, never
+        // 0x7656. AthenaOS's build_gart_enable_sequence set up CONTEXT0 + ENG0 only, never
         // the per-engine ADDR_RANGE amdgpu programs for ALL 18 engines — left at 0, an
         // invalidate on ENG17 covers no range and never completes. Write 0xffffffff/0x1f
         // (full coverage) for ENG0..17 on both hubs, BEFORE the MES runs set_hw_resources.
@@ -4026,7 +4026,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
         // the MES does its GFXHUB (GCVM) invalidate fine, then issues the MMHUB (MMVM) one
         // and spins forever on the ACK — because MMHUB's L2 cache is OFF. Readback proved
         // it: MMVM_L2_CNTL=0x80602 (bit0 ENABLE_L2_CACHE clear) vs GCVM_L2_CNTL=0x80e01
-        // (on). RaeenOS brings up GFXHUB but never touches MMHUB. RMW just set bit0 —
+        // (on). AthenaOS brings up GFXHUB but never touches MMHUB. RMW just set bit0 —
         // preserving firmware's MMHUB config bits (1/9/10/19 = the DCN aperture/fragment
         // setup) so the live display scanout is undisturbed — then kick an L2 invalidate so
         // the enable takes effect. Deliberately NOT amdgpu's full init_cache_regs (which
@@ -4061,12 +4061,12 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
         // mmhub_v3_0_setup_vmid_config) ── Iron (290bbac) proved L2-enable + ADDR_RANGE
         // alone don't make the MES's ENG17 invalidate ack. set_hw_resources runs with
         // vmid_mask_gfxhub/mmhub=0xFF00 (VMIDs 8-15), so the MES invalidates those VMIDs'
-        // TLBs — but RaeenOS only ever enabled CONTEXT0 (VMID0); CONTEXT1-15 sit at reset
+        // TLBs — but AthenaOS only ever enabled CONTEXT0 (VMID0); CONTEXT1-15 sit at reset
         // (disabled), so an invalidate over the masked VMIDs never completes. amdgpu's
         // gart_enable enables all 16 contexts (cold_mmio trace). Enable CONTEXT1..15 flat
         // (CNTL=0x1fffe01 = ENABLE | depth0 | all-fault-enable, same as CONTEXT0) with a
         // full page-table range [0, max], on BOTH hubs, BEFORE the MES runs. Offsets:
-        // GFXHUB CONTEXT0_CNTL=0x1688 (RaeenOS-proven) ctx_distance 1, START_LO=0x1713/
+        // GFXHUB CONTEXT0_CNTL=0x1688 (AthenaOS-proven) ctx_distance 1, START_LO=0x1713/
         // END_LO=0x1733 ctx_addr_distance 2; MMHUB CONTEXT0_CNTL=0x740 / START_LO(0)=0x7cb /
         // END_LO(0)=0x7eb (mmhub_3_0_0, seg1 base mmhub_base[1] — between the readback-
         // confirmed 0x700 L2_CNTL and 0x763 ENG0_REQ anchors). A flat enabled context lets
@@ -4174,7 +4174,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
         // 0xcafedead via MMIO right before the doorbell, then polls it. The MES proves it
         // DRAINED the ring by overwriting the scratch. We replicate it both as the likely
         // commit the MES needs AND as a DECISIVE probe: if the scratch reads 0xdeadbeef after
-        // the doorbell, the MES IS processing RaeenOS's KIQ ring (and SCHED-not-active is a
+        // the doorbell, the MES IS processing AthenaOS's KIQ ring (and SCHED-not-active is a
         // separate issue); if it stays 0xcafedead, the MES never drained the ring at all.
         const MES_SCRATCH_DWORD: u32 = 0xc040;
         let scratch_reg = MES_SCRATCH_DWORD << 2; // byte offset for reg_read/write
@@ -4232,7 +4232,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
         // Values BYTE-DIFFED against the WORKING amdgpu SET_HW_RSRC packet (Athena live
         // `umr -RS mes_3.0.0`, 2026-06-29): every field matches EXCEPT sdma_hqd_mask[1].
         // Working = [0xfc, 0x0] (Phoenix has ONE SDMA engine — dmesg shows only sdma0);
-        // RaeenOS sent [0xfc, 0xfc], telling the MES there's a SECOND SDMA engine. The
+        // AthenaOS sent [0xfc, 0xfc], telling the MES there's a SECOND SDMA engine. The
         // set_hw_resources handler then tries to set up the phantom SDMA1's HQDs (which
         // don't exist) and HALTS pipe0 mid-handler (INSTR 0x7656, mcause=0 = no fault, a
         // bad value not a bus fault) — exactly the halt the firmware-disasm localized.
@@ -4356,11 +4356,11 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
         // MMHUB-INVALIDATE PROBE (2026-06-29): the working MES SCHED ring (Athena umr) polls
         // BOTH hubs' VM-invalidate engines via WAIT_REG_MEM — gfx1101.GCVM_INVALIDATE_ENG17
         // (REQ dword 0x291c / ACK 0x292e) and mmhub301.MMVM_INVALIDATE_ENG17 (REQ 0x1a774 /
-        // ACK 0x1a786). RaeenOS configures GFXHUB (GCVM) fully but does ZERO MMHUB (MMVM) VM
+        // ACK 0x1a786). AthenaOS configures GFXHUB (GCVM) fully but does ZERO MMHUB (MMVM) VM
         // init. If the set_hw_resources handler issues an MMHUB TLB invalidate, it writes
         // MMVM_ENG17_REQ then spins on MMVM_ENG17_ACK — which never sets because MMHUB's
         // invalidate engine isn't enabled. Read all four (absolute SOC15 dwords from the
-        // working umr dump << 2 = MMIO byte offset; RaeenOS's gc/mmhub bases match the
+        // working umr dump << 2 = MMIO byte offset; AthenaOS's gc/mmhub bases match the
         // working driver, so the same offsets address the same regs). MMVM req!=0 & ack=0
         // (while GCVM acks) => the MES is stuck on an MMHUB invalidate = MMHUB VM not init.
         let gcvm17_req = ops.reg_read(0x291c << 2);
@@ -4370,8 +4370,8 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
         ops.log(&format!(
             "[amdgpu] INV17 GCVM r/a={gcvm17_req:#x}/{gcvm17_ack:#x} MMVM r/a={mmvm17_req:#x}/{mmvm17_ack:#x} (after program_invalidation: want ack!=0; ack still 0 => hub L2/VM not up)"
         ));
-        // L2 state: ENABLE_L2_CACHE = bit0. GCVM_L2_CNTL (GC seg0 0x15bc) — RaeenOS enables
-        // it. MMVM_L2_CNTL (MMHUB seg1 0x700) — RaeenOS never touches it; if firmware left
+        // L2 state: ENABLE_L2_CACHE = bit0. GCVM_L2_CNTL (GC seg0 0x15bc) — AthenaOS enables
+        // it. MMVM_L2_CNTL (MMHUB seg1 0x700) — AthenaOS never touches it; if firmware left
         // MMHUB L2 enabled (DCN scans out through it) bit0=1 and program_invalidation alone
         // should let MMVM ENG17 ack; bit0=0 => MMHUB needs an L2-enable before its invalidate
         // can complete (do it WITHOUT reprogramming apertures, to not disturb the display).
@@ -4889,7 +4889,7 @@ pub fn init_rings<O: GpuOps>(ops: &mut O, dev: &Device) -> bool {
     // CP_RB0_RPTR after the WPTR kick. The CP fetches packets from RB_BASE
     // (RPTR..WPTR) through VMID0 and advances RPTR as it consumes them. RPTR
     // advancing toward WPTR means the GFX command processor RAN our ring — the
-    // first GPU-executed graphics command on RaeenOS. A short, dedicated line (the
+    // first GPU-executed graphics command on AthenaOS. A short, dedicated line (the
     // combined readback above truncates at the 160-byte klog buffer, hiding this).
     let mut exec_rptr = ops.reg_read(r_rptr);
     for _ in 0..200 {

@@ -1,8 +1,8 @@
-//! RaeBridge guest-process launch handoff (option (b) — no-ABI VFS rendezvous).
+//! AthBridge guest-process launch handoff (option (b) — no-ABI VFS rendezvous).
 //!
-//! Concept §Compatibility Strategy: "RaeBridge runs Windows apps on day one.
+//! Concept §Compatibility Strategy: "AthBridge runs Windows apps on day one.
 //! Wine + Proton heritage, tightly integrated. Not a 'subsystem' — apps run
-//! naturally." Apps running *naturally* means each `.exe` is its OWN RaeenOS
+//! naturally." Apps running *naturally* means each `.exe` is its OWN AthenaOS
 //! process (Wine's one-loader-process-per-exe model) — so a guest
 //! `ExitProcess` kills only that child and a parent reaps the code, instead of
 //! every fixture sharing one host process where the first `ExitProcess`
@@ -39,7 +39,7 @@ use alloc::vec::Vec;
 ///
 /// It lives under the session home (`/home/raeen/`) deliberately: that tree is
 /// RAM-writable regardless of disk/safe-mode state (the boot self-test
-/// round-trips a file there), so the handoff has zero RaeFS/disk dependency.
+/// round-trips a file there), so the handoff has zero AthFS/disk dependency.
 /// The kernel-global VFS `ROOT` is shared parent↔child, so the child reads what
 /// the parent wrote. The parent serialises (unlink → write → spawn → reap)
 /// so the single path is never raced.

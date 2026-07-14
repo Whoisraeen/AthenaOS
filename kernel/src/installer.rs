@@ -9,9 +9,9 @@
 //!   1. Partition the target disk: protective MBR + GPT + an ESP entry
 //!      (`fatfs_esp::seed_minimal_gpt_with_esp`).
 //!   2. Format the ESP as FAT32 and write the EFI boot tree:
-//!      `/EFI/BOOT/BOOTX64.EFI` + `/EFI/raeenos/KERNEL-A.BIN`
+//!      `/EFI/BOOT/BOOTX64.EFI` + `/EFI/athenaos/KERNEL-A.BIN`
 //!      (`fatfs_esp::fat32_install_boot_tree`).
-//!   3. Create + format the RaeFS root partition (`raefs::format`).
+//!   3. Create + format the AthFS root partition (`raefs::format`).
 //!   4. Report which stages succeeded so the second boot can mount from NVMe.
 //!
 //! On QEMU this runs against the emulated NVMe/virtio disk; on Athena it targets
@@ -36,7 +36,7 @@ pub const STAGE_VERIFY: u64 = 1 << 4;
 /// the first destructive write, so callers/UI/logs can tell a deliberate,
 /// no-data-written abort apart from a partial-success stage count. Two causes:
 ///   * the bootable ESP could not be written (clone failed AND the in-kernel
-///     fallback is known-non-bootable) — proceeding would format RaeFS and
+///     fallback is known-non-bootable) — proceeding would format AthFS and
 ///     leave a dead, unbootable machine (H3);
 ///   * the pre-write target "firewall" found the ACTIVE device's identity does
 ///     not match the disk the install was told to target (H2).
@@ -141,7 +141,7 @@ fn on_qemu() -> bool {
 
 /// Pure H3 decision (host-testable): given whether a FIRMWARE-BOOTABLE ESP was
 /// written and whether we are on QEMU, should the install ABORT before the
-/// destructive RaeFS format? Aborts iff the ESP is not bootable AND we are on
+/// destructive AthFS format? Aborts iff the ESP is not bootable AND we are on
 /// real hardware (where an unbootable ESP bricks the box). On QEMU the
 /// non-bootable in-kernel ESP is the intended dev path, so never abort there.
 #[inline]
@@ -212,13 +212,13 @@ pub fn run_install() -> u64 {
         planned.write_lba_hi,
     );
 
-    // ── Stage 1: partition the disk (GPT + protective MBR + ESP + RaeFS) ──
+    // ── Stage 1: partition the disk (GPT + protective MBR + ESP + AthFS) ──
     // The seed returns (esp_start, raefs_start); raefs_start is 0 when the
-    // disk is too small for a RaeFS root (QEMU smoke disk).
+    // disk is too small for a AthFS root (QEMU smoke disk).
     let (esp_start, raefs_start) = match crate::fatfs_esp::seed_minimal_gpt_with_esp() {
         Some((esp, raefs)) => {
             crate::serial_println!(
-                "[install] stage 1 GPT: ESP at LBA {}, RaeFS root at LBA {}",
+                "[install] stage 1 GPT: ESP at LBA {}, AthFS root at LBA {}",
                 esp,
                 raefs
             );
@@ -303,15 +303,15 @@ pub fn run_install() -> u64 {
     // ── H3: a non-bootable ESP is a HARD FAIL, not a reported success ────────
     // If we could NOT write a firmware-bootable ESP (clone failed AND the
     // in-kernel fallback is known-non-bootable, or the ESP write failed
-    // outright), do NOT proceed to the destructive RaeFS format. Formatting
-    // RaeFS now would wipe the root partition yet leave a machine UEFI cannot
+    // outright), do NOT proceed to the destructive AthFS format. Formatting
+    // AthFS now would wipe the root partition yet leave a machine UEFI cannot
     // boot — the exact "success-ish stage count then a dead machine" failure
     // this slice exists to prevent. Abort here, BEFORE stage 4's first
-    // destructive RaeFS write, and return the distinct ABORTED sentinel so the
+    // destructive AthFS write, and return the distinct ABORTED sentinel so the
     // UI/logs say "source ESP unreadable — install ABORTED, target untouched".
     //
     // The GPT seed + ESP stages may have written to the ESP region above, but
-    // the RaeFS root (the user's data partition) is NOT yet touched, so the
+    // the AthFS root (the user's data partition) is NOT yet touched, so the
     // user's existing data partition is intact and the install can be retried
     // with a readable source. We surface the abort, not partial success.
     //
@@ -322,28 +322,28 @@ pub fn run_install() -> u64 {
     // non-QEMU families. This preserves the existing QEMU happy path exactly.
     if should_abort_for_unbootable_esp(esp_bootable, on_qemu()) {
         crate::serial_println!(
-            "[install] H3 ABORT: no firmware-bootable ESP could be written (clone failed and the in-kernel fallback is NOT firmware-bootable). Refusing to format RaeFS — install ABORTED, RaeFS root untouched."
+            "[install] H3 ABORT: no firmware-bootable ESP could be written (clone failed and the in-kernel fallback is NOT firmware-bootable). Refusing to format AthFS — install ABORTED, AthFS root untouched."
         );
         LAST_RESULT.store(STAGE_ABORTED, Ordering::Relaxed);
         return STAGE_ABORTED;
     }
 
-    // ── Stage 4: format the RaeFS root partition ─────────────────────────
-    // When stage 1 carved a real RaeFS partition (raefs_start != 0), point the
+    // ── Stage 4: format the AthFS root partition ─────────────────────────
+    // When stage 1 carved a real AthFS partition (raefs_start != 0), point the
     // filesystem at it via ROOT_PARTITION_LBA and format ON DISK so the install
     // is persistent — this is what lets the box boot standalone (no USB). On
-    // the tiny QEMU smoke disk no RaeFS partition fits (raefs_start == 0), so
+    // the tiny QEMU smoke disk no AthFS partition fits (raefs_start == 0), so
     // there we exercise the formatter in-memory rather than stomp our own GPT.
     let raefs_ok = if raefs_start != 0 {
         *crate::block_io::ROOT_PARTITION_LBA.lock() = raefs_start;
-        let formatted = crate::raefs::RaeFS::format().is_some();
+        let formatted = crate::raefs::AthFS::format().is_some();
         // Close the write→readback loop: re-read the superblock off the disk
-        // and confirm the RaeFS magic. Only then is the on-disk root proven
+        // and confirm the AthFS magic. Only then is the on-disk root proven
         // persistent — "format returned Ok" alone does not prove the bytes
         // are readable back from the carved partition.
-        let readback = formatted && crate::raefs::RaeFS::verify_root_superblock();
+        let readback = formatted && crate::raefs::AthFS::verify_root_superblock();
         crate::serial_println!(
-            "[install] stage 4 RaeFS: on-disk format at LBA {} format={} superblock_readback={} -> {}",
+            "[install] stage 4 AthFS: on-disk format at LBA {} format={} superblock_readback={} -> {}",
             raefs_start,
             formatted,
             readback,
@@ -356,14 +356,14 @@ pub fn run_install() -> u64 {
         formatted && readback
     } else {
         crate::serial_println!(
-            "[install] stage 4 RaeFS: no on-disk root partition (small disk) — in-memory formatter proof"
+            "[install] stage 4 AthFS: no on-disk root partition (small disk) — in-memory formatter proof"
         );
         format_raefs_root(esp_start + esp_sectors as u64)
     };
     if raefs_ok {
         result |= STAGE_RAEFS_FORMAT;
     } else {
-        crate::serial_println!("[install] stage 4 RaeFS FAILED");
+        crate::serial_println!("[install] stage 4 AthFS FAILED");
     }
 
     // ── Stage 5: verify the ESP is re-mountable ──────────────────────────
@@ -384,7 +384,7 @@ pub fn run_install() -> u64 {
 
 /// Apply a partition `LayoutPlan` (the choice the wizard's Layout screen shows).
 /// `FullDisk` runs the full-disk seed install (`run_install`); `DualBoot` carves
-/// RaeFS into the planned free gap WITHOUT touching the existing OS or its ESP;
+/// AthFS into the planned free gap WITHOUT touching the existing OS or its ESP;
 /// `Refuse` is a no-op. This is the plan-aware entry the graphical installer
 /// uses; the legacy headless path keeps calling `run_install` directly.
 pub fn apply_plan(plan: &LayoutPlan) -> u64 {
@@ -404,7 +404,7 @@ pub fn apply_plan(plan: &LayoutPlan) -> u64 {
     }
 }
 
-/// Install alongside an existing OS: carve a RaeFS partition into the free gap
+/// Install alongside an existing OS: carve a AthFS partition into the free gap
 /// `plan_layout` found and format it, leaving every existing partition — and the
 /// existing ESP — byte-for-byte intact. We deliberately do NOT reformat or write
 /// into the existing (e.g. Windows) ESP here: that needs a non-destructive
@@ -416,7 +416,7 @@ fn apply_dual_boot(esp_lba: u64, _esp_sectors: u64, raefs_start: u64, raefs_sect
     INSTALL_RUNS.fetch_add(1, Ordering::Relaxed);
     let mut result = 0u64;
     crate::serial_println!(
-        "[install] ===== dual-boot install: reuse ESP@{}, carve RaeFS at {}..{} ({} sectors) =====",
+        "[install] ===== dual-boot install: reuse ESP@{}, carve AthFS at {}..{} ({} sectors) =====",
         esp_lba,
         raefs_start,
         raefs_start + raefs_sectors.saturating_sub(1),
@@ -425,7 +425,7 @@ fn apply_dual_boot(esp_lba: u64, _esp_sectors: u64, raefs_start: u64, raefs_sect
 
     // ── H2: pre-write target "firewall" (shared with run_install) ────────────
     // The dual-boot carve writes the GPT (header+entry array+backup) and the
-    // RaeFS partition body, so the highest LBA touched is the carved RaeFS end.
+    // AthFS partition body, so the highest LBA touched is the carved AthFS end.
     // Re-snapshot the ACTIVE device immediately before the first write and
     // assert it matches; refuse with zero writes on mismatch.
     let end = raefs_start + raefs_sectors.saturating_sub(1);
@@ -471,7 +471,7 @@ fn apply_dual_boot(esp_lba: u64, _esp_sectors: u64, raefs_start: u64, raefs_sect
     match crate::fatfs_esp::add_gpt_partition(raefs_start, end) {
         Some(slot) => {
             crate::serial_println!(
-                "[install] dual-boot stage 1: RaeFS carved into free GPT slot {} (existing partitions preserved)",
+                "[install] dual-boot stage 1: AthFS carved into free GPT slot {} (existing partitions preserved)",
                 slot
             );
             result |= STAGE_GPT;
@@ -485,12 +485,12 @@ fn apply_dual_boot(esp_lba: u64, _esp_sectors: u64, raefs_start: u64, raefs_sect
         }
     }
 
-    // ── Stage 4: format RaeFS on the freshly carved partition ────────────────
+    // ── Stage 4: format AthFS on the freshly carved partition ────────────────
     *crate::block_io::ROOT_PARTITION_LBA.lock() = raefs_start;
-    let formatted = crate::raefs::RaeFS::format().is_some();
-    let readback = formatted && crate::raefs::RaeFS::verify_root_superblock();
+    let formatted = crate::raefs::AthFS::format().is_some();
+    let readback = formatted && crate::raefs::AthFS::verify_root_superblock();
     crate::serial_println!(
-        "[install] dual-boot stage 4 RaeFS: on-disk format at LBA {} format={} superblock_readback={} -> {}",
+        "[install] dual-boot stage 4 AthFS: on-disk format at LBA {} format={} superblock_readback={} -> {}",
         raefs_start,
         formatted,
         readback,
@@ -510,7 +510,7 @@ fn apply_dual_boot(esp_lba: u64, _esp_sectors: u64, raefs_start: u64, raefs_sect
     }
 
     crate::serial_println!(
-        "[install] dual-boot: ESP boot-tree write into the existing ESP is a Phase 3 follow-up (never clobber the foreign ESP); RaeFS root carved + formatted. stages={:#07b}",
+        "[install] dual-boot: ESP boot-tree write into the existing ESP is a Phase 3 follow-up (never clobber the foreign ESP); AthFS root carved + formatted. stages={:#07b}",
         result,
     );
     LAST_RESULT.store(result, Ordering::Relaxed);
@@ -518,7 +518,7 @@ fn apply_dual_boot(esp_lba: u64, _esp_sectors: u64, raefs_start: u64, raefs_sect
 }
 
 /// Path our loader takes on the (reused) ESP for a dual-boot install.
-pub const DUAL_BOOT_LOADER_PATH: &str = "\\EFI\\RAEENOS\\BOOTX64.EFI";
+pub const DUAL_BOOT_LOADER_PATH: &str = "\\EFI\\ATHENAOS\\BOOTX64.EFI";
 
 /// Build the `EFI_LOAD_OPTION` byte blob for a `Boot####` NVRAM variable that
 /// boots a file on a GPT partition (UEFI spec §3.1.3 + §10.3). This is the
@@ -695,7 +695,7 @@ fn clone_source_esp_to_target(target_esp_start: u64, target_esp_sectors: u32) ->
 
 /// Marker-gated automated install (MasterChecklist Phase 3.5). Fires ONLY
 /// when the boot USB stick's ESP carries an explicit `INSTALL.NOW` file the
-/// user created — root or `EFI/RAEENOS/`. This is deliberate, one-time
+/// user created — root or `EFI/ATHENAOS/`. This is deliberate, one-time
 /// consent: the kernel NEVER auto-installs (see the raefs/fatfs safety
 /// gates). It exists so a single bare-metal boot can both verify the system
 /// AND perform the install + log every step, even if input devices are still
@@ -709,7 +709,7 @@ fn clone_source_esp_to_target(target_esp_start: u64, target_esp_sectors: u32) ->
 pub fn maybe_run_triggered_install() {
     let marker = source_from_usb_stick(|| {
         crate::fatfs_esp::read_esp_file(&[], "INSTALL", "NOW")
-            .or_else(|| crate::fatfs_esp::read_esp_file(&["EFI", "RAEENOS"], "INSTALL", "NOW"))
+            .or_else(|| crate::fatfs_esp::read_esp_file(&["EFI", "ATHENAOS"], "INSTALL", "NOW"))
     });
     if marker.is_none() {
         return; // no marker, or no stick enumerated — silent, normal boot
@@ -772,7 +772,7 @@ fn source_ramdisk_payload() -> alloc::vec::Vec<u8> {
 }
 
 /// Run `read` with fatfs reads redirected to the boot USB stick (the first
-/// USB-MSC block device — RaeenOS booted from it, so its ESP carries the
+/// USB-MSC block device — AthenaOS booted from it, so its ESP carries the
 /// REAL bootloader + kernel). Returns `None` when no stick is enumerated or
 /// the read found nothing. The ACTIVE device is the install TARGET (Athena:
 /// the internal NVMe), so reading payloads from it would be circular.
@@ -814,7 +814,7 @@ fn source_bootx64_payload() -> (alloc::vec::Vec<u8>, bool) {
 /// `kernel-x86_64` at the ESP ROOT — that is the file the bootloader opens, so
 /// it is the authoritative source (read by long name, since its 8.3 alias is
 /// generated and unstable). Falls back to a slot-A copy from a previously
-/// RaeenOS-installed disk, then to a placeholder. MasterChecklist Phase 3.5.
+/// AthenaOS-installed disk, then to a placeholder. MasterChecklist Phase 3.5.
 fn source_kernel_payload() -> (alloc::vec::Vec<u8>, bool) {
     // The boot USB stick's ESP root carries the authoritative kernel-x86_64
     // (the very binary the bootloader loaded to run this code).
@@ -834,7 +834,7 @@ fn source_kernel_payload() -> (alloc::vec::Vec<u8>, bool) {
             return (bytes, true);
         }
     }
-    if let Some(bytes) = crate::fatfs_esp::read_esp_file(&["EFI", "RAEENOS"], "KERNEL-A", "BIN") {
+    if let Some(bytes) = crate::fatfs_esp::read_esp_file(&["EFI", "ATHENAOS"], "KERNEL-A", "BIN") {
         if !bytes.is_empty() {
             return (bytes, true);
         }
@@ -849,7 +849,7 @@ fn build_bootx64_payload() -> alloc::vec::Vec<u8> {
     let mut v = alloc::vec::Vec::with_capacity(4096);
     // PE/COFF magic "MZ" so a firmware that peeks the header sees an EFI app.
     v.extend_from_slice(b"MZ");
-    v.extend_from_slice(b"\x00RAEENOS-BOOTX64-EFI-PLACEHOLDER\x00");
+    v.extend_from_slice(b"\x00ATHENAOS-BOOTX64-EFI-PLACEHOLDER\x00");
     v.resize(4096, 0);
     v
 }
@@ -857,16 +857,16 @@ fn build_bootx64_payload() -> alloc::vec::Vec<u8> {
 /// Build a placeholder kernel slot-A image.
 fn build_kernel_payload() -> alloc::vec::Vec<u8> {
     let mut v = alloc::vec::Vec::with_capacity(8192);
-    v.extend_from_slice(b"RAEENOS-KERNEL-SLOT-A\x00");
+    v.extend_from_slice(b"ATHENAOS-KERNEL-SLOT-A\x00");
     v.resize(8192, 0);
     v
 }
 
-/// Format a RaeFS root in the device region beyond the ESP.
+/// Format a AthFS root in the device region beyond the ESP.
 fn format_raefs_root(_raefs_start_lba: u64) -> bool {
-    // RaeFS::format operates on a BlockDevice. The existing format_smoketest
+    // AthFS::format operates on a BlockDevice. The existing format_smoketest
     // proves the formatter; a full installer carves a second GPT partition for
-    // RaeFS root and formats it there. For this milestone we exercise the
+    // AthFS root and formats it there. For this milestone we exercise the
     // formatter via its in-memory proof path and report honestly.
     crate::raefs::format_smoketest()
 }
@@ -964,7 +964,7 @@ pub enum LayoutPlan {
     /// Blank disk (or empty GPT): take the whole disk — today's flow.
     FullDisk,
     /// Existing OS present: keep every partition, reuse its ESP for our
-    /// kernel, and carve RaeFS out of the largest free gap.
+    /// kernel, and carve AthFS out of the largest free gap.
     DualBoot {
         esp_lba: u64,
         esp_sectors: u64,
@@ -976,14 +976,14 @@ pub enum LayoutPlan {
     Refuse(&'static str),
 }
 
-/// Smallest RaeFS slice the PLANNER accepts (sectors). Deliberately tiny so
+/// Smallest AthFS slice the PLANNER accepts (sectors). Deliberately tiny so
 /// the synthetic smoketest disks exercise the gap math; the installer UI
 /// enforces the real >=8 GiB floor before applying a plan.
 pub const MIN_RAEFS_SECTORS: u64 = 1024;
 
 /// Decide the install layout for `dev` by reading its partition table.
 /// Never writes. Free-space search runs over the GPT's declared usable
-/// range; the chosen RaeFS start is aligned to 8 sectors (RaeFS 4 KiB
+/// range; the chosen AthFS start is aligned to 8 sectors (AthFS 4 KiB
 /// blocks).
 pub fn plan_layout(dev: &dyn crate::block_io::BlockDevice) -> LayoutPlan {
     use crate::block_io::{detect_partition_table, parse_gpt, PartitionTableType, PartitionType};
@@ -1080,12 +1080,12 @@ pub fn plan_layout(dev: &dyn crate::block_io::BlockDevice) -> LayoutPlan {
                 best_len = last_usable + 1 - cursor;
             }
 
-            // Align the RaeFS start to 8 sectors (4 KiB blocks).
+            // Align the AthFS start to 8 sectors (4 KiB blocks).
             let aligned = (best_start + 7) & !7;
             let shrink = aligned - best_start;
             let len = best_len.saturating_sub(shrink);
             if len < MIN_RAEFS_SECTORS {
-                return LayoutPlan::Refuse("no free space for a RaeFS partition");
+                return LayoutPlan::Refuse("no free space for a AthFS partition");
             }
             LayoutPlan::DualBoot {
                 esp_lba: esp.start_sector,
@@ -1141,7 +1141,7 @@ fn synth_gpt_disk(
 
 /// Deterministic Phase 16.1 proof over synthetic disks: blank → FullDisk;
 /// Windows-style GPT (ESP + data + free tail) → DualBoot reusing the ESP
-/// with an aligned RaeFS slice in the gap; packed GPT → Refuse (no space);
+/// with an aligned AthFS slice in the gap; packed GPT → Refuse (no space);
 /// GPT without an ESP → Refuse.
 pub fn run_layout_smoketest() {
     const ESP_GUID: [u8; 16] = [
@@ -1258,7 +1258,7 @@ fn synth_full_gpt_disk(
 
 /// Deterministic Phase 16.1 proof for the dual-boot carve: over a synthetic
 /// Windows-style GPT (ESP + NTFS + free tail), `add_gpt_partition_on` must add a
-/// RaeFS entry in the first free slot, leave both existing entries byte-for-byte
+/// AthFS entry in the first free slot, leave both existing entries byte-for-byte
 /// intact, write consistent array+header CRCs to BOTH primary and backup, and
 /// REFUSE a range that overlaps an existing partition (a test that can FAIL).
 pub fn run_apply_plan_smoketest() {
@@ -1472,7 +1472,7 @@ pub fn run_firewall_smoketest() {
 
 /// Slice H3 proof: a non-bootable ESP is a HARD FAIL on real hardware (abort,
 /// target untouched) but the QEMU dev flow proceeds; and a full `run_install`
-/// that hits the abort path issues ZERO destructive RaeFS writes. Pure logic +
+/// that hits the abort path issues ZERO destructive AthFS writes. Pure logic +
 /// a `run_install` end-to-end over a WriteRecorder mock (a test that can FAIL).
 ///
 /// Cases:
@@ -1501,7 +1501,7 @@ pub fn run_abort_safety_smoketest() {
     // it in as the ACTIVE device for the duration of one run_install, then
     // restore the prior device so we never disturb the running system. The mock
     // is 64 sectors — too small for the GPT seed AND for an existing ESP — so
-    // run_install bails at stage 1 (or the firewall) WITHOUT a RaeFS format.
+    // run_install bails at stage 1 (or the firewall) WITHOUT a AthFS format.
     let rec = WriteRecorder::new(64);
     let write_counter = rec.counter(); // second handle on the SAME counter
     let prev = {
@@ -1517,8 +1517,8 @@ pub fn run_abort_safety_smoketest() {
         let mut g = crate::block_io::ACTIVE_BLOCK_DEVICE.lock();
         *g = prev;
     }
-    // A 64-sector disk cannot hold a RaeFS root, so run_install MUST NOT reach
-    // the destructive RaeFS format. Two assertions: (1) no RaeFS-format stage
+    // A 64-sector disk cannot hold a AthFS root, so run_install MUST NOT reach
+    // the destructive AthFS format. Two assertions: (1) no AthFS-format stage
     // bit, and (2) the shared write counter recorded ZERO destructive writes —
     // the explicit "0 destructive writes on abort" guarantee.
     let no_raefs_format = result & STAGE_RAEFS_FORMAT == 0;

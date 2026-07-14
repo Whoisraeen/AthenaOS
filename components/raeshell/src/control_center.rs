@@ -1,6 +1,6 @@
 //! Control Center — the one-tap glance-and-toggle glass flyout.
 //!
-//! *"Built for people who care about how things feel."* — RaeenOS_Concept.md.
+//! *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md.
 //!
 //! Implements `docs/design/control-center.md`: a `material.glass` flyout
 //! anchored bottom-right above the tray, a responsive on/off tile grid (Wi-Fi,
@@ -8,7 +8,7 @@
 //! expand-in-place sub-panels (the macOS win — Wi-Fi network list pushed into
 //! the panel, NOT a new window), always-visible Volume + Brightness sliders, an
 //! inline media-transport card (present only when audio plays, absent
-//! otherwise), and the RaeenOS-native **Gaming row** (Game Mode + RGB effect
+//! otherwise), and the AthenaOS-native **Gaming row** (Game Mode + RGB effect
 //! quick-pick + Performance segmented) that honors "gaming isn't a mode".
 //!
 //! Cohesion (spec §5): every colour resolves from `rae_tokens` through the LIVE
@@ -84,7 +84,7 @@ pub enum TileKind {
     Airplane,
     /// Accessibility shortcut.
     Accessibility,
-    /// Game Mode (Gaming row; drives gameos/SCHED_GAME prioritisation).
+    /// Game Mode (Gaming row; drives gameos/SCHED_BODY prioritisation).
     GameMode,
     /// RGB (Gaming row; expandable → effect quick-pick chips).
     Rgb,
@@ -125,7 +125,7 @@ pub enum TileBackend {
     NotifyDnd,
     /// Wired to `notify::quick_settings` Night Light (config registry) — live.
     NotifyNightLight,
-    /// Wired to the `gameos` Game Mode / SCHED_GAME prioritisation (live model).
+    /// Wired to the `gameos` Game Mode / SCHED_BODY prioritisation (live model).
     GameOs,
     /// Wired to the `rgb_api` effect engine (live model).
     RgbEngine,
@@ -1544,7 +1544,7 @@ impl ControlCenter {
         canvas.draw_text_aa(
             (x + av + SPACE_2 as usize) as i32,
             (y + (FOOTER_HEIGHT - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
-            "RaeenOS",
+            "AthenaOS",
             rae_tokens::TYPE_LABEL,
             p.text_primary,
             raegfx::text::FontFamily::Sans,

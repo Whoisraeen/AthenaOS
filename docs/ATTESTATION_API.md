@@ -1,11 +1,11 @@
-# RaeenOS Attestation API
+# AthenaOS Attestation API
 
 > Concept §Security — *"You don't need kernel access on our OS; here's a better
 > primitive."*
 
 Anti-cheat vendors, enterprise compliance, and remote services historically demand a
 ring-0 driver to answer one question: **can I trust the machine and the process I'm
-talking to?** RaeenOS answers that question through a **userspace-queryable attestation
+talking to?** AthenaOS answers that question through a **userspace-queryable attestation
 API** instead — bounded, audited, crash-isolated, and transparent. A vendor gets the
 trust signal without being handed the kernel.
 
@@ -48,7 +48,7 @@ cryptographic commitment to the **exact contents AND order** of everything measu
 Tamper with any stage, reorder the chain, or swap the kernel, and the PCR diverges — an
 attacker cannot forge a PCR value back to a known-good state.
 
-### What RaeenOS measures today
+### What AthenaOS measures today
 
 | PCR | Stage | What it commits | TPM convention |
 |---|---|---|---|
@@ -115,7 +115,7 @@ detection — surfaced via `/proc/raeen/anticheat` and folded into the attestati
 ## 4. The remote-verification flow
 
 ```
-   Vendor server                         RaeenOS (userspace app + kernel)
+   Vendor server                         AthenaOS (userspace app + kernel)
    ─────────────                         ───────────────────────────────
 1. issue fresh nonce  ───────────────▶
 2.                                       SYS_AC_REQUEST_ATTESTATION(pid, vendor, ts)
@@ -141,7 +141,7 @@ Attestation is a privileged operation, gated like everything else:
   `Cap`.
 - A **sandboxed Wasm app** ([`raewasm`](../components/raewasm/)) cannot issue syscalls
   directly; it reaches attestation through a **capability-gated host import** — the
-  embedder (RaeShield) binds the import to an attestation `Cap` via the
+  embedder (AthGuard) binds the import to an attestation `Cap` via the
   [`raewasm::pkg`](../components/raewasm/src/pkg.rs) manifest, and the call traps unless
   the user granted that capability.
 

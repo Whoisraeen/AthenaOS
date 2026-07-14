@@ -21,7 +21,7 @@
 //! the older context always wins, so global progress is guaranteed (the oldest
 //! live context can never be made to back off).
 //!
-//! **Cooperative-daemon modeling.** The RaeenOS driver daemons are cooperatively
+//! **Cooperative-daemon modeling.** The AthenaOS driver daemons are cooperatively
 //! single-threaded, so true preemptive contention between two live contexts is
 //! rare — but the wound/wait *protocol* (the `-EDEADLK`/restart contract and the
 //! wound flag) must still be correct, because the drivers' lock-many-buffers

@@ -1,4 +1,4 @@
-//! XInput + HID deep input subsystem for RaeBridge.
+//! XInput + HID deep input subsystem for AthBridge.
 //!
 //! Full XInput 1.4 emulation, HID device parsing, and extended controller support.
 

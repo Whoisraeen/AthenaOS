@@ -1,4 +1,4 @@
-//! RaeCloud — cloud storage and sync for RaeenOS.
+//! RaeCloud — cloud storage and sync for AthenaOS.
 //!
 //! Multi-provider cloud storage with bidirectional sync, client-side encryption,
 //! chunked transfers, and virtual filesystem mount points.

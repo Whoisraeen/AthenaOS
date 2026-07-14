@@ -1,6 +1,6 @@
 //! # RaeRegex — a never-panic, `no_std`, ReDoS-safe regular-expression engine.
 //!
-//! RaeenOS_Concept.md §"The user owns the machine": the machine answers to its
+//! LEGACY_GAMING_CONCEPT.md §"The user owns the machine": the machine answers to its
 //! owner, not the other way around — which includes never letting an untrusted
 //! pattern or an untrusted input string wedge the system. Regular expressions are
 //! everywhere a text tool lives (find/replace in editors, input validation,

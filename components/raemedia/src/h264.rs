@@ -1,6 +1,6 @@
 //! # RaeMedia H.264 baseline-profile intra (I-frame) decoder.
 //!
-//! RaeenOS_Concept.md (§creators / media): a daily driver must "play my movies" and
+//! LEGACY_GAMING_CONCEPT.md (§creators / media): a daily driver must "play my movies" and
 //! "play my music." MP4 (ISO BMFF) is the dominant container for phone video, downloaded
 //! video, and AAC audio; H.264 baseline/constrained-baseline is the floor of "movies and
 //! downloaded video." And the manifesto's first principle — "Native everywhere. No

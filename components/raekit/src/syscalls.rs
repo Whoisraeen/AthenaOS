@@ -1,4 +1,4 @@
-//! High-level syscall wrappers for RaeenOS.
+//! High-level syscall wrappers for AthenaOS.
 //!
 //! Wraps the raw `sys::*` primitives into ergonomic Rust APIs grouped by
 //! subsystem: filesystem, IPC, surfaces, process control, and capabilities.

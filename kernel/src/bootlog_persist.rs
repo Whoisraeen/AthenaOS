@@ -459,7 +459,7 @@ extern "C" fn late_flush_thread_entry() {
 /// SAFE-MODE bare-metal auto-return SAFETY NET — INDEPENDENT of the NVMe flush.
 /// The late-flush thread's end-of-window auto-reboot only runs if its loop completes, but
 /// a live NVMe controller can block `flush()` bare-metal and stall the loop forever — which
-/// stranded the Athena 2026-06-28 (RaeenOS running + ping-able, but no auto-reboot, no SSH,
+/// stranded the Athena 2026-06-28 (AthenaOS running + ping-able, but no auto-reboot, no SSH,
 /// needing a physical power-cycle). This thread shares NOTHING with that loop: it sleeps a
 /// fixed ~150s using only `yield`+`hlt` (no block I/O), re-broadcasts the ring over UDP
 /// netlog (the flush-free capture path), then triple-faults via `reboot_no_flush` — a
@@ -566,7 +566,7 @@ fn flush_to(dev: &dyn crate::block_io::BlockDevice) {
         return;
     };
 
-    // dump_text = "# RaeenOS boot log …" header + transcript, so the file
+    // dump_text = "# AthenaOS boot log …" header + transcript, so the file
     // self-describes (capacity, bytes logged, whether the ring wrapped).
     let log = crate::bootlog::dump_text();
     let bytes = log.as_bytes();

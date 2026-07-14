@@ -1,6 +1,6 @@
 # Design Spec: Control Center (Quick Settings flyout)
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > The one-tap glance-and-toggle surface. It must clear: **macOS Control Center's
 > grouped module layout + expandable modules, and Windows 11 Quick Settings'
@@ -16,7 +16,7 @@ flyout in half a page) — that section now defers here.
 
 ## Concept promise + bar to clear
 
-> "The user owns the machine… one tap to a different place." — RaeenOS_Concept.md
+> "The user owns the machine… one tap to a different place." — LEGACY_GAMING_CONCEPT.md
 > (§Customization). Control Center is where the machine's *current state* (volume,
 > network, game mode, RGB, do-not-disturb) is owned at a glance.
 
@@ -24,7 +24,7 @@ flyout in half a page) — that section now defers here.
   expandable into a full sub-panel (Wi-Fi list, audio output picker, Focus modes),
   drag-to-rearrange via Settings; + Windows 11 Quick Settings — 6–8 toggle pills,
   brightness + volume sliders, an edit pencil, an inline media-transport card.
-- **The RaeenOS-specific promise:** because "gaming isn't a mode," Control Center
+- **The AthenaOS-specific promise:** because "gaming isn't a mode," Control Center
   is also the **fast lane to Game Mode + RGB + per-game power** without opening
   Settings — the gaming pillar lives one tap from the tray.
 
@@ -57,27 +57,27 @@ glass flyout with the full state matrix.
   push/slide. Brightness + Sound are always-visible sliders. Drag-to-customize
   lives in Settings. **Take:** expandable-in-place modules (no separate window),
   always-visible brightness/volume, glass material. **Avoid:** the two-tap cost to
-  reach a Wi-Fi network (RaeenOS expands on first tap of the tile's expand region).
+  reach a Wi-Fi network (AthenaOS expands on first tap of the tile's expand region).
 - **Windows 11 Quick Settings:** a 2-column grid of toggle *pills* (Wi-Fi, BT,
   Airplane, Battery saver, Night light, Accessibility…), brightness + volume
   sliders below, a **pencil** to add/remove/reorder tiles, and an inline **media
   transport card** (album art + prev/play/next) when audio plays. **Take:** the
   edit-tiles affordance, the inline media card, the slider row. **Avoid:** the
-  hard 2-column cap (RaeenOS uses a responsive 2–4 col grid) and the separation
-  from notifications into two different flyouts (RaeenOS keeps them adjacent).
+  hard 2-column cap (AthenaOS uses a responsive 2–4 col grid) and the separation
+  from notifications into two different flyouts (AthenaOS keeps them adjacent).
 - **GNOME Quick Settings (46+):** compact toggle buttons with a built-in
   expand-arrow for the few that need a sub-menu (Wi-Fi, Power mode); strong focus
   rings. **Take:** the per-tile expand-arrow as the expand affordance; visible
   focus.
 
-**RaeenOS synthesis:** macOS's **expand-in-place modules** + Win11's **edit-tiles
+**AthenaOS synthesis:** macOS's **expand-in-place modules** + Win11's **edit-tiles
 + inline media card + slider row**, on the shell's `material.glass`, with a
 **Gaming row** (Game Mode + RGB + per-game power) that is uniquely ours and
 honors "gaming isn't a mode."
 
 ---
 
-## RaeenOS design tokens this surface uses
+## AthenaOS design tokens this surface uses
 
 - **spacing:** `space.2` (tile-internal padding, intra-grid gap), `space.3` (tile
   label inset, slider row padding), `space.4` (panel padding, section gap).
@@ -163,9 +163,9 @@ honors "gaming isn't a mode."
 - Hidden entirely when nothing is playing (no empty card). **focus:** tab through
   the transport buttons; reduced-motion: no art cross-fade on track change.
 
-### 2.5 Gaming row (the RaeenOS-native section — "gaming isn't a mode")
+### 2.5 Gaming row (the AthenaOS-native section — "gaming isn't a mode")
 - Section header "Gaming" (`type.subtitle` `text.secondary`).
-- **Game Mode** tile (toggle; on = `accent.subtle`, drives `gameos`/SCHED_GAME
+- **Game Mode** tile (toggle; on = `accent.subtle`, drives `gameos`/SCHED_BODY
   prioritization).
 - **RGB** tile (expandable → quick-pick of the 9 `rgb.rs` effect modes as a
   horizontal chip row + a brightness mini-slider; full control in Settings →
@@ -184,7 +184,7 @@ honors "gaming isn't a mode."
 
 ## 3. Notifications adjacency (one mental model, not two flyouts)
 
-Unlike Win11 (Quick Settings and Notifications are separate flyouts), RaeenOS
+Unlike Win11 (Quick Settings and Notifications are separate flyouts), AthenaOS
 keeps them coherent: the **notification stack** (`notify.rs`, see `desktop-shell.md`
 §5) lives top-right; Control Center lives bottom-right; both use the **same glass
 material, same accent, same `elev.3`**. A future "notification center" history
@@ -277,10 +277,10 @@ as `space.*` multiples, deliberately not global tokens.
   derive_accent(seed).base`.
 
 ### Unblocks (MasterChecklist)
-- **Phase 8 (RaeUI/RaeKit):** expandable-tile + media-card widgets.
+- **Phase 8 (AthUI/AthKit):** expandable-tile + media-card widgets.
 - **Phase 13 (Customization):** edit-tiles + the Vibe/RGB/Game fast lane make the
   ownership story one tap from the tray.
-- **Phase 14 (RaeShell + apps):** the quick-settings/Control-Center surface, from
+- **Phase 14 (AthShell + apps):** the quick-settings/Control-Center surface, from
   `desktop-shell.md` §3 sketch to a macOS/Win11-rival flyout.
 - **Consumer Production Gate "Gamer":** Game Mode + RGB + performance one tap from
   the tray is a gaming-OS differentiator.

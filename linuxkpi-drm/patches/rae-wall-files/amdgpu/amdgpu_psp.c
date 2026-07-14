@@ -48,7 +48,7 @@
 
 #define AMD_VBIOS_FILE_MAX_SIZE_B      (1024*1024*16)
 
-/* RaeenOS maps large CPU-write/GPU-read UMA BOs WB for throughput. Phoenix's
+/* AthenaOS maps large CPU-write/GPU-read UMA BOs WB for throughput. Phoenix's
  * PSP is a non-snooping DMA agent, so ownership transitions require explicit
  * cache writeback/invalidation around its mailbox protocol. */
 extern void rae_cpu_cache_flush(const void *ptr, unsigned long len);
@@ -3089,7 +3089,7 @@ static int psp_load_non_psp_fw(struct psp_context *psp)
 	struct amdgpu_device *adev = psp->adev;
 
 	/* amdgpu_ucode_init_bo() builds the consolidated PSP source image through
-	 * a CPU mapping. RaeenOS maps this multi-megabyte UMA/VRAM BO write-back;
+	 * a CPU mapping. AthenaOS maps this multi-megabyte UMA/VRAM BO write-back;
 	 * Phoenix PSP DMA is not cache coherent with the CPU. Publish every ucode
 	 * segment before the first LOAD_IP_FW command or PSP can authenticate stale
 	 * cache lines (observed as status 0x63 for PFP/MEC/MES and a dead MES KIQ). */
@@ -3187,7 +3187,7 @@ static int psp_load_fw(struct amdgpu_device *adev)
 
 	ret = psp_hw_start(psp);
 	if (ret) {
-		/* RaeenOS wall-3: PSP GPCOM/bootloader is dead on the passthrough
+		/* AthenaOS wall-3: PSP GPCOM/bootloader is dead on the passthrough
 		 * Phoenix APU (no C2PMSG response). Under RLC backdoor autoload the
 		 * GFX/SDMA/MES firmware is loaded by the RLC microengine, not the PSP,
 		 * so a hw_start failure is non-fatal: warn and skip the PSP-dependent

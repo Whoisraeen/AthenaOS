@@ -1938,7 +1938,7 @@ pub fn shadow_penumbra_stats() -> (u64, u32, u32) {
 }
 
 // ─── Overview / Mission-Control mechanism (window-management.md §1) ──────────
-// Concept §RaeUI: "your desktop, your rules — tiling, stacking, floating are
+// Concept §AthUI: "your desktop, your rules — tiling, stacking, floating are
 // POLICIES over the compositor, not forks of it." Overview is the compositor
 // MECHANISM (scaled-composite of the live per-surface buffers into a frozen
 // grid); the shell owns the policy (grid chrome, labels, spaces strip). The bar
@@ -2152,7 +2152,7 @@ impl MagParams {
 // "Built for people who care about how things feel." Accessibility is a SHIP
 // GATE (PARITY_MATRIX §J). macOS ships "Invert Colors", "Increase Contrast" and
 // colorblindness "Color Filters"; Windows ships "Color filters" (invert,
-// grayscale) + High Contrast. RaeenOS does the equivalent at the SAME place as
+// grayscale) + High Contrast. AthenaOS does the equivalent at the SAME place as
 // the magnifier: a per-pixel transform applied as the finished frame is copied
 // from the compositor-OWNED `scanout_ready` buffer to the framebuffer.
 //
@@ -2519,7 +2519,7 @@ pub fn run_boot_smoketest() {
 }
 
 /// FAIL-able proof that the compositor's frame pacer HONORS a monitor's variable
-/// refresh range (Concept §RaeGFX: "first-class HDR/VRR"; MasterChecklist Phase
+/// refresh range (Concept §AthGFX: "first-class HDR/VRR"; MasterChecklist Phase
 /// 6.4 "VRR pacing — compositor honors monitor's variable refresh range"). A VRR
 /// panel can present a frame anywhere inside `[min_hz, max_hz]`; the pacer must
 /// never ask the display to refresh FASTER than `max_hz` (tears / wasted frames)
@@ -2917,7 +2917,7 @@ pub fn run_capture_abi_smoketest() {
 }
 
 /// FAIL-able proof of the overview-mode scaled composite (window-management.md
-/// §1 / Concept §RaeUI). Creates N synthetic kernel surfaces, paints a known
+/// §1 / Concept §AthUI). Creates N synthetic kernel surfaces, paints a known
 /// solid into each, enters overview, drives one `recomposite`, and asserts:
 ///   1. each surface's thumbnail center pixel in the COMPOSITED frame carries
 ///      that surface's color at the `compute_layout(Tile,…)` cell origin (the
@@ -3193,7 +3193,7 @@ fn buddy_free_frames() -> usize {
 /// Proof that destroying a surface returns its backing frames to the allocator
 /// (the ~1.5 MiB-per-window-close leak fix). Allocates then destroys N
 /// kernel surfaces and asserts the buddy free-frame count returns to baseline.
-/// MasterChecklist Phase 6 / §RaeGFX surface lifecycle. Prints FAIL if the
+/// MasterChecklist Phase 6 / §AthGFX surface lifecycle. Prints FAIL if the
 /// free count dropped (a real leak), so this test can actually fail.
 pub fn run_surface_leak_smoketest() {
     // Skip cleanly if the compositor never initialized (no framebuffer): there
@@ -3239,7 +3239,7 @@ pub fn run_surface_leak_smoketest() {
 /// Deterministic proof of the compositor effect math with ZERO framebuffer
 /// access: the HDR tone-map pipeline (sRGB → linear → ACES → sRGB, per pixel)
 /// and the 3-pass box blur that underpins glassmorphism. MasterChecklist
-/// Phase 6.4 — HDR pipeline + glassmorphism (blur). Concept §RaeUI compositor.
+/// Phase 6.4 — HDR pipeline + glassmorphism (blur). Concept §AthUI compositor.
 pub fn run_effects_smoketest() {
     let mut pass = 0u32;
     let mut total = 0u32;
@@ -4592,7 +4592,7 @@ pub fn capture_dump_text() -> alloc::string::String {
     use core::fmt::Write;
     let state = lock_compositor();
     let mut out = alloc::string::String::new();
-    let _ = writeln!(out, "# RaeenOS compositor capture sessions");
+    let _ = writeln!(out, "# AthenaOS compositor capture sessions");
     if let Some(st) = state.as_ref() {
         let _ = writeln!(out, "active_sessions: {}", st.captures.len());
         for c in st.captures.iter() {
@@ -5564,7 +5564,7 @@ fn alpha_blend(fg: u32, bg: u32) -> u32 {
 /// it NEVER samples the backdrop (the old renderer leaked the wallpaper's blue
 /// into the shadow — raeen-visual-qa finding #1, the #1 "looks basic" defect).
 ///
-/// Concept §RaeUI: "glassmorphic, GPU-accelerated… looks like Metal." A soft
+/// Concept §AthUI: "glassmorphic, GPU-accelerated… looks like Metal." A soft
 /// ambient shadow with a smooth penumbra is exactly the premium cue that the
 /// hard blue offset block destroyed; this restores it for every elevated
 /// surface at once.
@@ -5940,7 +5940,7 @@ fn compositor_tick(now_us: u64, last_present_us: &mut u64, target_us: u64) -> (b
     }
 }
 
-// ─── SCHED_GAME Compositor Thread ──────────────────────────────────────────
+// ─── SCHED_BODY Compositor Thread ──────────────────────────────────────────
 
 extern "C" fn compositor_thread_entry() {
     let mut last_present_us = monotonic_us();
@@ -5974,7 +5974,7 @@ extern "C" fn compositor_thread_entry() {
 /// `Ready` normal tasks never picked). That single starvation was the cause of
 /// "boots to login but no desktop, dead mouse, no DHCP" on iron.
 ///
-/// Until SCHED_GAME gets real runtime-budget throttling (so a deadline task
+/// Until SCHED_BODY gets real runtime-budget throttling (so a deadline task
 /// that has used its slice this period stops being picked until the next
 /// period), the compositor runs as a fair CFS-normal task, sharing the CPU so
 /// the rest of the system runs. BSP-pinned because the APs don't schedule
@@ -5988,7 +5988,7 @@ extern "C" fn compositor_thread_entry() {
 /// vs `HZ`=1000) and idle-polled at only ~6 fps.
 pub fn spawn_compositor_thread() {
     let task = crate::task::Task::new(compositor_thread_entry, None);
-    // ── DO NOT promote this thread to SCHED_GAME EDF without fixing the tick. ──
+    // ── DO NOT promote this thread to SCHED_BODY EDF without fixing the tick. ──
     // Tried 2026-07-03 (EDF 8_333/8_333/1_100): QEMU passed both SMP configs, but
     // IRON froze the desktop — with audio (2_667 µs) + HID (2_000 µs) already on
     // CPU0, a third EDF task saturates the ~100 Hz-tick pick slots and the whole

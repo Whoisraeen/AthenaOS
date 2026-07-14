@@ -10,11 +10,11 @@
 //! recomputes the expected value and compares.
 //!
 //! This is the shared **measurement core**, used both by the kernel's boot-time
-//! measurement (`kernel::measured_boot`) and RaeShield's userspace attestation API. Its
+//! measurement (`kernel::measured_boot`) and AthGuard's userspace attestation API. Its
 //! behavior is identical to a hardware TPM for the same events, so the software chain
 //! and a real TPM's PCRs agree. The hardware half — the TPM chip (TIS/CRB MMIO) and key
 //! sealing to PCR state — is iron-gated and lives elsewhere; this pure-logic core is
-//! host-KAT'd. Concept §RaeShield: "you don't need kernel access; here's a better
+//! host-KAT'd. Concept §AthGuard: "you don't need kernel access; here's a better
 //! primitive."
 
 use alloc::string::String;

@@ -8,14 +8,14 @@ Slice 0 (already landed, commit 5079a90).
 
 ## Concept promise served
 
-> "macOS got locked behind a walled garden of Apple silicon. … RaeenOS is the third path —
-> a from-scratch, gaming-first, native-feeling OS that treats power users like adults"
-> (RaeenOS_Concept.md §The OS Manifesto)
+> "macOS got locked behind a walled garden of Apple silicon. … AthenaOS is the third path —
+> a from-scratch, embodiment-first, native-feeling OS that treats power users like adults"
+> (LEGACY_GAMING_CONCEPT.md §The OS Manifesto)
 
 and the north-star clause ADR 0007 added to §Architecture ("Architecture Reach"), already
 quoted verbatim in `kernel/src/arch/mod.rs`:
 
-> "RaeenOS refuses ISA lock-in: the kernel sits on a clean `arch::` abstraction layer … so the
+> "AthenaOS refuses ISA lock-in: the kernel sits on a clean `arch::` abstraction layer … so the
 > same OS boots x86_64, aarch64 (ARM 64-bit), and i686 (32-bit x86) — each proven independently."
 
 aarch64 is the *load-bearing* proof of that clause: it's the ISA macOS is welded to, and the one
@@ -117,7 +117,7 @@ From QEMU's own `hw/arm/virt.c` `base_memmap[]`
 ([source](https://github.com/qemu/qemu/blob/master/hw/arm/virt.c)). These are the MMIO bases the
 aarch64 backend hardcodes for the first boot (DTB parse later refines them):
 
-| Region | Base | Size | RaeenOS use |
+| Region | Base | Size | AthenaOS use |
 |---|---|---|---|
 | VIRT_FLASH | `0x0000_0000` | `0x0800_0000` | boot ROM (`-kernel` loads here / pflash) |
 | **VIRT_GIC_DIST** | `0x0800_0000` | `0x0001_0000` | GIC **distributor** (GICD_*) |
@@ -351,9 +351,9 @@ prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new
 ## What stays shared vs what forks (portability debt call-out)
 
 **Stays fully shared — must NOT fork** (pure `no_std`+`alloc` logic, arch-neutral):
-scheduler policy + EDF/SCHED_GAME, the MM allocator *logic* (buddy/slab/heap — only the page-table
-*backend* is arch), IPC, VFS, RaeFS, **every syscall handler** (the 3296-line `syscall::dispatch`),
-capability/RaeShield, the entire `components/*` Rae* userspace stack, RaeNet above the NIC, crypto,
+scheduler policy + EDF/SCHED_BODY, the MM allocator *logic* (buddy/slab/heap — only the page-table
+*backend* is arch), IPC, VFS, AthFS, **every syscall handler** (the 3296-line `syscall::dispatch`),
+capability/AthGuard, the entire `components/*` Rae* userspace stack, AthNet above the NIC, crypto,
 the procfs surface. The user/syscall **ABI is arch-neutral** — NO `rae_abi`/`ABI_VERSION` change.
 
 **Must be per-arch (the HAL only):** boot/early-init, CPU feature init, MMU/paging backend,

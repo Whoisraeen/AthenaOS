@@ -8,7 +8,7 @@
   QEMU-virt-specific, slice-ordered execution plan (ADR 0007 §5 deferred this).
 
 ## Context
-Goal criterion #3 requires RaeenOS boot/run/install on x86_64 + aarch64 + i686, each
+Goal criterion #3 requires AthenaOS boot/run/install on x86_64 + aarch64 + i686, each
 proven independently in QEMU. x86_64 is live; the arch:: HAL seam (Slice 0, commit
 5079a90) landed. aarch64 is the next ISA and the load-bearing proof of the Concept's
 "third path … not locked behind Apple silicon" reach clause. The bring-up has several

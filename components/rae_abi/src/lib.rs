@@ -1,4 +1,4 @@
-//! RaeenOS ABI — the single, version-locked serialization point.
+//! AthenaOS ABI — the single, version-locked serialization point.
 //!
 //! Every development slice (Opus/kernel, Gemini/subsystems, Composer/drivers)
 //! imports its cross-slice constants from HERE, not from magic numbers scattered
@@ -30,7 +30,7 @@
 /// - v1: initial frozen contract (driver fw 109-118, LinuxKPI 127-140, etc.)
 /// - v2: SYS_DEBUG_PRINT moved from 27 (collided with SYS_SURFACE_CLOSE — the
 ///       compositor close-surface path was dead code because Rust match picks
-///       the first arm) to 141. RaeGFX reserved range slid to 142-199. relibc
+///       the first arm) to 141. AthGFX reserved range slid to 142-199. relibc
 ///       printf updated in lockstep.
 /// - v3: SYS_SEARCH_QUERY_RESOLVED (281) — a NAMED, variable-length search-result
 ///       surface so the Files app / command palette can render clickable rows
@@ -62,7 +62,7 @@ pub mod syscall {
     // wins, so the surface_close arm was dead code). Moved to 141 in v2.
     pub const SYS_DEBUG_PRINT: u64 = 141;
 
-    // ── RaeFS game-install hint ──
+    // ── AthFS game-install hint ──
     pub const SYS_RAEFS_GAME_INSTALL_HINT: u64 = 99;
 
     /// Subscribe the calling task to low-memory notifications (Phase 4.1).
@@ -71,7 +71,7 @@ pub mod syscall {
     /// Additive (unreserved slot 100); no ABI_VERSION bump.
     pub const SYS_OOM_SUBSCRIBE: u64 = 100;
 
-    // ── RaeFS snapshot management (Phase 5.1) ──
+    // ── AthFS snapshot management (Phase 5.1) ──
     // Additive (unreserved slots 101-103); no ABI_VERSION bump. Core CoW
     // snapshot paths live in kernel/src/raefs.rs; the kernel side is Opus.
     // All three require Cap::Filesystem{WRITE} (they mutate the live FS).
@@ -143,7 +143,7 @@ pub mod syscall {
     // ── System control ──
     pub const SYS_RAEEN_SHUTDOWN: u64 = 120; // requires Cap::System{WRITE}
 
-    // ── RaeNet sockets (121-125) ──
+    // ── AthNet sockets (121-125) ──
     // The dispatch arms have been live in kernel/src/syscall.rs since the
     // socket bring-up but the slots were never recorded here; named now so they
     // can't be double-allocated. 121-125 = the TCP/UDP socket surface
@@ -186,7 +186,7 @@ pub mod syscall {
     /// to [`THEME_DEFAULT_ACCENT`] (RaeBlue) on any error.
     pub const SYS_THEME_GET: u64 = 266;
 
-    /// Feed PCM samples into the RaeAudio mixer — `rdi = samples ptr`
+    /// Feed PCM samples into the AthAudio mixer — `rdi = samples ptr`
     /// (`*const i16`), `rsi = frame_count`, `rdx = format_flags`. Completes the
     /// audio pillar end-to-end (app → mixer → ring → HDA): the kernel
     /// `copy_from_user`s the samples and enqueues them into the calling task's
@@ -540,8 +540,8 @@ pub mod syscall {
     /// next free after `SYS_SURFACE_ORIGIN` 280).
     pub const SYS_SEARCH_QUERY_RESOLVED: u64 = 281;
 
-    // ── Block 33: RaeBridge real-MSVC-CRT ABI (282–283) ─────────────────────
-    // Two syscalls that let RaeBridge run REAL MSVC-compiled `.exe`s: every
+    // ── Block 33: AthBridge real-MSVC-CRT ABI (282–283) ─────────────────────
+    // Two syscalls that let AthBridge run REAL MSVC-compiled `.exe`s: every
     // MSVC-CRT binary reads `gs:[0x30]` for its TEB on entry, and the loader
     // needs to flip relocated `.text` RW→RX. Both ungated, allowed in every
     // sandbox level (a guest setting its own TEB pointer / narrowing its own
@@ -550,7 +550,7 @@ pub mod syscall {
     // docs/components/raebridge-real-crt-abi.md.
 
     /// `SYS_SET_GS_BASE(base)` — set the user-visible GS base to the Win32 TEB
-    /// pointer for a RaeBridge guest. `rdi = base` (TEB virtual address);
+    /// pointer for a AthBridge guest. `rdi = base` (TEB virtual address);
     /// returns `0` on success, `u64::MAX` on a non-canonical / kernel-half
     /// address. Mirrors `SYS_SET_FS_BASE` (126); the kernel persists it in the
     /// per-task GS base and restores it across context switches. Ungated,
@@ -568,15 +568,15 @@ pub mod syscall {
 
     // ── Block 34: Anti-cheat attestation (284–290) ──────────────────────────
     // Concept §Security: "anti-cheat vendors (EAC/BattlEye/Vanguard) use a
-    // RaeShield attestation API WITHOUT owning ring 0." Handlers live in
+    // AthGuard attestation API WITHOUT owning ring 0." Handlers live in
     // kernel/src/anticheat.rs.
     //
     // RENUMBERED 2026-06-25 from the original 100–106. Those numbers were a hard
-    // ABI COLLISION: dispatch arms 100 (SYS_OOM_SUBSCRIBE) and 101–103 (RaeFS
+    // ABI COLLISION: dispatch arms 100 (SYS_OOM_SUBSCRIBE) and 101–103 (AthFS
     // snapshot create/restore/delete) precede the range arm in the match, so the
     // first-match-wins rule meant calling the *documented* SYS_AC_REGISTER_GAME
     // (102) actually executed `raefs::snapshot_restore` — a destructive FS
-    // rollback. OOM(100) + RaeFS snapshots(101–103) are live and iron-proven, so
+    // rollback. OOM(100) + AthFS snapshots(101–103) are live and iron-proven, so
     // anti-cheat (design-tier) moved to this fresh contiguous block. ABI_VERSION
     // bumped to 4 (a number CHANGED — not merely additive). The 100–106 anti-cheat
     // numbers never worked, so no real consumer breaks.
@@ -589,7 +589,7 @@ pub mod syscall {
     pub const SYS_AC_HEARTBEAT: u64 = 290;
 
     // ── Block 35: Surface resize protocol (291–292) ─────────────────────────
-    // Concept §RaeUI: "tiling, stacking, floating are POLICIES over the
+    // Concept §AthUI: "tiling, stacking, floating are POLICIES over the
     // compositor." A real tiling WM does not merely move a window into a cell —
     // it RESIZES the client to FILL the cell (i3/sway tiling; Win11 Snap
     // Layouts). The compositor owns the surface's backing frames, so the client
@@ -674,7 +674,7 @@ pub mod syscall {
     /// Maximum UTF-8 byte length of a single `name`/`path` field a resolved
     /// record carries (each clamped independently). A longer string is truncated
     /// on a char boundary by the kernel encoder so one entry can't dominate the
-    /// buffer. A full RaeFS path fits comfortably; this is a safety ceiling.
+    /// buffer. A full AthFS path fits comfortably; this is a safety ceiling.
     pub const SEARCH_RESOLVED_MAX_STR: usize = 1024;
 
     /// Inline name buffer length for [`crate::A11yNode`] (matches the compositor
@@ -784,7 +784,7 @@ pub mod syscall {
     /// address space. Required by every Linux GPU/Wi-Fi driver (amdgpu, i915,
     /// iwlwifi) before it can bring the hardware up. Additive (v2 → v2, no
     /// breaking change): carved from the previously-unused low end of the
-    /// RaeGFX reserved range, which now starts at 143.
+    /// AthGFX reserved range, which now starts at 143.
     pub const SYS_LINUXKPI_REQUEST_FIRMWARE: u64 = 142;
 
     /// `SYS_RAEGFX_REGISTER_SCANOUT` — a GPU driver daemon (amdgpud, via
@@ -794,7 +794,7 @@ pub mod syscall {
     /// MUST be a DMA region the caller already owns on that device — so a daemon
     /// can expose only its own buffer, never arbitrary physical memory),
     /// `rdx`=(width << 32 | height), `r10`=stride bytes. Returns 1 if the
-    /// compositor attached it, 0 on reject. First slot claimed from the RaeGFX
+    /// compositor attached it, 0 on reject. First slot claimed from the AthGFX
     /// reserved range (143-199); additive (no `ABI_VERSION` bump).
     pub const SYS_RAEGFX_REGISTER_SCANOUT: u64 = 143;
 
@@ -830,7 +830,7 @@ pub mod syscall {
     pub const SYS_FUTEX: u64 = 258;
 
     /// Reserved ranges (do not allocate without an `[interface]` Opus commit):
-    /// 141 SYS_DEBUG_PRINT · 142 SYS_LINUXKPI_REQUEST_FIRMWARE · 143-199 RaeGFX
+    /// 141 SYS_DEBUG_PRINT · 142 SYS_LINUXKPI_REQUEST_FIRMWARE · 143-199 AthGFX
     /// runtime · 200-255 Linux compat shim · 258-263 native sync · 264-267
     /// experimental (264 net_dns, 265 net_status, 266 theme_get, 267
     /// audio_submit) · 268-273 clipboard history · 274-276 screen capture ·
@@ -918,7 +918,7 @@ pub mod device {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// Capability surface. RaeShield (Opus) is the authority; every privileged op
+// Capability surface. AthGuard (Opus) is the authority; every privileged op
 // goes through a Cap. These flag values are the wire contract — never bypass.
 // ════════════════════════════════════════════════════════════════════════════
 pub mod cap {
@@ -1124,7 +1124,7 @@ impl A11ySnapshotHeader {
 #[derive(Debug, Clone, Copy)]
 pub struct A11yNode {
     /// Stable node id. At the window tier this equals the compositor
-    /// `Surface.id`; widget-tier nodes get ids from the RaeUI provider.
+    /// `Surface.id`; widget-tier nodes get ids from the AthUI provider.
     pub id: u64,
     /// Parent node id (`0` = the root desktop node).
     pub parent: u64,
@@ -1237,10 +1237,10 @@ const _: () = {
     // SYS_DEBUG_PRINT must NOT collide with anything in the lower allocated
     // range; the v1→v2 reason for the move was 27 conflict with the
     // compositor's SYS_SURFACE_CLOSE. 142 is SYS_LINUXKPI_REQUEST_FIRMWARE
-    // (additive); the reserved RaeGFX range now starts at 143.
+    // (additive); the reserved AthGFX range now starts at 143.
     assert!(syscall::SYS_LINUXKPI_REQUEST_FIRMWARE == 142);
     assert!(syscall::RESERVED_RAEGFX_LO == 143);
-    // RaeFS snapshot trio is additive in the unreserved 101-103 gap between
+    // AthFS snapshot trio is additive in the unreserved 101-103 gap between
     // SYS_OOM_SUBSCRIBE (100) and the frozen driver range (109+).
     assert!(syscall::SYS_RAEFS_SNAPSHOT_CREATE == 101);
     assert!(syscall::SYS_RAEFS_SNAPSHOT_RESTORE == 102);
@@ -1326,7 +1326,7 @@ const _: () = {
     assert!(SEARCH_KIND_FILE == 2);
     assert!(SEARCH_KIND_DOCUMENT == 5);
     assert!(SEARCH_KIND_OTHER == 99);
-    // Block 33: RaeBridge real-MSVC-CRT ABI (282–283). Contiguous, additive,
+    // Block 33: AthBridge real-MSVC-CRT ABI (282–283). Contiguous, additive,
     // no ABI_VERSION bump.
     assert!(syscall::SYS_SET_GS_BASE == 282);
     assert!(syscall::SYS_SET_GS_BASE == syscall::SYS_SEARCH_QUERY_RESOLVED + 1);
@@ -1339,14 +1339,14 @@ const _: () = {
     assert!(syscall::PROT_EXEC == 4);
     assert!(syscall::PROT_READ | syscall::PROT_WRITE == 3);
     // Block 34: Anti-cheat attestation (284–290). Contiguous, and — critically —
-    // ABOVE the OOM/RaeFS-snapshot numbers (100–103) that previously shadowed
+    // ABOVE the OOM/AthFS-snapshot numbers (100–103) that previously shadowed
     // them in the dispatch. This guard fails the build if anti-cheat ever drifts
     // back onto a colliding number.
     assert!(syscall::SYS_AC_REQUEST_ATTESTATION == 284);
     assert!(syscall::SYS_AC_REQUEST_ATTESTATION == syscall::SYS_MPROTECT + 1);
     assert!(syscall::SYS_AC_HEARTBEAT == 290);
     assert!(syscall::SYS_AC_HEARTBEAT == syscall::SYS_AC_REQUEST_ATTESTATION + 6);
-    // The whole anti-cheat block must clear the live OOM(100)/RaeFS-snapshot
+    // The whole anti-cheat block must clear the live OOM(100)/AthFS-snapshot
     // (101–103) numbers it was rescued from (the original collision).
     assert!(syscall::SYS_AC_REQUEST_ATTESTATION > 106);
     // Block 35: Surface resize protocol (291–292). Contiguous, additive, no

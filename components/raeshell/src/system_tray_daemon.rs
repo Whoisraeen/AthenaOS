@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 // ═══════════════════════════════════════════════════════════════════════════
-// System Tray Daemon — Notification area icon management for RaeenOS
+// System Tray Daemon — Notification area icon management for AthenaOS
 // ═══════════════════════════════════════════════════════════════════════════
 
 static TRAY_INITIALIZED: AtomicBool = AtomicBool::new(false);

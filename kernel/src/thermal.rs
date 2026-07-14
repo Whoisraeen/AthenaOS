@@ -1739,7 +1739,7 @@ pub fn read_tj_max() -> i32 {
 //
 // Intel's IA32_THERM_STATUS does not exist on AMD (reading it #GPs — gated
 // above), so on the Athena (Ryzen 7640HS, Family 19h) the kernel had NO CPU
-// temperature source at all and the gaming-first "never fry the silicon"
+// temperature source at all and the embodiment-first "never fry the silicon"
 // promise was unenforceable on the actual target. AMD exposes Tctl through the
 // System Management Network (SMN): write the register address to the data
 // fabric root's PCI config index (00:00.0 + 0x60) and read the value back from
@@ -1841,7 +1841,7 @@ pub fn thermal_poll_and_throttle(passive_trip_c: i32, critical_trip_c: i32) {
 //  ACPI thermal zone polling — Phase 4.7: Thermal throttling
 // ═══════════════════════════════════════════════════════════════════════════
 //
-// Concept: RaeenOS is gaming-first, so sustained heavy load must never silently
+// Concept: AthenaOS is embodiment-first, so sustained heavy load must never silently
 // fry the silicon. This subsystem reads ACPI thermal-zone temperatures via the
 // AML interpreter (`\_TZ.THMx._TMP`), enforces the firmware's passive (`_PSV`)
 // trip by clamping CPU frequency, and honours the critical (`_CRT`) trip by

@@ -306,7 +306,7 @@ Airplane/High Contrast grid and the Gaming tiles (Game Mode "On", RGB/Performanc
 "Off") all read correctly. Fully resolved. (Was HIGH #3 - closed.)
 
 **(d) Footer fully visible + panel top not clipped - HALF-LANDED.**
-Footer: LANDED. The footer row (avatar + "RaeenOS" + the two trailing glyphs) is
+Footer: LANDED. The footer row (avatar + "AthenaOS" + the two trailing glyphs) is
 fully visible and not clipped at the bottom - Round 1 overflow is gone and the panel
 now sizes to contain its full content.
 Panel top: STILL OFF (improved). The first tile row (Wi-Fi/Bluetooth) is no longer

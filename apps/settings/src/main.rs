@@ -1,4 +1,4 @@
-//! RaeenOS Settings.
+//! AthenaOS Settings.
 //!
 //! Standalone userspace ELF launched from the start menu (`exec_path = "settings"`).
 //! Sectioned settings panel: System / Display / Sound / Network / Personalization
@@ -171,7 +171,7 @@ fn items_for(section: usize, app: &App) -> Vec<Item> {
         0 => vec![
             Item {
                 title: "Game Mode",
-                detail: "Enable SCHED_GAME priority class by default",
+                detail: "Enable SCHED_BODY priority class by default",
                 control: Control::Toggle(app.game_mode),
             },
             Item {
@@ -351,7 +351,7 @@ fn items_for(section: usize, app: &App) -> Vec<Item> {
             Item {
                 title: "Kernel",
                 detail: "Architecture",
-                control: Control::Label("RaeKernel x86_64 hybrid"),
+                control: Control::Label("AthKernel x86_64 hybrid"),
             },
             Item {
                 title: "SMP",
@@ -534,7 +534,7 @@ impl App {
             camera: cfg_bool("/privacy/camera_enabled", false),
             mic: cfg_bool("/privacy/microphone_enabled", false),
             // About
-            sys_name: cfg_text_buf("/system/name", "RaeenOS"),
+            sys_name: cfg_text_buf("/system/name", "AthenaOS"),
             sys_version: {
                 let v = cfg_text_buf("/system/version", "0.0.1");
                 let ch = cfg_text_buf("/system/channel", "dev");
@@ -875,7 +875,7 @@ fn panel_subtitle(section: usize) -> &'static str {
         0 => "Core OS preferences",
         1 => "Resolution, scale, refresh rate, HDR",
         2 => "Audio devices, volume, latency",
-        3 => "Wi-Fi, firewall, RaeNet shaping",
+        3 => "Wi-Fi, firewall, AthNet shaping",
         4 => "Themes, accent color, Vibe Mode, animations",
         5 => "Power profile, sleep timer, battery",
         6 => "Telemetry, permissions, attestation",

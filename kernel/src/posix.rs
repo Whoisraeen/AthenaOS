@@ -1,9 +1,9 @@
-//! POSIX compatibility layer for RaeenOS.
+//! POSIX compatibility layer for AthenaOS.
 //!
-//! Maps standard POSIX syscall semantics onto the existing RaeenOS kernel
+//! Maps standard POSIX syscall semantics onto the existing AthenaOS kernel
 //! infrastructure (VFS, fd table, scheduler, memory management, signals).
 //! This is NOT a Linux clone — it provides the POSIX interface that Linux
-//! apps expect, backed by RaeenOS's own subsystems.
+//! apps expect, backed by AthenaOS's own subsystems.
 
 #![allow(dead_code)]
 
@@ -1464,7 +1464,7 @@ pub fn sys_brk(new_brk: u64) -> Result<u64, Errno> {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 pub fn sys_mkdir(_path: &str, _mode: u32) -> Result<(), Errno> {
-    // VFS directory creation stub — RaeFS would handle the actual
+    // VFS directory creation stub — AthFS would handle the actual
     // directory inode creation. For now accept silently.
     Ok(())
 }

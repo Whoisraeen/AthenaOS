@@ -1231,7 +1231,7 @@ pub fn dlclose(name: &str) -> Result<(), ElfError> {
 
 pub const ELFOSABI_NONE: u8 = 0; // UNIX System V ABI (Linux uses this)
 pub const ELFOSABI_LINUX: u8 = 3; // Linux
-pub const ELFOSABI_RAEENOS: u8 = 0xAE; // RaeenOS native
+pub const ELFOSABI_ATHENAOS: u8 = 0xAE; // AthenaOS native
 
 pub const EI_OSABI: usize = 7;
 
@@ -1259,10 +1259,10 @@ pub const AT_HWCAP2: u64 = 26;
 pub const AT_EXECFN: u64 = 31;
 pub const AT_SYSINFO_EHDR: u64 = 33;
 
-/// Detect whether an ELF binary is a Linux ELF or a RaeenOS native ELF.
+/// Detect whether an ELF binary is a Linux ELF or a AthenaOS native ELF.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ElfOrigin {
-    RaeenOS,
+    AthenaOS,
     Linux,
     Unknown(u8),
 }
@@ -1277,7 +1277,7 @@ pub fn detect_elf_origin(data: &[u8]) -> Result<ElfOrigin, ElfError> {
 
     let osabi = data[EI_OSABI];
     match osabi {
-        ELFOSABI_RAEENOS => Ok(ElfOrigin::RaeenOS),
+        ELFOSABI_ATHENAOS => Ok(ElfOrigin::AthenaOS),
         ELFOSABI_NONE | ELFOSABI_LINUX => Ok(ElfOrigin::Linux),
         other => Ok(ElfOrigin::Unknown(other)),
     }

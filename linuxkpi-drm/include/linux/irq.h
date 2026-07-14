@@ -4,7 +4,7 @@
  *
  * The generic-IRQ-layer types (irq_chip / irq_data / flow handlers). amdgpu_irq
  * builds its interrupt-source dispatch on top of the IRQ domain (irqdomain.h) and
- * touches a few of these types. The real interrupt delivery is the RaeenOS kernel's
+ * touches a few of these types. The real interrupt delivery is the AthenaOS kernel's
  * job; the daemon receives demuxed IRQ events over its IRQ-wait syscall, so the
  * chip/flow ops here are layout-only, backed by raeen_linuxkpi at M4. License
  * boundary (../../README.md): API surface.

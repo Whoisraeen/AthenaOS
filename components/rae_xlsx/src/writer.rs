@@ -1,6 +1,6 @@
 //! # RaeXlsx writer — build a minimal **valid** `.xlsx` from a cell model.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy / Distribution criterion #5 — "edit
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy / Distribution criterion #5 — "edit
 //! AND SAVE my spreadsheets": a daily driver that can only *open* `.xlsx` is a
 //! viewer, not an editor. This module is the inverse of the reader in
 //! [`crate`]: given an in-memory [`crate::Workbook`] (sheets of [`crate::Cell`]s)

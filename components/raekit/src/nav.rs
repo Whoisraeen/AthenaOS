@@ -1,4 +1,4 @@
-//! Navigation and routing for RaeKit apps.
+//! Navigation and routing for AthKit apps.
 //!
 //! Provides three navigation paradigms:
 //! - `NavigationStack` — push/pop like UINavigationController

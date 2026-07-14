@@ -1,17 +1,17 @@
-//! Full-disk encryption binding for RaeFS (Concept §RaeFS: "encryption is a
+//! Full-disk encryption binding for AthFS (Concept §AthFS: "encryption is a
 //! property of the volume, not an app feature — lose the laptop, lose
-//! nothing"). MasterChecklist Phase 3.8 — "LUKS-equivalent FDE for RaeFS
+//! nothing"). MasterChecklist Phase 3.8 — "LUKS-equivalent FDE for AthFS
 //! root".
 //!
 //! The cipher core lives in `encryption.rs` (AES-256-XTS per-sector, key
 //! slots, AF-split, RaeVault header). This module is the BINDING: an
 //! [`EncryptedBlockDevice`] that implements `block_io::BlockDevice` and
 //! transparently AES-XTS-encrypts every sector on its way to the inner
-//! device — so the whole RaeFS volume, superblock and metadata included, is
-//! ciphertext at rest. RaeFS itself never knows: it mounts through the
+//! device — so the whole AthFS volume, superblock and metadata included, is
+//! ciphertext at rest. AthFS itself never knows: it mounts through the
 //! wrapper exactly as it would a raw NVMe namespace.
 //!
-//! The smoketest is the proof that matters for FDE: format + mount RaeFS
+//! The smoketest is the proof that matters for FDE: format + mount AthFS
 //! THROUGH the wrapper over a RAM disk, write a known canary file, then scan
 //! the RAW underlying bytes — the canary (and any recognizable plaintext)
 //! must be absent; reading back through the crypto layer must return it
@@ -38,7 +38,7 @@ static SECTORS_ENCRYPTED: AtomicU64 = AtomicU64::new(0);
 static SECTORS_DECRYPTED: AtomicU64 = AtomicU64::new(0);
 
 /// A RAM disk whose backing store is shared (`Arc`), so the smoketest can
-/// inspect the RAW (post-encryption) bytes while RaeFS writes through the
+/// inspect the RAW (post-encryption) bytes while AthFS writes through the
 /// crypto wrapper. Pure memory: no safe-mode interaction by construction.
 pub struct SharedRamDisk {
     sectors: Arc<spin::Mutex<Vec<[u8; 512]>>>,
@@ -92,7 +92,7 @@ impl BlockDevice for SharedRamDisk {
 
 /// The FDE wrapper: every sector is AES-256-XTS transformed (tweak = LBA) on
 /// the way through, so the inner device only ever sees ciphertext. Wraps any
-/// `BlockDevice` — RAM disk here, the real RaeFS root partition on iron.
+/// `BlockDevice` — RAM disk here, the real AthFS root partition on iron.
 pub struct EncryptedBlockDevice {
     inner: Box<dyn BlockDevice>,
     xts: AesXts,
@@ -174,10 +174,10 @@ pub fn init() {
     );
 }
 
-/// Deterministic FDE proof: RaeFS mounts through the AES-XTS wrapper over a
+/// Deterministic FDE proof: AthFS mounts through the AES-XTS wrapper over a
 /// RAM disk; a canary file written through the FS must be (1) readable back
 /// through the crypto layer, (2) ABSENT from the raw device bytes — and the
-/// RaeFS superblock magic must be ciphertext at rest too; (3) a wrong key
+/// AthFS superblock magic must be ciphertext at rest too; (3) a wrong key
 /// must not decrypt what the right key decrypts.
 pub fn run_boot_smoketest() {
     const CANARY: &[u8] = b"FDE-PLAINTEXT-CANARY-raeen-0x52414545";
@@ -204,7 +204,7 @@ pub fn run_boot_smoketest() {
     let (wrote, read_ok) = io.unwrap_or((false, false));
 
     // (2) Raw bytes: no canary plaintext anywhere; superblock magic
-    // ("RaeFS!" little-endian on disk) must not be recognizable either.
+    // ("AthFS!" little-endian on disk) must not be recognizable either.
     let (plaintext_leaked, magic_leaked) = {
         let guard = store.lock();
         let magic_le = 0x0052_6165_4653_21u64.to_le_bytes();
@@ -256,7 +256,7 @@ pub fn run_boot_smoketest() {
 /// `/proc/raeen/fde` — FDE binding state.
 pub fn dump_text() -> String {
     alloc::format!(
-        "# RaeFS full-disk encryption (AES-256-XTS, tweak=LBA)\ncipher: AES-256-XTS\nkdf: Argon2id (RFC 9106; selftest uses PBKDF2-low)\nsectors_encrypted: {}\nsectors_decrypted: {}\nroot_volume_encrypted: false (opt-in at install; binding proven by smoketest)\n",
+        "# AthFS full-disk encryption (AES-256-XTS, tweak=LBA)\ncipher: AES-256-XTS\nkdf: Argon2id (RFC 9106; selftest uses PBKDF2-low)\nsectors_encrypted: {}\nsectors_decrypted: {}\nroot_volume_encrypted: false (opt-in at install; binding proven by smoketest)\n",
         SECTORS_ENCRYPTED.load(Ordering::Relaxed),
         SECTORS_DECRYPTED.load(Ordering::Relaxed),
     )

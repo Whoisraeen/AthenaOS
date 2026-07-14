@@ -1,7 +1,7 @@
-//! Aurora Mesh wallpaper — the RaeenOS signature backdrop (IDENTITY.md §3):
+//! Aurora Mesh wallpaper — the AthenaOS signature backdrop (IDENTITY.md §3):
 //!
 //! > "The flat void is half the problem: glass has nothing to refract. The
-//! >  default RaeenOS wallpaper is a **procedural aurora mesh** — no asset file
+//! >  default AthenaOS wallpaper is a **procedural aurora mesh** — no asset file
 //! >  … three to four soft radial color blobs on a deep base, drifting on
 //! >  independent low-frequency sine paths, blended additively into smooth
 //! >  color fields … alive, not busy."
@@ -144,7 +144,7 @@ pub fn is_default() -> bool {
 /// state (IDENTITY §3). Allocation is fine here (procfs read path, not hot).
 pub fn dump_text() -> alloc::string::String {
     alloc::format!(
-        "# RaeenOS default backdrop = \"{}\" (Aurora Mesh, IDENTITY \u{a7}3)\n\
+        "# AthenaOS default backdrop = \"{}\" (Aurora Mesh, IDENTITY \u{a7}3)\n\
          # default_active={} base=#{:06x} blobs=[blue #{:06x}, violet #{:06x}, teal #{:06x}] ribbon_mesh=raegfx::glass vignette=0.85 per_frame_alloc=none\n",
         AURORA_NAME,
         is_default(),

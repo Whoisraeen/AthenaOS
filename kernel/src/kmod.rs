@@ -471,7 +471,7 @@ impl ModuleLoader {
             symbol_table: BTreeMap::new(),
             load_order: Vec::new(),
             module_memory: ModuleMemoryAllocator::new(256 * 1024 * 1024), // 256 MiB max
-            vermagic: String::from("RaeenOS 0.1.0 SMP preempt mod_unload"),
+            vermagic: String::from("AthenaOS 0.1.0 SMP preempt mod_unload"),
         }
     }
 

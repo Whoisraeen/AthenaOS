@@ -6,7 +6,7 @@
  * file core are compiled unchanged.  This file supplies the small piece that
  * Linux's PCI/DRM registration path normally constructs around them: one
  * render-only drm_driver, one stable render minor, and explicit client
- * open/ioctl/close entry points for the RaeenOS capability broker.
+ * open/ioctl/close entry points for the AthenaOS capability broker.
  */
 #include <linux/err.h>
 #include <linux/fs.h>

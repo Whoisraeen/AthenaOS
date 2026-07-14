@@ -1,4 +1,4 @@
-//! RaeFS — copy-on-write filesystem with snapshots, tiered storage, native encryption.
+//! AthFS — copy-on-write filesystem with snapshots, tiered storage, native encryption.
 //!
 //! Userspace library providing:
 //! - Path manipulation and normalization
@@ -1208,7 +1208,7 @@ impl FileSystem for MemFs {
 
 // ── R10 Artifacts ────────────────────────────────────────────────────────
 
-/// Initialize the RaeFS userspace library.
+/// Initialize the AthFS userspace library.
 pub fn init() {
     // No global state for now, but following the contract.
 }

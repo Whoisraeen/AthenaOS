@@ -1,4 +1,4 @@
-/* RaeenOS LinuxKPI — C ABI for userspace Linux driver ports (Phase 1).
+/* AthenaOS LinuxKPI — C ABI for userspace Linux driver ports (Phase 1).
  * SPDX-License-Identifier: MPL-2.0
  *
  * Link this static library into a driver daemon; the kernel host syscalls

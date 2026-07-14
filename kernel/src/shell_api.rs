@@ -1,6 +1,6 @@
-//! Swappable Shell API for RaeenOS.
+//! Swappable Shell API for AthenaOS.
 //!
-//! The concept doc says: "Swappable shells — the default RaeShell can be
+//! The concept doc says: "Swappable shells — the default AthShell can be
 //! replaced with a competing one. The OS doesn't care."
 //!
 //! This module defines:
@@ -10,8 +10,8 @@
 //! - Shell ↔ kernel IPC protocol for window management, app launching,
 //!   notifications, and input routing
 //!
-//! The default shell is RaeShell. Alternative shells (GameOS couch UI,
-//! tiling-only shells, accessibility shells) register via RaeStore or
+//! The default shell is AthShell. Alternative shells (GameOS couch UI,
+//! tiling-only shells, accessibility shells) register via AthStore or
 //! sideload. Each shell must create at least one compositor surface for
 //! the desktop and handle keyboard/mouse/controller input.
 
@@ -132,11 +132,11 @@ pub struct ShellDescriptor {
 }
 
 impl ShellDescriptor {
-    /// The default RaeShell descriptor.
+    /// The default AthShell descriptor.
     pub fn raeenshell() -> Self {
         Self {
             id: ShellId::RAEENSHELL,
-            name: String::from("RaeShell"),
+            name: String::from("AthShell"),
             version: String::from("0.1.0"),
             author: String::from("AthenaOS"),
             description: String::from(
@@ -379,7 +379,7 @@ impl ShellRegistry {
         );
     }
 
-    /// Register a new shell from a RaeStore package or sideload.
+    /// Register a new shell from a AthStore package or sideload.
     pub fn register(&mut self, mut descriptor: ShellDescriptor) -> ShellId {
         let id = ShellId(self.next_id.fetch_add(1, Ordering::Relaxed));
         descriptor.id = id;
@@ -757,7 +757,7 @@ pub static SHELL_REGISTRY: Mutex<Option<ShellRegistry>> = Mutex::new(None);
 /// Initialize the shell subsystem and register built-in shells.
 pub fn init() {
     *SHELL_REGISTRY.lock() = Some(ShellRegistry::new());
-    crate::serial_println!("[ OK ] Shell API initialized (RaeShell + GameOS registered)");
+    crate::serial_println!("[ OK ] Shell API initialized (AthShell + GameOS registered)");
 }
 
 /// Register a new shell from a package.
@@ -819,18 +819,18 @@ pub fn unregister_shell(id: ShellId) -> Result<(), ShellError> {
     registry.unregister(id)
 }
 
-/// R10 smoketest (Concept §"swappable shell — RaeShell can be replaced"): prove the
+/// R10 smoketest (Concept §"swappable shell — AthShell can be replaced"): prove the
 /// swap registry — a third-party shell can be registered, retrieved, and removed;
 /// the built-ins are protected; an unknown id is `NotFound`. It deliberately does
 /// NOT execute a live `switch_shell` (that stops the running boot shell); the live
-/// RaeShell↔GameOS swap is exercised by GameOS mode.
+/// AthShell↔GameOS swap is exercised by GameOS mode.
 pub fn run_boot_smoketest() {
     let before = list_shells().len();
     let builtins_ok = before >= 2
         && get_shell(ShellId::RAEENSHELL).is_some()
         && get_shell(ShellId::GAMEOS).is_some();
 
-    // Register a third-party (non-builtin) shell — "RaeShell can be replaced".
+    // Register a third-party (non-builtin) shell — "AthShell can be replaced".
     let mut custom = ShellDescriptor::raeenshell();
     custom.name = String::from("Test Shell");
     custom.is_builtin = false;

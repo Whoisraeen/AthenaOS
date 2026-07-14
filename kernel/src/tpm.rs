@@ -1,10 +1,10 @@
 //! TPM 2.0 driver — CRB (Command Response Buffer) interface over MMIO.
 //!
-//! RaeShield uses the TPM for:
+//! AthGuard uses the TPM for:
 //! - Measured boot (PCR extend/read)
 //! - Hardware RNG
 //! - Attestation quotes (signed PCR snapshots for EAC/BattlEye)
-//! - Key sealing to PCR state (RaeFS FDE keys)
+//! - Key sealing to PCR state (AthFS FDE keys)
 //!
 //! The CRB interface is the modern TPM 2.0 access method. The TPM2 ACPI
 //! table provides the MMIO base address. All register access is volatile.
@@ -723,7 +723,7 @@ impl SoftTpm {
         hasher.finalize(&mut digest);
 
         let mut blob = Vec::with_capacity(96);
-        blob.extend_from_slice(b"RAEQ"); // RaeenOS Quote magic
+        blob.extend_from_slice(b"RAEQ"); // AthenaOS Quote magic
         blob.extend_from_slice(nonce);
         blob.extend_from_slice(&digest);
         blob.extend_from_slice(&(pcr_selection.len() as u32).to_be_bytes());
@@ -1005,7 +1005,7 @@ pub fn init() {
 }
 
 /// R10 boot smoketest — proves the measured-boot key-sealing property that
-/// makes TPM-backed FDE auto-unlock safe (Concept §RaeFS encryption / "TPM 2.0
+/// makes TPM-backed FDE auto-unlock safe (Concept §AthFS encryption / "TPM 2.0
 /// unsealing path for keys"): a secret sealed to a set of PCR values is
 /// recoverable ONLY while those PCRs still hold those values, so a tampered
 /// firmware/kernel measurement makes the key unrecoverable. This test CAN print

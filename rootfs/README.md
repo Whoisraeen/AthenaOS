@@ -1,7 +1,7 @@
 # rootfs/ — Linux dynamic-linking assets (ld.so support, WIP)
 
 These are real glibc shared objects + a test binary, sourced from the Athena
-Arch box, staged for **dynamic-linking (ld.so / PT_INTERP) support** so RaeenOS
+Arch box, staged for **dynamic-linking (ld.so / PT_INTERP) support** so AthenaOS
 can run *stock* dynamically-linked Linux binaries (not just static ones).
 
 | path | what | size |

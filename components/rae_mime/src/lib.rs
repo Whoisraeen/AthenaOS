@@ -1,8 +1,8 @@
 //! # RaeMime — never-panic, `no_std` file-association / MIME resolver.
 //!
-//! RaeenOS_Concept.md §"Built for people who care about how things feel.": a
+//! LEGACY_GAMING_CONCEPT.md §"Built for people who care about how things feel.": a
 //! computer you can't open a downloaded file on by double-clicking it is not a
-//! daily driver. Today RaeenOS has *zero* file-association registry — the #1
+//! daily driver. Today AthenaOS has *zero* file-association registry — the #1
 //! daily-driver parity gap. This crate is the infra-first foundation: given a
 //! filename and (optionally) the file's leading bytes, it answers two questions
 //! a desktop must answer instantly and locally:
@@ -61,7 +61,7 @@ use alloc::vec::Vec;
 pub struct MimeType(pub &'static str);
 
 impl MimeType {
-    /// The IANA / RaeenOS MIME string, e.g. `"image/png"`.
+    /// The IANA / AthenaOS MIME string, e.g. `"image/png"`.
     pub fn as_str(&self) -> &'static str {
         self.0
     }

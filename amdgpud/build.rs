@@ -55,7 +55,7 @@ fn main() {
     // RELOC FIX (the 0x77 fault): -Bsymbolic binds every intra-daemon reference to
     // its local definition, so amdgpu's global-symbol .data.rel.ro vtable slots
     // (`X_funcs.op = x_op`) emit R_X86_64_RELATIVE at this final link instead of an
-    // interposable, symbol-based R_X86_64_64. The RaeenOS ELF loader
+    // interposable, symbol-based R_X86_64_64. The AthenaOS ELF loader
     // (kernel/src/elf.rs) applies ONLY R_X86_64_RELATIVE and skips symbol-based
     // relocs, so without this an amdgpu vtable slot stays null and the first
     // `nbio.funcs->set_reg_remap()` on the Phoenix init path jumps through 0

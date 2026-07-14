@@ -1,10 +1,10 @@
-//! DSP mix-graph primitives — Concept §"RaeAudio: sub-3ms, zero underruns".
+//! DSP mix-graph primitives — Concept §"AthAudio: sub-3ms, zero underruns".
 //!
 //! The mixer needs three things off the decode path: sample-format conversion
 //! (symphonia emits many formats; the HDA ring wants one), summing voices, and
 //! sample-rate conversion (devices run 48 kHz; media is often 44.1 kHz). `dasp`
 //! provides all three in pure-Rust no_std, so the on-device mix graph never
-//! leaves the RaeenOS userspace target.
+//! leaves the AthenaOS userspace target.
 //!
 //! `rubato` (behind `hq_resample`) is std-only sinc resampling for HOST/OFFLINE
 //! asset pre-conditioning — never the on-device path.
@@ -62,7 +62,7 @@ pub fn resample_linear(input: &[f32], in_hz: f64, out_hz: f64) -> Vec<f32> {
 // ---------------------------------------------------------------------------
 // Windowed-sinc polyphase resampler — the on-device, no_std, soft-float SRC.
 //
-// Concept §RaeAudio "zero underruns / no aliasing": mixing 44.1 kHz media into
+// Concept §AthAudio "zero underruns / no aliasing": mixing 44.1 kHz media into
 // a 48 kHz device with the old linear interpolator folds image energy back into
 // the passband (audible aliasing on swept/near-Nyquist content). This is the
 // real anti-aliased SRC: a band-limited windowed-sinc reconstruction filter.

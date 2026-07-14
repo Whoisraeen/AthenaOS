@@ -1,6 +1,6 @@
 # Design Spec: Files
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > The file manager is the surface power-users live in. It must clear: **macOS
 > Finder's column-view + Quick Look cleanness, Windows 11 Explorer's tabbed
@@ -15,13 +15,13 @@ introduces no new magic numbers.
 
 ## Concept promise + bar to clear
 
-> "RaeFS — CoW, snapshots, tiered storage, per-app data buckets, versioned
-> config." — RaeenOS_Concept.md (§RaeFS)
+> "AthFS — CoW, snapshots, tiered storage, per-app data buckets, versioned
+> config." — LEGACY_GAMING_CONCEPT.md (§AthFS)
 
 - **Bar to clear:** Finder (column view, Quick Look spacebar preview, tag
   sidebar, instant fuzzy search) + Windows 11 Explorer (tabs, address-bar
   breadcrumb, details pane) + Dolphin/Nautilus (split pane, embedded terminal).
-- **The RaeenOS-specific promise:** RaeFS snapshots and per-app buckets are
+- **The AthenaOS-specific promise:** AthFS snapshots and per-app buckets are
   first-class — the Files app is the *only* place a normal user sees "restore a
   previous version" and "this folder belongs to app X". That sidebar section is
   the showcase that no other OS has natively.
@@ -59,29 +59,29 @@ hover/active/focus/disabled/dark/light/reduced-motion state matrix.
   list rows, generous left inset, SF Symbols file icons; accent only on
   selection + sidebar-active. **Take:** column view, spacebar Quick Look,
   titled-section sidebar, accent restraint. **Avoid:** chrome that hides until
-  hover (path bar off by default) — RaeenOS shows the breadcrumb always.
+  hover (path bar off by default) — AthenaOS shows the breadcrumb always.
 - **Windows 11 Explorer:** tabs (the headline 11 feature), address-bar
   breadcrumb with clickable segments + dropdown chevrons, command bar (not the
   old ribbon), details/preview pane toggle, ~28px rows on a 4px grid, Mica
   window. **Take:** tabs, clickable breadcrumb segments, the slim command bar,
   details pane. **Avoid:** the residual right-click → "show more options" two-tier
-  context menu (RaeenOS ships one flat, complete context menu).
+  context menu (AthenaOS ships one flat, complete context menu).
 - **GNOME Files / KDE Dolphin:** Dolphin's split-pane (two independent panes,
   one toolbar), embedded terminal panel, and breadcrumb-as-buttons; Nautilus's
   strong focus rings + recursive search + batch rename. **Take:** split-pane as a
-  first-class toggle, embedded-terminal affordance (RaeenOS has a terminal app to
+  first-class toggle, embedded-terminal affordance (AthenaOS has a terminal app to
   dock), batch rename, visible focus. **Avoid:** Dolphin's information density
-  knobs sprawl — RaeenOS exposes 3 view densities, not a settings burrow.
+  knobs sprawl — AthenaOS exposes 3 view densities, not a settings burrow.
 
-**RaeenOS synthesis:** Explorer's **tabs + clickable breadcrumb**, Finder's
+**AthenaOS synthesis:** Explorer's **tabs + clickable breadcrumb**, Finder's
 **column view + spacebar Quick Look + titled-section sidebar + accent
 restraint**, Dolphin's **split-pane toggle**, all on the `material.mica` window +
-`material.glass` transient-popover system the shell uses — plus a **RaeFS
+`material.glass` transient-popover system the shell uses — plus a **AthFS
 sidebar section** (Snapshots / per-app Buckets) that is uniquely ours.
 
 ---
 
-## RaeenOS design tokens this surface uses
+## AthenaOS design tokens this surface uses
 
 Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 
@@ -136,7 +136,7 @@ Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
   1px `stroke.subtle` right divider. Titled sections (§6).
 - **Content pane:** fills remainder, `bg.raised`, `space.4` inset, scrollable.
 - **Details pane** (right, toggleable): width **300px**, `material.mica`, shows
-  the selected file's thumbnail + metadata + RaeFS version history.
+  the selected file's thumbnail + metadata + AthFS version history.
 - **Status bar** (bottom, 24px): item count + selection size (`type.caption`,
   `text.tertiary`).
 
@@ -238,7 +238,7 @@ tokens. Default: collapse. **raeen-accessibility** verifies each `ftype.*` clear
 
 ---
 
-## 6. Sidebar (titled sections — incl. the RaeFS showcase)
+## 6. Sidebar (titled sections — incl. the AthFS showcase)
 
 Finder-style titled groups (`type.subtitle` `text.secondary` headers, collapsible):
 
@@ -247,13 +247,13 @@ Finder-style titled groups (`type.subtitle` `text.secondary` headers, collapsibl
    = `accent.subtle` fill + 2px left `accent.base` rule.
 2. **Locations** — mounted volumes + network shares (volume model exists);
    eject affordance on hover (32px target).
-3. **Snapshots (RaeFS — the showcase)** — RaeFS snapshots for the current folder:
+3. **Snapshots (AthFS — the showcase)** — AthFS snapshots for the current folder:
    each a row "2026-06-21 14:30" (`type.body`) + "restore" on hover. Selecting
    shows that snapshot's contents read-only in the content pane with a
    `state.warn` InfoBar "Viewing a snapshot — read only". **This is the surface
-   no other OS has natively** (RaeFS CoW snapshots are live per memory
+   no other OS has natively** (AthFS CoW snapshots are live per memory
    `raefs-snapshot-cow`).
-4. **App Buckets (RaeFS)** — per-app data buckets (`RaeFS` per-app buckets are a
+4. **App Buckets (AthFS)** — per-app data buckets (`AthFS` per-app buckets are a
    Concept pillar): each app's sandboxed data dir, shown so a user can see/clear
    what an app stores. Cross-links to Privacy & Security in Settings.
 
@@ -318,7 +318,7 @@ Files ships only when:
   private `FM_*` palette + `GLYPH_*`, consume `rae_tokens`; (b) swap block glyphs
   for `Canvas::draw_text` AA (raefont); (c) re-skin all five views to the token
   geometry + state matrix (§2); (d) build the breadcrumb dropdown, split-pane
-  focus model, tab chrome (§1, §3); (e) wire the RaeFS Snapshots + App Buckets
+  focus model, tab chrome (§1, §3); (e) wire the AthFS Snapshots + App Buckets
   sidebar sections (§6) to the live `raefs` snapshot/bucket APIs; (f) build the
   fuzzy search + Quick Look overlay (§5, §7).
 - **raeen-gfx:** confirm `Canvas` rounded-rect per-corner masking for grid cells +
@@ -346,7 +346,7 @@ Files ships only when:
 - **Tabs + split:** screenshot of 3 tabs (active tab accent rule) and the
   split-pane with a drop-target ghost mid-drag. Log: `[files] tabs=3 split=2
   active_tab_rule=accent`.
-- **RaeFS sidebar:** screenshot of the Snapshots section listing ≥1 snapshot +
+- **AthFS sidebar:** screenshot of the Snapshots section listing ≥1 snapshot +
   the read-only `state.warn` InfoBar when viewing one. Log: `[files] raefs:
   snapshots=N buckets=M`.
 - **Quick Look:** screenshot of the spacebar overlay over an image, glass card +
@@ -357,11 +357,11 @@ Files ships only when:
   `files.accent == taskbar.accent == derive_accent(seed).base`.
 
 ### Unblocks (MasterChecklist)
-- **Phase 8.1/8.2 (RaeUI/RaeKit):** tabs / breadcrumb / split-pane / sidebar are
-  reusable widgets RaeUI owes.
-- **Phase 14 (RaeShell + apps):** the Files app polish from `[~]`-basic to a
+- **Phase 8.1/8.2 (AthUI/AthKit):** tabs / breadcrumb / split-pane / sidebar are
+  reusable widgets AthUI owes.
+- **Phase 14 (AthShell + apps):** the Files app polish from `[~]`-basic to a
   premium daily-driver surface.
-- **Phase 5 (RaeFS UX):** the Snapshots + App Buckets sidebar makes CoW snapshots
+- **Phase 5 (AthFS UX):** the Snapshots + App Buckets sidebar makes CoW snapshots
   and per-app buckets *user-visible* — the only native surface for them.
 - **Consumer Production Gate "Switcher":** a Finder/Explorer-rival file manager is
   table stakes for someone leaving macOS/Windows.

@@ -1,6 +1,6 @@
 //! Linux locking + completion primitives.
 //!
-//! The daemon is cooperatively scheduled on the RaeenOS host, so a contended
+//! The daemon is cooperatively scheduled on the AthenaOS host, so a contended
 //! lock yields the CPU (`msleep(0)`) rather than spinning forever. Lock words
 //! are the driver's own `spinlock_t`/`struct mutex` storage, addressed by the
 //! pointer the driver passes — we never allocate lock state ourselves.

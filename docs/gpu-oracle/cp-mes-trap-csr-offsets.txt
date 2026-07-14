@@ -1,5 +1,5 @@
 # CP_MES RISC-V trap-CSR offsets (from Athena umr db /usr/share/umr/database/ip/gc_11_0_0.reg, 2026-06-29)
-# GC seg index 1 (same block as REG_CP_MES_GP3_LO=(0x2849,1), which RaeenOS reads working).
+# GC seg index 1 (same block as REG_CP_MES_GP3_LO=(0x2849,1), which AthenaOS reads working).
 # Derive byte offset from cp_mes_gp3_lo: reg = gp3 - (0x2849 - dword)*4.
 regCP_MES_GP3_LO     0x2849   (anchor; reads fw version 0x1025088)
 regCP_MES_INSTR_PNTR 0x2813   (gp3 - 216B)
@@ -9,4 +9,4 @@ regCP_MES_MEPC_LO    0x2818   (gp3 - 196B)   MEPC_HI 0x2819
 regCP_MES_MCAUSE_LO  0x281a   (gp3 - 188B)   MCAUSE_HI 0x281b
 regCP_MES_MBADADDR_LO 0x281c  (gp3 - 180B)   MBADADDR_HI 0x281d
 # RISC-V mcause: 0=none; 5=load access fault, 7=store access fault, 2=illegal instr.
-# Working idle MES: all 0 (no fault). RaeenOS stalled@0x7656: if MCAUSE!=0 => FAULT, MBADADDR=addr.
+# Working idle MES: all 0 (no fault). AthenaOS stalled@0x7656: if MCAUSE!=0 => FAULT, MBADADDR=addr.

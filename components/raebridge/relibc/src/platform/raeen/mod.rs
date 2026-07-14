@@ -298,7 +298,7 @@ impl Pal for Sys {
     }
 
     fn openat(dirfd: c_int, path: CStr, oflag: c_int, mode: mode_t) -> Result<c_int> {
-        // RaeenOS sys_open expects a pointer to a C-string (null-terminated)
+        // AthenaOS sys_open expects a pointer to a C-string (null-terminated)
         let path_ptr = path.as_ptr() as *const u8;
         let fd = syscalls::sys_open(path_ptr, oflag as u32, mode as u32)?;
         Ok(fd as c_int)

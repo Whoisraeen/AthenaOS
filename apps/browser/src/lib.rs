@@ -1,6 +1,6 @@
-//! RaeenOS Browser — *"the web is the universal app runtime; PWAs that feel
-//! native"* (RaeenOS_Concept.md §"3. Web apps via PWA support that actually feels
-//! native (renders through RaeUI)"; §Core Principles: "the web runs via the
+//! AthenaOS Browser — *"the web is the universal app runtime; PWAs that feel
+//! native"* (LEGACY_GAMING_CONCEPT.md §"3. Web apps via PWA support that actually feels
+//! native (renders through AthUI)"; §Core Principles: "the web runs via the
 //! browser/PWA path, never as an OS component").
 //!
 //! The biggest missing first-party app. It wires the two already-built, already-
@@ -8,8 +8,8 @@
 //!   * `raeweb` — HTML tokenizer → parser → DOM → CSS cascade → layout → paint.
 //!     [`raeweb::RenderPipeline::render_to_layout`] gives the laid-out box tree;
 //!     [`raeweb::backend::paint_displaylist_to_canvas`] blits the display list
-//!     through the SAME crisp-AA `raegfx::Canvas` path every RaeUI surface uses —
-//!     the literal meaning of "renders through RaeUI".
+//!     through the SAME crisp-AA `raegfx::Canvas` path every AthUI surface uses —
+//!     the literal meaning of "renders through AthUI".
 //!   * `rae_js` — a real tree-walking ECMAScript interpreter. An inline `<script>`
 //!     is extracted from the page and executed via [`rae_js::Interpreter::eval_str`]
 //!     for its evaluation + `console.*` side effects; the output is captured with
@@ -884,8 +884,8 @@ p { font-size: 16px; }
 <h1 id="title">RaeWeb</h1>
 <p id="tagline">The web, rendered natively.</p>
 <div class="card">
-<p>This page was parsed, styled, laid out and painted by the RaeenOS web engine,
-then its script ran in the RaeenOS JavaScript interpreter.</p>
+<p>This page was parsed, styled, laid out and painted by the AthenaOS web engine,
+then its script ran in the AthenaOS JavaScript interpreter.</p>
 </div>
 <script>
 var greeting = "RaeWeb online: " + (6 * 7);
@@ -1116,7 +1116,7 @@ impl App {
                 let doc = error_page(
                     "Secure pages aren't wired into the browser yet",
                     &owned,
-                    "RaeenOS has a verified TLS 1.3 fetch path (it validates the \
+                    "AthenaOS has a verified TLS 1.3 fetch path (it validates the \
                      certificate chain, the hostname, and the server's signatures before \
                      loading anything), but it isn't linked into this browser build yet. \
                      Loading an http:// address is the only network option for now — the \
@@ -1465,7 +1465,7 @@ fn render_toolbar(app: &App, canvas: &mut Canvas) {
 
 /// Paint the current page through the LIVE engine paint bridge
 /// ([`raeweb::backend::paint_displaylist_to_canvas`]) — the SAME crisp-AA `raegfx`
-/// path RaeUI uses ("renders through RaeUI"). The display list is in viewport
+/// path AthUI uses ("renders through AthUI"). The display list is in viewport
 /// space; we offset it under the chrome by translating the bridge's scroll origin
 /// up by `top` (content that lands above the chrome is clipped to the canvas), and
 /// add the user's scroll. The chrome is redrawn ON TOP afterward by [`render`].

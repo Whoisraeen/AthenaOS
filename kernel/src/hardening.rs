@@ -1,7 +1,7 @@
 //! Kernel Security Hardening — KASLR, stack canaries, CFI, KASAN, KFENCE,
 //! UBSAN, W^X enforcement, kernel lockdown, SMAP/SMEP, Spectre/Meltdown mitigations.
 //!
-//! Concept §Security: RaeenOS must ship defense-in-depth hardening AND must not
+//! Concept §Security: AthenaOS must ship defense-in-depth hardening AND must not
 //! lie about it. This module reports only what is genuinely instrumenting code.
 //! KASAN/KFENCE/KCFI require compiler/build support that is not on by default,
 //! so they are gated behind build features and reported honestly (see
@@ -2279,7 +2279,7 @@ pub fn run_boot_smoketest() {
     }
 
     // Phase 4.10: prove lockdown actually ENFORCES the dangerous-interface
-    // restrictions. RaeenOS exposes no syscall for module loading, /dev/mem, or
+    // restrictions. AthenaOS exposes no syscall for module loading, /dev/mem, or
     // kexec (structurally absent), and the lockdown gate marks them restricted on
     // top — so any future path that checks `check_permission` is denied.
     {
@@ -2308,7 +2308,7 @@ pub fn dump_text() -> alloc::string::String {
         None => return String::from("# hardening manager not initialized\n"),
     };
     let mut out = String::new();
-    out.push_str("# RaeenOS kernel hardening (Concept §Security)\n");
+    out.push_str("# AthenaOS kernel hardening (Concept §Security)\n");
     let row = |out: &mut String, name: &str, on: bool| {
         out.push_str(&alloc::format!(
             "{:<24} {}\n",

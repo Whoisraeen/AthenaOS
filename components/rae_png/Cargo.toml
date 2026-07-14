@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS PNG decoder — "show my photos" (RaeenOS_Concept.md §creators / media).
+# AthenaOS PNG decoder — "show my photos" (LEGACY_GAMING_CONCEPT.md §creators / media).
 # PNG is the dominant lossless image format: photos, app icons, and web images all
 # ship as PNG. This is the from-scratch decoder Photos / raeplay sit on, matching
 # the rae_bmp / rae_gif ARGB8888 `Vec<u32>` pixel convention so all three decoders

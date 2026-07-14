@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS unified image-decode dispatcher — the COHESION SEAM (RaeenOS_Concept.md
+# AthenaOS unified image-decode dispatcher — the COHESION SEAM (LEGACY_GAMING_CONCEPT.md
 # criterion #5) that turns the five separate still-image decoders (rae_png,
 # rae_jpeg, rae_bmp, rae_gif, rae_webp) into ONE "open any image" call. Photos,
 # raeplay, and raegfx call `rae_image::decode(bytes)` and get back a single

@@ -1,4 +1,4 @@
-//! Runtime permission prompt dialog (Concept §RaeShield: "permission prompts
+//! Runtime permission prompt dialog (Concept §AthGuard: "permission prompts
 //! you can actually trust — drawn by the OS compositor, not the requesting
 //! app, so an app can never spoof its own consent screen").
 //! MasterChecklist Phase 9.2 — "Runtime permission prompts via compositor UI

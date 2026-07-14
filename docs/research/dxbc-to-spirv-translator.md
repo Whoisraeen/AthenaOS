@@ -1,11 +1,11 @@
-# Spec: DXBC → SPIR-V shader translator (RaeBridge DirectX path)
+# Spec: DXBC → SPIR-V shader translator (AthBridge DirectX path)
 
 ## Concept promise served
-> "DirectX 11/12 → RaeGFX translation at the driver level (DXVK/VKD3D-Proton lineage, but integrated and signed)" (§Gaming-First Design / Compatibility, line 116)
+> "DirectX 11/12 → AthGFX translation at the driver level (DXVK/VKD3D-Proton lineage, but integrated and signed)" (§Gaming-First Design / Compatibility, line 116)
 >
-> "Steam works day one via RaeBridge — non-negotiable; without Steam there is no PC gaming OS" (§Compatibility, line 117)
+> "Steam works day one via AthBridge — non-negotiable; without Steam there is no PC gaming OS" (§Compatibility, line 117)
 
-A D3D game cannot draw a single triangle on RaeGFX/Vulkan until its HLSL-compiled
+A D3D game cannot draw a single triangle on AthGFX/Vulkan until its HLSL-compiled
 shaders (shipped as DXBC for D3D9/10/11, DXIL for D3D12) become SPIR-V. This spec
 designs that translator. Per the agent prompt's central framing: **the translation
 is pure CPU-side compute, host-KAT-provable NOW; only the eventual GPU *submit* of
@@ -19,7 +19,7 @@ Verified by reading the source, not the stale crate table:
   *API state*, **stub** for *shaders*:
   - `[x]` DONE: `DxgiFormat` (110 formats) → `raegfx::PixelFormat`, `bytes_per_pixel`,
     `is_depth/compressed/srgb`; D3D11 rasterizer/blend/depth-stencil/buffer/texture
-    descriptors → RaeGFX state; D3D12 resource-state→barrier/layout/access/stage;
+    descriptors → AthGFX state; D3D12 resource-state→barrier/layout/access/stage;
     D3D12 root-signature → `DescriptorSetLayoutBinding` + push-constant ranges;
     input-layout (vertex elements) → `VertexBufferLayout`; perf counters; compat DB.
   - `[x]` DONE: `parse_dxbc_header()` — walks the FourCC chunk table, finds
@@ -67,7 +67,7 @@ must converge on ONE new module (`dxbc_spirv`), with `dxgi::ShaderTranslator` an
 - **naga** (already cited in MasterChecklist 6.2 for WGSL→SPIR-V) — its `spv` backend
   is a clean Rust SPIR-V emitter to study for the word-encoding layer (MIT/Apache).
   Verdict: ➕ pattern-reference; we may end up sharing a SPIR-V-builder crate with the
-  RaeGFX WGSL path, but that is a later consolidation, not slice 1.
+  AthGFX WGSL path, but that is a later consolidation, not slice 1.
 - Spec references (public): Microsoft "Direct3D 11 / Shader Model 4/5 Assembly" docs;
   the DXBC container layout (FourCC + checksum + chunk offset table) as documented by
   DXVK and the `wine` `d3dcompiler` reverse-engineering notes; the Khronos **SPIR-V
@@ -139,7 +139,7 @@ must converge on ONE new module (`dxbc_spirv`), with `dxgi::ShaderTranslator` an
      for the same semantic+index, or the pipeline interface mismatches. The translator
      therefore assigns Locations by a deterministic (semantic-name, semantic-index)
      ordering shared across stages, not by raw register number.
-5. **Resource binding contract with RaeGFX** (the descriptor-set layout): this MUST
+5. **Resource binding contract with AthGFX** (the descriptor-set layout): this MUST
    match what `D3d12RootSignature::to_raegfx_bindings()` already produces. Adopt the
    **DXVK binding convention**, namespaced per resource class to avoid `b#`/`t#`/`s#`
    collisions (D3D has separate register spaces; Vulkan has one binding number space):
@@ -171,7 +171,7 @@ must converge on ONE new module (`dxbc_spirv`), with `dxgi::ShaderTranslator` an
 ## Interface needs (NEEDS-INTERFACE)
 **None for the translator itself.** It is pure CPU library code inside `raebridge`
 (no new syscall, no `rae_abi` change). The translated SPIR-V crosses into the kernel
-only via the *existing/future* RaeGFX submit path, which is GPU-gated and out of scope.
+only via the *existing/future* AthGFX submit path, which is GPU-gated and out of scope.
 If/when the GPU submit seam needs a "load SPIR-V module" syscall, that is a separate
 `[interface]` escalation to raeen-architect at Phase 6.3 time — flag it, do not bundle.
 
@@ -259,7 +259,7 @@ in milliseconds, exactly the "host KAT first" cheapest-real-proof layer (§4.15)
 |---|---|---|---|
 | **Slice 1** | SM4/5 container + ISGN/OSGN, `mov`/`ret`/`dcl`, passthrough VS + solid PS | host KAT + `spirv-val` | **none — buildable now** |
 | Slice 2 | ALU subset: `add mul mad div min max` + `dp2/3/4` + saturate/swizzle/neg/abs modifiers | host KAT vs hand-checked SPIR-V | none |
-| Slice 3 | Resources: `cb#` uniform blocks (RDEF), `t#`/`s#` + `sample`/`sample_l`/`ld`; the `BindingLayout` ↔ RaeGFX descriptor contract | host KAT (+ `spirv-val`) | none for translate; **pipeline-create is GPU-gated** |
+| Slice 3 | Resources: `cb#` uniform blocks (RDEF), `t#`/`s#` + `sample`/`sample_l`/`ld`; the `BindingLayout` ↔ AthGFX descriptor contract | host KAT (+ `spirv-val`) | none for translate; **pipeline-create is GPU-gated** |
 | Slice 4 | Control flow: `if/else/endif`, `loop/endloop/break`, `discard` → SPIR-V structured CFG (`OpSelectionMerge`/`OpLoopMerge`) | host KAT | none |
 | Deferred | Geometry/Hull/Domain/Compute stages; SM5 typed/structured/append UAVs; tessellation | — | none, but large |
 | **Deferred (separate effort)** | **DXIL / SM6 (D3D12)** — LLVM-bitcode reader + DXIL→SPIR-V; VKD3D-Proton is LGPL 📖 reference only | — | not GPU-gated but a multi-month subsystem of its own; **do not attempt in this workstream** |
@@ -270,11 +270,11 @@ in milliseconds, exactly the "host KAT first" cheapest-real-proof layer (§4.15)
   `BindingLayout` + `SignatureMap`. Nothing here touches the GPU.
 - **GPU-gated, stays stubbed (NOT this spec):** taking that SPIR-V +
   `BindingLayout` and doing `vkCreateShaderModule` / `vkCreateGraphicsPipelines` /
-  `vkQueueSubmit` / scanout. That is the RaeGFX submit seam, blocked on the owner's
+  `vkQueueSubmit` / scanout. That is the AthGFX submit seam, blocked on the owner's
   amdgpu bring-up (MEMORY: amdgpu iron hang / Mesa seam). The translator's job ends at
   "here is provably-valid SPIR-V"; the submit consumer remains a stub until the GPU path
   lands. **This boundary is exactly why the translator is worth building now** — it is
-  the largest RaeBridge DirectX piece that needs zero GPU to prove.
+  the largest AthBridge DirectX piece that needs zero GPU to prove.
 
 Honest scale note: a *complete* DXBC→SPIR-V translator (all stages, full SM5, UAVs,
 control flow, plus the DXIL path for D3D12) is a multi-month subsystem on the order of

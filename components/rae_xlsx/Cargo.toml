@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS XLSX (Excel) reader — "open my spreadsheets" (RaeenOS_Concept.md
+# AthenaOS XLSX (Excel) reader — "open my spreadsheets" (LEGACY_GAMING_CONCEPT.md
 # §Compatibility Strategy / office-style productivity, the natural follow-up to
 # rae_docx). A Windows/macOS switcher brings a folder of .xlsx files; an OS that
 # can't open them isn't a daily driver. An .xlsx IS a ZIP container of Office Open

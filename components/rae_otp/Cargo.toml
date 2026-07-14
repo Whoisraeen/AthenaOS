@@ -6,10 +6,10 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS one-time-password engine — HOTP (RFC 4226) + TOTP (RFC 6238), the
+# AthenaOS one-time-password engine — HOTP (RFC 4226) + TOTP (RFC 6238), the
 # "my authenticator-app codes" primitive. Daily-driver table stakes and the
-# software-token half of RaeenOS's 2FA story: it pairs with raeid's passkeys
-# (RaeenOS_Concept.md §Compatibility Strategy criterion #5, "import & keep my
+# software-token half of AthenaOS's 2FA story: it pairs with raeid's passkeys
+# (LEGACY_GAMING_CONCEPT.md §Compatibility Strategy criterion #5, "import & keep my
 # stuff" — a switcher's existing Google Authenticator / Authy / 1Password TOTP
 # secrets must keep producing the same six digits here).
 #

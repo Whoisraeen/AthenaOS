@@ -1,4 +1,4 @@
-//! ANSI/VT escape parsing — Concept §"RaeShell: a terminal that feels like 2026".
+//! ANSI/VT escape parsing — Concept §"AthShell: a terminal that feels like 2026".
 //!
 //! The terminal emulator should model a grid and state, not re-implement the
 //! decades of VT100/xterm escape-sequence parsing. `vte` (the Alacritty parser)
@@ -77,7 +77,7 @@ mod tests {
     #[test]
     fn captures_osc_title() {
         // OSC 0 ; set-title BEL.
-        let sink = parse(b"\x1b]0;RaeShell\x07ready");
+        let sink = parse(b"\x1b]0;AthShell\x07ready");
         assert_eq!(sink.osc_count, 1);
         assert_eq!(sink.text, "ready");
     }

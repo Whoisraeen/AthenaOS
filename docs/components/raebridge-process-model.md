@@ -1,17 +1,17 @@
-# Spec: RaeBridge guest-process isolation + double-click `.exe` launch
+# Spec: AthBridge guest-process isolation + double-click `.exe` launch
 
 ## Concept promise served
 
-> "**RaeBridge runs Windows apps on day one.** Wine + Proton heritage, tightly
-> integrated. Not a 'subsystem' — apps run naturally." (RaeenOS_Concept.md §"The
+> "**AthBridge runs Windows apps on day one.** Wine + Proton heritage, tightly
+> integrated. Not a 'subsystem' — apps run naturally." (LEGACY_GAMING_CONCEPT.md §"The
 > hardest problem isn't the OS" / switching plan, line 221)
 
-Reinforced by §Compatibility (line 117): "**Steam works day one** via RaeBridge".
+Reinforced by §Compatibility (line 117): "**Steam works day one** via AthBridge".
 Steam *spawns* child processes (the storefront launches each game as its own
 process) — so "apps run naturally" is structurally impossible until each `.exe`
-is its own OS process. This spec maps the architecture from "RaeBridge executes a
+is its own OS process. This spec maps the architecture from "AthBridge executes a
 PE *in-host*" to "double-click a Windows app and it runs as its own sandboxed
-RaeenOS process."
+AthenaOS process."
 
 ---
 
@@ -31,7 +31,7 @@ the *process-model delta*, not the loader/CRT work that already runs.
   ONE process and runs the C++ fixture *as the process terminator*. Its own
   docstring states the constraint: "Only ONE real CRT exe can run to its
   ExitProcess per host process (it terminates us)." That is the structural wall.
-- **RaeBridge ABI primitives** — `SYS_SET_GS_BASE`=282, `SYS_MPROTECT`=283 (+
+- **AthBridge ABI primitives** — `SYS_SET_GS_BASE`=282, `SYS_MPROTECT`=283 (+
   `PROT_*`) landed in kernel + `rae_abi`; scheduler saves/restores `Task::gs_base`
   at all 3 switch sites. `[~]` (commits `de4845f`, `78bc921`). `docs/SYSCALL_TABLE.md`
   Block 33. **Next free syscall number: 293** (284–290 were taken by anti-cheat
@@ -40,13 +40,13 @@ the *process-model delta*, not the loader/CRT work that already runs.
   §10-pitfall-#1 collision class).
 - **Native ELF spawn by osabi byte** — `kernel/src/syscall.rs` arm 11 (`SYS_SPAWN`):
   reads the path from VFS, routes by `elf_loader::detect_elf_origin` —
-  `ELFOSABI_RAEENOS` (0xAE) → `scheduler::spawn_elf_task_with_pty`; Linux ELF →
+  `ELFOSABI_ATHENAOS` (0xAE) → `scheduler::spawn_elf_task_with_pty`; Linux ELF →
   `linux_exec`. **`rdx` already carries the optional PTY slave id** (NOT free for
   argv). `[x]` (the spawn-and-reap chain boots).
 - **The argv gap (confirmed)** — `kernel/src/task.rs`: `new_elf_with_pty` (native,
   line 579) sets up the user stack with **no argc/argv** (just rbp/rsp); ONLY the
   Linux path `new_elf_linux` (line ~688) calls `elf_loader::setup_linux_stack`
-  with argv/envp/auxv. So a native RaeenOS process today receives **no arguments**.
+  with argv/envp/auxv. So a native AthenaOS process today receives **no arguments**.
   This is the load-bearing ABI gap.
 - **The launcher's home** — `user_init/src/main.rs` `sys_spawn(path: &[u8])` (line
   82) wraps `SYS_SPAWN` with **only `rdi`/`rsi`** (no third arg passed). user_init
@@ -64,7 +64,7 @@ the *process-model delta*, not the loader/CRT work that already runs.
   Double-click PE detection needs **zero new format code**.
 - **Per-app data buckets** — `kernel/src/data_buckets.rs`: `on_task_spawn(task_id)`
   creates an isolated per-task bucket; `parse_path` / `can_access` / `read` /
-  `write` enforce ownership; `reclaim_task_resources` calls `on_task_exit`. RaeFS
+  `write` enforce ownership; `reclaim_task_resources` calls `on_task_exit`. AthFS
   buckets + `Cap::Filesystem{root_inode}` scoping are `[x]` iron-proven (cross-app
   read rejected — MasterChecklist line 1236). This is the substrate the virtual
   `C:\` binds to.
@@ -81,7 +81,7 @@ shell double-click wiring, (4) binding the bucket as the guest `C:\`.
 - **Wine `wine64`/`wineloader`** — one Unix process per Windows process; the loader
   binary (`wine`) is `exec`'d with the target `.exe` path as `argv[1]`, builds the
   PEB/TEB, maps the PE, jumps the entry. `CreateProcess` → a fresh `wine` exec.
-  *Verdict:* **📖 study/isolate** (LGPL-2.1). RaeBridge already carries Wine
+  *Verdict:* **📖 study/isolate** (LGPL-2.1). AthBridge already carries Wine
   *lineage* (Concept §line 45 "Wine/Proton lineage, isolated"); we mirror the
   **one-loader-process-per-exe pattern**, not the code. The launcher = our
   `wineloader`.
@@ -93,12 +93,12 @@ shell double-click wiring, (4) binding the bucket as the guest `C:\`.
   target + argv over a well-known channel. Pattern reference for the no-ABI
   alternative (option b). *Verdict:* 📖 conceptual only.
 - **POSIX `posix_spawn` / Redox `exec`** — argv lands on the new task's stack
-  (argc, `char**`, envp). RaeenOS already does this on the **Linux** spawn path
-  (`setup_linux_stack`); we extend the convention to a **native** RaeenOS stack
+  (argc, `char**`, envp). AthenaOS already does this on the **Linux** spawn path
+  (`setup_linux_stack`); we extend the convention to a **native** AthenaOS stack
   layout. *Verdict:* in-use (our own `elf_loader::setup_linux_stack`); reuse the
   stack-building technique, native ABI.
 
-No new external dependency is vendored. The launcher is pure RaeBridge + raekit.
+No new external dependency is vendored. The launcher is pure AthBridge + raekit.
 
 ---
 
@@ -106,7 +106,7 @@ No new external dependency is vendored. The launcher is pure RaeBridge + raekit.
 
 ### 1. The launcher model — `raebridge-run`
 
-A new **bundled native-osabi ELF** (`ELFOSABI_RAEENOS` 0xAE), crate
+A new **bundled native-osabi ELF** (`ELFOSABI_ATHENAOS` 0xAE), crate
 `raebridge_run/` (sibling of `raebridge_host/`), that:
 
 1. Reads its target PE path (or bundled fixture name) from its arguments — see §2.
@@ -124,7 +124,7 @@ A new **bundled native-osabi ELF** (`ELFOSABI_RAEENOS` 0xAE), crate
 The critical inversion: in the host harness, a guest `ExitProcess`/`sys_exit`
 **terminates the whole host** (so only the *last* fixture may ExitProcess). In the
 launcher model, `raebridge-run` **IS the process** — its `sys_exit(code)`
-terminates only *this* child. The parent (Files / RaeShell / Steam-equivalent)
+terminates only *this* child. The parent (Files / AthShell / Steam-equivalent)
 reaps the code via `SYS_WAIT` (13), exactly like any native app. One `.exe` =
 one `raebridge-run` process = one OS-reapable exit code.
 
@@ -157,7 +157,7 @@ while `raebridge-run` becomes the production launch path. Two crates, one loader
 
 The launcher must learn WHICH PE to run. Two options were specced; **(a) is
 recommended** because it is the general primitive every real shell/Steam needs
-(argv is not RaeBridge-specific), it is the smallest durable surface, and it
+(argv is not AthBridge-specific), it is the smallest durable surface, and it
 reuses the proven `setup_linux_stack` stack-building technique on the native path.
 
 #### Option (a) — RECOMMENDED: new `SYS_SPAWN_ARGS` = syscall **293**
@@ -185,11 +185,11 @@ nr  | name              | rdi      | rsi      | rdx      | r10        | r8      
   *already* takes an argv slice — the Linux path needs no new kernel work, just the
   wired argv).
 
-**Where args land in the child (the RaeenOS native convention).** Today
+**Where args land in the child (the AthenaOS native convention).** Today
 `new_elf_with_pty` builds a bare native stack. The new
 `Task::new_elf_with_args` writes a native argv block onto the child's user stack
 *before* entry, using the **same descending-stack technique** as
-`elf_loader::setup_linux_stack` but with the **RaeenOS native ABI** (NOT the Linux
+`elf_loader::setup_linux_stack` but with the **AthenaOS native ABI** (NOT the Linux
 auxv layout — rule 2, no Linux-clone). Proposed native convention, documented in
 `docs/SYSCALL_TABLE.md` Block 36 (the launcher's own block; 34 is anti-cheat,
 35 is surface-resize):
@@ -209,7 +209,7 @@ auxv layout — rule 2, no Linux-clone). Proposed native convention, documented 
 ```
 
 The native runtime entry stub (`raekit::_start` / `raebridge_run::_start`) reads
-`argc` at `[rsp]` and `argv` at `[rsp+8]` (RaeenOS native, deliberately *unlike*
+`argc` at `[rsp]` and `argv` at `[rsp+8]` (AthenaOS native, deliberately *unlike*
 the Linux `setup_linux_stack` because native ELFs are not Linux-ABI). raekit gains
 `raekit::args() -> ArgsIter` reading this block; `raebridge-run` reads `argv[1]`
 as the target PE path.
@@ -272,7 +272,7 @@ and wire double-click against option (b) if a release is needed sooner.
  raebridge-run::_start  reads argv[1] → load_pe_executable → install session →
         │               jump entry → unmodified Win32 code runs
         ▼
- Win32 window: guest calls user32 CreateWindow → RaeBridge shim → SYS_SURFACE_CREATE(24)
+ Win32 window: guest calls user32 CreateWindow → AthBridge shim → SYS_SURFACE_CREATE(24)
         │  → compositor surface (SHARED input path: SYS_POLL_MOUSE/READ_KEY/INPUT_CURSOR)
         ▼
  guest ExitProcess(code) → shim → sys_exit(code) → ONLY this child dies
@@ -292,7 +292,7 @@ on the space into path + argv. This is the **same** `spawn_app_from_vfs` →
 only new code is the PE-target branch.
 
 **Window through the compositor / shared input.** Nothing new: the guest's Win32
-window is a normal `SYS_SURFACE_CREATE` surface (the RaeBridge user32 shim already
+window is a normal `SYS_SURFACE_CREATE` surface (the AthBridge user32 shim already
 targets the compositor), so it composites, focuses, and receives input through the
 exact same path as native apps. Per-process isolation does not change the
 compositor contract — it *enables* it (today the in-host harness has no window; a
@@ -303,15 +303,15 @@ real app does).
 Concept §"Security by default": each guest process is sandboxed by default.
 
 - **Binding.** On spawn, `data_buckets::on_task_spawn(child_pid)` already creates an
-  isolated per-task RaeFS bucket (`[x]` iron-proven cross-app isolation). The
-  RaeBridge file shims (`kernel32 CreateFileW`/`ReadFile`/`WriteFile`, already
+  isolated per-task AthFS bucket (`[x]` iron-proven cross-app isolation). The
+  AthBridge file shims (`kernel32 CreateFileW`/`ReadFile`/`WriteFile`, already
   implemented) translate the guest's `C:\` namespace onto **this child's bucket
   root**: a guest path `C:\Users\...\foo.txt` maps to bucket-relative
   `Users/.../foo.txt` resolved via `data_buckets::{read,write}` / `open_in_bucket`,
   so app A cannot see app B's `C:\` (they are different buckets). `C:\Windows`
   system DLLs resolve to a **read-only shared system bucket** (the bundled
-  RaeBridge DLL set), never the per-app writable bucket.
-- **Cap gate (coordinate with raeen-security — DO NOT design RaeShield internals
+  AthBridge DLL set), never the per-app writable bucket.
+- **Cap gate (coordinate with raeen-security — DO NOT design AthGuard internals
   here).** File and net access from a guest must pass a capability. The proposed
   cap surface to hand raeen-security:
   - A guest process holds `Cap::Filesystem{root_inode = its bucket root}` only —
@@ -321,7 +321,7 @@ Concept §"Security by default": each guest process is sandboxed by default.
     path; a guest without the cap gets `WSAEACCES`-equivalent, fail-closed.
   - The sandbox *level* (Trusted / AppSandbox / Untrusted) comes from the app's
     `RaeManifest.toml` via the **existing** `rae_manifest::assign_for_spawn`
-    (called in `spawn_app_from_vfs` today) — RaeBridge apps get a manifest entry
+    (called in `spawn_app_from_vfs` today) — AthBridge apps get a manifest entry
     like any bundle. **Naming + the exact cap variants are raeen-security's call;**
     this spec only states the *binding points* (bucket = `C:\`, manifest =
     sandbox level, `Cap::{Filesystem,Net}` = the gates).
@@ -372,7 +372,7 @@ address space (separate page tables — the whole point of the per-process move)
    spawner and the kernel agree on the wire format without magic numbers.
 3. **Native argv stack convention** documented in `docs/SYSCALL_TABLE.md` Block 36
    (the `argc@[rsp]`, `argv@[rsp+8]`, NULL-terminated `char**` layout) — explicitly
-   marked RaeenOS-native (NOT Linux auxv).
+   marked AthenaOS-native (NOT Linux auxv).
 
 If 293 is deferred behind the hot spawn path, the architect signs off **option
 (b)** as the interim (no ABI change) and 293 lands when `scheduler.rs` cools.
@@ -410,7 +410,7 @@ If 293 is deferred behind the hot spawn path, the architect signs off **option
   the PE path as argv.
 - **`apps/files/`** (raeen-shell-apps): on double-click of a `FileKind::Pe`, issue
   the launch (SYS_SPAWN_ARGS or option-b handoff) instead of Quick Look.
-- **RaeBridge file shims** (raeen-compat): translate guest `C:\` → this task's
+- **AthBridge file shims** (raeen-compat): translate guest `C:\` → this task's
   `data_buckets` root; `C:\Windows` → read-only shared system bucket.
 
 ---
@@ -456,12 +456,12 @@ to its own `ExitProcess`, both exit codes reaped by the parent:
   - **raeen-shell-apps** — `shell_runner::spawn_app_from_vfs` PE-target branch +
     `apps/files` double-click→launch wiring.
   - **raeen-security** — name + wire the guest `Cap::{Filesystem(bucket-scoped),
-    Net}` gates and the RaeBridge `RaeManifest.toml` sandbox-level entry (this spec
-    states the binding points; RaeShield internals are theirs).
-- **Unblocks checklist lines:** Phase 11 "RaeBridge runs Windows apps"
-  (MasterChecklist §1428); the RaeBridge-wave "double-click a .exe and it runs"
+    Net}` gates and the AthBridge `RaeManifest.toml` sandbox-level entry (this spec
+    states the binding points; AthGuard internals are theirs).
+- **Unblocks checklist lines:** Phase 11 "AthBridge runs Windows apps"
+  (MasterChecklist §1428); the AthBridge-wave "double-click a .exe and it runs"
   milestone (lines 53/58) graduates from in-host to per-process; line 1455
-  ("games run via RaeBridge + Steam") is downstream of guest `CreateProcess`, which
+  ("games run via AthBridge + Steam") is downstream of guest `CreateProcess`, which
   this enables.
 - **Sequencing:**
   1. **Now (off hot files):** `raebridge_run` crate skeleton + `load_pe_executable`
@@ -500,14 +500,14 @@ to its own `ExitProcess`, both exit codes reaped by the parent:
 ## Concept promise served
 
 > "**Gaming isn't a mode. It's the default.**" + "**Steam works day one** via
-> RaeBridge — non-negotiable." (RaeenOS_Concept.md §Core Principles / §Compatibility)
+> AthBridge — non-negotiable." (LEGACY_GAMING_CONCEPT.md §Core Principles / §Compatibility)
 
 Steam and every non-trivial multi-threaded Windows app rely on `WaitForSingleObject`
 *actually blocking* and on two processes sharing a `Global\Name` object. The
-performance of that path is the one place in RaeBridge where the "faster than Wine"
+performance of that path is the one place in AthBridge where the "faster than Wine"
 question is decided by **design**, not tuning — because the other big cost (D3D→Vulkan
 translation) is shared with Wine via DXVK/VKD3D source reuse (`raebridge-wine-strategy.md`
-§5). The sync path is where RaeBridge can match fsync — or silently undercut it.
+§5). The sync path is where AthBridge can match fsync — or silently undercut it.
 
 ## Background: why fsync beats wineserver (the cost being avoided)
 
@@ -518,9 +518,9 @@ in shared memory, so the common case (no contention) is a single userspace atomi
 CAS — zero syscalls, zero broker IPC, zero context switches. fsync was a large,
 measurable gaming win precisely because it removed the broker from the hot path.
 
-**RaeBridge must replicate fsync's structure, not wineserver's.** The danger is
+**AthBridge must replicate fsync's structure, not wineserver's.** The danger is
 subtle: a broker daemon is the right home for the *namespace and lifetime*, but if
-it ends up on the *per-operation* path, RaeBridge reinvents the exact tax it should
+it ends up on the *per-operation* path, AthBridge reinvents the exact tax it should
 be beating.
 
 ## Already in the tree (verify-before-implement)
@@ -541,7 +541,7 @@ live blocking wiring on top of it.
   `run_shared_state_self_test()` (boot self-test #10, `raebridge_boot.rs:344`) is `[~]`.
 - **Kernel futex** — native `SYS_FUTEX = 258` (`syscall.rs:3297`, "native futex for
   relibc sync"; distinct from the Linux-ABI `SYS_FUTEX = 202`). Wait/wake queue in
-  `locking.rs:2139`/`2153`. RaeBridge guests are native-osabi (0xAE) → they use 258.
+  `locking.rs:2139`/`2153`. AthBridge guests are native-osabi (0xAE) → they use 258.
 - **In-process named-object stubs (the thing being replaced)** — `kernel32.rs:1050+`
   `create_mutex_w` & friends + `finish_create_sync`/`CreateSyncResult`. The §6.1
   finding stands: `release_mutex`/`set_event` currently set last-error and return
@@ -601,7 +601,7 @@ naive caller would then always issue `futex_wake`, putting a syscall on the
 uncontended signal path. fsync avoids this with a waiter count. **Add a second word**
 to `SharedSyncState` — `waiters: AtomicU32` — incremented right before `futex_wait`
 and decremented on wake/timeout; the signal path issues `futex_wake` **only if
-`waiters > 0`**. Without this, RaeBridge beats wineserver but loses to fsync on the
+`waiters > 0`**. Without this, AthBridge beats wineserver but loses to fsync on the
 uncontended signal — the precise regression this spec exists to prevent.
 
 ### The canonical wait loop (around the existing atomics)

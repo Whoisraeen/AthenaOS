@@ -1,12 +1,12 @@
-# RaeID
+# AthID
 
 Account system. Passkeys first. Optional. **Never required for local use.**
 
 ## Principles
 
-- The OS works fully without a RaeID account. Local user, local data, local apps,
+- The OS works fully without a AthID account. Local user, local data, local apps,
   local games. Period.
-- Sign-in is the on-ramp to RaeSync, RaeStore purchases tied to a user, and
+- Sign-in is the on-ramp to AthSync, AthStore purchases tied to a user, and
   cross-device profile portability. None of those are mandatory.
 - Passkeys (FIDO2 / WebAuthn) are the default. No passwords by default; passwords
   remain as a fallback only.
@@ -25,7 +25,7 @@ Account system. Passkeys first. Optional. **Never required for local use.**
 
 ## Open design questions
 
-- Backup of the local-only "no RaeID" user data — encouraged? automatic to encrypted
+- Backup of the local-only "no AthID" user data — encouraged? automatic to encrypted
   external drive? out of scope?
 - Family sharing model when accounts are present
 - Recovery code length / encoding (BIP-39-style? raw base32?)

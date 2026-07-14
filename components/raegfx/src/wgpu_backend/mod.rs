@@ -1,8 +1,8 @@
-//! Native `wgpu-hal` backend for RaeGFX.
+//! Native `wgpu-hal` backend for AthGFX.
 //!
 //! This module is the bridge between the public `wgpu_hal::Api` surface used
-//! by RaeUI / Skia and the lockless command ring + VirtIO Venus protocol that
-//! the RaeKernel half of the graphics stack consumes. Specifically:
+//! by AthUI / Skia and the lockless command ring + VirtIO Venus protocol that
+//! the AthKernel half of the graphics stack consumes. Specifically:
 //!
 //!   1. Every `wgpu_hal::CommandEncoder` call serialises a typed Venus token
 //!      (see `tokens.rs`) into a per-encoder `PayloadArena` (see `arena.rs`).
@@ -162,7 +162,7 @@ impl wgpu_hal::Api for RaeGfxApi {
 //
 // `Instance::init` is called by wgpu-core during adapter discovery. We do not
 // yet have a kernel handle to ask for a real `RaeGfxQueue` from this code path
-// (that requires a syscall into RaeKernel that returns the mapped ring +
+// (that requires a syscall into AthKernel that returns the mapped ring +
 // doorbell pointers). Until that wiring lands, we surface an explicit
 // `InstanceError` so callers can fall back to the software canvas instead of
 // crashing the renderer.
@@ -170,7 +170,7 @@ impl wgpu_hal::Api for RaeGfxApi {
 impl wgpu_hal::Instance<RaeGfxApi> for RaeGfxContext {
     unsafe fn init(_desc: &wgpu_hal::InstanceDescriptor) -> Result<Self, wgpu_hal::InstanceError> {
         Err(wgpu_hal::InstanceError::new(String::from(
-            "RaeGFX wgpu_backend: Instance::init requires a kernel-provided RaeGfxQueue. \
+            "AthGFX wgpu_backend: Instance::init requires a kernel-provided RaeGfxQueue. \
              Call RaeGfxContext::from_queue(...) after acquiring one via the surface syscall.",
         )))
     }
@@ -180,7 +180,7 @@ impl wgpu_hal::Instance<RaeGfxApi> for RaeGfxContext {
         _display_handle: raw_window_handle::RawDisplayHandle,
         _window_handle: raw_window_handle::RawWindowHandle,
     ) -> Result<RaeGfxContext, wgpu_hal::InstanceError> {
-        // The compositor owns surface allocation; from RaeGFX's perspective a
+        // The compositor owns surface allocation; from AthGFX's perspective a
         // surface is just another handle on the same underlying ring. Clone
         // the Arc so the surface and instance share the queue.
         Ok(RaeGfxContext {
@@ -193,7 +193,7 @@ impl wgpu_hal::Instance<RaeGfxApi> for RaeGfxContext {
     }
 
     unsafe fn enumerate_adapters(&self) -> Vec<wgpu_hal::ExposedAdapter<RaeGfxApi>> {
-        // We expose exactly one adapter: the kernel's primary RaeGFX queue.
+        // We expose exactly one adapter: the kernel's primary AthGFX queue.
         // wgpu_hal::ExposedAdapter requires concrete capability info which is
         // intentionally minimal until the kernel reports real device info via
         // RaeGfxQueue::describe_adapter — for now we return empty to signal

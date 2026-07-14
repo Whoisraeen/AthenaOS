@@ -1,7 +1,7 @@
-//! RaeenOS SSH server — the SSH-2.0 transport/auth/connection protocol as pure
-//! logic on top of `rae_crypto`. You SSH into a running RaeenOS and get a
-//! RaeShell session (Concept §"the user owns the machine": real remote access,
-//! no cloud in the middle). No OpenSSL / libssh — every primitive is RaeenOS's
+//! AthenaOS SSH server — the SSH-2.0 transport/auth/connection protocol as pure
+//! logic on top of `rae_crypto`. You SSH into a running AthenaOS and get a
+//! AthShell session (Concept §"the user owns the machine": real remote access,
+//! no cloud in the middle). No OpenSSL / libssh — every primitive is AthenaOS's
 //! own: curve25519-sha256 KEX, ssh-ed25519 host key + publickey auth,
 //! chacha20-poly1305@openssh packet cipher.
 //!

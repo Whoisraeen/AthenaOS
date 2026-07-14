@@ -1,5 +1,5 @@
 //! wevtapi.dll — Windows Event Log API, legacy event log, channel configuration,
-//! subscription, publisher metadata, and event rendering for RaeBridge.
+//! subscription, publisher metadata, and event rendering for AthBridge.
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;
@@ -412,7 +412,7 @@ impl EventLog {
                 channel: String::from(chan),
                 provider: String::from(provider),
                 time_created: 133_600_000_000_000_000 + rid * 10_000_000,
-                computer: String::from("RAEENOS-PC"),
+                computer: String::from("ATHENAOS-PC"),
                 message: String::from(msg),
                 data: Vec::new(),
                 xml: build_event_xml(chan, id, level, provider, msg, rid),
@@ -760,16 +760,16 @@ pub fn evt_write_event(
         event_id: descriptor.id,
         level: descriptor.level,
         channel: String::from(channel),
-        provider: String::from("RaeenOS-App"),
+        provider: String::from("AthenaOS-App"),
         time_created: 133_600_000_000_000_000 + rid * 10_000_000,
-        computer: String::from("RAEENOS-PC"),
+        computer: String::from("ATHENAOS-PC"),
         message: String::from(message),
         data,
         xml: build_event_xml(
             channel,
             descriptor.id,
             descriptor.level,
-            "RaeenOS-App",
+            "AthenaOS-App",
             message,
             rid,
         ),

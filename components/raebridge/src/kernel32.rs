@@ -1,7 +1,7 @@
-//! kernel32.dll — Win32 base API surface for RaeBridge.
+//! kernel32.dll — Win32 base API surface for AthBridge.
 //!
 //! Each function operates on a [`CompatContext`] that maps Win32 semantics
-//! to RaeenOS native state.
+//! to AthenaOS native state.
 
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -535,7 +535,7 @@ pub fn create_thread(
     creation_flags: u32,
     thread_id: &mut u32,
 ) -> WinHandle {
-    // Threading is NOT supported in the native RaeenOS kernel yet (no SYS_THREAD_CREATE).
+    // Threading is NOT supported in the native AthenaOS kernel yet (no SYS_THREAD_CREATE).
     // We return ERROR_NOT_SUPPORTED.
     let _ = creation_flags;
     let _ = thread_id;
@@ -1541,7 +1541,7 @@ pub fn get_tick_count_64(_ctx: &mut CompatContext) -> u64 {
 }
 
 pub fn get_computer_name_w(ctx: &mut CompatContext, buffer: &mut [u16], size: &mut u32) -> WinBool {
-    let name = "RAEENOS";
+    let name = "ATHENAOS";
     let wide: Vec<u16> = name.encode_utf16().chain(core::iter::once(0)).collect();
     if (*size as usize) < wide.len() {
         *size = wide.len() as u32;
@@ -2530,7 +2530,7 @@ pub fn get_volume_information_w(
     fs_name: Option<&mut [u16]>,
 ) -> WinBool {
     if let Some(vn) = volume_name {
-        let label = "RaeenOS";
+        let label = "AthenaOS";
         for (i, ch) in label.bytes().enumerate() {
             if i >= vn.len() {
                 break;

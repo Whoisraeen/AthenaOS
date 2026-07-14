@@ -27,7 +27,7 @@ pub mod hole;
 #[cfg(test)]
 mod test;
 
-// RaeenOS freelist hardening — public surface (see `hole` for the full docs).
+// AthenaOS freelist hardening — public surface (see `hole` for the full docs).
 // Re-exported at the crate root so consumers call
 // `linked_list_allocator::set_freelist_cookie(..)` etc. directly.
 pub use hole::{

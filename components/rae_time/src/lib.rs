@@ -1,6 +1,6 @@
-//! RaeenOS date/time + locale-aware formatting — *"an OS that only works in
-//! English is a demo, not a competitor"* (RaeenOS_Concept.md global-readiness:
-//! RaeenOS must rival Windows + macOS in **every** language and locale).
+//! AthenaOS date/time + locale-aware formatting — *"an OS that only works in
+//! English is a demo, not a competitor"* (LEGACY_GAMING_CONCEPT.md global-readiness:
+//! AthenaOS must rival Windows + macOS in **every** language and locale).
 //!
 //! This crate is the reusable civil-date/time core plus the i18n formatting
 //! surface the whole UI pulls from:

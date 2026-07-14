@@ -1,4 +1,4 @@
-//! RaeenOS VPN — userspace ELF entry shim.
+//! AthenaOS VPN — userspace ELF entry shim.
 //!
 //! All the app (the syscall-free [`vpn::VpnModel`] over the LIVE `raevpn`
 //! Noise_IKpsk2 WireGuard handshake, the config model, plus the draw path +

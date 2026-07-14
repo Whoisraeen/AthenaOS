@@ -1,6 +1,6 @@
 //! Arch-neutral PAGING seam (Slice 1.5 / A4) — aarch64 backend.
 //!
-//! Concept §Architecture Reach: *"RaeenOS refuses ISA lock-in: the kernel sits
+//! Concept §Architecture Reach: *"AthenaOS refuses ISA lock-in: the kernel sits
 //! on a clean `arch::` abstraction layer (boot, **MMU**, interrupts, timers, SMP,
 //! context switch, syscall entry, firmware discovery) so the same OS boots
 //! x86_64, aarch64 (ARM 64-bit), and i686 (32-bit x86) — each proven
@@ -101,7 +101,7 @@ pub struct PageFlags {
 }
 
 impl PageFlags {
-    /// MAIR_EL1 attribute index for Normal write-back RAM (the canonical RaeenOS
+    /// MAIR_EL1 attribute index for Normal write-back RAM (the canonical AthenaOS
     /// aarch64 layout: index 0 = Normal-WB — see [`aarch64_logic::mmu::mair`]).
     pub const MAIR_NORMAL_WB: u8 = 0;
     /// MAIR_EL1 attribute index for Device-nGnRnE MMIO (index 1).

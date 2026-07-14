@@ -1,4 +1,4 @@
-//! RaeUI Reactive Data Binding
+//! AthUI Reactive Data Binding
 //!
 //! Provides Observable values, computed/derived values, and a BindingContext
 //! that wires observables to widget properties. Supports one-way and two-way

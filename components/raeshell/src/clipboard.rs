@@ -1,4 +1,4 @@
-//! Clipboard manager for the RaeenOS desktop shell.
+//! Clipboard manager for the AthenaOS desktop shell.
 //!
 //! Provides a multi-format clipboard with persistent history, pinning,
 //! search, listener notifications, and memory-bounded storage.

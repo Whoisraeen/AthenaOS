@@ -6,7 +6,7 @@
 //! >  declarative bundles, signed and sandboxed."
 //!
 //! Most desktop "themes" are colour-only swaps (Windows accent colour,
-//! macOS Dark Mode, GTK CSS). RaeenOS treats a theme as a record the
+//! macOS Dark Mode, GTK CSS). AthenaOS treats a theme as a record the
 //! compositor can act on at draw time — colour palette, font, animation
 //! curves, blur radius, scanline overlay, glassmorphism amount, cursor
 //! style, system sound pack, even per-event particle behaviour. A theme
@@ -752,7 +752,7 @@ pub fn dump_text() -> String {
     };
     let mut out = String::new();
     out.push_str(&alloc::format!(
-        "# RaeenOS theme engine ({} themes, {} applies since boot)\n",
+        "# AthenaOS theme engine ({} themes, {} applies since boot)\n",
         reg.themes.len(),
         reg.apply_count,
     ));

@@ -1,4 +1,4 @@
-//! RaeenOS Driver API (RaeDriver)
+//! AthenaOS Driver API (RaeDriver)
 //!
 //! Standard library for userspace device drivers. Provides safe wrappers
 //! for MMIO, port I/O, DMA, and Asynchronous Event Ring (AER) interrupts.

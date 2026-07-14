@@ -148,7 +148,7 @@ fn decode_fault_code(code: u8) -> FaultStatus {
 }
 
 /// For an `SVC`, extract the 16-bit immediate (the syscall selector immediate;
-/// RaeenOS uses `svc #0` and carries the syscall number in `x8`). Returns
+/// AthenaOS uses `svc #0` and carries the syscall number in `x8`). Returns
 /// `None` if the ESR is not an SVC.
 pub fn svc_immediate(esr: &Esr) -> Option<u16> {
     match esr.class {

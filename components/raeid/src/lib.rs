@@ -1,4 +1,4 @@
-//! RaeID — account system.
+//! AthID — account system.
 //!
 //! Passkeys first, optional, never required for local use.
 //! Supports multiple authentication methods with session management.
@@ -194,8 +194,8 @@ pub struct RelyingParty {
 impl RelyingParty {
     pub fn local() -> Self {
         Self {
-            id: String::from("local.raeenos"),
-            name: String::from("RaeenOS Local"),
+            id: String::from("local.athenaos"),
+            name: String::from("AthenaOS Local"),
         }
     }
 }
@@ -512,7 +512,7 @@ pub fn estimate_password_strength(password: &[u8]) -> PasswordStrength {
 // ---------------------------------------------------------------------------
 
 /// A persisted local account: identity + its password credential. The kernel
-/// writes a sequence of these to the RaeFS root so the installed system has
+/// writes a sequence of these to the AthFS root so the installed system has
 /// working logins across reboots (only the Argon2id hash is stored, never the
 /// plaintext password).
 #[derive(Clone, Debug)]
@@ -2169,7 +2169,7 @@ impl TokenGenerator {
 // 15. Init
 // ---------------------------------------------------------------------------
 
-/// Initialize the RaeID subsystem. Creates the guest user and returns a
+/// Initialize the AthID subsystem. Creates the guest user and returns a
 /// manager ready for use. Account is never required — guest mode is the
 /// default and provides full local functionality.
 pub fn init(now: u64) -> AccountManager {
@@ -2429,7 +2429,7 @@ mod password_tests {
             DeviceInfo {
                 device_id: [7u8; 16],
                 device_name: String::from("test"),
-                os_version: String::from("raeenos"),
+                os_version: String::from("athenaos"),
                 last_ip_hash: None,
             }
         }

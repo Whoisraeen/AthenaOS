@@ -533,8 +533,8 @@ use crate::mp3_imdct_tables::{SYNTH_D, SYNTH_N};
 /// the 576 PCM samples of one granule/channel. This is the final stage that makes `.mp3`
 /// **audible** — without it the decoder runs the whole DSP path but emits silence.
 ///
-/// Concept promise served (RaeenOS_Concept.md, Media / "it just works" pillar):
-///   "RaeenOS ships a media stack that just plays the files people actually have — music,
+/// Concept promise served (LEGACY_GAMING_CONCEPT.md, Media / "it just works" pillar):
+///   "AthenaOS ships a media stack that just plays the files people actually have — music,
 ///    video, photos — out of the box, with no codec hunts and no bundled spyware."
 /// MP3 is the dominant consumer audio format; "plays the files people have" is not true
 /// until `.mp3` produces sound. This closes that last gap.

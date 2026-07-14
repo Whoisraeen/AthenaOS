@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "raeinstaller — RaeenOS userspace installer. Partitions the target disk, formats the ESP (FAT32) + RaeFS root, writes the EFI boot tree, via SYS_INSTALL_RUN."
+description = "raeinstaller — AthenaOS userspace installer. Partitions the target disk, formats the ESP (FAT32) + AthFS root, writes the EFI boot tree, via SYS_INSTALL_RUN."
 
 [dependencies]
 rae_abi = { path = "../components/rae_abi" }

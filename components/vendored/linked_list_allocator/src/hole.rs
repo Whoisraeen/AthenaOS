@@ -10,12 +10,12 @@ use crate::{align_down_size, align_up_size};
 use super::align_up;
 
 // ===========================================================================
-// RaeenOS freelist hardening (always-on; MIT/Apache — RaeenOS addition).
+// AthenaOS freelist hardening (always-on; MIT/Apache — AthenaOS addition).
 //
 // Concept promise served:
 //   "Driver isolation: Every driver runs in its own protection domain with
 //    IOMMU enforcement. A bad GPU driver crashes a service, not the kernel."
-//    (RaeenOS_Concept.md §Kernel Architecture)
+//    (LEGACY_GAMING_CONCEPT.md §Kernel Architecture)
 //   "Security by default, not by friction." (§Principles)
 //
 // The intrusive free list stores each free chunk's `next` link *inside* the
@@ -796,7 +796,7 @@ impl HoleList {
         let new_hole_size = align_down_size(extend_by, align_of::<Hole>());
         let layout = Layout::from_size_align(new_hole_size, 1).unwrap();
 
-        // Publish the new `top` BEFORE building the hole at the old top. RaeenOS
+        // Publish the new `top` BEFORE building the hole at the old top. AthenaOS
         // freelist hardening validates every decoded link against `[bottom, top)`,
         // and the hole we are about to instantiate lives at the old `top`; with
         // `top` still un-bumped its address would (correctly) read as out-of-range

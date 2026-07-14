@@ -1,4 +1,4 @@
-//! Full desktop taskbar for RaeenOS shell.
+//! Full desktop taskbar for AthenaOS shell.
 
 #![allow(dead_code)]
 

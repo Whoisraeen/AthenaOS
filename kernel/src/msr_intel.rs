@@ -1,8 +1,8 @@
 //! Intel-specific model-specific registers (MSRs) — power, scheduling, and
 //! control-flow-integrity features that only Intel silicon exposes.
 //!
-//! Concept alignment (RaeenOS_Concept.md §"Gaming-first power & latency" and
-//! §"Hardware-backed exploit mitigation"): RaeenOS must drive modern Intel
+//! Concept alignment (LEGACY_GAMING_CONCEPT.md §"Embodiment-first power & latency" and
+//! §"Hardware-backed exploit mitigation"): AthenaOS must drive modern Intel
 //! parts at their best operating point and lock down the kernel's own
 //! control flow. This module owns three Intel-only knobs:
 //!
@@ -63,7 +63,7 @@ const HWP_REQ_DESIRED_SHIFT: u64 = 16;
 const HWP_REQ_EPP_SHIFT: u64 = 24;
 
 /// Energy-Performance Preference: 0x00 = max performance, 0xFF = max power
-/// save. RaeenOS is gaming-first, so we bias hard toward performance.
+/// save. AthenaOS is embodiment-first, so we bias hard toward performance.
 const HWP_EPP_PERFORMANCE: u64 = 0x00;
 
 /// IA32_THREAD_DIRECTOR_CONTROL bit 0 = enable HW thread classification.
@@ -214,7 +214,7 @@ fn max_basic_leaf() -> u32 {
 // §4  CAPABILITY GATE
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Programming MSRs / CR4 is a system-wide privileged operation. RaeenOS funnels
+/// Programming MSRs / CR4 is a system-wide privileged operation. AthenaOS funnels
 /// all privileged authority through `crate::capability`. There is no userspace
 /// caller here — this runs in `kernel_main` — so we assert the kernel's own
 /// `Cap::System` authority rather than consulting a per-task `CapTable`. The
@@ -270,7 +270,7 @@ fn enable_hwp(_auth: &Cap) -> bool {
     HWP_EFFICIENT.store(efficient, Ordering::SeqCst);
     HWP_LOWEST.store(lowest, Ordering::SeqCst);
 
-    // Program a gaming-first request: let the CPU range from the part's lowest
+    // Program a embodiment-first request: let the CPU range from the part's lowest
     // up to its highest perf, desired = highest, EPP = max performance.
     let request = ((lowest as u64) << HWP_REQ_MIN_SHIFT)
         | ((highest as u64) << HWP_REQ_MAX_SHIFT)

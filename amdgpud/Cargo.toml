@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "amdgpud — RaeenOS userspace AMD GPU driver daemon. Runs the amdgpu init pipeline (PCI → VBIOS → GMC/GPUVM → IH → SMU → GFX → DC) on the LinuxKPI host."
+description = "amdgpud — AthenaOS userspace AMD GPU driver daemon. Runs the amdgpu init pipeline (PCI → VBIOS → GMC/GPUVM → IH → SMU → GFX → DC) on the LinuxKPI host."
 
 [dependencies]
 rae_abi = { path = "../components/rae_abi" }

@@ -3,7 +3,7 @@
 # forwards its exports to a real host DLL (kernel32 / kernelbase / ...).
 #
 # Emits, per api set DLL: "apiset<TAB>host1:count1,host2:count2,...".
-# The dominant host is the redirection target RaeBridge uses.
+# The dominant host is the redirection target AthBridge uses.
 # Pure ASCII, output to $env:TEMP (never the repo).
 param(
     [string]$Dumpbin = "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\dumpbin.exe",

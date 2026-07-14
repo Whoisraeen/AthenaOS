@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-29 · **ASIC:** Phoenix1 (gfx_11_0_1, Radeon 760M), `AMDGPU_FW_LOAD_PSP`, CP = **F32** (v1 ucode).
 
-**Context:** First light is achieved + committed (`95e60fb`): `EnableGfxImu(0x16,1)` sent right after `AUTOLOAD_RLC` → `RLC_BOOTLOAD_STATUS=0xc000001f`, `GFX_IMU_GFX_RESET_CTRL=0x1f`. The blocker now is that GFX goes back *down* (`RESET_CTRL 0x1f→0x10`) during the post-first-light ring setup, because RaeenOS redundantly driver-loads firmware the PSP already loaded. This doc is the source-of-truth for the cleanup.
+**Context:** First light is achieved + committed (`95e60fb`): `EnableGfxImu(0x16,1)` sent right after `AUTOLOAD_RLC` → `RLC_BOOTLOAD_STATUS=0xc000001f`, `GFX_IMU_GFX_RESET_CTRL=0x1f`. The blocker now is that GFX goes back *down* (`RESET_CTRL 0x1f→0x10`) during the post-first-light ring setup, because AthenaOS redundantly driver-loads firmware the PSP already loaded. This doc is the source-of-truth for the cleanup.
 
 ## Ground truth — amdgpu `gfx_v11_0_hw_init`, the `AMDGPU_FW_LOAD_PSP` branch
 
@@ -42,13 +42,13 @@ get IMU version; irq setup
 
 It does **not** set `CP_MES_IC_BASE`. On PSP load the MES IMEM is already populated and `IC_BASE` set **by the PSP**; the driver only points the PC at the entry and unhalts. `mes_v11_0_load_microcode` (the IC-base streamer) is **`AMDGPU_FW_LOAD_DIRECT` only**.
 
-## RaeenOS divergences (what to remove on the first-light / PSP path)
+## AthenaOS divergences (what to remove on the first-light / PSP path)
 
 All in `components/raeen_amdgpu/src/bringup.rs::init_rings` (stage 6):
 
 1. **Backdoor IMU bring-up** (`program_rlc_ram` + autoload buffer + `imu_load_microcode` + `setup_imu` + `try_imu_core_start`) — **already gated off** on `first_light` (commit 95e60fb). amdgpu runs none of it on PSP.
 2. **MES IC-base direct-load** (~2845 `mes_load`, ~2874 `mes_kiq_load`, ~3543 `build_mes_load_sequence` writing `CP_MES_IC_BASE/MDBASE`). The `psp_loaded` flag at **3578 is hardcoded `false`** from the stale H2 conclusion ("PSP rejects MES, 0xffff0006") — which NIGHT 5 FIXED (types 33/34/81/82 now accepted, no rejects in the netlog). The dead `if psp_loaded {…}` ENABLE-ONLY branch (3583) is the correct path.
-3. **CP F32 ucode** — verify RaeenOS isn't direct-loading CP ucode on PSP either (amdgpu skips it).
+3. **CP F32 ucode** — verify AthenaOS isn't direct-loading CP ucode on PSP either (amdgpu skips it).
 
 ## Refactor plan (incremental — do NOT big-bang; first light is fragile)
 

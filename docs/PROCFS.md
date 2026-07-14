@@ -1,4 +1,4 @@
-# RaeenOS procfs introspection
+# AthenaOS procfs introspection
 
 **Authoritative source.** Required by `kernelchecklist.md` R10: every new
 `/proc/raeen/<name>` entry MUST add a row here in the same commit.
@@ -42,7 +42,7 @@ machines parse-by-line if they want. No binary blobs.
 
 ## Conventions
 
-- **First line** is `# RaeenOS <subsystem> <summary>` — humans see what
+- **First line** is `# AthenaOS <subsystem> <summary>` — humans see what
   they're reading at a glance.
 - **No tabs** in output — use spaces, predictable column widths.
 - **No timestamps in absolute form** in the dump body — use TSC deltas

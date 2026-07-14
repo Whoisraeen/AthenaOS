@@ -1,4 +1,4 @@
-//! Advanced input widgets for RaeUI.
+//! Advanced input widgets for AthUI.
 //!
 //! TextArea, NumberInput, Checkbox (tri-state), RadioGroup, DropdownSelect,
 //! MultiSelect, DatePicker, TimePicker, ColorPicker, FileInput, SearchInput,
@@ -1768,7 +1768,7 @@ impl FileInput {
 }
 
 // ── Host KATs (dev box, `cargo test -p raeui`) ──────────────────────────
-// MasterChecklist Phase 8 (RaeUI inputs): TextArea editing invariants —
+// MasterChecklist Phase 8 (AthUI inputs): TextArea editing invariants —
 // insert-at-cursor, the newline split, and the backspace line-merge are
 // what every editor / terminal / text field depends on. FAIL-ably pinned.
 #[cfg(test)]

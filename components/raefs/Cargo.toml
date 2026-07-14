@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeFS — copy-on-write filesystem with snapshots, tiered storage, native encryption."
+description = "AthFS — copy-on-write filesystem with snapshots, tiered storage, native encryption."
 
 [dependencies]
 ruzstd = { version = "0.7", default-features = false }

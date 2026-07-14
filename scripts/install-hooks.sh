@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install-hooks.sh — install the RaeenOS three-agent guardrail hooks into
+# install-hooks.sh — install the AthenaOS three-agent guardrail hooks into
 # .git/hooks/. Run once per clone (the hook itself is not version-controlled,
 # so each agent's checkout must install it). Idempotent.
 set -euo pipefail

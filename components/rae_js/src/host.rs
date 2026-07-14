@@ -1,6 +1,6 @@
 //! # RaeJs embedder host-object API — exposing native objects to page script.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy (criterion #5 — "the web browser is the
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy (criterion #5 — "the web browser is the
 //! universal app runtime; PWAs that feel native"): the [interpreter](crate::interp) runs
 //! ECMAScript and the [builtins](crate::builtins) give it `console`/`Math`/`JSON`, but a
 //! *page* needs to read and mutate its own document — `document.getElementById('x')

@@ -1,8 +1,8 @@
-# RaeenOS hardware-coverage roadmap
+# AthenaOS hardware-coverage roadmap
 
 **Audience:** any AI agent or human deciding where to spend driver effort.
 **Companion to:** `kernelchecklist.md` §M-A through §M-G milestones.
-**Honest answer to the question:** "How do we get RaeenOS running on any PC?"
+**Honest answer to the question:** "How do we get AthenaOS running on any PC?"
 
 ---
 
@@ -113,11 +113,11 @@ Driver work is genuinely hard:
   enough to potentially re-shim
 - "20% of drivers for 5% of effort" sounds great
 
-### Why this path is wrong for RaeenOS
+### Why this path is wrong for AthenaOS
 
 1. **License blocker.** Linux is GPL-2. Most modern drivers use
    `EXPORT_SYMBOL_GPL`. Static-linking GPL kernel code into MPL-2.0
-   RaeKernel = license violation. Period.
+   AthKernel = license violation. Period.
 
 2. **No stable internal ABI.** Linus's stated position: the internal
    kABI changes every kernel release, intentionally, to prevent exactly
@@ -154,7 +154,7 @@ re-implemented** (BSD-licensed Rust), **userspace driver runs unchanged**.
 
 Concept §Architecture is explicit:
 
-> "User-space: Filesystems (except RaeFS root), drivers (IOMMU-sandboxed),
+> "User-space: Filesystems (except AthFS root), drivers (IOMMU-sandboxed),
 > networking protocols above L3, audio mixing, USB stack. Anything that
 > can fail without taking the system down."
 
@@ -222,9 +222,9 @@ For the avoidance of doubt:
 
 - ❌ **Pretending to be Linux at the kABI level** (path B above) — license blocker + maintenance treadmill
 - ❌ **Embedding Wine / WSL-style Linux subsystem** for drivers — drivers aren't userspace; this doesn't apply
-- ❌ **Loading Windows .sys drivers via RaeBridge** — Windows kernel drivers run at ring 0 and trust ntoskrnl-internal APIs. Even Wine/Proton can't do this. NDISwrapper tried for NICs; it was always janky.
+- ❌ **Loading Windows .sys drivers via AthBridge** — Windows kernel drivers run at ring 0 and trust ntoskrnl-internal APIs. Even Wine/Proton can't do this. NDISwrapper tried for NICs; it was always janky.
 - ❌ **Buying NVIDIA's binary blob driver** — proprietary; can't be redistributed; needs Linux ABI we don't provide
-- ❌ **"Just bundle Linux"** — not RaeenOS, just Yet Another Distro
+- ❌ **"Just bundle Linux"** — not AthenaOS, just Yet Another Distro
 
 ---
 
@@ -250,7 +250,7 @@ For the avoidance of doubt:
 ABI stability, and maintenance picture all argue against it. The
 `linux_kabi.rs` scaffold in the tree lets us *measure* Linux drivers
 ("what symbols would this need?") and shares names with the future
-userspace LinuxKPI host — but loading actual `.ko` files into RaeKernel
+userspace LinuxKPI host — but loading actual `.ko` files into AthKernel
 is not a path we should commit to.
 
 **What we CAN do**: ship the userspace driver framework, then host
@@ -268,7 +268,7 @@ work is in progress.
 ## 9. Bare-metal boot gate (kernel checklist)
 
 **Last updated: 2026-05-28.** Ruthless kernel-side list for installing and
-booting RaeenOS on real iron. Organized by what blocks **first power-on**
+booting AthenaOS on real iron. Organized by what blocks **first power-on**
 vs what makes the OS **useful** afterward.
 
 **Companion:** `Audit.md` §Bare-metal boot gate (summary + link here).
@@ -286,7 +286,7 @@ Nothing useful happens without these.
 | `bootloader 0.11` BIOS + UEFI images | ✅ | `kernel.bios.img` / `kernel.uefi.img` via `cargo run -p xtask -- build` |
 | UEFI boot on real firmware | ❌ | UEFI image never validated on physical firmware |
 | Secure Boot stance | ❌ | **(c)** require SB off in setup for first spike; **(a/b)** signed shim months away |
-| GPT install layout (ESP + RaeFS root) | ❌ | Today: flat raw image `dd` to USB; installer/userspace does not exist |
+| GPT install layout (ESP + AthFS root) | ❌ | Today: flat raw image `dd` to USB; installer/userspace does not exist |
 | GOP / framebuffer edge cases | ❌ | Accept bootloader GOP only; no EDID, HiDPI, hotplug, preferred mode |
 
 #### CPU bringup
@@ -362,8 +362,8 @@ Parallel **~1 day** wins: `_PIC(1)`, `_OSI`, PS/2-absent detection, serial-only 
 | Item | Status |
 |---|---|
 | Verified boot chain (Concept §Security) | ❌ |
-| RaeFS on NVMe partition (GPT type GUID) | ❌ |
-| RaeFS fsck / journal replay on iron | 🟡 |
+| AthFS on NVMe partition (GPT type GUID) | ❌ |
+| AthFS fsck / journal replay on iron | 🟡 |
 | Atomic CoW system updates | ❌ |
 | Installer / `mkfs` / ESP + `BOOTX64.EFI` | ❌ |
 
@@ -414,7 +414,7 @@ Goal: Beelink Athena (or similar) prints kernel idle on **serial** (USB-C UART).
 |---|---|
 | NVMe on Samsung 980-class M.2 | ~2 weeks |
 | GPT partition writer | ~1 week |
-| RaeFS `mkfs` from installer | ~1 week |
+| AthFS `mkfs` from installer | ~1 week |
 | Root mount by `PARTUUID` | ~1 week |
 | ESP + bootloader | ~1 week |
 | A/B kernel slots + fallback | ~3–4 weeks |

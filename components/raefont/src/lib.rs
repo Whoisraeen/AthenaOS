@@ -4782,7 +4782,7 @@ pub fn notdef_box(ppem: u16, advance_px: i32) -> RasterizedGlyph {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // builtin — the embedded system faces (no filesystem dependency, available at
-// first boot before RaeFS mounts). OFL-licensed; the upstream OFL.txt files ship
+// first boot before AthFS mounts). OFL-licensed; the upstream OFL.txt files ship
 // alongside in components/raefont/assets/ (see assets/README.md).
 //
 // RaeSans  = Inter (variable .ttf — the glyf table carries the default-instance
@@ -4893,7 +4893,7 @@ mod tests {
         g.pixels.iter().map(|&p| p as u64).sum()
     }
 
-    /// The common Latin punctuation + symbols the RaeenOS UI actually renders MUST
+    /// The common Latin punctuation + symbols the AthenaOS UI actually renders MUST
     /// produce real ink in the default UI face (RaeSans/Inter). The em-dash
     /// especially is everywhere. This is the anti-tofu guard for the font itself.
     #[test]

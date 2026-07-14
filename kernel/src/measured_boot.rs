@@ -1,11 +1,11 @@
-//! measured_boot — kernel-side measured boot (Concept §RaeShield: "you don't need
+//! measured_boot — kernel-side measured boot (Concept §AthGuard: "you don't need
 //! kernel access; here's a better primitive").
 //!
 //! The companion to [`crate::secure_boot`]: secure boot *verifies* a signature before
 //! running an image; measured boot *records* what actually ran into a TPM 2.0-style PCR
 //! bank — `PCR := SHA256(PCR ‖ measurement)` — so the final PCR is a cryptographic
 //! commitment to the exact bytes AND order of the boot chain. A remote attestation
-//! service (the RaeShield anti-cheat primitive) or a local sealing policy recomputes
+//! service (the AthGuard anti-cheat primitive) or a local sealing policy recomputes
 //! the expected PCRs and compares; any tamper, reorder, or swap diverges.
 //!
 //! Here the kernel measures the authentic in-memory `crate::INITRAMFS` (the userspace

@@ -1,7 +1,7 @@
 //! gfx11 RLC backdoor-autoload buffer — TOC parsing.
 //!
-//! Concept (RaeGFX): on the Athena's Phoenix APU the PSP leaves the GFX engine
-//! cold (iron boot 002046: `RLC_BOOTLOAD_STATUS=0`), so RaeGFX DIRECT-loads the
+//! Concept (AthGFX): on the Athena's Phoenix APU the PSP leaves the GFX engine
+//! cold (iron boot 002046: `RLC_BOOTLOAD_STATUS=0`), so AthGFX DIRECT-loads the
 //! GFX firmware. The IMU bring-up needs a single contiguous VRAM "autoload
 //! buffer" holding every GFX engine's ucode (RLC, PFP, ME, MEC, MES, SDMA, TOC)
 //! laid out at fixed offsets; the IMU's RLC-bootloader reads the RLC_G ucode from
@@ -254,7 +254,7 @@ pub fn extract_rlc_rlx6(blob: &[u8]) -> Option<(&[u8], &[u8])> {
 /// RLC_P ucode from an `rlc_firmware_header_v2_3+` blob: rlcp_ucode_size_bytes @180,
 /// rlcp_ucode_offset_bytes @184 (after the v2_2 iram/dram block @156..172). amdgpu
 /// loads this as a separate `GFX_FW_TYPE_RLC_P` LOAD_IP_FW — the Athena
-/// amdgpu_firmware_info shows RLCP (feature 1, ver 0x0f) loaded, and RaeenOS was NOT
+/// amdgpu_firmware_info shows RLCP (feature 1, ver 0x0f) loaded, and AthenaOS was NOT
 /// loading it. `None` for a pre-v2.3 header.
 pub fn extract_rlcp(blob: &[u8]) -> Option<&[u8]> {
     let ver_major = rd_u32_le(blob, 8)? & 0xFFFF;
@@ -269,7 +269,7 @@ pub fn extract_rlcp(blob: &[u8]) -> Option<&[u8]> {
 
 /// RLC GPM restore list (`save_restore_list_gpm` in rlc_firmware_header_v2_1 —
 /// size @132, offset @136). PSP fw_type RLC_RESTORE_LIST_GPM_MEM (20). amdgpu
-/// loads this in its autoload batch (iron trace); RaeenOS omitted it. Requires
+/// loads this in its autoload batch (iron trace); AthenaOS omitted it. Requires
 /// header v2.1+ (Athena's rlc.bin is v2.3). Iron-verified size = 2560.
 pub fn extract_rlc_gpm(blob: &[u8]) -> Option<&[u8]> {
     let ver = rd_u32_le(blob, 8)?;

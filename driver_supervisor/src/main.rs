@@ -1,4 +1,4 @@
-//! RaeenOS Driver Supervisor (userspace).
+//! AthenaOS Driver Supervisor (userspace).
 //!
 //! Spawned by `user_init` to prove the capability-gated driver model:
 //!   1. Poll for an `SYS_CAP_GRANT` deposit from the parent (handle 1).

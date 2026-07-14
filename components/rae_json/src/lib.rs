@@ -1,8 +1,8 @@
 //! # RaeJSON — a never-panic, `no_std` JSON parser + serializer (RFC 8259).
 //!
-//! RaeenOS_Concept.md §"Web apps via PWA support that actually feels native":
+//! LEGACY_GAMING_CONCEPT.md §"Web apps via PWA support that actually feels native":
 //! the web is the universal app runtime, and JSON is the lingua franca of every
-//! web API a PWA talks to. It is *also* the on-disk format for RaeStore package
+//! web API a PWA talks to. It is *also* the on-disk format for AthStore package
 //! manifests and for settings/config. One correct, dependency-free, hostile-input
 //! JSON core serves all three — so this crate is foundational infrastructure, not
 //! tied to any one consumer (it is deliberately wired into none this slice).
@@ -1387,7 +1387,7 @@ mod tests {
 
     #[test]
     fn manifest_shaped_document() {
-        // Shaped like a RaeStore manifest — the real-world use this serves.
+        // Shaped like a AthStore manifest — the real-world use this serves.
         let src = r#"{
             "name": "com.raeen.example",
             "version": "1.2.3",

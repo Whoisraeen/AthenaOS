@@ -5,7 +5,7 @@
 //! - "Allow Once" / "Allow Always" / "Deny" buttons
 //! - Rate limiting (max 3 requests per minute per app)
 //! - Persistent permission store for user decisions
-//! - Integration with RaeShield's SandboxPolicy
+//! - Integration with AthGuard's SandboxPolicy
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;

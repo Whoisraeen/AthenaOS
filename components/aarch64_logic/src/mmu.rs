@@ -236,14 +236,14 @@ pub mod mair {
             | (attrs[7] as u64) << 56
     }
 
-    /// RaeenOS's canonical MAIR for QEMU-virt bring-up:
+    /// AthenaOS's canonical MAIR for QEMU-virt bring-up:
     /// index 0 = Normal WB (RAM), index 1 = Device-nGnRnE (MMIO), rest unused.
     pub const fn raeen_default() -> u64 {
         build([NORMAL_WB, DEVICE_NGNRNE, 0, 0, 0, 0, 0, 0])
     }
 }
 
-/// `TCR_EL1` builder for the RaeenOS aarch64 model: 4 KiB granule on BOTH
+/// `TCR_EL1` builder for the AthenaOS aarch64 model: 4 KiB granule on BOTH
 /// halves, 48-bit VA (T0SZ=T1SZ=16), inner/outer WB cacheable, inner-shareable
 /// table walks, and 48-bit IPS.
 ///

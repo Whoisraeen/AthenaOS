@@ -2445,7 +2445,7 @@ pub fn run_boot_smoketest() {
     let x25519_ok = shared_a == shared_b && shared_a != Key::zero();
 
     // 2. Test Blake2s
-    let data = b"RaeenOS Crypto Test";
+    let data = b"AthenaOS Crypto Test";
     let hash1 = blake2s(data, &[]);
     let hash2 = blake2s(data, &[]);
     let blake2_ok = hash1.0 == hash2.0 && hash1.0 != [0u8; 32];

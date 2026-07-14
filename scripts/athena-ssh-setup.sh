@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# athena-ssh-setup.sh — enable SSH on Athena (Arch) so the RaeenOS dev box can read
+# athena-ssh-setup.sh — enable SSH on Athena (Arch) so the AthenaOS dev box can read
 # the live GPU/PSP register state over the LAN (umr/debugfs). READS ONLY from the
 # dev box side; this script only sets up the sshd + an authorized key.
 #
@@ -40,6 +40,6 @@ else
 fi
 
 echo
-echo "== then, from the RaeenOS dev box: =="
+echo "== then, from the AthenaOS dev box: =="
 echo "  ssh $TARGET_USER@<ATHENA-IP>     # should log in with no password prompt"
 echo "Done."

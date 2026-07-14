@@ -1,4 +1,4 @@
-//! RaeBridge — Windows app compatibility layer.
+//! AthBridge — Windows app compatibility layer.
 //!
 //! See `docs/components/raebridge.md` for the design.
 // no_std for real builds; std under `cargo test` so the ldr/disasm/pe_inspect
@@ -446,7 +446,7 @@ pub fn string_to_wide(s: &str) -> Vec<u16> {
 // Error types
 // ---------------------------------------------------------------------------
 
-/// Errors produced by the RaeBridge subsystem.
+/// Errors produced by the AthBridge subsystem.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BridgeError {
     /// The input buffer is too small to contain the expected structure.
@@ -724,7 +724,7 @@ impl CompatSession {
 /// Result type for syscall translation operations.
 pub type TranslateResult = Result<u64, BridgeError>;
 
-/// Interface for translating Windows NT syscalls into RaeenOS native calls.
+/// Interface for translating Windows NT syscalls into AthenaOS native calls.
 ///
 /// Implementors map Windows kernel32/ntdll syscall numbers and semantics to the
 /// host kernel's equivalent operations. Each method receives the session context
@@ -903,7 +903,7 @@ pub(crate) fn ascii_eq_ignore_case(a: &str, b: &str) -> bool {
 impl WinApiModule {
     pub fn from_name(name: &str) -> Self {
         // Redirect API Set contract DLLs (api-ms-win-*, ext-ms-win-*) and host
-        // aliases (kernelbase/ucrtbase/combase/...) to the canonical RaeBridge
+        // aliases (kernelbase/ucrtbase/combase/...) to the canonical AthBridge
         // module before classifying — modern binaries import through these, not
         // the physical DLL. Grounded in the real Win10 schema (crate::apiset).
         let canon = crate::apiset::canonical_dll(name);
@@ -1375,7 +1375,7 @@ pub fn translate_win_path(win_path: &str) -> String {
 /// (its image name). Distinct apps get distinct buckets; the same app is stable
 /// across runs. This namespaces each app's virtual `C:\` so one app cannot see
 /// another's files — the Concept "per-app data buckets" isolation, at the path
-/// level. (RaeFS bucket-key binding is the deeper kernel follow-up.)
+/// level. (AthFS bucket-key binding is the deeper kernel follow-up.)
 pub fn app_bucket_id(identity: &str) -> String {
     // Basename (drop any path), lowercased, non-alphanumeric -> '_'.
     let base = identity
@@ -1428,7 +1428,7 @@ pub fn app_bucket_vfs_path(identity: &str, win_path: &str) -> String {
 }
 
 // ---------------------------------------------------------------------------
-// DirectX → RaeGFX translation layer
+// DirectX → AthGFX translation layer
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1789,12 +1789,12 @@ pub const KERNEL32_MODULE_BASE: u64 = 0x7FFF_0001_0000;
 pub const NTDLL_MODULE_BASE: u64 = 0x7FFF_0002_0000;
 
 // ---------------------------------------------------------------------------
-// Error translation: RaeenOS → Win32
+// Error translation: AthenaOS → Win32
 // ---------------------------------------------------------------------------
 
 pub use pe_loader::{raeen_error_to_win32, RaeenOsError};
 
-/// Convenience: set `last_error` on a session from a RaeenOS error.
+/// Convenience: set `last_error` on a session from a AthenaOS error.
 pub fn set_last_error_from_raeen(ctx: &mut FullCompatSession, err: &pe_loader::RaeenOsError) {
     ctx.last_error = pe_loader::raeen_error_to_win32(err);
 }
@@ -1847,7 +1847,7 @@ pub fn run_sync_self_test() -> bool {
     ok &= kernel32::wait_for_single_object(&mut ctx, s, 0) == WAIT_OBJECT_0;
 
     // Named reopen shares one object and reports ERROR_ALREADY_EXISTS.
-    let name: Vec<u16> = "Global\\RaeBridgeSelfTest".encode_utf16().collect();
+    let name: Vec<u16> = "Global\\AthBridgeSelfTest".encode_utf16().collect();
     let n1 = kernel32::create_mutex_w(&mut ctx, 0, WinBool(0), Some(&name));
     ok &= n1 != NULL_HANDLE && ctx.last_error == ERROR_SUCCESS;
     let _n2 = kernel32::create_mutex_w(&mut ctx, 0, WinBool(0), Some(&name));
@@ -1880,7 +1880,7 @@ pub fn run_registry_thunk_self_test() -> bool {
     ok &= advapi32::reg_create_key_ex_w(
         &mut ctx,
         advapi32::HKEY_CURRENT_USER,
-        "Software\\RaeBridge\\SelfTest",
+        "Software\\AthBridge\\SelfTest",
         0,
         None,
         0,
@@ -1951,7 +1951,7 @@ pub fn registry_thunk_self_test_text() -> String {
     let _ = core::fmt::Write::write_fmt(
         &mut s,
         format_args!(
-            "RaeBridge advapi32 registry thunks (Phase A.3)\nself_test: {}\n\
+            "AthBridge advapi32 registry thunks (Phase A.3)\nself_test: {}\n\
              thunks: RegOpen/Create/Close/Query/Set/Delete/Enum/QueryInfo/Flush (W+A)\n\
              backing: ctx.registry hive -> win_registry versioned config (snapshot/rollback)\n\
              exposed: IAT shim table under advapi32.dll (was fail-loud trampoline)\n",
@@ -1968,7 +1968,7 @@ pub fn sync_self_test_text() -> String {
     let _ = core::fmt::Write::write_fmt(
         &mut s,
         format_args!(
-            "RaeBridge sync objects (broker §6.1, in-process)\nself_test: {}\n\
+            "AthBridge sync objects (broker §6.1, in-process)\nself_test: {}\n\
              objects: mutex(owner+recursion) event(manual/auto) semaphore(count/max)\n\
              namespace: named create/open + ERROR_ALREADY_EXISTS, refcounted close\n\
              waits: WaitForSingleObject + WaitForMultipleObjects (any/all)\n\
@@ -2379,7 +2379,7 @@ mod tests {
     #[test]
     fn test_named_object_reopen_and_close() {
         let mut ctx = sync_ctx();
-        let name = wname("Global\\RaeBridgeTestMutex");
+        let name = wname("Global\\AthBridgeTestMutex");
         let h1 = kernel32::create_mutex_w(&mut ctx, 0, FALSE, Some(&name));
         assert_eq!(ctx.last_error, ERROR_SUCCESS);
         // Second create with the same name returns a DISTINCT handle to the
@@ -2449,13 +2449,13 @@ mod tests {
     fn test_registry_thunk_dword_roundtrip() {
         use advapi32 as adv;
         let mut ctx = sync_ctx();
-        // Create HKCU\Software\RaeBridgeTest, set a DWORD, read it back.
+        // Create HKCU\Software\AthBridgeTest, set a DWORD, read it back.
         let mut hk = 0u64;
         let mut disp = 0u32;
         let r = adv::reg_create_key_ex_w(
             &mut ctx,
             adv::HKEY_CURRENT_USER,
-            "Software\\RaeBridgeTest",
+            "Software\\AthBridgeTest",
             0,
             None,
             0,

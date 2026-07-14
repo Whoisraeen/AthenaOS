@@ -2,13 +2,13 @@
 //!
 //! > "Native everywhere. No Electron tax. No web wrappers. Native rendering,
 //! > native input, native audio — sub-frame latency end to end."
-//! > — RaeenOS Concept, §Design Principles #1
+//! > — AthenaOS Concept, §Design Principles #1
 //!
 //! This is the single highest-leverage piece of Phase 1 (docs/research/web-engine.md
 //! §"Paint bridge"): it converts the engine's private [`DisplayList`]/[`PaintCommand`]
 //! IR into [`raegfx::Canvas`] calls, turning the inert 4.9k-line renderer into pixels
 //! that draw through the SAME crisp-AA path (Inter / `draw_text_aa`) as every other
-//! RaeUI surface — the literal meaning of "renders through RaeUI".
+//! AthUI surface — the literal meaning of "renders through AthUI".
 //!
 //! `no_std + alloc`, never panics on malformed input: every coordinate is clamped to
 //! `usize` and to the active clip, and an empty/degenerate command is skipped, so a

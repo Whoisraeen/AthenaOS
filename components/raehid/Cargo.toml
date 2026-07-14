@@ -6,11 +6,11 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS HID report-descriptor layer. Wraps the `hidreport` crate (MIT) — the
+# AthenaOS HID report-descriptor layer. Wraps the `hidreport` crate (MIT) — the
 # SAME parser Redox OS uses for keyboard/mouse: Redox's `usbhidd` depends on
 # `rehid`, which in turn depends on `hidreport` for the actual report-descriptor
 # parse + field extraction. We harvest the parser (not Redox's userspace
-# scheme glue) so RaeenOS's in-kernel xHCI HID path can decode NON-boot-protocol
+# scheme glue) so AthenaOS's in-kernel xHCI HID path can decode NON-boot-protocol
 # devices (gaming mice/keyboards that report via report descriptors, not the
 # fixed boot layout). See docs/REDOX_EXTRACTION_MAP.md.
 #

@@ -4,9 +4,9 @@
 //! process-global loaded-module registry the `Rtl*` SEH-filter machinery
 //! walks to map a PC back to its image + `.pdata`.
 //!
-//! Concept §Compatibility Strategy: "RaeBridge runs Windows apps on day one."
+//! Concept §Compatibility Strategy: "AthBridge runs Windows apps on day one."
 //! Reaching `main` in an unmodified MSVC binary is the concrete proof that the
-//! CRT's startup sequence (`__scrt_common_main_seh`) ran on RaeenOS. Every
+//! CRT's startup sequence (`__scrt_common_main_seh`) ran on AthenaOS. Every
 //! function here is a *pure* transform or a serialized table operation, so it
 //! is unit-tested off-target (host KAT) BEFORE any guest executes it — a wrong
 //! UTF-8↔UTF-16 conversion or a stale EncodePointer cookie corrupts the guest

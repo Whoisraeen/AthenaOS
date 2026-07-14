@@ -1,6 +1,6 @@
 //! shlwapi.dll — Shell Lightweight Utility API: path manipulation, string
 //! helpers, URL functions, registry utilities, and color conversion for
-//! RaeBridge.
+//! AthBridge.
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;

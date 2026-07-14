@@ -1,6 +1,6 @@
 //! # RaeXlsx — a never-panic, `no_std` XLSX (Excel) reader (Office Open XML / SpreadsheetML).
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy ("how to actually win" — let people
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy ("how to actually win" — let people
 //! switch without conscious effort): a Windows/macOS switcher arrives with a folder
 //! of `.xlsx` files, and "open my spreadsheets" is core office-style productivity
 //! table stakes for a daily driver (the natural follow-up to `rae_docx`'s "open my

@@ -1,4 +1,4 @@
-//! Power management and suspend/resume subsystem for RaeenOS.
+//! Power management and suspend/resume subsystem for AthenaOS.
 //!
 //! Full suspend/resume lifecycle: sleep states (S0–S5), device PM callbacks,
 //! generic power domains, runtime PM, hibernation with image compression,

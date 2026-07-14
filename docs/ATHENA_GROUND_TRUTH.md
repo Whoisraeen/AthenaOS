@@ -78,6 +78,6 @@ Get-WmiObject Win32_PnPAllocatedResource   # filter Dependent by the GPU DeviceI
 Get-ChildItem HKLM:\SYSTEM\CurrentControlSet\Enum\DISPLAY -Recurse  # EDID bytes
 ```
 
-The same session also explains why nothing here came from a RaeenOS boot: the
+The same session also explains why nothing here came from a AthenaOS boot: the
 Athena box has **no toolchain** — collection from the installed OS is the
-zero-flash way to ground-truth a new SKU before its first RaeenOS boot.
+zero-flash way to ground-truth a new SKU before its first AthenaOS boot.

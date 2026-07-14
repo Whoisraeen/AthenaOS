@@ -6,9 +6,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS animated-GIF decoder (87a + 89a) — pixels and frames, not bytes
-# (RaeenOS_Concept.md §creators / media: "show my photos" extends to animated
-# images — stickers, messaging, web GIFs). RaeenOS already decodes PNG/JPEG
+# AthenaOS animated-GIF decoder (87a + 89a) — pixels and frames, not bytes
+# (LEGACY_GAMING_CONCEPT.md §creators / media: "show my photos" extends to animated
+# images — stickers, messaging, web GIFs). AthenaOS already decodes PNG/JPEG
 # but nothing animated; this is the missing consumer format. A from-scratch,
 # zero-dependency LZW + frame-composition pipeline that outputs ready-to-blit
 # ARGB8888 full-canvas frames.

@@ -6,8 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS regular-expression engine — a never-panic, zero-dependency, `no_std`
-# Thompson-NFA matcher (RaeenOS_Concept.md §"The user owns the machine"). Broadly
+# AthenaOS regular-expression engine — a never-panic, zero-dependency, `no_std`
+# Thompson-NFA matcher (LEGACY_GAMING_CONCEPT.md §"The user owns the machine"). Broadly
 # useful text infrastructure: find/replace in editors, input validation, search.
 #
 # The NFA is simulated with a parallel-state Pike VM — NO backtracking — so an

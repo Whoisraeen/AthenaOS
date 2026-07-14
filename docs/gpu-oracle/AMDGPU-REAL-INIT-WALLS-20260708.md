@@ -1,9 +1,9 @@
-# Real amdgpu on RaeenOS — two walls broken, PSP is a passthrough limit (2026-07-08)
+# Real amdgpu on AthenaOS — two walls broken, PSP is a passthrough limit (2026-07-08)
 
 **Session result:** the real upstream amdgpu C (Strategy B, `RAEEN_AMDGPU_REAL=1`),
 running under the LinuxKPI shim in a VFIO GPU-passthrough KVM guest on Athena
 (Phoenix1 `1002:15bf`), was driven **from "dies at device claim" all the way to
-PSP `hw_init`** — the deepest the real driver has ever run on RaeenOS. Two walls
+PSP `hw_init`** — the deepest the real driver has ever run on AthenaOS. Two walls
 were broken; the third (PSP) is proven to be a VFIO-APU-passthrough limitation,
 not a code bug.
 
@@ -105,12 +105,12 @@ c4:00.1/.5/.6 audio, c4:00.3/.4 USB  <- host-owned siblings
 
 The host Linux amdgpu inits this exact PSP fine **because it owns all of
 `c4:00.*`**. A guest that owns only `c4:00.0` never can. This is an APU-VFIO
-limitation, independent of RaeenOS.
+limitation, independent of AthenaOS.
 
-## Next step — bare-metal RaeenOS (the real PSP test)
+## Next step — bare-metal AthenaOS (the real PSP test)
 
 Boot the same `--safe` `RAEEN_AMDGPU_REAL=1` image on Athena **bare metal** (USB
-per §9): RaeenOS then owns the whole SoC, the firmware cold-inits the PSP (SOS
+per §9): AthenaOS then owns the whole SoC, the firmware cold-inits the PSP (SOS
 loaded), and amdgpu inits its rings against a PSP it fully controls — the same
 ownership the working host driver has. The cap-gate and VBIOS fixes carry over
 unchanged (bare metal the GPU IS at `c4:00.0`, which is exactly what

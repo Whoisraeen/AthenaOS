@@ -1,7 +1,7 @@
-//! DirectX → RaeGFX translation layer.
+//! DirectX → AthGFX translation layer.
 //!
-//! Translates DXGI, Direct3D 11, and Direct3D 12 API calls into RaeGFX
-//! pipeline commands — analogous to DXVK/VKD3D-Proton but native to RaeenOS.
+//! Translates DXGI, Direct3D 11, and Direct3D 12 API calls into AthGFX
+//! pipeline commands — analogous to DXVK/VKD3D-Proton but native to AthenaOS.
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;
@@ -271,7 +271,7 @@ pub struct DxgiAdapter {
 impl DxgiAdapter {
     pub fn raeen_default() -> Self {
         Self {
-            description: String::from("RaeGFX Virtual GPU"),
+            description: String::from("AthGFX Virtual GPU"),
             vendor_id: 0x1AEE,
             device_id: 0x0001,
             subsys_id: 0,
@@ -1409,7 +1409,7 @@ impl D3d11DeviceContext {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// D3D11 → RaeGFX Command Translation
+// D3D11 → AthGFX Command Translation
 // ═══════════════════════════════════════════════════════════════════════════
 
 pub fn translate_d3d11_to_raegfx(
@@ -2036,7 +2036,7 @@ impl D3d12GraphicsCommandList {
     }
 }
 
-/// Translate D3D12 command list to RaeGFX draw commands.
+/// Translate D3D12 command list to AthGFX draw commands.
 pub fn translate_d3d12_to_raegfx(commands: &[D3d12Command]) -> Vec<raegfx::DrawCommand> {
     let mut out = Vec::new();
 

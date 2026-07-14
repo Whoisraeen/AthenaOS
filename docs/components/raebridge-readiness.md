@@ -1,7 +1,7 @@
-# RaeBridge Readiness Report
+# AthBridge Readiness Report
 
 **Status as of 2026-06-30.** Ceiling is `[~]` (host KAT + QEMU); no iron flashes on
-this path. This is the consolidated answer to "how close is RaeBridge to *a real
+this path. This is the consolidated answer to "how close is AthBridge to *a real
 Windows GUI app runs, types, saves, windows, exits — with cross-process sync +
 exception handling*", and what remains for the GPU-gated Phase D.
 
@@ -16,11 +16,11 @@ Two in-crate, no-ABI slices grounded in real Windows 10.0.26200 ground truth
 - **API Set schema redirection (`src/apiset.rs`) — the level-of-detail win.** A
   survey of 500 real System32 `.exe` import tables showed the ~40 most-imported
   symbols are imported through **API Set contract DLLs** (`api-ms-win-core-*`,
-  `api-ms-win-crt-*`), not `kernel32.dll`. RaeBridge's exact-name resolver never
+  `api-ms-win-crt-*`), not `kernel32.dll`. AthBridge's exact-name resolver never
   matched them, so every modern (non-hand-crafted) binary's imports fell through
   to fail-loud stubs. Now an authoritative `api-set -> host` table — generated
   from this machine's 111 `System32\downlevel` forwarder stubs and folded onto
-  the RaeBridge module that hosts each export — redirects contract DLLs the way
+  the AthBridge module that hosts each export — redirects contract DLLs the way
   the real Windows loader (and Wine) do. Wired into `winapi_shims::resolve_shim`,
   `pe_loader::DllRegistry::{resolve,resolve_ordinal,has_dll}`, and
   `WinApiModule::from_name`.
@@ -48,7 +48,7 @@ Two in-crate, no-ABI slices grounded in real Windows 10.0.26200 ground truth
   (FindILsb/FindUMsb/FindSMsb, with the D3D `31 - pos` MSB flip + -1 sentinel).
   fxc fixture `intbit_ps.dxbc` + `spirv-val`-clean KAT.
 - **`raebridge_server` broker sign-off packet** (`raebridge-server-design.md` §7):
-  versioned `RaeSyncObject` shared-page struct + the one binary ABI decision
+  versioned `AthSyncObject` shared-page struct + the one binary ABI decision
   (Outcome A: zero ABI vs Outcome B: `SYS_RAEBRIDGE_SYNC_OPEN=259`) filed as
   `NEEDS-INTERFACE` for Opus.
 
@@ -162,16 +162,16 @@ the known regression, and closes gate item #3 honestly.
 
 ---
 
-## What's left for Phase D — the D3D-runtime ↔ RaeGFX-submit seam (GPU-gated, OUT)
+## What's left for Phase D — the D3D-runtime ↔ AthGFX-submit seam (GPU-gated, OUT)
 
 The shader **translator** is done and spirv-val-clean (item #5). The open seam is the
-D3D **runtime** ↔ **RaeGFX submit**:
+D3D **runtime** ↔ **AthGFX submit**:
 
 1. **D3D runtime** (resource/state/command-list/pipeline/present — ~90% of DXVK/VKD3D):
    ratified to be a *source port* of DXVK/VKD3D via `zig cc`, not rewritten
    (`raebridge-wine-strategy.md` §5). It consumes the translator's SPIR-V and issues
    draw/dispatch.
-2. **RaeGFX submit**: the runtime's `vkQueueSubmit`-equivalent must reach RaeGFX's real
+2. **AthGFX submit**: the runtime's `vkQueueSubmit`-equivalent must reach AthGFX's real
    GPU submit path — which is gated on the amdgpu bring-up (the MES `set_hw_resources`
    ack, per the amdgpu campaign). No host proof exists past `spirv-val`; real pixels
    need real silicon.

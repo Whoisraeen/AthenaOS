@@ -1,5 +1,5 @@
 //! OLE32 — COM/OLE runtime, Structured Storage, Monikers, winmm multimedia,
-//! and version info APIs for the RaeBridge compatibility layer.
+//! and version info APIs for the AthBridge compatibility layer.
 #![allow(dead_code)]
 
 extern crate alloc;
@@ -1421,7 +1421,7 @@ impl VersionInfoBlock {
         let ver_string = alloc::format!("{}.{}.{}.{}", major, minor, patch, build);
         string_table.insert(String::from("FileVersion"), ver_string.clone());
         string_table.insert(String::from("ProductVersion"), ver_string);
-        string_table.insert(String::from("CompanyName"), String::from("RaeenOS"));
+        string_table.insert(String::from("CompanyName"), String::from("AthenaOS"));
         string_table.insert(String::from("FileDescription"), String::new());
         string_table.insert(String::from("InternalName"), String::new());
         string_table.insert(String::from("LegalCopyright"), String::new());

@@ -1,4 +1,4 @@
-# RaeManifest.toml — RaeenOS app permission manifest (Phase 9.2)
+# RaeManifest.toml — AthenaOS app permission manifest (Phase 9.2)
 # "trusted" is only honored because terminal is on the kernel's first-party
 # allowlist; a sideloaded bundle declaring trusted is capped to AppSandbox
 # until code signing provides a real trust root (Phase 9, next item).

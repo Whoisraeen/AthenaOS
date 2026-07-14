@@ -1,4 +1,4 @@
-// RaeBridge notepad-flow fixture — types text and saves it to a file.
+// AthBridge notepad-flow fixture — types text and saves it to a file.
 // Pure Win32, custom returning entry `rae_entry`. Injects two keystrokes
 // ('H','I') as WM_KEYDOWN to its own window; the standard message pump
 // (GetMessage -> TranslateMessage -> DispatchMessage) turns them into WM_CHAR,

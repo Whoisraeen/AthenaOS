@@ -771,7 +771,7 @@ fn fmt_radix(mut v: u64, radix: u64, out: &mut [u8]) -> usize {
 
 // ── Persistent preferences (rae_toml) ─────────────────────────────────────────
 //
-// RaeenOS_Concept.md §"The user owns the machine": "remember my settings" must be
+// LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. Calculator persists its VIEW state — the active mode (Std/Sci/Prog/Conv),
 // the Scientific deg/rad toggle, and the last Converter category — to
 // `<home>/.config/calculator.toml` and restores it on launch, so the app opens in

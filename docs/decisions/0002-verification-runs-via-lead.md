@@ -10,7 +10,7 @@ reported it could not run the gates, `cargo ... build`, or the QEMU `--ci` boot 
 was refused. The lead's own Bash works. Toolchain available to the lead:
 - Windows MINGW64: cargo 1.98 nightly, rustc, and `qemu-system-x86_64.exe` under `Program Files`.
 - WSL2 Ubuntu-22.04 (stopped): qemu-system-x86_64 + cargo + a WSL-native clone at
-  `/home/raeen/raeenos` (the faster KVM path per project memory).
+  `/home/raeen/athenaos` (the faster KVM path per project memory).
 
 ## Decision
 The LEAD runs the real build + QEMU boot to produce machine evidence (serial log), then hands the

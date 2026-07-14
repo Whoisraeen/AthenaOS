@@ -2,7 +2,7 @@
 //!
 //! Concept §Compatibility Strategy ("apps run naturally"): real Windows apps
 //! reach File→Open / File→Save through `GetOpenFileNameW` / `GetSaveFileNameW`,
-//! which normally pop an interactive file picker. RaeBridge's compat path has no
+//! which normally pop an interactive file picker. AthBridge's compat path has no
 //! interactive picker, so these deterministically *confirm* the path the app
 //! pre-filled into `OPENFILENAMEW.lpstrFile` (apps seed it with a default file
 //! name) — the same observable behavior as a scripted / automated Windows

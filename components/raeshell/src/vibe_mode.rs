@@ -1,4 +1,4 @@
-//! Vibe Mode — system-wide visual personalities for RaeenOS.
+//! Vibe Mode — system-wide visual personalities for AthenaOS.
 //!
 //! A `VibeProfile` is a declarative data bundle describing wallpaper,
 //! accent colours, sound design, fonts, cursor theme, animation curves,
@@ -304,7 +304,7 @@ impl VibeProfile {
         Self {
             name: String::from(name),
             description: String::from(desc),
-            author: String::from("RaeenOS"),
+            author: String::from("AthenaOS"),
             version: 1,
             accent: default_accent(),
             wallpaper: WallpaperConfig::solid(Color::rgb(0x0A, 0x0E, 0x1A)),

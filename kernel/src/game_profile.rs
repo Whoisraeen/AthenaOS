@@ -8,7 +8,7 @@
 //! own per-game Properties window, Xbox Game Bar's overlays). Each one
 //! owns a slice of the surface and they routinely contradict each other.
 //!
-//! RaeenOS makes it one kernel primitive. A `GameProfile` is a record
+//! AthenaOS makes it one kernel primitive. A `GameProfile` is a record
 //! keyed by a stable game identifier (binary hash or app-store ID). When
 //! the game launches, `apply()` walks the profile and pokes every system
 //! that can act on a field: scheduler (game mode + NULL_LATENCY + affinity),
@@ -52,7 +52,7 @@ pub struct GameProfileAbi {
     pub gpu_power_pct: u32,  // 0-100; 0 = leave default
     pub audio_sink_id: u32,  // 0 = default
     pub flags: u32,          // bit 0 = game_mode, bit 1 = null_latency, bit 2 = hdr, bit 3 = vrr
-    pub priority: u32,       // SCHED_GAME=2, Normal=0
+    pub priority: u32,       // SCHED_BODY=2, Normal=0
     pub affinity_mask: u64,  // CPU affinity bitmask
     pub memory_pin_mib: u32, // megabytes of guaranteed-resident memory
     /// Per-game CPU power cap, as a percent of the max non-turbo frequency
@@ -173,7 +173,7 @@ impl ProfileStore {
 
     fn seed(&mut self) {
         // Ship a couple of named presets so the Settings → Games panel and
-        // the start-menu RaePlay tile have something to populate from.
+        // the start-menu AthPlay tile have something to populate from.
         self.profiles.insert(
             String::from("preset:competitive"),
             GameProfileAbi::default_competitive(),
@@ -498,7 +498,7 @@ pub fn dump_text() -> String {
     };
     let mut out = String::new();
     out.push_str(&alloc::format!(
-        "# RaeenOS per-game profiles ({} stored, {} applied since boot)\n",
+        "# AthenaOS per-game profiles ({} stored, {} applied since boot)\n",
         s.profiles.len(),
         s.apply_count,
     ));

@@ -1,4 +1,4 @@
-# flash-usb.ps1 - write a RaeenOS disk image to a USB stick, SAFELY.
+# flash-usb.ps1 - write a AthenaOS disk image to a USB stick, SAFELY.
 #
 # Safety model (because a prior install wiped a Windows partition):
 #   * HARD GUARD: refuses to write any disk whose BusType is not 'USB'. Your
@@ -64,7 +64,7 @@ if ($target.Size -gt 256GB) {
 $sizeGB = [math]::Round($target.Size/1GB,1)
 Write-Host ""
 Write-Host "[flash-usb] TARGET  -> disk $Disk : $($target.FriendlyName)  ($sizeGB GB, $($target.BusType))" -ForegroundColor Yellow
-Write-Host "[flash-usb] This ERASES that disk completely and writes the RaeenOS image." -ForegroundColor Yellow
+Write-Host "[flash-usb] This ERASES that disk completely and writes the AthenaOS image." -ForegroundColor Yellow
 Write-Host ""
 
 if (-not $Force) {

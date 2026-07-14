@@ -9,9 +9,9 @@
 //!     highest / nominal / lowest performance levels so `cpufreq` can later
 //!     drive autonomous frequency selection instead of fixed P-states.
 //!   * **SVM** (Secure Virtual Machine = AMD-V) — the AMD virtualization
-//!     extension. RaeenOS is *not* a hypervisor, so we deliberately do **not**
+//!     extension. AthenaOS is *not* a hypervisor, so we deliberately do **not**
 //!     set `EFER.SVME`; we only detect and log its presence (and current
-//!     EFER state) so RaeBridge / future VM tooling knows what the silicon
+//!     EFER state) so AthBridge / future VM tooling knows what the silicon
 //!     can do.
 //!   * **SMCA** (Scalable Machine Check Architecture) — Zen-era MCA with a
 //!     wider, banked error-reporting layout. We detect support and log the
@@ -236,7 +236,7 @@ pub fn init() {
 
     if info.svm.supported {
         crate::serial_println!(
-            "[msr-amd] SVM (AMD-V): supported EFER.SVME={} (not enabled by RaeenOS — we are not a hypervisor)",
+            "[msr-amd] SVM (AMD-V): supported EFER.SVME={} (not enabled by AthenaOS — we are not a hypervisor)",
             info.svm.enabled,
         );
     } else {
@@ -314,7 +314,7 @@ pub fn dump_text() -> String {
     };
 
     let mut out = String::new();
-    out.push_str("# RaeenOS AMD MSR detection\n");
+    out.push_str("# AthenaOS AMD MSR detection\n");
     out.push_str(&format!("is_amd: {}\n", info.is_amd));
     if !info.is_amd {
         out.push_str("(AMD MSR probing skipped on non-AMD CPU)\n");
@@ -337,7 +337,7 @@ pub fn dump_text() -> String {
     out.push_str("\n## SVM (AMD-V virtualization)\n");
     out.push_str(&format!("supported:        {}\n", info.svm.supported));
     out.push_str(&format!("efer_svme:        {}\n", info.svm.enabled));
-    out.push_str("note:             not enabled by RaeenOS (we are not a hypervisor)\n");
+    out.push_str("note:             not enabled by AthenaOS (we are not a hypervisor)\n");
 
     out.push_str("\n## SMCA (Scalable Machine Check Architecture)\n");
     out.push_str(&format!("supported:        {}\n", info.smca.supported));

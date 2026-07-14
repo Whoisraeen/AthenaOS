@@ -2,11 +2,11 @@
 //! space, patches the IAT with real `extern "win64"` shim addresses, and
 //! returns a callable entry point.
 //!
-//! Concept §Compatibility Strategy: this is the step that turns RaeBridge
+//! Concept §Compatibility Strategy: this is the step that turns AthBridge
 //! from a Windows-process *simulation* into Windows-code *execution*
 //! (MasterChecklist Phase 11.2: trampoline emitter + import patching).
-//! It runs in the RaeBridge host process (Wine model): guest VAs are host
-//! VAs, so `sys_mmap`-backed memory is directly executable — RaeenOS user
+//! It runs in the AthBridge host process (Wine model): guest VAs are host
+//! VAs, so `sys_mmap`-backed memory is directly executable — AthenaOS user
 //! pages are mapped without NX.
 //!
 //! Import resolution policy:

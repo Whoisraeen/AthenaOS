@@ -111,7 +111,7 @@ pub struct PerCpuSyscall {
     pub kernel_stack_top: u64, // gs:[0x08]
     /// Logical CPU id (0..MAX_CPUS). The authoritative source for
     /// `gdt::current_cpu_id()`. It used to live in the active (user-visible)
-    /// GS base, but once RaeBridge guests own their user GS base (the Win32
+    /// GS base, but once AthBridge guests own their user GS base (the Win32
     /// TEB, via SYS_SET_GS_BASE) the active GS base is guest-controlled and can
     /// no longer carry the CPU id. This per-CPU block is pointed at by
     /// IA32_KERNEL_GS_BASE, which is stable per physical CPU and never changes
@@ -201,7 +201,7 @@ pub fn reinit_after_resume(cpu_id: usize) {
 /// kernel code runs (the syscall handler swaps the per-CPU pointer into
 /// KERNEL_GS while Rust executes; interrupt handlers run with the per-CPU
 /// pointer parked in KERNEL_GS too, since they don't swapgs). The id therefore
-/// no longer depends on the *active* GS base — which RaeBridge guests now own
+/// no longer depends on the *active* GS base — which AthBridge guests now own
 /// (the Win32 TEB, via SYS_SET_GS_BASE). Returns `None` before
 /// `init_percpu_syscall` has run on this CPU (KERNEL_GS still 0) or if the
 /// pointer is outside the static `PERCPU_SYSCALL` array, so the caller can
@@ -590,7 +590,7 @@ fn read_user_cstr(ptr: u64, max_len: usize) -> Option<alloc::string::String> {
 
 pub fn dump_guard_text() -> alloc::string::String {
     alloc::format!(
-        "# RaeenOS syscall hardening\nptr_rejects: {}\nbounds_rejects: {}\nfs_cap_rejects: {}\nproc_cap_rejects: {}\npath_len_limit: {}\nclipboard_len_limit: {}\n",
+        "# AthenaOS syscall hardening\nptr_rejects: {}\nbounds_rejects: {}\nfs_cap_rejects: {}\nproc_cap_rejects: {}\npath_len_limit: {}\nclipboard_len_limit: {}\n",
         GUARD_PTR_REJECTS.load(Ordering::Relaxed),
         GUARD_BOUNDS_REJECTS.load(Ordering::Relaxed),
         GUARD_FS_CAP_REJECTS.load(Ordering::Relaxed),
@@ -603,7 +603,7 @@ pub fn dump_guard_text() -> alloc::string::String {
 pub fn run_boot_smoketest() {
     // Keep this trivial and deterministic: ensure procfs dump path is wired.
     let text = dump_guard_text();
-    if text.starts_with("# RaeenOS syscall hardening") {
+    if text.starts_with("# AthenaOS syscall hardening") {
         crate::serial_println!("[syscall] guard smoketest OK");
     } else {
         crate::serial_println!("[syscall] guard smoketest FAIL");
@@ -623,7 +623,7 @@ pub fn run_boot_smoketest() {
 /// Runs interrupts-masked and restores the original active GS base before
 /// re-enabling, so the BSP's `current_cpu_id()` fast path (active GS == cpu_id
 /// for the boot thread) is never left perturbed. The cross-context-switch
-/// survival (the scheduler restore) is proven end-to-end by RaeBridge's gs-PE
+/// survival (the scheduler restore) is proven end-to-end by AthBridge's gs-PE
 /// smoketest (spec §5) once the loader wiring lands; here we prove the MSR
 /// plumbing the syscall depends on.
 fn gsbase_msr_roundtrip_smoketest() {
@@ -675,15 +675,15 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         .unwrap_or(0);
     let is_linux = crate::linux_syscall::is_linux_task(pid);
 
-    // ── RaeShield sandbox gate (Phase 9) ─────────────────────────────────────
+    // ── AthGuard sandbox gate (Phase 9) ─────────────────────────────────────
     // Per-task enforcement: a sandboxed app is denied the device/network/install
     // syscall classes its policy forbids. Trusted tasks (the default) short-circuit
     // on a single atomic load, so the hot path is unaffected.
     //
     // The gate runs BEFORE ABI dispatch — the Linux branch used to return
-    // first, so a sandboxed Linux binary bypassed RaeShield entirely (fixed
+    // first, so a sandboxed Linux binary bypassed AthGuard entirely (fixed
     // 2026-06-10). The deny value u64::MAX reads as -1 = -EPERM under the
-    // Linux ABI and as the native error sentinel under the RaeenOS ABI, so
+    // Linux ABI and as the native error sentinel under the AthenaOS ABI, so
     // one encoding serves both tables.
     let gate_ok = if is_linux {
         crate::sandbox::check_linux_syscall(pid, regs.rax)
@@ -701,7 +701,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
     }
 
     // Linux ELF tasks route through the Linux syscall translation layer
-    // (Linux x86_64 numbers instead of RaeenOS native numbers).
+    // (Linux x86_64 numbers instead of AthenaOS native numbers).
     if is_linux {
         crate::linux_syscall::linux_syscall_dispatch(regs);
         return;
@@ -1261,8 +1261,8 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             if let Ok(name) = core::str::from_utf8(&name_bytes) {
                 if let Some(data) = crate::vfs::read_file(name) {
                     let parent_id = crate::scheduler::current_task_id();
-                    // Route by ELF OS/ABI byte: native RaeenOS apps are stamped
-                    // ELFOSABI_RAEENOS (0xAE) by xtask; anything carrying a
+                    // Route by ELF OS/ABI byte: native AthenaOS apps are stamped
+                    // ELFOSABI_ATHENAOS (0xAE) by xtask; anything carrying a
                     // Linux identity (0x00 SysV / 0x03 Linux) is loaded through
                     // linux_exec — Linux auxv stack, Linux syscall-table
                     // marking, POSIX state + console fds — so unmodified Linux
@@ -1979,7 +1979,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 }
             }
         }
-        // ── Gaming-first syscalls (40-49) ── see kernel/src/game_session.rs
+        // ── Embodiment-first syscalls (40-49) ── see kernel/src/game_session.rs
         // SYS_WALL_CLOCK — unix-epoch nanoseconds.
         40 => {
             regs.rax = crate::game_session::sys_wall_clock();
@@ -2230,7 +2230,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         80 => {
             regs.rax = crate::scripting::sys_kill(regs.rdi);
         }
-        // ── WireGuard (81-84) ── Concept §RaeNet.
+        // ── WireGuard (81-84) ── Concept §AthNet.
         81 => {
             regs.rax = crate::wireguard::sys_list(regs.rdi, regs.rsi, |p, l, w| {
                 validate_user_range(p, l, w).is_ok()
@@ -2264,7 +2264,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 validate_user_range(p, l, w).is_ok()
             });
         }
-        // ── RaeID session (88-93) ── Concept §RaeID / login gate.
+        // ── AthID session (88-93) ── Concept §AthID / login gate.
         // SYS_SESSION_LOGIN — rdi=user, rsi=user_len, rdx=pass, r10=pass_len → 0 ok, 1 fail
         88 => {
             let user = match copy_from_user(regs.rdi, regs.rsi) {
@@ -2726,7 +2726,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         }
         // ── Anti-cheat attestation (284-290) ──
         //
-        // Concept §Security: "No kernel-level anti-cheat needed — RaeShield
+        // Concept §Security: "No kernel-level anti-cheat needed — AthGuard
         // exposes an attestation API that anti-cheat vendors (EAC, BattlEye,
         // Vanguard) can use without owning ring 0."
         //
@@ -2734,7 +2734,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         // in the SysV order (rdi, rsi, rdx, r10, r8, r9). Pack it up and
         // forward.
         // Anti-cheat attestation (284–290). RENUMBERED from 100–106, which
-        // collided with SYS_OOM_SUBSCRIBE (100) + RaeFS snapshot (101–103) above
+        // collided with SYS_OOM_SUBSCRIBE (100) + AthFS snapshot (101–103) above
         // — first-match-wins meant SYS_AC_REGISTER_GAME (102) ran the destructive
         // raefs::snapshot_restore. See rae_abi Block 34 + docs/SYSCALL_TABLE.md.
         284..=290 => {
@@ -2910,7 +2910,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 };
             }
         }
-        // SYS_AUDIO_SUBMIT (267): feed app PCM into the RaeAudio mixer.
+        // SYS_AUDIO_SUBMIT (267): feed app PCM into the AthAudio mixer.
         //   rdi = samples ptr (*const i16), rsi = frame_count, rdx = format_flags.
         // Fixed format: interleaved 48 kHz i16 stereo (4 bytes/frame). The user
         // buffer is validated (validate_user_range, read) and copy_from_user'd
@@ -3323,7 +3323,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                     // the word's shared physical frame) and retry the syscall on
                     // wake so the word is re-checked — vs the old single
                     // cooperative yield that never parked. This is the primitive
-                    // under every RaeBridge Win32 sync object (WaitForSingleObject
+                    // under every AthBridge Win32 sync object (WaitForSingleObject
                     // → Event/Mutex/Semaphore). MasterChecklist item 1828.
                     match crate::linux_syscall::futex_prepare_wait(addr, val) {
                         crate::linux_syscall::FutexPrep::Block(phys) => {
@@ -3361,12 +3361,12 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             regs.rax = 0;
         }
         // SYS_SET_GS_BASE (282, rae_abi): set the user-visible GS base to the
-        // Win32 TEB pointer for a RaeBridge guest (MSVC CRT reads gs:[0x30]).
+        // Win32 TEB pointer for a AthBridge guest (MSVC CRT reads gs:[0x30]).
         // rdi = TEB virtual address. Mirrors SYS_SET_FS_BASE (126).
         //
         // WHICH MSR — the load-bearing subtlety. The spec (raebridge-real-crt-
         // abi.md §2) prescribes KernelGsBase on the assumption of a SINGLE
-        // trailing swapgs before sysretq. RaeenOS's `syscall_handler` actually
+        // trailing swapgs before sysretq. AthenaOS's `syscall_handler` actually
         // does an EVEN number of swapgs between this Rust arm and sysret: the
         // pair at lines ~184/187 (swap GS back to the per-CPU block for the
         // call, then swap again after) PLUS the final one at ~208. Trace the
@@ -3396,8 +3396,8 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         }
         // SYS_MPROTECT (283, rae_abi): flip protection flags on already-mapped
         // 4 KiB user pages. rdi=addr, rsi=len, rdx=prot (PROT_READ=1/WRITE=2/
-        // EXEC=4). RaeBridge's loader uses this to flip relocated .text RW->RX.
-        // The RaeShield W^X gate (refuse W+X) lives in sys_mprotect.
+        // EXEC=4). AthBridge's loader uses this to flip relocated .text RW->RX.
+        // The AthGuard W^X gate (refuse W+X) lives in sys_mprotect.
         283 => {
             regs.rax = crate::memory::sys_mprotect(regs.rdi, regs.rsi, regs.rdx);
         }

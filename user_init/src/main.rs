@@ -280,7 +280,7 @@ unsafe fn sys_net_close(fd: u64) -> u64 {
 }
 
 /// Dev-only boot demos (raebridge test-exe build, linux_hello/relibc/linuxkpi
-/// fixtures, the VFS/RaeUI/triangle/input/spawn session demos). These are
+/// fixtures, the VFS/AthUI/triangle/input/spawn session demos). These are
 /// self-tests that ran every boot to prove subsystems on QEMU — they are NOT
 /// daily-driver features and just add post-desktop time + log noise on iron
 /// (raebridge alone maps its embedded PE page-by-page = ~370 mmap syscalls).
@@ -354,10 +354,10 @@ unsafe fn run_selftest() -> ! {
         n += 1;
     }
 
-    // 4-6. Filesystem — write/stat/read+verify round trip through the VFS/RaeFS.
+    // 4-6. Filesystem — write/stat/read+verify round trip through the VFS/AthFS.
     {
         let path = b"/home/raeen/selftest.dat";
-        let payload = b"RaeenOS self-test payload 0123456789 abcdef";
+        let payload = b"AthenaOS self-test payload 0123456789 abcdef";
         let mut wrote = false;
         let mut stat_ok = false;
         let mut read_ok = false;
@@ -431,7 +431,7 @@ unsafe fn run_selftest() -> ! {
         canvas.draw_text(
             12,
             (chrome_h - 8) / 2,
-            "RaeenOS - Bare-Metal Self-Test",
+            "AthenaOS - Bare-Metal Self-Test",
             raeui::theme::TITLE_FG,
             None,
         );
@@ -545,7 +545,7 @@ pub extern "C" fn _start() -> ! {
         }
 
         // ─────────────────────────────────────────────────────────────────
-        // RaeBridge execution smoketest (MasterChecklist Phase 11.2) — DURABLE.
+        // AthBridge execution smoketest (MasterChecklist Phase 11.2) — DURABLE.
         // Runs on EVERY boot (NOT gated by RUN_BOOT_DEMOS) and BEFORE the slow
         // amdgpud/LinuxKPI firmware probes, so its serial output always lands
         // inside the QEMU capture window AND survives the production boot cut.
@@ -606,9 +606,9 @@ pub extern "C" fn _start() -> ! {
             let _ = sys_write_fd(1, b"[raebridge] smoketest: raebridge_host spawn FAIL\n");
         }
 
-        // ── RaeBridge guest-process ISOLATION proof (per-process model) ───────
+        // ── AthBridge guest-process ISOLATION proof (per-process model) ───────
         // docs/components/raebridge-process-model.md option (b): each Windows
-        // .exe runs as its OWN RaeenOS process (raebridge_run), so a guest
+        // .exe runs as its OWN AthenaOS process (raebridge_run), so a guest
         // ExitProcess kills only that child and WE (the parent) reap the code.
         // The in-host harness above can run only ONE real CRT exe to ExitProcess
         // per process; THIS runs TWO fixtures as SEPARATE PIDs with DIFFERENT
@@ -632,7 +632,7 @@ pub extern "C" fn _start() -> ! {
             // A real MSVC /MT console .exe compiled on the dev box (its .c source
             // + dumpbin sit beside it in the fixtures dir). Baked in so Child C
             // can write it to the VFS and run it through the PRODUCTION on-disk
-            // Target::Pe route — proving RaeBridge runs a real .exe read off the
+            // Target::Pe route — proving AthBridge runs a real .exe read off the
             // filesystem, not just an in-binary fixture blob.
             const REAL_HELLO_EXE: &[u8] =
                 include_bytes!("../../components/raebridge/fixtures/real_msvc_mt_hello.exe");
@@ -912,8 +912,8 @@ pub extern "C" fn _start() -> ! {
         }
 
         // hello_relibc — native relibc port smoke test (relibc speaks NATIVE
-        // RaeenOS syscalls — see raeenOS_syscall.rs — so xtask stamps it
-        // ELFOSABI_RAEENOS and it spawns natively). TLS now persists across
+        // AthenaOS syscalls — see raeenOS_syscall.rs — so xtask stamps it
+        // ELFOSABI_ATHENAOS and it spawns natively). TLS now persists across
         // switches via SYS_SET_FS_BASE (126) + Task::fs_base, so relibc
         // startup gets further than the old PAUSED state; the kernel cleanly
         // kills it if it still trips (MasterChecklist "relibc full startup").
@@ -949,7 +949,7 @@ pub extern "C" fn _start() -> ! {
 
         // ── v0.1 PRODUCTION BOOT CUT ────────────────────────────────────────
         // The real driver daemons (amdgpud, i915d) are up. EVERYTHING below is
-        // dev demos: the LinuxKPI smoketest + the VFS/RaeUI/**triangle**/input/
+        // dev demos: the LinuxKPI smoketest + the VFS/AthUI/**triangle**/input/
         // driver_supervisor/rg session sequences — including the "Vulkan triangle"
         // that shows on boot. They are self-tests, not daily-driver features, so
         // for the production boot we exit here and let the kernel shell_runner
@@ -973,7 +973,7 @@ pub extern "C" fn _start() -> ! {
 
         // ─────────────────────────────────────────────────────────────────
         // Session 3 demo: persistent file I/O through the VFS layer to
-        // RaeFS-on-virtio-blk (or `/home/raeen/` RAM file when block FS absent).
+        // AthFS-on-virtio-blk (or `/home/raeen/` RAM file when block FS absent).
         //
         // Sentinel encoding so the serial log is human-decodable at a glance:
         //   3000             "begin VFS demo"
@@ -1019,9 +1019,9 @@ pub extern "C" fn _start() -> ! {
         // ─────────────────────────────────────────────────────────────────
         // Continue to UI demo.
         // ─────────────────────────────────────────────────────────────────
-        // Session 5 demo: real windowed UI through RaeUI + compositor.
+        // Session 5 demo: real windowed UI through AthUI + compositor.
         //
-        // We allocate a 480x320 surface, build a Frame("Hello RaeenOS")
+        // We allocate a 480x320 surface, build a Frame("Hello AthenaOS")
         // containing a Label + Button("Click me"), render the widget tree
         // into the surface via raegfx::Canvas, present at (160, 120).
         // Then we fire a few synthetic KeyPress events at the Button to
@@ -1029,12 +1029,12 @@ pub extern "C" fn _start() -> ! {
         // works end-to-end.
         //
         // Sentinel encoding:
-        //   5000             "begin RaeUI demo"
+        //   5000             "begin AthUI demo"
         //   5100 + id        "surface created"
         //   5200             "initial render done"
         //   5300             "presented at (160, 120)"
         //   5400 + i         "toggle iteration i (re-render + re-present)"
-        //   5900             "end RaeUI demo"
+        //   5900             "end AthUI demo"
         // ─────────────────────────────────────────────────────────────────
         sys_print(5000);
 
@@ -1058,7 +1058,7 @@ pub extern "C" fn _start() -> ! {
         let mut canvas = Canvas::new(SURFACE_VIRT as *mut u8, width as usize, height as usize, 4);
 
         let label = Label::new(
-            "Welcome to RaeenOS",
+            "Welcome to AthenaOS",
             raeui::body_y_start(),
             raeui::body_y_start(),
         );
@@ -1078,7 +1078,7 @@ pub extern "C" fn _start() -> ! {
         canvas.draw_text(
             8,
             (chrome_h - 8) / 2,
-            "Hello RaeenOS",
+            "Hello AthenaOS",
             raeui::theme::TITLE_FG,
             None,
         );
@@ -1118,7 +1118,7 @@ pub extern "C" fn _start() -> ! {
 
         // ─────────────────────────────────────────────────────────────────
         // Session 6 — Year-1 milestone demo: "hello triangle" rendered by
-        // RaeGFX's software rasterizer into the same compositor surface.
+        // AthGFX's software rasterizer into the same compositor surface.
         //
         // This closes the concept-doc Year-1 milestone visually:
         //   "Boots, draws, plays a single Vulkan demo."
@@ -1237,7 +1237,7 @@ pub extern "C" fn _start() -> ! {
         let app_info = VkApplicationInfo {
             app_name: alloc::string::String::from("VkDemo"),
             app_version: 1,
-            engine_name: alloc::string::String::from("RaeGFX"),
+            engine_name: alloc::string::String::from("AthGFX"),
             engine_version: 1,
             api_version: VK_API_VERSION_1_0,
         };

@@ -22,7 +22,7 @@ MP3/AAC specs took (per-stage referenced, not end-to-end bit-exact in the host K
 > "A daily driver must 'play my movies' and 'play my music.' MP4 … (the ISO Base Media File
 > Format) is the dominant container for both — phone video, downloaded video, and AAC audio
 > (`.m4a`/`.mp4`) all ship as BMFF."
-> (RaeenOS_Concept.md §creators / media — the exact line `rae_mp4/src/lib.rs` and
+> (LEGACY_GAMING_CONCEPT.md §creators / media — the exact line `rae_mp4/src/lib.rs` and
 > `apps/video/src/lib.rs` both quote in their module docstrings; the "it just works" media pillar.
 > Concept §Roadmap Year-1 also names a decoded picture as the bar: "Boots, draws, plays …".)
 
@@ -82,7 +82,7 @@ decoded frame" line) in `MasterChecklist.md` from `[~] demux-only / gray surface
 
 Every numeric table below is **spec-defined (ITU-T H.264 / ISO 14496-10)** and corroborated across
 ≥2 independent open decoders. None of these projects is vendored or linked — they are read-only
-spec oracles; RaeenOS keeps its own `#![no_std]`, no-libm, integer-transform decoder.
+spec oracles; AthenaOS keeps its own `#![no_std]`, no-libm, integer-transform decoder.
 
 - **ITU-T H.264 (= ISO/IEC 14496-10) — the normative source.** §7.3.2.1 (SPS syntax), §7.3.2.2
   (PPS), §7.3.3 (slice header), §7.3.5 (macroblock layer), §8.3 (intra prediction), §8.5 (transform

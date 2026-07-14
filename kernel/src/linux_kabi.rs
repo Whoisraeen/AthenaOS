@@ -1,7 +1,7 @@
 //! Linux kernel ABI symbol registry — name resolution scaffold for
 //! vendor `.ko` / out-of-tree module imports.
 //!
-//! > **RaeenOS_Concept.md §Architecture:** *"User-space: … drivers
+//! > **LEGACY_GAMING_CONCEPT.md §Architecture:** *"User-space: … drivers
 //! > (IOMMU-sandboxed) … Anything that can fail without taking the system
 //! > down."* *"Driver isolation: Every driver runs in its own protection
 //! > domain with IOMMU enforcement."*
@@ -9,7 +9,7 @@
 //! This module is **not** GPL Linux kernel code. It is an MPL-2.0–compatible
 //! metadata table (symbol name → category + implementation status) modeled
 //! after `components/raebridge/src/pe_dll_registry.rs`: loaders resolve
-//! names to stub dispatch slots; real behavior lives in future RaeenOS
+//! names to stub dispatch slots; real behavior lives in future AthenaOS
 //! shims or userspace driver services.
 //!
 //! Complements [`crate::linux_compat`] (userspace ELF hosting) and
@@ -472,7 +472,7 @@ pub fn run_boot_smoketest() {
 pub fn dump_text() -> String {
     let total = KABI_TABLE.len();
     let mut out = String::new();
-    out.push_str("# RaeenOS Linux kABI symbol registry (scaffold)\n");
+    out.push_str("# AthenaOS Linux kABI symbol registry (scaffold)\n");
     out.push_str("# NOT GPL Linux code — MPL-2.0 metadata + stub dispatch only.\n");
     out.push_str(&format!("total_symbols: {total}\n\n"));
 

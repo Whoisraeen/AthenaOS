@@ -1,9 +1,9 @@
-# raelang — the RaeenOS scripting language
+# raelang — the AthenaOS scripting language
 
 > *"Scripting layer — Swift scripts for automation, no PowerShell archaeology
-> required."* — RaeenOS_Concept.md, §Customization Engine
+> required."* — LEGACY_GAMING_CONCEPT.md, §Customization Engine
 
-**raelang** (surface name: **Rae script**) is RaeenOS's first-class automation
+**raelang** (surface name: **Rae script**) is AthenaOS's first-class automation
 language: a small, Swift-flavored, capability-sandboxed scripting language
 implemented from scratch in Rust. One interpreter — this crate — runs in two
 places:
@@ -20,7 +20,7 @@ places:
 
 ## Why not just ship a real language?
 
-The same reason RaeenOS doesn't ship ext4 or Wayland: the existing options
+The same reason AthenaOS doesn't ship ext4 or Wayland: the existing options
 drag in the wrong architecture. A Python/JS runtime is megabytes of GC and
 attack surface that can't run in-kernel and can't be fuel-metered. AppleScript
 is half-deprecated; PowerShell is its own forbidden cuneiform. Rae script is
@@ -30,7 +30,7 @@ built around three properties the OS actually needs from automation:
    statement, loop iteration, call, and host call burns fuel. `while true {}`
    ends in a `Timeout`, never a hung kernel. There is no way to write a script
    that wedges its host.
-2. **Capability sandboxing (RaeShield model).** A script can compute anything
+2. **Capability sandboxing (AthGuard model).** A script can compute anything
    but *touch* nothing by default. Every system binding is gated on a
    `cap_mask` bit the **user** grants at submit. A denied call fails the whole
    script closed — never a silent no-op.

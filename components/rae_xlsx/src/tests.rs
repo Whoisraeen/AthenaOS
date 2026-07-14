@@ -547,7 +547,7 @@ fn rich_text_shared_string() {
     // A shared string built from multiple <r><t> runs must concatenate.
     let shared = concat_xml(
         r#"<?xml version="1.0"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">"#,
-        "<si><r><t>Hello</t></r><r><t xml:space=\"preserve\">, </t></r><r><t>RaeenOS</t></r></si>",
+        "<si><r><t>Hello</t></r><r><t xml:space=\"preserve\">, </t></r><r><t>AthenaOS</t></r></si>",
         "</sst>",
     );
     let sheet1 = worksheet_xml("<row r=\"1\"><c r=\"A1\" t=\"s\"><v>0</v></c></row>");
@@ -564,7 +564,7 @@ fn rich_text_shared_string() {
     let wb = Workbook::open(&xlsx).unwrap();
     assert_eq!(
         wb.sheets[0].cell(0, 0),
-        Some(&CellValue::Text(String::from("Hello, RaeenOS")))
+        Some(&CellValue::Text(String::from("Hello, AthenaOS")))
     );
 }
 

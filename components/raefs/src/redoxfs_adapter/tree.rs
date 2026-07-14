@@ -1,7 +1,7 @@
 //! RedoxFS `Tree` / `TreeList` / `TreePtr` — first R08 port slice.
 //!
 //! Adapted from `redox_reference_upstream/redoxfs/src/tree.rs` (MIT).
-//! Changes for RaeFS: `no_std`, plain `u32` LE in `TreePtr` (no `endian_num` crate).
+//! Changes for AthFS: `no_std`, plain `u32` LE in `TreePtr` (no `endian_num` crate).
 
 use core::{marker::PhantomData, mem, ops, slice};
 

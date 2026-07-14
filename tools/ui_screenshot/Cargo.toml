@@ -41,5 +41,5 @@ rae_tokens = { path = "../../components/rae_tokens" }
 raemedia = { path = "../../components/raemedia" }
 
 # Standalone workspace: this tool is intentionally NOT a member of the root
-# RaeenOS workspace (it pulls std + path-deps the kernel never links).
+# AthenaOS workspace (it pulls std + path-deps the kernel never links).
 [workspace]

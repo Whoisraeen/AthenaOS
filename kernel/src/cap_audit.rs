@@ -1,6 +1,6 @@
 //! Capability audit — observability for the `capability` subsystem.
 //!
-//! `RaeenOS_Concept.md` §Security:
+//! `LEGACY_GAMING_CONCEPT.md` §Security:
 //!
 //! > "Capability-based permissions — apps request capabilities (file
 //! >  access, camera, mic, network), user grants, OS enforces at the
@@ -295,7 +295,7 @@ pub fn dump_text() -> String {
     let t = totals();
     let mut out = String::new();
     out.push_str(&alloc::format!(
-        "# RaeenOS capability audit\n\
+        "# AthenaOS capability audit\n\
          # totals: grants={} revokes={} queries={} uses={} denied={} (ring {}/{} wrapped={})\n\
          # legend: rights = r(ead) w(rite) x(ec) M(map) W(ait) g(rant) R(evoke)\n\
          # seq  kind   actor  target  flavor       rights   handle\n",

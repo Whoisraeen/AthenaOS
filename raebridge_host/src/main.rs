@@ -1,13 +1,13 @@
-//! RaeBridge host — the userspace process Windows programs run inside.
+//! AthBridge host — the userspace process Windows programs run inside.
 //!
-//! Concept §Compatibility Strategy: "RaeBridge runs Windows apps on day
+//! Concept §Compatibility Strategy: "AthBridge runs Windows apps on day
 //! one. Wine + Proton heritage, tightly integrated. Not a 'subsystem' —
 //! apps run naturally." This binary is that runtime: it maps a PE32+
 //! image into its own address space (Wine model — guest VA == host VA),
 //! patches the IAT against the `extern "win64"` shim table, installs the
 //! process-global Win32 compat session, and jumps to the PE entry point.
 //! From that instruction on, unmodified Windows machine code is executing
-//! on RaeenOS, calling Win32 APIs that land in `raebridge::winapi_shims`.
+//! on AthenaOS, calling Win32 APIs that land in `raebridge::winapi_shims`.
 //!
 //! This is the *durable smoketest harness*: it runs BOTH bring-up images in
 //! one process and emits FAIL-able verdict lines that survive a production

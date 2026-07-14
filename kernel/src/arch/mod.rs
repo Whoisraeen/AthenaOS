@@ -1,6 +1,6 @@
 //! `arch::` — the kernel's Hardware Abstraction Layer boundary (multi-arch).
 //!
-//! Concept §Architecture Reach: *"RaeenOS refuses ISA lock-in: the kernel sits
+//! Concept §Architecture Reach: *"AthenaOS refuses ISA lock-in: the kernel sits
 //! on a clean `arch::` abstraction layer (boot, MMU, interrupts, timers, SMP,
 //! context switch, syscall entry, firmware discovery) so the same OS boots
 //! x86_64, aarch64 (ARM 64-bit), and i686 (32-bit x86) — each proven

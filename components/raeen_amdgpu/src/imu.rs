@@ -1,9 +1,9 @@
 //! gfx11 IMU microcode parsing (`imu_firmware_header_v1_0`).
 //!
-//! Concept (RaeGFX, "looks like Metal, performs like Vulkan"): on the Athena's
+//! Concept (AthGFX, "looks like Metal, performs like Vulkan"): on the Athena's
 //! Phoenix APU the PSP leaves the GFX engine COLD — it loads the PMFW (SMU) but
 //! NOT the GFX firmware (iron boot 233600: `RLC_BOOTLOAD_STATUS=0`,
-//! `GFX_IMU_GFX_RESET_CTRL=0x10`). So RaeGFX's driver must DIRECT-load the GFX
+//! `GFX_IMU_GFX_RESET_CTRL=0x10`). So AthGFX's driver must DIRECT-load the GFX
 //! firmware itself. Step 1 is loading the IMU ucode into the IMU's SRAM; the IMU
 //! then brings GFX out of reset and autoloads RLC/CP. This module parses the
 //! `gc_*_imu.bin` blob to find the I-RAM and D-RAM ucode regions — pure logic,

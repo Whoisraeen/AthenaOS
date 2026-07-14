@@ -1,4 +1,4 @@
-//! RaeAudio — low-latency audio engine.
+//! AthAudio — low-latency audio engine.
 //!
 //! Sub-3 ms round-trip on certified hardware.
 //! No ASIO mess, no PulseAudio mess.
@@ -618,7 +618,7 @@ impl AudioEngine {
         &self.output_buffer
     }
 
-    /// Elevate the current thread to SCHED_GAME priority to guarantee sub-3ms latency.
+    /// Elevate the current thread to SCHED_BODY priority to guarantee sub-3ms latency.
     pub fn elevate_to_game_priority() {
         // We use SYS_NULL_LATENCY_ENTER (44) to explicitly request real-time pinned execution
         #[cfg(target_arch = "x86_64")]
@@ -2418,7 +2418,7 @@ pub fn engine() -> &'static mut AudioEngine {
     unsafe {
         (*core::ptr::addr_of_mut!(ENGINE))
             .as_mut()
-            .expect("RaeAudio not initialized")
+            .expect("AthAudio not initialized")
     }
 }
 

@@ -2,11 +2,11 @@
 
 ## Concept promise served
 
-> "Windows became bloated chasing enterprise. macOS got locked behind a walled garden of Apple silicon. Linux never figured out gaming or design coherence. RaeenOS is the third path…" (§Thesis)
+> "Windows became bloated chasing enterprise. macOS got locked behind a walled garden of Apple silicon. Linux never figured out gaming or design coherence. AthenaOS is the third path…" (§Thesis)
 
 > "Memory tagging on supported CPUs (ARMv8.5 MTE, Intel/AMD equivalent as it ships)" (§Security Model)
 
-The Concept doc never says "x86_64 only." Its entire pitch is that RaeenOS is the answer to *macOS being locked to Apple silicon* — which is only credible if RaeenOS itself can run on ARM (the Rae Station, gaming handhelds, ARM laptops) as well as x86. The §Security Model explicitly names ARMv8.5 MTE as a first-class hardware feature. Multi-arch reach is therefore latent in the Concept, and this spec makes it buildable without a single regression to the iron-proven x86_64 path.
+The Concept doc never says "x86_64 only." Its entire pitch is that AthenaOS is the answer to *macOS being locked to Apple silicon* — which is only credible if AthenaOS itself can run on ARM (the Rae Station, gaming handhelds, ARM laptops) as well as x86. The §Security Model explicitly names ARMv8.5 MTE as a first-class hardware feature. Multi-arch reach is therefore latent in the Concept, and this spec makes it buildable without a single regression to the iron-proven x86_64 path.
 
 This spec is **research + boundary design only**. It writes no kernel code; it defines the seam, the module layout, the build wiring, the phased plan, and the exact boot-log proof for each phase. Charter priority #3.
 
@@ -90,7 +90,7 @@ kernel/src/
 
 ### What stays generic (does NOT move into `arch`)
 
-Everything that is logic, not silicon: `scheduler.rs` (policy — EDF/SCHED_GAME), `task.rs` (Task struct, except the saved-register block), `vfs.rs`, `raefs.rs`, `capability.rs`, `compositor.rs`, all the Rae* services, `net*`, `crypto.rs` (already soft-float, arch-neutral after SIMD-gating), ACPI parsing logic (AML is arch-neutral; only the table *discovery* differs — UEFI config table on both x86 and ARM). The scheduler keeps calling `arch::context::switch(...)`; it doesn't know or care about CR3 vs TTBR0.
+Everything that is logic, not silicon: `scheduler.rs` (policy — EDF/SCHED_BODY), `task.rs` (Task struct, except the saved-register block), `vfs.rs`, `raefs.rs`, `capability.rs`, `compositor.rs`, all the Rae* services, `net*`, `crypto.rs` (already soft-float, arch-neutral after SIMD-gating), ACPI parsing logic (AML is arch-neutral; only the table *discovery* differs — UEFI config table on both x86 and ARM). The scheduler keeps calling `arch::context::switch(...)`; it doesn't know or care about CR3 vs TTBR0.
 
 ### The shared signature surface (what `arch/mod.rs` guarantees every backend provides)
 
@@ -206,7 +206,7 @@ For **raeen-architect**:
 |---|---|---|---|
 | **0** | Land `arch/` boundary; move x86_64 behind it; **x86_64 boots byte-identically** in QEMU (no-regression). | **raeen-kernel** (the move) + **raeen-architect** (the `arch/mod.rs` signature surface) | x86_64 QEMU boot still prints `[ OS ] System successfully booted.`, all existing smoketest PASS lines unchanged, `[BOOT-BENCH]` not regressed. |
 | **1** | xtask `--arch` flag + per-arch target/QEMU wiring; default stays x86_64. | **raeen-architect** | `xtask build` (no flag) unchanged; `xtask build --arch=aarch64` invokes the right cargo target (may fail-to-link until Phase 2 — acceptable). |
-| **2** | aarch64 serial "hello": `_start` → `arch::aarch64::serial::init` (PL011) → one marker line, then `wfi`. | **raeen-arch** (new agent) | `qemu-system-aarch64 -M virt` serial shows `[arch:aarch64] PL011 up — RaeKernel first light` then idles (no fault). |
+| **2** | aarch64 serial "hello": `_start` → `arch::aarch64::serial::init` (PL011) → one marker line, then `wfi`. | **raeen-arch** (new agent) | `qemu-system-aarch64 -M virt` serial shows `[arch:aarch64] PL011 up — AthKernel first light` then idles (no fault). |
 | **3** | aarch64 to MMU + exceptions + timer: enable EL1 paging, install VBAR_EL1, generic-timer tick, GIC EOI. | **raeen-arch** | aarch64 serial shows `[arch:aarch64] MMU+GIC+timer online -> PASS` and survives ≥3 timer ticks without exception loop. |
 | **4** | aarch64 to the smoketest set: run the arch-neutral R10 smoketests (crypto KAT, scheduler spawn, vfs) on ARM; reach `System successfully booted.` | **raeen-arch** + **raeen-kernel** | aarch64 QEMU prints `[ OS ] System successfully booted.` + the same generic-module PASS lines that x86 prints. |
 | **5** | i686 backend to boot marker (proves the boundary generalizes to a 3rd arch). | **raeen-arch** | `qemu-system-i386` prints `[ OS ] System successfully booted.` |
@@ -218,7 +218,7 @@ Phases 0 and 1 are independent and can land together. Phase 2 cannot start until
 ## Acceptance criteria (the exact proof)
 
 - **Phase 0 (the gate):** on `cargo run -p xtask --release -- run --release --ci` (x86_64), serial log MUST still show `[ OS ] System successfully booted.`, MUST NOT show `PANIC`, and every pre-existing smoketest PASS marker (`[msr] run_boot_smoketest … -> PASS`, `[gdt]`, etc.) MUST be unchanged. `[BOOT-BENCH]` total within noise of the pre-refactor number; no new `[boot] WARN`. Per CLAUDE.md §10.17 SMP rule: re-boot ≥5× at `RAEEN_SMP=1` and `=2`. **A diff that changes any boot-log line other than nothing has regressed.**
-- **Phase 2:** `qemu-system-aarch64 -M virt` serial MUST show `[arch:aarch64] PL011 up — RaeKernel first light` and the VM MUST NOT enter an exception loop (no repeating fault address).
+- **Phase 2:** `qemu-system-aarch64 -M virt` serial MUST show `[arch:aarch64] PL011 up — AthKernel first light` and the VM MUST NOT enter an exception loop (no repeating fault address).
 - **Phase 3:** aarch64 serial MUST show `[arch:aarch64] MMU+GIC+timer online -> PASS` with the assertion that ≥3 generic-timer interrupts were taken and EOI'd.
 - **Phase 4:** aarch64 serial MUST show `[ OS ] System successfully booted.` plus the arch-neutral KAT PASS lines (crypto, scheduler).
 - **`/proc/raeen/arch` MUST report:** `arch: <x86_64|aarch64|i686>`, `cpus_online: <n>`, `page_size: <bytes>`, `interrupt_controller: <APIC|GICv3|…>`, `timer: <TSC+LAPIC|generic>`. (New procfs line in `vfs.rs`, arch-neutral, populated from `arch::cpu`/`arch::time`.)

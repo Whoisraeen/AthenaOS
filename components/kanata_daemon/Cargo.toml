@@ -7,6 +7,6 @@ authors.workspace = true
 description = "Userspace Kanata macro input daemon"
 
 [dependencies]
-# kanata-parser requires std. It is vendored but disabled until Phase 11 RaeBridge brings full std support.
+# kanata-parser requires std. It is vendored but disabled until Phase 11 AthBridge brings full std support.
 kanata-keyberon = { path = "vendor/kanata-keyberon" }
 raekit = { path = "../raekit" }

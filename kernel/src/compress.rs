@@ -1,5 +1,5 @@
 //! Transparent block compression — Concept §"CoW, snapshots, tiered storage":
-//! RaeFS pays for capacity with cheap, fast compression on cold/snapshot data.
+//! AthFS pays for capacity with cheap, fast compression on cold/snapshot data.
 //!
 //! Two codecs share this surface: LZ4 (this module, via `lz4_flex`) for the
 //! fast path where decompression latency is on the read critical path, and Zstd
@@ -17,7 +17,7 @@ pub fn compress(input: &[u8]) -> Vec<u8> {
 }
 
 /// Decompress a block produced by [`compress`]. Returns `None` on corrupt input
-/// (truncated, bad length prefix) rather than panicking — RaeFS treats that as a
+/// (truncated, bad length prefix) rather than panicking — AthFS treats that as a
 /// read error and falls back to the uncompressed mirror.
 pub fn decompress(input: &[u8]) -> Option<Vec<u8>> {
     lz4_flex::block::decompress_size_prepended(input).ok()
@@ -57,10 +57,10 @@ pub fn run_boot_smoketest() {
 
 /// procfs body for `/proc/raeen/compress`.
 pub fn dump_text() -> alloc::string::String {
-    let sample = b"RaeenOS transparent compression self-describe sample block.";
+    let sample = b"AthenaOS transparent compression self-describe sample block.";
     let packed = compress(sample);
     alloc::format!(
-        "# RaeenOS block compression\ncodecs: lz4 (rw), zstd (ro)\nsample_in: {}\nsample_lz4: {}\n",
+        "# AthenaOS block compression\ncodecs: lz4 (rw), zstd (ro)\nsample_in: {}\nsample_lz4: {}\n",
         sample.len(),
         packed.len()
     )

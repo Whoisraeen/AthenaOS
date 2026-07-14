@@ -1,6 +1,6 @@
 //! # RaeJs — a never-panic, `no_std` ECMAScript LEXER + PARSER → AST.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy (criterion #5 — "the web browser is the
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy (criterion #5 — "the web browser is the
 //! universal app runtime; PWAs that feel native"): [`raeweb`](../raeweb) already parses
 //! and lays out HTML/CSS and paints through `raegfx`, but it has **no JavaScript**, so a
 //! page is a static document — no buttons that do anything, no PWA. JavaScript is "the

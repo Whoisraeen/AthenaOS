@@ -1,6 +1,6 @@
-# RaeFS On-Disk Format Specification v0.1
+# AthFS On-Disk Format Specification v0.1
 
-RaeFS is a high-performance, Copy-on-Write (CoW) B-tree filesystem designed for gaming workloads. It prioritizes sequential read performance for assets while providing iOS-grade per-app isolation.
+AthFS is a high-performance, Copy-on-Write (CoW) B-tree filesystem designed for gaming workloads. It prioritizes sequential read performance for assets while providing iOS-grade per-app isolation.
 
 ## 1. Physical Layout
 
@@ -24,7 +24,7 @@ RaeFS is a high-performance, Copy-on-Write (CoW) B-tree filesystem designed for 
 
 ### 2.1 Superblock (Block 0)
 
-Occupies the first 4096 bytes. Magic: `0x526165465321` ("RaeFS!").
+Occupies the first 4096 bytes. Magic: `0x526165465321` ("AthFS!").
 
 | Offset | Type | Field |
 |---|---|---|
@@ -60,7 +60,7 @@ Occupies the first 4096 bytes. Magic: `0x526165465321` ("RaeFS!").
 
 ### 2.3 B-tree Node (4KB)
 
-RaeFS uses a B-tree to map **File Offsets** to **Physical Extents**.
+AthFS uses a B-tree to map **File Offsets** to **Physical Extents**.
 
 **Internal Node Layout:**
 - Header (Magic, Level, Key Count)

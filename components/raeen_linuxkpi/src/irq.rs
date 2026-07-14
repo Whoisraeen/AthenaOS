@@ -1,7 +1,7 @@
 //! IRQ → doorbell bridge — Phase 2 of the LinuxKPI host.
 //!
 //! Linux drivers call `request_irq(vector, handler)` expecting the kernel to
-//! invoke `handler` in interrupt context. RaeenOS runs the driver in userspace,
+//! invoke `handler` in interrupt context. AthenaOS runs the driver in userspace,
 //! so we cannot deliver a real hardware interrupt to it directly. Instead:
 //!
 //!   1. `request_irq` routes the device's MSI-X vector to an IPC doorbell.

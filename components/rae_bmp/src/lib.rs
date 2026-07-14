@@ -1,8 +1,8 @@
 //! # RaeBMP — BMP + ICO decoder (favicons + raster coverage).
 //!
-//! RaeenOS_Concept.md (§web / media): a browser that can't show a site's
+//! LEGACY_GAMING_CONCEPT.md (§web / media): a browser that can't show a site's
 //! favicon, and an OS that can't render a Windows bitmap, aren't daily drivers.
-//! RaeenOS already decodes PNG/JPEG/GIF; BMP rounds out raster coverage, and
+//! AthenaOS already decodes PNG/JPEG/GIF; BMP rounds out raster coverage, and
 //! **ICO is the favicon container the web pillar needs** — favicons ship as
 //! `.ico` files served from untrusted websites. This crate is the from-scratch
 //! decoder a browser's tab-strip and a future Photos viewer sit on.
@@ -19,7 +19,7 @@
 //!   data — the mask becomes alpha) or an embedded **PNG** (modern large icons:
 //!   detected by signature and returned as raw bytes for the PNG decoder).
 //!
-//! Output is a flat ARGB8888 `Vec<u32>` (`0xAARRGGBB`) — the RaeGFX
+//! Output is a flat ARGB8888 `Vec<u32>` (`0xAARRGGBB`) — the AthGFX
 //! compositor/Canvas pixel format, matching the house PNG/JPEG/GIF decoders.
 //!
 //! ## Hostile-input posture (CLAUDE: decoders are the #1 RCE surface)

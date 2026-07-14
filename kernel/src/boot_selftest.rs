@@ -1,6 +1,6 @@
 //! Deferred boot self-test sweep (ADR 0006 — boot-time gate).
 //!
-//! RaeenOS_Concept §"Fast is a feature": boot under 6 s (target 3 s). The boot
+//! AthenaOS_Concept §"Fast is a feature": boot under 6 s (target 3 s). The boot
 //! critical path is dozens of synchronous correctness smoketests run serially
 //! on CPU0 *before* the "System successfully booted." marker. Many of those are
 //! userspace-feature correctness checks (theme/vibe/wallpaper/RGB/widgets/

@@ -156,7 +156,7 @@ that touches *other* devices.
 | Malicious driver reads disk MMIO | Driver only has the NIC cap; disk MMIO is a different region. |
 | Malicious driver re-grants its cap | Driver's cap lacks `GRANT` right. |
 | Malicious driver spams IPC | Channel caps have `WRITE` only; backpressure via bounded ring buffers blocks them. |
-| Compromised supervisor | Supervisor is itself an isolated user-space task. Compromise it and you have driver authority — but not kernel authority. Kernel can be re-attested via RaeShield's measured-boot chain. |
+| Compromised supervisor | Supervisor is itself an isolated user-space task. Compromise it and you have driver authority — but not kernel authority. Kernel can be re-attested via AthGuard's measured-boot chain. |
 | Cap forgery | Handles are u64 with no semantics; only kernel translates them. Userspace can't synthesize a valid handle for a target task. |
 
 ## What ships this commit

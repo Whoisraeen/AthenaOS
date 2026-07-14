@@ -1,6 +1,6 @@
-# RaeenOS Driver Registry — every driver we need, what it does, how to build it
+# AthenaOS Driver Registry — every driver we need, what it does, how to build it
 
-**Purpose:** the single enumerated list of every device driver RaeenOS needs to be a
+**Purpose:** the single enumerated list of every device driver AthenaOS needs to be a
 daily-driver gaming OS, with the development info required to build each one. This is
 the *catalogue*; the *method* lives in its companions:
 
@@ -217,7 +217,7 @@ These aren't device drivers in the user sense — they're what every *other* dri
 - **Open:** USB3-hub child probes still time out on some hubs (worked-around by skipping a hub that fails SET_HUB_DEPTH; a real HCRST recovery is a deeper follow-up).
 
 ### 22. USB HID keyboard/mouse — `xhci.rs` + `input.rs` — `[x]` (iron)
-- **Does:** the Tier-0 input path — without it a post-2015 laptop is a mute machine (no PS/2). Boot + report protocol, interrupt-IN endpoint → `service_hid_reports` → `usb_hid` → `shell_runner::handle_key`. SCHED_GAME latency.
+- **Does:** the Tier-0 input path — without it a post-2015 laptop is a mute machine (no PS/2). Boot + report protocol, interrupt-IN endpoint → `service_hid_reports` → `usb_hid` → `shell_runner::handle_key`. SCHED_BODY latency.
 - **Iron:** keyboard armed (5th boot); live typing test pending. Open: LowSpeed keyboard 18-byte `GET_DESCRIPTOR` stall (8-byte-header fallback fix, iron pending — `xhci-lowspeed-kbd-fallback-order` memory).
 
 ### 23. USB HID gamepad — `hid_gamepad.rs` + `input.rs` — `[~]`
@@ -225,7 +225,7 @@ These aren't device drivers in the user sense — they're what every *other* dri
 - **Status:** parser host-KAT'd + iron report-parse proven; **live interrupt-IN binding pending iron**.
 
 ### 24. USB Audio Class — `audio.rs` (usb_audio) — `[~]`
-- **Does:** USB headsets/DACs. UAC1/2 isochronous transfers. Sub-3ms RaeAudio path candidate.
+- **Does:** USB headsets/DACs. UAC1/2 isochronous transfers. Sub-3ms AthAudio path candidate.
 - **Spec:** USB Audio Class 2.0. Isoch endpoint scheduling over xHCI.
 
 ### 25. USB Video Class (UVC webcam) — `[ ]`
@@ -323,7 +323,7 @@ The single biggest open Concept Year-1 deliverable: a **real GPU submit path** (
 ## 8. Audio
 
 ### 47. Intel HD Audio (HDA) — `audio.rs` — `[x]` (iron, partial)
-- **Does:** the analog/HDMI audio on virtually every desktop/laptop. CORB/RIRB command rings, codec widget-graph walk, ring-buffer DMA PCM. The RaeAudio sub-3ms target path.
+- **Does:** the analog/HDMI audio on virtually every desktop/laptop. CORB/RIRB command rings, codec widget-graph walk, ring-buffer DMA PCM. The AthAudio sub-3ms target path.
 - **Spec:** Intel High Definition Audio 1.0a (public). ~3,000 LOC.
 - **Iron:** real codec playback (`wrote_samples=960 hda_playback=1`). **Open:** `codec-walk: dac=true output_pin=false -> FAIL` — output-pin widget detection on this codec topology.
 
@@ -361,7 +361,7 @@ The single biggest open Concept Year-1 deliverable: a **real GPU submit path** (
 - **Does:** sleep/resume (Concept Phase 2.4). Without it, lid-close drains the battery. ACPI S3 programming + device save/restore — a cross-cutting effort touching every driver's `suspend()/resume()`.
 
 ### 60. RGB unified — `rgb.rs` — `[~]`
-- **Does:** the Concept §Customization promise — every mobo/fan/keyboard RGB through one API (SMBus/USB/I²C vendor protocols). "RGB hell is a Windows problem; RaeenOS solves it."
+- **Does:** the Concept §Customization promise — every mobo/fan/keyboard RGB through one API (SMBus/USB/I²C vendor protocols). "RGB hell is a Windows problem; AthenaOS solves it."
 
 ### 61. Bluetooth (btusb + HCI + L2CAP + GAP/A2DP) — `bluetooth.rs` — `[~]`
 - **Does:** BT radios (usually USB btusb, HCI over USB bulk/interrupt). Pairing, controllers, audio (§8.49). ~15,000 LOC native or a BlueZ-class userspace stack (Path C).

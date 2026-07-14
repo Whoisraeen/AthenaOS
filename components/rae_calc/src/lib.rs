@@ -1,4 +1,4 @@
-//! RaeenOS Calculator math engine — *"apps that just work"* (RaeenOS_Concept.md
+//! AthenaOS Calculator math engine — *"apps that just work"* (LEGACY_GAMING_CONCEPT.md
 //! §Three User Experiences). A real expression evaluator powering the bundled
 //! Calculator app: operator precedence, parentheses, unary minus, decimals,
 //! percent, and the `sqrt`/`pow` niceties — all in pure `f64`, no panics on bad

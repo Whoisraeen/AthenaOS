@@ -1,4 +1,4 @@
-//! Shared text helpers for RaeShell render paths.
+//! Shared text helpers for AthShell render paths.
 //!
 //! Every shell surface that truncates a label to fit a pixel/glyph budget used
 //! to do `&s[..N]` — a raw BYTE slice. That PANICS the instant byte `N` lands

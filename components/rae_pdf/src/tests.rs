@@ -146,13 +146,13 @@ fn single_page_pdf(text_op: &[u8], compressed: bool) -> Vec<u8> {
 
 #[test]
 fn opens_and_extracts_hello_uncompressed() {
-    let pdf = single_page_pdf(b"(Hello, RaeenOS!) Tj", false);
+    let pdf = single_page_pdf(b"(Hello, AthenaOS!) Tj", false);
     let doc = Document::open(&pdf).expect("must parse a valid PDF");
     assert_eq!(doc.page_count(), 1, "single page expected");
     let text = doc.extract_text();
     // The concrete, FAIL-able assert: change the expected string and this flips.
     assert!(
-        text.contains("Hello, RaeenOS!"),
+        text.contains("Hello, AthenaOS!"),
         "extract_text must recover the shown text, got {:?}",
         text
     );
@@ -162,11 +162,11 @@ fn opens_and_extracts_hello_uncompressed() {
 
 #[test]
 fn flatedecode_content_decompresses_and_extracts() {
-    let pdf = single_page_pdf(b"(Hello, RaeenOS!) Tj", true);
+    let pdf = single_page_pdf(b"(Hello, AthenaOS!) Tj", true);
     let doc = Document::open(&pdf).expect("FlateDecode PDF must parse");
     assert_eq!(doc.page_count(), 1);
     assert!(
-        doc.extract_text().contains("Hello, RaeenOS!"),
+        doc.extract_text().contains("Hello, AthenaOS!"),
         "FlateDecode content must decompress to the shown text"
     );
 }
@@ -724,7 +724,7 @@ fn fuzz_random_bytes_never_panic() {
 
 #[test]
 fn fuzz_mutated_valid_never_panic() {
-    let base = single_page_pdf(b"(Hello, RaeenOS!) Tj", true);
+    let base = single_page_pdf(b"(Hello, AthenaOS!) Tj", true);
     let mut rng = Rng::new(0x1234_5678);
     for _ in 0..20_000 {
         let mut m = base.clone();

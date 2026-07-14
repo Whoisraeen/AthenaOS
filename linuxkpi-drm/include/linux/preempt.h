@@ -6,7 +6,7 @@
  * wrap lock-free sections in preempt_disable()/enable() and branch on
  * in_interrupt()/in_atomic().
  *
- * In the RaeenOS userspace-daemon model there is no kernel preemption to gate, so
+ * In the AthenaOS userspace-daemon model there is no kernel preemption to gate, so
  * the disable/enable calls are honest NO-OPS (not fakes — there is genuinely no
  * kernel scheduler to hold off here, the same posture as module.h's macros).
  * The context predicates report "normal task context" because the daemon always

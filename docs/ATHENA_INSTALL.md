@@ -1,11 +1,11 @@
-# Installing RaeenOS on the Beelink "Athena" (bare-metal)
+# Installing AthenaOS on the Beelink "Athena" (bare-metal)
 
 Two images are built and QEMU-verified (2026-06-11):
 
 | File | Purpose |
 |---|---|
-| `target/install-usb-safe.img` | **SAFE dry-run.** Boots RaeenOS and *attempts* the install but every disk write to the internal NVMe is refused (`--safe` build). Proves the stick boots on Athena and that nothing destructive happens. **Run this FIRST.** |
-| `target/install-usb.img` | **REAL install.** Boots RaeenOS and writes a fresh GPT + bootable ESP + RaeFS root onto Athena's internal NVMe. |
+| `target/install-usb-safe.img` | **SAFE dry-run.** Boots AthenaOS and *attempts* the install but every disk write to the internal NVMe is refused (`--safe` build). Proves the stick boots on Athena and that nothing destructive happens. **Run this FIRST.** |
+| `target/install-usb.img` | **REAL install.** Boots AthenaOS and writes a fresh GPT + bootable ESP + AthFS root onto Athena's internal NVMe. |
 
 Both are 40 MiB raw disk images: protective MBR + GPT + a FAT32 ESP holding
 `EFI/BOOT/BOOTX64.EFI` + `kernel-x86_64` + `INSTALL.NOW`. The `INSTALL.NOW`
@@ -56,7 +56,7 @@ to copy.
 1. Insert the stick, power on, and spam the **one-time boot-menu key** (Beelink
    mini-PCs: usually **F7**; BIOS setup is **Del** or **F2** — confirm yours).
 2. In BIOS/UEFI settings, make sure:
-   - **Secure Boot = Disabled** (RaeenOS's `BOOTX64.EFI` is not Microsoft-signed —
+   - **Secure Boot = Disabled** (AthenaOS's `BOOTX64.EFI` is not Microsoft-signed —
      Secure Boot will refuse it).
    - Boot mode = **UEFI** (not Legacy/CSM).
 3. From the boot menu pick the **UEFI: <USB stick name>** entry.
@@ -102,9 +102,9 @@ and watch for:
 
 ```
 [install] INSTALL.NOW marker present on the boot stick — running automated install
-[install] stage 1 GPT: ESP at LBA 2048, RaeFS root at LBA 264192
+[install] stage 1 GPT: ESP at LBA 2048, AthFS root at LBA 264192
 [install] clone ESP: NNNNN sectors (38 MiB) source ESP@2048 -> target ESP@2048 -> bootable
-[install] stage 4 RaeFS: on-disk format at LBA 264192 ... superblock_readback=true -> PASS
+[install] stage 4 AthFS: on-disk format at LBA 264192 ... superblock_readback=true -> PASS
 [install] ===== install complete: stages=0b11111 (5/5) =====
 [install] automated install finished: stages=0b11111 (5/5) — bootable ESP written; remove the stick and power-cycle
 ```
@@ -125,12 +125,12 @@ Watch for:
 
 ```
 BdsDxe: starting Boot... NVMe...        ← firmware boots the installed disk
-... RaeenOS bootloader + kernel ...
-[storage] RaeFS mounted from partition 2 @ LBA 264192
+... AthenaOS bootloader + kernel ...
+[storage] AthFS mounted from partition 2 @ LBA 264192
 [ OS ] System successfully booted.
 ```
 
-That's RaeenOS booting **from its own NVMe** — the glassmorphic login/desktop
+That's AthenaOS booting **from its own NVMe** — the glassmorphic login/desktop
 should come up. This is the milestone the QEMU runs proved; Athena is the iron
 confirmation.
 

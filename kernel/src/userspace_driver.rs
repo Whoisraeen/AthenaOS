@@ -588,7 +588,7 @@ pub fn dump_text() -> String {
     };
     let mut out = String::new();
     out.push_str(&alloc::format!(
-        "# RaeenOS userspace driver framework\n\
+        "# AthenaOS userspace driver framework\n\
          # totals: active={} idle={} registered={} unregistered={} claims_granted={} claims_denied={} dma_enabled={}\n\
          # IOMMU enforcement: NOT YET WIRED — `iommu.rs` parser only. Untrusted drivers must NOT use this until that lands.\n\
          # legend: handle  class       state    owner   claims  dma_maps  domain  dma  name\n",

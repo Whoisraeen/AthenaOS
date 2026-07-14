@@ -6,7 +6,7 @@
 //! flag in `config_registry`, and transitions straight to the desktop
 //! (auto-login as the just-created user — same convention as Windows OOBE).
 //!
-//! Until this lands, RaeenOS booted to a pre-seeded `raeen`/`raeen` account
+//! Until this lands, AthenaOS booted to a pre-seeded `raeen`/`raeen` account
 //! that no real user ever chose — fine for a debug kernel, not for an OS
 //! you'd hand to anyone. The wizard makes first boot feel like a fresh
 //! Windows or macOS install: you see your own name on the lock screen
@@ -113,7 +113,7 @@ pub struct Layout {
     pub button: Rect,
     /// "Skip — use without an account" affordance, left-aligned on the same row
     /// as the primary button. Concept §"the user owns the machine" + UI_UX §7
-    /// anti-pattern "Account required for local use": RaeenOS must let a user
+    /// anti-pattern "Account required for local use": AthenaOS must let a user
     /// reach the desktop on first boot WITHOUT creating credentials, unlike
     /// Windows 11's forced Microsoft account.
     pub skip_button: Rect,
@@ -374,7 +374,7 @@ impl SetupState {
         canvas.draw_text_aa(
             lay.title.0 as i32,
             lay.title.1 as i32,
-            "Welcome to RaeenOS",
+            "Welcome to AthenaOS",
             TYPE_TITLE,
             p.text_primary,
             sans,
@@ -817,7 +817,7 @@ fn submit(state: &mut SetupState) -> bool {
 /// could not be started.
 ///
 /// Concept §"the user owns the machine" + `docs/UI_UX.md §7` anti-pattern
-/// "Account required for local use": RaeenOS must let a person reach a usable
+/// "Account required for local use": AthenaOS must let a person reach a usable
 /// desktop on first power-on without ever creating an account — the opposite of
 /// Windows 11 forcing a Microsoft account.
 fn skip(state: &mut SetupState) -> bool {

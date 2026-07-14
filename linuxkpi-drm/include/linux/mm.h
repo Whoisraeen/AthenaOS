@@ -185,7 +185,7 @@ static inline void vm_flags_set(struct vm_area_struct *vma, unsigned long flags)
 	vma->vm_flags |= flags;
 }
 
-/* RaeenOS records cache mode in pgprot_t; access rights remain enforced by the
+/* AthenaOS records cache mode in pgprot_t; access rights remain enforced by the
  * VM mapping syscall.  Start from the normal WB encoding, after which callers
  * such as drm_gem_mmap_obj() can select WC explicitly. */
 static inline pgprot_t vm_get_page_prot(vm_flags_t flags)

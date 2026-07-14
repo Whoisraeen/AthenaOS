@@ -7,7 +7,7 @@
 Run **unmodified Linux driver source** (`amdgpu`, `iwlwifi`, `e1000e`, …) as an
 IOMMU-sandboxed userspace daemon that *believes* it is in the Linux kernel with
 Ring-0 privileges. Every privileged call is intercepted by the LinuxKPI host and
-translated into native RaeKernel primitives. This delivers Day-1 hardware breadth
+translated into native AthKernel primitives. This delivers Day-1 hardware breadth
 without rewriting millions of lines of C — per Concept §Architecture
 ("drivers IOMMU-sandboxed") and `docs/LINUX_DRIVER_STRATEGY.md` Path C/D.
 

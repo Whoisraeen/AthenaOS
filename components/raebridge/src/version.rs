@@ -1,4 +1,4 @@
-//! version.dll — File version information API for RaeBridge.
+//! version.dll — File version information API for AthBridge.
 //!
 //! Many Windows applications query file version info to check DLL versions,
 //! product versions, and company names. This module synthesizes plausible

@@ -58,9 +58,9 @@ rae_pdf = { path = "../../components/rae_pdf" }
 rae_docx = { path = "../../components/rae_docx" }
 rae_xlsx = { path = "../../components/rae_xlsx" }
 rae_image = { path = "../../components/rae_image" }
-# RaeBridge handoff codec — the proven per-process Windows-app launch channel
+# AthBridge handoff codec — the proven per-process Windows-app launch channel
 # (components/raebridge/src/handoff.rs). Files double-clicking a `.exe` writes the
 # launch target to `handoff::HANDOFF_PATH` then spawns `raebridge_run`, which
-# loads that PE as its OWN RaeenOS process (commit d5db628). We CONSUME the
+# loads that PE as its OWN AthenaOS process (commit d5db628). We CONSUME the
 # handoff codec here (rule 7: reuse, never twin) — no parallel encoder.
 raebridge = { path = "../../components/raebridge" }

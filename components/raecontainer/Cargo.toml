@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "RaeContainer — OCI container runtime for RaeenOS"
+description = "RaeContainer — OCI container runtime for AthenaOS"
 
 [dependencies]
 # Real SHA-256 for content-addressed image/layer digests (the OCI digest must

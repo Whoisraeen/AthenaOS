@@ -1,18 +1,18 @@
-# Spec: RaeFS data-integrity / per-block checksums (detect-only)
+# Spec: AthFS data-integrity / per-block checksums (detect-only)
 
 ## Concept promise served
 
 > "**CoW with snapshots** — instant rollback, time-machine-style backups, atomic system
-> updates that never half-apply" (§File System: RaeFS, line 66)
+> updates that never half-apply" (§File System: AthFS, line 66)
 
 > "a system that **resists ransomware structurally** ... where malware infections are
 > bounded, and where you can run untrusted software without fear." (§Security Model, line 142)
 
 A CoW filesystem whose blocks can silently bit-rot or be tampered with is not "instant
 rollback you can trust" — a corrupt snapshot restores corruption. The integrity contract
-is the missing half of the RaeFS promise: **every block carries a strong checksum, and a
+is the missing half of the AthFS promise: **every block carries a strong checksum, and a
 read that does not verify returns an error instead of silently serving corrupt or tampered
-bytes.** This is the ZFS/Btrfs "checksum everything" property adapted to RaeFS's CoW +
+bytes.** This is the ZFS/Btrfs "checksum everything" property adapted to AthFS's CoW +
 extent-B-tree + XTS-encrypt + LZ4-compress layout.
 
 ## Already in the tree (verify-before-implement)
@@ -42,7 +42,7 @@ All paths are `kernel/src/raefs.rs` unless noted. Status is the real ladder ([x]
   fields are normalised on mount by `normalise_region_counts` (line 1911). **[x]**.
 - **fsck** `fsck_integrity` (line 2436, bitmap↔refcount span-safe walk), `fsck_btree_integrity`
   (line 2570), `fsck_orphan_inode_cleanup` (line 2501). No data-checksum scrub exists. **[~]**.
-- **R10 smoketests** `RaeFS::run_boot_smoketest` (line 1255), `run_cow_journal_crash_smoketest`
+- **R10 smoketests** `AthFS::run_boot_smoketest` (line 1255), `run_cow_journal_crash_smoketest`
   (line 665), `run_compression_flag_smoketest` (line 4452); all use `with_ram_raefs` (line 480) for a
   throwaway RAM volume in safe-mode. `/proc/raeen/raefs` via `proc_dump_text` (line 215). **[x]**.
 - **Checksum primitives already in-tree:** `fatfs_esp::crc32_ieee` (line 871) — IEEE CRC32, table-free,
@@ -62,7 +62,7 @@ ciphertext*, written atomically with every block write, verified on every read (
   📖 **study/isolate**, do not vendor.
 - **Btrfs** — separate **checksum tree** (CRC32C default, xxHash/SHA-256/BLAKE2 selectable), one tree
   keyed by logical byte offset, 4-byte CRC per 4 KiB. Verify-on-read → EIO; `btrfs scrub` walks every
-  block. This is the closest model to RaeFS's separate-metadata-region layout. GPL-2 — 📖 **isolate**
+  block. This is the closest model to AthFS's separate-metadata-region layout. GPL-2 — 📖 **isolate**
   (pattern only, our impl is independent Rust).
 - **CRC32C (Castagnoli)** — 32-bit, table-driven (or `crc32c` HW insn on SSE4.2). **Our kernel is
   soft-float / no guaranteed SSE (CLAUDE.md §10 #?, kernel-soft-float memory)** → must be the
@@ -119,7 +119,7 @@ Three candidates were weighed:
    ("Landmine-1" pattern). This covers **every** block uniformly — data, inode table, B-tree nodes,
    bitmaps — with one mechanism, keyed the same way refcounts already are (`block_id`).
 
-   This mirrors Btrfs's separate checksum tree, simplified to a flat array because RaeFS already
+   This mirrors Btrfs's separate checksum tree, simplified to a flat array because AthFS already
    addresses everything by physical block index (same access pattern as `read_refcount`, line 1955).
 
 **New superblock fields (format change — see Handoff):**
@@ -227,7 +227,7 @@ ordered so a crash leaves a state `replay_journal` already understands:
   scribble the device is caught on next read).
 - CRC32C is **not** a MAC: an attacker who can write both the data block and its checksum-table slot
   (i.e. already has FS-level write through the kernel) is not stopped by CRC32C alone — that threat is
-  addressed by capability/sandbox enforcement (RaeShield) plus the reserved keyed-BLAKE2S follow-up.
+  addressed by capability/sandbox enforcement (AthGuard) plus the reserved keyed-BLAKE2S follow-up.
   This spec's boundary is explicit and matches Concept §142's "bounded" (detect + fail), not "prevent
   a privileged in-kernel write".
 
@@ -239,7 +239,7 @@ surfaces, both deferrable, flagged for raeen-architect (do **not** assign number
 - `NEEDS-INTERFACE:` (optional, follow-up) a `SYS_RAEFS_SCRUB` syscall so userspace (Settings /
   a "Verify disk" UI) can trigger `fsck_scrub_checksums` and read back `ScrubReport`. Not needed for
   the R10 boot proof (the smoketest calls the function directly). Assign only if/when the UI lands.
-- `NEEDS-INTERFACE:` (optional) extend the existing RaeFS VFS error surface so a userspace `read()`
+- `NEEDS-INTERFACE:` (optional) extend the existing AthFS VFS error surface so a userspace `read()`
   that hits `E_RAEFS_CKSUM` gets a distinct errno rather than a generic EIO. `E_RAEFS_CKSUM` itself
   is an internal `pub const` in `raefs.rs` (pattern of `E_RAEFS_EXTENT_FAIL`, line 131) and needs no
   ABI number; only the errno *mapping* would touch the syscall surface.
@@ -266,12 +266,12 @@ No `rae_abi` / `ABI_VERSION` change is required for the core detect+scrub featur
   - `proc_dump_text` (215): add the integrity status line.
   - `cow_diverge_extent_journaled` (2090): no schema change; rely on `write_data_block` now writing the
     checksum pre-commit (add a comment asserting the invariant).
-- `kernel/src/main.rs`: add `raefs::run_integrity_smoketest();` in the RaeFS smoketest cluster
+- `kernel/src/main.rs`: add `raefs::run_integrity_smoketest();` in the AthFS smoketest cluster
   (after line 1183, beside the cow-journal test).
 - Host KAT: `kernel/src/raefs.rs` `#[cfg(test)]` module (or `tools/`-side harness) for `crc32c`
   against public CRC32C vectors — see Host KAT plan.
 - `docs/SYSCALL_TABLE.md`: **only** if the optional `SYS_RAEFS_SCRUB` is later approved (not now).
-- `MasterChecklist.md`: add a Phase 5.x "RaeFS data-integrity checksums" row (currently absent).
+- `MasterChecklist.md`: add a Phase 5.x "AthFS data-integrity checksums" row (currently absent).
 
 ## Acceptance criteria (the exact proof)
 
@@ -343,8 +343,8 @@ Layer order: ① host KAT (above) → ② boot smoketest (`run_integrity_smokete
   it. Update the `const _: assert size_of::<Superblock>() == BLOCK_SIZE` and the `reserved` tail length
   in the **same** commit as the field additions, or the superblock `ptr::write` overflows the stack
   (the documented Landmine at line 66-69).
-- **Unblocks checklist lines:** no existing MasterChecklist item — **add a Phase 5.x row** "RaeFS
-  data-integrity / per-block checksums (detect-only)"; this is the next RaeFS hardening iteration after
+- **Unblocks checklist lines:** no existing MasterChecklist item — **add a Phase 5.x row** "AthFS
+  data-integrity / per-block checksums (detect-only)"; this is the next AthFS hardening iteration after
   per-file encryption keys (`FILE_KEY_SELFTEST`). Strengthens the §66 "never half-apply" / §142
   "resists ransomware structurally" contracts in `Audit.md`.
 - **Sequencing:** (1) host-KAT `crc32c`; (2) superblock fields + const-assert + reserved tail + all

@@ -1,6 +1,6 @@
-# RaeenOS Testing & Verification Strategy
+# AthenaOS Testing & Verification Strategy
 
-How RaeenOS proves a thing works. A `#![no_std]` kernel on a bare-metal target can't
+How AthenaOS proves a thing works. A `#![no_std]` kernel on a bare-metal target can't
 `cargo test`, so we use a layered ladder instead — host KATs for pure logic, boot
 smoketests for kernel subsystems, QEMU for integration, and iron for the truth. This
 doc is the methodology; CLAUDE.md §9 is the per-commit checklist.

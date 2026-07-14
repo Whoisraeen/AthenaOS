@@ -1,4 +1,4 @@
-# RaeenOS Master Build Checklist
+# AthenaOS Master Build Checklist
 
 Status key: `[x]` done, `[~]` partial/structural, `[ ]` not started
 
@@ -10,7 +10,7 @@ These block everything — without them the OS only runs in QEMU.
 
 - [x] **NVMe driver** — DMA via GlobalFrameAllocator, no hardcoded addresses
 - [x] **AHCI driver** — DMA via GlobalFrameAllocator for command lists, FIS, command tables
-- [x] **Block device trait** — `BlockDevice` trait in block_io.rs, RaeFS wired through it
+- [x] **Block device trait** — `BlockDevice` trait in block_io.rs, AthFS wired through it
 - [x] **MSI/MSI-X interrupt support** — pci.rs capability parsing + msi.rs enable API + dynamic dispatch
 - [x] **PCIe ECAM** — MCFG ACPI parsing, ECAM MMIO + legacy fallback, extended caps (AER, SR-IOV, LTR)
 - [x] **xHCI USB host controller** — real MMIO volatile reads/writes throughout
@@ -18,9 +18,9 @@ These block everything — without them the OS only runs in QEMU.
 - [x] **IOMMU (VT-d/AMD-Vi)** — DMAR parsing, VT-d registers, root/context tables, DMA domains, IOTLB invalidation, cap-gated
 - [x] **Un-quarantine init() calls** — 8-tier boot ordering, all modules wired
 
-## Phase 1: Year-1 Completion (Kernel + RaeFS + RaeGFX + RaeUI)
+## Phase 1: Year-1 Completion (Kernel + AthFS + AthGFX + AthUI)
 
-### RaeFS — CoW Filesystem
+### AthFS — CoW Filesystem
 - [x] Basic mount/format/read/write (on virtio-blk)
 - [x] Copy-on-Write journal
 - [x] Snapshot mechanism (instant rollback)
@@ -32,7 +32,7 @@ These block everything — without them the OS only runs in QEMU.
 - [x] Per-app data buckets (FS-layer isolation)
 - [x] Versioned config files
 
-### RaeGFX — Native Graphics API
+### AthGFX — Native Graphics API
 - [x] Software rasterizer (Canvas, draw_triangle, barycentric)
 - [x] Vulkan-equivalent command submission API
 - [x] GPU memory management (VRAM allocator, PCI discovery, BAR mapping, command ring, VirtIO-GPU, display scanout)
@@ -42,7 +42,7 @@ These block everything — without them the OS only runs in QEMU.
 - [x] Direct-to-GPU exclusive fullscreen (page flip, VRR controller, LFC, mode switch, hotplug recovery)
 - [x] OS-level shader cache (persistent across reinstalls)
 
-### RaeUI — Native UI Framework
+### AthUI — Native UI Framework
 - [x] Label + Button + Frame widgets
 - [x] Theme palette (hardcoded)
 - [x] Layout engine (flexbox/grid — taffy or custom)
@@ -65,7 +65,7 @@ These block everything — without them the OS only runs in QEMU.
 
 ## Phase 2: Year-2 Desktop Experience
 
-### RaeShell — Desktop Shell
+### AthShell — Desktop Shell
 - [x] Window manager (wired to compositor via desktop.rs)
 - [x] Taskbar (renders on own surface, window buttons, clock)
 - [x] Start menu (toggle, app list, click-to-launch)
@@ -82,7 +82,7 @@ These block everything — without them the OS only runs in QEMU.
 - [x] Lock screen (secure overlay, blur, PIN/passkey, idle/lid/hotkey triggers, multi-monitor)
 - [x] Search (local-first, inverted index, TF-IDF, fuzzy Levenshtein, sub-100ms, filesystem watcher)
 
-### RaeBridge — Windows App Compatibility
+### AthBridge — Windows App Compatibility
 - [x] Win32 type definitions (HANDLE, BOOL, DWORD)
 - [x] 30 DLL shim modules declared (kernel32, user32, gdi32, etc.)
 - [x] kernel32 API (CreateFile A/W, ReadFile, WriteFile, CreateProcess, VirtualAlloc, HeapAlloc, TLS, etc.)
@@ -91,11 +91,11 @@ These block everything — without them the OS only runs in QEMU.
 - [x] ntdll API (NtCreateFile, NtQueryInformationFile, NtQueryInformationProcess, Rtl*, heap, registry)
 - [x] PE loader (parse PE32/PE32+, section mapping, base relocations, import resolution, DllRegistry)
 - [x] Win32 threading model (CreateThread, TLS, critical sections)
-- [x] Error translation (RaeenOS → Win32 error codes)
-- [x] DirectX 11/12 -> RaeGFX translation layer (D3D11/12 state mapping, DXGI, DXBC parsing, compat DB)
+- [x] Error translation (AthenaOS → Win32 error codes)
+- [x] DirectX 11/12 -> AthGFX translation layer (D3D11/12 state mapping, DXGI, DXBC parsing, compat DB)
 - [ ] Steam client compatibility test
 
-### RaeNet — Networking Stack
+### AthNet — Networking Stack
 - [x] virtio-net L2 driver
 - [x] smoltcp L3/L4 stack (wired, poll_full integration)
 - [x] DHCP client (full state machine, auto-configure, renewal)
@@ -106,11 +106,11 @@ These block everything — without them the OS only runs in QEMU.
 - [x] Firewall (capability-gated, per-app, conntrack, rate limiting, 3 profiles)
 - [x] e1000 NIC PCI probe wiring
 
-### RaeAudio — Low-Latency Audio
+### AthAudio — Low-Latency Audio
 - [x] HDA register map + codec structures
 - [x] Real MMIO I/O to HDA controller (GCAP, GCTL, CORB/RIRB, stream descriptors)
 - [x] Lockless ring buffer (SPSC, AtomicUsize, 4096 samples)
-- [x] SCHED_GAME audio thread (128 frames @ 48kHz = 2.67ms)
+- [x] SCHED_BODY audio thread (128 frames @ 48kHz = 2.67ms)
 - [x] Mixer (N-stream additive mix, f32→i16, master gain)
 - [x] Audio routing (VoiceMeeter-class, built-in)
 - [x] Capture / recording
@@ -119,17 +119,17 @@ These block everything — without them the OS only runs in QEMU.
 - [x] Audio graph (node-based processing, topological sort)
 - [x] Device manager (hot-plug, per-app device routing)
 
-### SCHED_GAME — Real-Time Scheduling
+### SCHED_BODY — Real-Time Scheduling
 - [x] Game priority queue (preempts Normal)
 - [x] Hard deadline enforcement (not just priority — actual deadline miss detection)
-- [x] Compositor thread on SCHED_GAME
-- [x] Audio engine thread on SCHED_GAME
+- [x] Compositor thread on SCHED_BODY
+- [x] Audio engine thread on SCHED_BODY
 - [x] Background process throttling (when in-game, nothing else gets meaningful CPU)
 - [x] Per-game CPU affinity / core pinning
 
 ## Phase 3: Gaming Features
 
-### RaeShield — Security + Anti-Cheat
+### AthGuard — Security + Anti-Cheat
 - [x] Capability system (14 flavors, derivation, grant/revoke)
 - [x] Secure boot chain (6-stage measured boot into TPM PCRs)
 - [x] Attestation service (TPM2_Quote, HMAC-SHA256 signatures, W^X check)
@@ -147,15 +147,15 @@ These block everything — without them the OS only runs in QEMU.
 - [x] Xbox controller full support (impulse triggers, 4-motor rumble)
 - [x] NULL_LATENCY mode (disable all smoothing/queuing)
 - [x] Memory pinning API (pin/unpin, 50% RAM limit, cap-gated)
-- [x] RaePlay launcher (Steam/Epic/GOG/RaeStore, VDF/JSON parsers, per-game profiles, playtime, achievements)
+- [x] AthPlay launcher (Steam/Epic/GOG/AthStore, VDF/JSON parsers, per-game profiles, playtime, achievements)
 
 ## Phase 4: Polish + Ecosystem
 
-### RaeKit — App Development SDK
+### AthKit — App Development SDK
 - [x] Declarative UI API (ViewNode 24 variants, 15 builders, SwiftUI-style chaining)
 - [x] App lifecycle management (RaeApp trait, AppRunner, event loop)
 - [x] Sandboxed app model (capability-gated syscall wrappers)
-- [x] App bundle format (via RaeStore package manifest)
+- [x] App bundle format (via AthStore package manifest)
 - [x] State management (State<T>, Binding<T>, ObservableObject)
 - [x] Navigation (NavigationStack, TabView, Router with URL-style history)
 
@@ -163,12 +163,12 @@ These block everything — without them the OS only runs in QEMU.
 - [x] Vibe Mode (system-wide visual personalities — 12 presets, user profiles, time-based auto-switch, smooth transitions)
 - [x] Window animation curve editor (cubic bezier, 7 presets, per-action assignment, animation manager)
 - [x] Swappable window managers (TilingWm master/stack, FloatingWm snap zones/resize, HybridWm tile groups, per-workspace mode, hotkeys)
-- [x] Swappable shells (ShellRegistry, switch_shell, IPC protocol, RaeShell + GameOS built-in)
+- [x] Swappable shells (ShellRegistry, switch_shell, IPC protocol, AthShell + GameOS built-in)
 - [x] Widget system (Rainmeter-style, sandboxed — Clock, Weather, SystemMonitor, NowPlaying, Calendar, QuickNotes, drag placement, bundles)
 - [x] RGB unified API (RgbDevice trait, 10 effects, RgbManager discovery, profiles, game integration)
 - [x] Fan curve / power management at OS level (FanCurve with hysteresis, 4 PowerProfiles, AC/battery auto-switch, emergency throttle)
 
-### RaeStore / RaeID / RaeSync
+### AthStore / AthID / AthSync
 - [x] App store (package format, dependency resolver, repository, sandboxed install, delta updates, 12% revenue)
 - [x] Account system (passkey auth, session management, multi-user, guest mode, audit log)
 - [x] Cross-device sync (E2E encrypted, X25519+ChaCha20, conflict resolution, device trust, 8 sync types)
@@ -197,9 +197,9 @@ These block everything — without them the OS only runs in QEMU.
 - [x] Dynamic linker (ld-linux.so equivalent, lazy binding, NEEDED resolution)
 - [x] /proc + /sys full Linux-compatible virtual filesystems
 - [x] tmpfs in-memory filesystem (mounted at /tmp and /dev/shm)
-- [ ] PWA support (web apps rendered through RaeUI)
+- [ ] PWA support (web apps rendered through AthUI)
 
-### RaeBridge Deep
+### AthBridge Deep
 - [x] advapi32 (registry, security, crypto, services)
 - [x] ole32 / COM (CoInitialize, IUnknown, CLSIDFromString, CoTaskMemAlloc)
 - [x] ws2_32 / Winsock (socket, send/recv, WSA*, getaddrinfo)
@@ -209,7 +209,7 @@ These block everything — without them the OS only runs in QEMU.
 - [x] winmm (multimedia timers, waveOut, MIDI, joystick)
 - [x] version.dll (GetFileVersionInfo)
 
-### RaeShield Deep
+### AthGuard Deep
 - [x] Sandbox policy engine (builder pattern, 5 profiles, enforcer)
 - [x] Code signing (Ed25519/RSA, cert chain, CRL)
 - [x] Mandatory Access Control (labels, policies, dominance hierarchy)

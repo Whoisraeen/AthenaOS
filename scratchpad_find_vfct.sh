@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cd ~/raeenos || exit 1
+cd ~/athenaos || exit 1
 f=$(find . -name amdgpu_bios.c 2>/dev/null | head -1)
 echo "FOUND: $f"
 if [ -n "$f" ]; then

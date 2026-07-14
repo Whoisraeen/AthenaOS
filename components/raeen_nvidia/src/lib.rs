@@ -1,11 +1,11 @@
 //! raeen_nvidia — pure NVIDIA GPU bring-up logic for the `nvidiad` daemon.
 //!
-//! RaeenOS's native NVIDIA driver, built to the same discipline as
+//! AthenaOS's native NVIDIA driver, built to the same discipline as
 //! [`raeen_amdgpu`](../raeen_amdgpu): the parts of the bring-up that are *pure
 //! functions of register values* live here with NO dependency on the LinuxKPI
 //! syscall shim, so they build on the dev box and every decode is validated by
 //! `cargo test -p raeen_nvidia` (the host-KAT pattern) rather than only being
-//! exercisable on real NVIDIA silicon — which the RaeenOS lab does not yet have.
+//! exercisable on real NVIDIA silicon — which the AthenaOS lab does not yet have.
 //!
 //! What lives here so far:
 //! * [`regs`] — the NVIDIA BAR layout (BAR0 = MMIO registers, BAR1 = VRAM

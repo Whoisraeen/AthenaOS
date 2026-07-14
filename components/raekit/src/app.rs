@@ -1,6 +1,6 @@
-//! Application lifecycle for RaeKit apps.
+//! Application lifecycle for AthKit apps.
 //!
-//! Every RaeKit application implements the `RaeApp` trait and hands itself to
+//! Every AthKit application implements the `RaeApp` trait and hands itself to
 //! `AppRunner::run()`, which creates a compositor surface, enters the event
 //! loop, and re-renders whenever state changes.
 
@@ -52,7 +52,7 @@ pub enum LifecycleState {
 
 // ── RaeApp trait ─────────────────────────────────────────────────────────
 
-/// The core trait for RaeKit applications. Implement this and pass it to
+/// The core trait for AthKit applications. Implement this and pass it to
 /// `AppRunner::run()` to launch your app.
 pub trait RaeApp {
     fn name(&self) -> &str;

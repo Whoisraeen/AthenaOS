@@ -1,6 +1,6 @@
 //! GameOS Mode — couch UI, big-picture, controller-first.
 //!
-//! > *"Gaming isn't a mode. It's the default."* — RaeenOS_Concept.md
+//! > *"Gaming isn't a mode. It's the default."* — LEGACY_GAMING_CONCEPT.md
 //! > §"What Makes It Different". *"GameOS Mode — couch UI, big-picture,
 //! > controller-first. Toggle into it instantly. Same OS, different shell."*
 //! > — Concept §Gaming-First Design.
@@ -293,7 +293,7 @@ pub enum GameStoreName {
     Steam,
     Epic,
     Gog,
-    RaeStore,
+    AthStore,
     Custom,
 }
 
@@ -1232,7 +1232,7 @@ impl CouchProfile {
         if self.gpu_power_pct > 100 {
             self.gpu_power_pct = 100;
         }
-        // Priority is SCHED_GAME(2) or Normal(0); anything else snaps to Normal.
+        // Priority is SCHED_BODY(2) or Normal(0); anything else snaps to Normal.
         if self.priority != 0 && self.priority != 2 {
             self.priority = 0;
         }
@@ -1340,7 +1340,7 @@ impl ProfileField {
             ProfileField::Vrr => "VRR (Variable Refresh)",
             ProfileField::GpuPowerPct => "GPU Power Limit",
             ProfileField::NullLatency => "Null-Latency Mode",
-            ProfileField::GameMode => "Game Mode (SCHED_GAME)",
+            ProfileField::GameMode => "Game Mode (SCHED_BODY)",
             ProfileField::AudioSink => "Audio Output",
         }
     }
@@ -1755,7 +1755,7 @@ impl GameOsShell {
 
     /// A stable kernel profile id for a library entry — the key the couch SETs /
     /// GETs / APPLYs against. Uses the game's numeric id so the surface and the
-    /// kernel agree on one record per game. (RaePlay's store-qualified ids
+    /// kernel agree on one record per game. (AthPlay's store-qualified ids
     /// supersede this once the library is fed from the live connectors.)
     #[must_use]
     pub fn profile_id_for(game: &GameEntry) -> String {
@@ -2953,7 +2953,7 @@ impl GameOsShell {
                 GameStoreName::Steam => "STM",
                 GameStoreName::Epic => "EPC",
                 GameStoreName::Gog => "GOG",
-                GameStoreName::RaeStore => "RAE",
+                GameStoreName::AthStore => "RAE",
                 GameStoreName::Custom => "USR",
             };
             let meta_y = title_y + SPACE_1 as usize + TYPE_COUCH_SUBTITLE.line_height as usize;
@@ -3057,7 +3057,7 @@ impl GameOsShell {
             GameStoreName::Steam => "Steam",
             GameStoreName::Epic => "Epic Games",
             GameStoreName::Gog => "GOG",
-            GameStoreName::RaeStore => "RaeStore",
+            GameStoreName::AthStore => "AthStore",
             GameStoreName::Custom => "Custom",
         };
         row(canvas, &mut detail_y, "Store", store, TEXT_PRIMARY);
@@ -4143,7 +4143,7 @@ pub fn run_couch_smoketest(
             title: alloc::format!("Game {}", i + 1),
             banner_color: 0xFF_2D_5A_9E,
             icon_char: 'G',
-            store: GameStoreName::RaeStore,
+            store: GameStoreName::AthStore,
             installed: true,
             last_played: 0,
             playtime_hours: 0.0,
@@ -4249,7 +4249,7 @@ pub fn run_glyph_smoketest(
             title: alloc::format!("Game {}", i + 1),
             banner_color: 0xFF_2D_5A_9E,
             icon_char: 'G',
-            store: GameStoreName::RaeStore,
+            store: GameStoreName::AthStore,
             installed: true,
             last_played: 0,
             playtime_hours: 0.0,
@@ -4355,7 +4355,7 @@ pub fn run_padbind_smoketest() -> PadBindSmoketest {
             title: alloc::format!("Game {}", i + 1),
             banner_color: 0xFF_2D_5A_9E,
             icon_char: 'G',
-            store: GameStoreName::RaeStore,
+            store: GameStoreName::AthStore,
             installed: true,
             last_played: 0,
             playtime_hours: 0.0,
@@ -4453,7 +4453,7 @@ pub fn run_profile_editor_smoketest() -> ProfileEditorSmoketest {
         title: String::from("Test Game"),
         banner_color: 0xFF_2D_5A_9E,
         icon_char: 'G',
-        store: GameStoreName::RaeStore,
+        store: GameStoreName::AthStore,
         installed: true,
         last_played: 0,
         playtime_hours: 0.0,
@@ -4854,7 +4854,7 @@ mod glyph_tests {
                 title: alloc::format!("G{}", i),
                 banner_color: 0,
                 icon_char: 'G',
-                store: GameStoreName::RaeStore,
+                store: GameStoreName::AthStore,
                 installed: true,
                 last_played: 0,
                 playtime_hours: 0.0,
@@ -4994,7 +4994,7 @@ mod glyph_tests {
             title: String::from("G"),
             banner_color: 0,
             icon_char: 'G',
-            store: GameStoreName::RaeStore,
+            store: GameStoreName::AthStore,
             installed: true,
             last_played: 0,
             playtime_hours: 0.0,
@@ -5071,7 +5071,7 @@ mod glyph_tests {
             title: String::from("operae"),
             banner_color: 0,
             icon_char: 'G',
-            store: GameStoreName::RaeStore,
+            store: GameStoreName::AthStore,
             installed: true,
             last_played: 0,
             playtime_hours: 0.0,

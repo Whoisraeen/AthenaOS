@@ -1,7 +1,7 @@
 //! RaeWeb resource loader — the missing front of the pipeline.
 //!
-//! > "Web apps via PWA support that actually feels native (renders through RaeUI)."
-//! > — RaeenOS Concept §3
+//! > "Web apps via PWA support that actually feels native (renders through AthUI)."
+//! > — AthenaOS Concept §3
 //!
 //! Phase 1 (docs/research/web-engine.md §"Resource loader"): fetch a document over
 //! the **real** `raenet::http1` HTTP/1.1 client (`fetch_with` over any

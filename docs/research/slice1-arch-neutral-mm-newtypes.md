@@ -17,9 +17,9 @@ NOT `rae_abi` — `ABI_VERSION` unchanged, §6 below). Implementer: **raeen-kern
 
 Same north-star clause the four landed seams quote, already verbatim in `kernel/src/arch/mod.rs`:
 
-> "RaeenOS refuses ISA lock-in: the kernel sits on a clean `arch::` abstraction layer … so the
+> "AthenaOS refuses ISA lock-in: the kernel sits on a clean `arch::` abstraction layer … so the
 > same OS boots x86_64, aarch64 (ARM 64-bit), and i686 (32-bit x86) — each proven independently."
-> (RaeenOS_Concept.md §Architecture Reach)
+> (LEGACY_GAMING_CONCEPT.md §Architecture Reach)
 
 Slice 1 is the load-bearing precursor of that clause's MM half. The four seams relocated *calls*
 (install IDT, load GDT, EOI, arm timer). Slice 1 relocates a *type*: the `x86_64` crate's

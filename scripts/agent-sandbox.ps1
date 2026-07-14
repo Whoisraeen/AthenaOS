@@ -2,14 +2,14 @@
 .DEPRECATED 2026-06 — SUPERSEDED BY THE THREE-AGENT MODEL.
   This script enforces a single-agent "branch-per-phase / never touch main" workflow and
   references rules (.cursor/rules/agent-sandbox.mdc, git-workflow.mdc) that no longer exist.
-  RaeenOS now uses three peer agents committing to `main`, isolated by crate ownership and
+  AthenaOS now uses three peer agents committing to `main`, isolated by crate ownership and
   enforced by scripts/ownership-lock.sh + scripts/architecture-gate.sh (pre-commit hooks).
   See AGENTS.md "Three-agent parallel development", agents/OWNERSHIP.toml, and the per-agent
   files CLAUDE.md / .gemini/GEMINI.md / .cursor/rules/composer-slice.mdc.
   Retained for reference only. Do not use for new work.
 
 .SYNOPSIS
-  RaeenOS agent sandbox driver — wraps git-workflow.mdc as one-liners. (DEPRECATED)
+  AthenaOS agent sandbox driver — wraps git-workflow.mdc as one-liners. (DEPRECATED)
 
 .DESCRIPTION
   Every agent session should call into this script for branch and reset

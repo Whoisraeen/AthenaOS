@@ -1,8 +1,8 @@
 //! Live device MMIO mapping — the bridge from amdgpu's raw `ioremap(phys, size)`
-//! to the RaeenOS kernel's BAR-indexed map syscall (`lkpi_ioremap(handle, bar)`).
+//! to the AthenaOS kernel's BAR-indexed map syscall (`lkpi_ioremap(handle, bar)`).
 //!
 //! amdgpu maps its register aperture with `adev->rmmio = ioremap(pci_resource_
-//! start(pdev, 5), size)` — a RAW physical address, not a BAR index. RaeenOS maps
+//! start(pdev, 5), size)` — a RAW physical address, not a BAR index. AthenaOS maps
 //! by (device-handle, BAR-index), so this module carries the missing context: the
 //! daemon claims the GPU, sets the current device handle, and registers each BAR's
 //! physical [start,size). `ioremap(phys, size)` then finds the owning BAR, maps it

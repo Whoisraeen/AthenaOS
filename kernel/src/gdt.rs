@@ -265,7 +265,7 @@ pub fn set_rsp0_for_cpu(cpu_id: usize, stack_end: VirtAddr) {
 
 /// Returns the logical CPU id for the current core.
 ///
-/// Two sources, in order, to stay correct now that RaeBridge guests own their
+/// Two sources, in order, to stay correct now that AthBridge guests own their
 /// user-visible GS base (the Win32 TEB, via `SYS_SET_GS_BASE`):
 ///
 /// 1. **Active GS base, if it is a small integer (`< MAX_CPUS`).** This is the
@@ -278,7 +278,7 @@ pub fn set_rsp0_for_cpu(cpu_id: usize, stack_end: VirtAddr) {
 ///
 /// 2. **Kernel-GS per-CPU block (`syscall::current_cpu_id_from_kernel_gs`).**
 ///    Reached only when the active GS base is a large value — i.e. we are in an
-///    interrupt handler that preempted a RaeBridge guest whose active GS base
+///    interrupt handler that preempted a AthBridge guest whose active GS base
 ///    is the TEB. The x86-interrupt handlers don't swapgs, so the per-CPU
 ///    pointer is parked in `IA32_KERNEL_GS_BASE`; we read the authoritative
 ///    `cpu_id` field from it. This is the path that keeps SMP correct under

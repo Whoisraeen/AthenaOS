@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# RaeenOS commit-msg hook (TRACKED COPY). Install via scripts/install-hooks.sh.
+# AthenaOS commit-msg hook (TRACKED COPY). Install via scripts/install-hooks.sh.
 #
 # Enforces the interface sign-off: if the commit's staged diff touches the
 # interface crates (rae_abi / rae_driver_api), the commit message MUST carry the

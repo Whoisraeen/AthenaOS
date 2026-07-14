@@ -3,9 +3,9 @@
 //!
 //! ES256 is the algorithm that virtually every FIDO2 / WebAuthn hardware
 //! security key (YubiKey, Titan, …) and platform authenticator (Windows Hello,
-//! Touch ID, Android) emits. The Concept's RaeShield pitch — "run untrusted
+//! Touch ID, Android) emits. The Concept's AthGuard pitch — "run untrusted
 //! software without fear" and let the user own the machine — extends to
-//! passwordless login: RaeID's WebAuthn verifier (`raeid::webauthn`) needs a
+//! passwordless login: AthID's WebAuthn verifier (`raeid::webauthn`) needs a
 //! correct ES256 signature check to register/authenticate those credentials.
 //! It currently rejects ES256 with `UnsupportedAlgorithm`; this module is the
 //! primitive that closes that gap.

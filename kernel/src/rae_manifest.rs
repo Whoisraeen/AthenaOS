@@ -1,4 +1,4 @@
-//! `RaeManifest.toml` — per-app permission manifests (RaeShield, Phase 9).
+//! `RaeManifest.toml` — per-app permission manifests (AthGuard, Phase 9).
 //!
 //! Concept §Security:
 //! > "Capability-based permissions — apps request capabilities (file access,
@@ -7,7 +7,7 @@
 //!
 //! This module is the *declaration* side of that model. Every app bundle may
 //! carry an `apps/<name>/RaeManifest.toml` in the boot media (initramfs today,
-//! RaeFS app bundles later) stating which sandbox level it runs at and which
+//! AthFS app bundles later) stating which sandbox level it runs at and which
 //! gated syscall classes it requests:
 //!
 //! ```toml
@@ -491,7 +491,7 @@ pub fn run_boot_smoketest() {
 // ── procfs ──────────────────────────────────────────────────────────────
 
 pub fn dump_text() -> String {
-    let mut out = String::from("# RaeenOS app permission manifests (RaeManifest.toml)\n");
+    let mut out = String::from("# AthenaOS app permission manifests (RaeManifest.toml)\n");
     out.push_str(&alloc::format!(
         "discovered: {}\nspawns_from_manifest: {}\nspawns_from_fallback: {}\ntrust_caps: {}\n",
         DISCOVERED.load(Ordering::Relaxed),

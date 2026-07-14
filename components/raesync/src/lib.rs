@@ -1,4 +1,4 @@
-//! RaeSync — optional cross-device sync.
+//! AthSync — optional cross-device sync.
 //!
 //! End-to-end encrypted synchronization across devices with
 //! conflict resolution and peer trust management.
@@ -1524,7 +1524,7 @@ pub fn make_game_save_item(
 // 13. Init
 // ---------------------------------------------------------------------------
 
-/// Initialize the RaeSync subsystem. Sync is disabled by default —
+/// Initialize the AthSync subsystem. Sync is disabled by default —
 /// the user must explicitly opt in. Local-only operation is the default.
 pub fn init(device_id: DeviceId, seed: [u8; 32], now: u64) -> SyncEngine {
     SyncEngine::new(device_id, seed, ConflictStrategy::KeepNewer, now)
@@ -1534,7 +1534,7 @@ pub fn init(device_id: DeviceId, seed: [u8; 32], now: u64) -> SyncEngine {
 // 14. E2E sync core — zero-knowledge blob store + LWW-register CRDT
 // ---------------------------------------------------------------------------
 //
-// "RaeSync: end-to-end-encrypted cross-device sync" — RaeenOS_Concept.md,
+// "AthSync: end-to-end-encrypted cross-device sync" — LEGACY_GAMING_CONCEPT.md,
 // §The Proprietary Stack. And the user-ownership pillar: "The user owns the
 // machine" — sync is OPT-IN and the server is ZERO-KNOWLEDGE. The server only
 // ever stores `SyncBlob`s: opaque AEAD ciphertext + a signature. It holds NO
@@ -1547,7 +1547,7 @@ pub fn init(device_id: DeviceId, seed: [u8; 32], now: u64) -> SyncEngine {
 // Conflict model: a **last-writer-wins (LWW) register** per record key,
 // ordered by a monotonic Lamport clock with the device id as the deterministic
 // tiebreak. This is the right CRDT for settings / themes / bookmarks (the
-// buckets RaeSync targets): every device that has seen the same set of blobs
+// buckets AthSync targets): every device that has seen the same set of blobs
 // converges to the SAME value with no coordination. (An OR-set would layer on
 // top for collection-typed buckets; LWW-register is the documented core.)
 

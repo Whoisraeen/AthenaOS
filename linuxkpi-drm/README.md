@@ -1,7 +1,7 @@
 # linuxkpi-drm — running the real amdgpu driver via LinuxKPI (Path C)
 
 **Status: foundation / scaffolding. NOT a shipped feature.** This is the FreeBSD
-`drm-kmod` model applied to RaeenOS: compile the *real* upstream `amdgpu` C driver
+`drm-kmod` model applied to AthenaOS: compile the *real* upstream `amdgpu` C driver
 against a LinuxKPI compatibility layer (headers here + the C-ABI implementations in
 `components/raeen_linuxkpi`), so the complete, battle-tested amdgpu init brings the
 GPU up — instead of our hand-ported `components/raeen_amdgpu` Rust reimplementation.
@@ -23,7 +23,7 @@ directory.
 
 ## The GPL license boundary (READ THIS)
 
-The upstream amdgpu driver is **GPL-2.0**. The RaeenOS kernel + components are
+The upstream amdgpu driver is **GPL-2.0**. The AthenaOS kernel + components are
 **MPL-2.0**. Per `docs/LINUX_DRIVER_STRATEGY.md` (Option C, "FreeBSD-style LinuxKPI
 partition — separate license island"):
 
@@ -46,7 +46,7 @@ and keeps the boundary clean.
 
 Native Linux + gcc (the kernel C idioms need a real Linux toolchain). On the dev box
 this is **WSL2 Ubuntu** (`gcc 11.4`). The header-shim iteration loop runs natively on
-the host for speed; cross-compilation for the RaeenOS target is a later phase.
+the host for speed; cross-compilation for the AthenaOS target is a later phase.
 
 ## Layout
 

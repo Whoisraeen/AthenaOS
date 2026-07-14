@@ -1,4 +1,4 @@
-//! d3d9.dll — Direct3D 9 API emulation for RaeBridge.
+//! d3d9.dll — Direct3D 9 API emulation for AthBridge.
 //!
 //! Provides full IDirect3D9 and IDirect3DDevice9 interface stubs,
 //! device capabilities, vertex formats, texture formats, render states,
@@ -796,7 +796,7 @@ impl Default for D3dAdapterIdentifier9 {
     fn default() -> Self {
         Self {
             driver: String::from("raebridge_d3d9"),
-            description: String::from("RaeBridge D3D9 Compatibility Adapter"),
+            description: String::from("AthBridge D3D9 Compatibility Adapter"),
             device_name: String::from("\\\\.\\DISPLAY1"),
             driver_version_low: 0x00010001,
             driver_version_high: 0x00090003,

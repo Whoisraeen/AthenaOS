@@ -1,12 +1,12 @@
 //! # RaeOTP — HOTP (RFC 4226) + TOTP (RFC 6238) one-time passwords.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy ("how to actually win", criterion
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy ("how to actually win", criterion
 //! #5 — *import & keep my stuff*) + the daily-driver table stakes: a person
-//! switching to RaeenOS arrives with a phone full of authenticator-app secrets
+//! switching to AthenaOS arrives with a phone full of authenticator-app secrets
 //! (Google Authenticator, Authy, 1Password, Microsoft Authenticator). Those are
 //! all the **same** open standard — counter- and time-based one-time passwords —
 //! and the format is frozen by interoperability. To be a credible daily driver
-//! RaeenOS must produce the *exact same six digits* their old phone did. This
+//! AthenaOS must produce the *exact same six digits* their old phone did. This
 //! crate is that engine; it pairs with `raeid`'s passkeys to cover both halves of
 //! modern 2FA (something-you-have hardware/platform keys + software OTP tokens).
 //!
@@ -365,7 +365,7 @@ fn base32_value(ch: char) -> Option<u8> {
 // ---------------------------------------------------------------------------
 
 /// A parsed `otpauth://totp/...` provisioning URI — the QR-code payload every
-/// authenticator app emits. Lets RaeenOS import an existing 2FA entry verbatim.
+/// authenticator app emits. Lets AthenaOS import an existing 2FA entry verbatim.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OtpAuth {
     /// `"totp"` or `"hotp"` (the URI authority).

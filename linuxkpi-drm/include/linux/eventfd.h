@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MPL-2.0 */
 /* eventfd surface used by the optional DRM_SYNCOBJ_EVENTFD ioctl.  Descriptor
- * lookup is broker-owned on RaeenOS and fails closed until fd translation is
+ * lookup is broker-owned on AthenaOS and fails closed until fd translation is
  * installed. */
 #ifndef _LINUXKPI_LINUX_EVENTFD_H
 #define _LINUXKPI_LINUX_EVENTFD_H

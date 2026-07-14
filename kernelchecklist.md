@@ -1,8 +1,8 @@
-# RaeKernel Checklist
+# AthKernel Checklist
 
 **Audience:** Any AI agent (or human) working on the kernel.
 **Scope:** Strictly `kernel/`. Userspace, components, apps, and the bridge layer are out of scope here — see their respective docs.
-**Source of truth:** `RaeenOS_Concept.md`. When this checklist and the Concept doc disagree, the Concept doc wins.
+**Source of truth:** `LEGACY_GAMING_CONCEPT.md`. When this checklist and the Concept doc disagree, the Concept doc wins.
 
 > "Built for people who care about how things feel." — every kernel commit should serve that line.
 
@@ -10,13 +10,13 @@
 
 ## 0. Mission
 
-RaeKernel is the hybrid kernel underneath RaeenOS. It must:
+AthKernel is the hybrid kernel underneath AthenaOS. It must:
 
 1. Boot to a logged-in compositor desktop on **any** x86_64 PC of the last 8 years in **under 3 seconds** from POR to first frame.
 2. Hold **sub-3 ms** end-to-end input → display → audio latency for the active game/foreground app, with frame-pacing jitter under ½ ms.
 3. Enforce capability-based security at every syscall edge, with **zero implicit ambient authority** between processes.
 4. Survive any single userspace driver crash without taking the system down.
-5. Stay under **180 000 lines of kernel-resident Rust** in steady state. Below that ceiling is good. Bigger means we're cloning Linux instead of designing RaeKernel.
+5. Stay under **180 000 lines of kernel-resident Rust** in steady state. Below that ceiling is good. Bigger means we're cloning Linux instead of designing AthKernel.
 
 Today: **~114 K LOC, 120+ modules, 100+ syscalls, ~0.83 s boot in QEMU.** (Dead code purge complete).
 
@@ -63,7 +63,7 @@ Today: **~114 K LOC, 120+ modules, 100+ syscalls, ~0.83 s boot in QEMU.** (Dead 
 | Context switch (SSE/AVX/GS) | 88 | 150 | **DONE** (naked asm) |
 | Timer IRQ & Preemption | 110 | 200 | **DONE** (LAPIC) |
 | CFS (vruntime) | ~400 | 800 | **DONE** |
-| SCHED_GAME (hard real-time) | ~300 | 500 | **DONE** |
+| SCHED_BODY (hard real-time) | ~300 | 500 | **DONE** |
 | Per-CPU runqueues + work stealing | ~1500 | 1500 | **DONE** (Full core-aware refactor) |
 | Admission control polish | 50 | 200 | **DONE** |
 | NULL_LATENCY (core pinning, IRQ steering) | ~200 | 500 | **DONE** |
@@ -90,7 +90,7 @@ Today: **~114 K LOC, 120+ modules, 100+ syscalls, ~0.83 s boot in QEMU.** (Dead 
 
 | Subsystem | LOC | Target | Status |
 |---|---|---|---|
-| RaeFS Core (B-tree, extents) | ~3500 | 4000 | **DONE** (Splits implemented) |
+| AthFS Core (B-tree, extents) | ~3500 | 4000 | **DONE** (Splits implemented) |
 | Transparent compression (LZ4) | 210 | 400 | **DONE** |
 | Transparent encryption (XTS-AES) | 350 | 600 | **DONE** |
 | CoW Snapshots | ~800 | 1200 | **DONE** |

@@ -1,4 +1,4 @@
-//! Full PE/PE32+ executable loader for RaeBridge.
+//! Full PE/PE32+ executable loader for AthBridge.
 //!
 //! Parses DOS header, PE signature, COFF header, optional header (PE32 and
 //! PE32+), section table, import directory, and base relocation table.
@@ -1289,10 +1289,10 @@ fn rva_to_image_offset(sections: &[PeSection], rva: u32) -> Option<usize> {
 }
 
 // ---------------------------------------------------------------------------
-// Error translation: RaeenOS errors → Win32 error codes
+// Error translation: AthenaOS errors → Win32 error codes
 // ---------------------------------------------------------------------------
 
-/// Maps RaeenOS-internal error categories to Win32 error codes.
+/// Maps AthenaOS-internal error categories to Win32 error codes.
 pub fn raeen_error_to_win32(err: &RaeenOsError) -> u32 {
     match err {
         RaeenOsError::NotFound => crate::ERROR_FILE_NOT_FOUND,
@@ -1311,7 +1311,7 @@ pub fn raeen_error_to_win32(err: &RaeenOsError) -> u32 {
     }
 }
 
-/// Abstraction over RaeenOS native error categories.
+/// Abstraction over AthenaOS native error categories.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RaeenOsError {
     NotFound,

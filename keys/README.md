@@ -1,4 +1,4 @@
-# RaeenOS signing keys
+# AthenaOS signing keys
 
 `dev-signing.key` (32-byte Ed25519 seed) + `dev-signing.pub` (32-byte public
 key) are the **development** app-bundle signing keypair.

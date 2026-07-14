@@ -1,6 +1,6 @@
 //! # RaeMedia PNG encoder — pixels back out to a real `.png`.
 //!
-//! RaeenOS_Concept.md (§creators / media): the OS must let people "show my photos"
+//! LEGACY_GAMING_CONCEPT.md (§creators / media): the OS must let people "show my photos"
 //! — and, just as load-bearing for a daily driver, *produce* images: a screenshot
 //! that saves as a real `.png` (not a raw `.argb` blob no other tool can open), the
 //! Photos app's "export", a Files thumbnail cache. This module is the encode half of

@@ -6,7 +6,7 @@ Hand-off: raeen-kernel.
 ## Concept promise served
 
 > "**Driver isolation:** Every driver runs in its own protection domain with IOMMU
-> enforcement. A bad GPU driver crashes a service, not the kernel." (RaeenOS_Concept.md §Kernel Architecture, line 29)
+> enforcement. A bad GPU driver crashes a service, not the kernel." (LEGACY_GAMING_CONCEPT.md §Kernel Architecture, line 29)
 
 > "4. **Security by default, not by friction.**" (§Principles, line 13) and
 > "Memory safety where bugs are catastrophic" / "No GC, no UB, full control" (§Language table, lines 40–41)
@@ -43,7 +43,7 @@ MasterChecklist flags as the next always-on hardening target after the buddy dou
 - **glibc `malloc` "safe-linking"** (2.32+, `PROTECT_PTR`/`REVEAL_PTR` on tcache/fastbin `fd`) — `enc = (loc >> 12) ^ ptr`; validates 16-byte alignment on unlink (`malloc_printerr("misaligned")`). Same shape, pointer-only, no separate random cookie. Verdict: **LGPL — study only 📖**. Confirms the "shift the storage address in, check alignment out" minimal variant works in production at scale.
 - **glibc/Windows chunk canaries** (the classic `size`/prev-in-use magic; Windows LFH `_HEAP_ENTRY` cookie + encoded header) — a per-chunk header magic validated on free, catches *linear overflow of an adjacent live chunk*. Verdict: 📖 technique reference. Note the mismatch: this defends **live-chunk header** corruption, not the **freed-chunk link-pointer** follow which is our actual class.
 - **`linked_list_allocator` v0.10** (phil-opp) — the crate we already ship. Singly-linked intrusive `HoleList`: `struct Hole { size: usize, next: Option<NonNull<Hole>> }`, headers written *inside* free memory; `allocate_first_fit` walks `Cursor{prev,current}` first-fit; `deallocate` reconstructs a `Hole` at the freed ptr and address-order-inserts + merges adjacent holes. **License: MIT / Apache-2.0 — permissive, already in use → vendorable ➕** (same class as the vendored aml crate).
-- **RaeenOS `buddy.rs`** — our own always-on intrusive-freelist validator for physical frames (see above). In-tree prior art; the heap guard should read like its sibling.
+- **AthenaOS `buddy.rs`** — our own always-on intrusive-freelist validator for physical frames (see above). In-tree prior art; the heap guard should read like its sibling.
 
 ## Design
 
@@ -144,7 +144,7 @@ extra memory, no lock changes (the existing `LockedHeap` spinlock still serializ
   per allocation; **zero** added heap traversals.
 - Whole-boot: must stay inside `[BOOT-BENCH]` — assert **no new `[boot] WARN`** and the
   BOOT-BENCH total does not regress beyond measurement noise (budget ≤ +20 ms over the
-  whole boot; realistically single-digit ms). SCHED_GAME latency budgets are untouched
+  whole boot; realistically single-digit ms). SCHED_BODY latency budgets are untouched
   because steady-state game/audio/compositor threads do not allocate on the hot path
   (kernel rule 2), and the per-alloc delta is far below one audio period / frame.
 - The cookie install (`init_heap`) is one rdrand + one atomic store — one-time.

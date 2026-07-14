@@ -26,7 +26,7 @@ use linked_list_allocator::LockedHeap;
 /// + amdgpu_gfx_cp/rlc_init_microcode) kmemdups ~1.2 MiB of GFX ucode plus RLC
 /// register/save-restore lists, on top of the PSP/VBIOS/discovery allocations —
 /// which exhausted the old 8 MiB heap (gfx_v11_0 early_init returned -ENOMEM).
-/// The RLC-backdoor autoload path (RaeenOS bring-up on this passthrough APU)
+/// The RLC-backdoor autoload path (AthenaOS bring-up on this passthrough APU)
 /// assembles the WHOLE ucode set (pfp/me/mec/rlc/imu/sdma/mes ~1.6 MiB) into an
 /// autoload buffer on top of that, so 64 MiB was raised to 256 MiB after amdgpud
 /// took a NULL-alloc write right after `rlc autoload enabled` (cap10).

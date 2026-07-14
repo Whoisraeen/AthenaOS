@@ -1,9 +1,9 @@
-//! Gaming-first kernel syscall backend.
+//! Embodiment-first kernel syscall backend.
 //!
-//! RaeenOS_Concept.md calls out a handful of capabilities that no shipping
+//! LEGACY_GAMING_CONCEPT.md calls out a handful of capabilities that no shipping
 //! desktop OS exposes coherently:
 //!
-//!   * `SCHED_GAME` priority class with hard deadlines.
+//!   * `SCHED_BODY` priority class with hard deadlines.
 //!   * Background-process throttling when a game is foreground.
 //!   * `NULL_LATENCY` mode — pin a game to dedicated cores, route IRQs off
 //!     them, lock CPU frequency at max. (Concept §Pro Gaming.)

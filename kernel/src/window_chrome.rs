@@ -1,6 +1,6 @@
 //! Window chrome: title bar + controls for kernel-drawn userspace windows.
 //!
-//! Concept §RaeUI ("glassmorphic, GPU-accelerated") + IDENTITY.md §7 (window
+//! Concept §AthUI ("glassmorphic, GPU-accelerated") + IDENTITY.md §7 (window
 //! chrome is the MOST see-through `glass.chrome` tier) + the desktop-shell spec
 //! (docs/design/desktop-shell.md §4 "Window chrome"): a Liquid-Glass title bar —
 //! frosted, translucent `glass.chrome` over the window/desktop behind it, with

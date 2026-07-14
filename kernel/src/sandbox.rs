@@ -1,4 +1,4 @@
-//! Per-task sandbox enforcement — wires RaeShield's `PolicyEnforcer` into the
+//! Per-task sandbox enforcement — wires AthGuard's `PolicyEnforcer` into the
 //! kernel syscall edge.
 //!
 //! Concept §Security: "Mandatory app sandboxing — every app runs in its own
@@ -14,7 +14,7 @@
 //!   * A fast-path atomic (`SANDBOXED_COUNT`) means the syscall hot path pays
 //!     only one relaxed load when no task is sandboxed — the common boot state.
 //!   * When an app IS sandboxed (AppSandbox / Strict), the gated syscall classes
-//!     are checked against a RaeShield profile and denied with `EPERM` if the
+//!     are checked against a AthGuard profile and denied with `EPERM` if the
 //!     policy says no — and the violation is counted for `/proc/raeen/sandbox`.
 //!
 //! R10: `init()` + `run_boot_smoketest()` + `/proc/raeen/sandbox` + this docstring.
@@ -33,7 +33,7 @@ use raeshield::{
 };
 use spin::Mutex;
 
-/// Enforcement strength applied to a task. Maps to a RaeShield profile.
+/// Enforcement strength applied to a task. Maps to a AthGuard profile.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum SandboxLevel {
     /// System/trusted code — full access (user_init, shell, services). Default.
@@ -74,14 +74,14 @@ pub struct Grants {
 }
 
 /// pid -> manifest permission grants. Absent = no grants (all gated classes
-/// follow the level's RaeShield profile).
+/// follow the level's AthGuard profile).
 static GRANTS: Mutex<Option<BTreeMap<u64, Grants>>> = Mutex::new(None);
 
 pub fn init() {
     *TABLE.lock() = Some(BTreeMap::new());
     *GRANTS.lock() = Some(BTreeMap::new());
     crate::serial_println!(
-        "[sandbox] enforcement online (RaeShield PolicyEnforcer; default level = Trusted)"
+        "[sandbox] enforcement online (AthGuard PolicyEnforcer; default level = Trusted)"
     );
 }
 
@@ -221,7 +221,7 @@ fn class_of(nr: u64) -> Option<GateClass> {
         {
             Some(GateClass::Device)
         }
-        // Userspace network sockets (RaeShield net block 121-125).
+        // Userspace network sockets (AthGuard net block 121-125).
         121 | 122 => Some(GateClass::Network),
         // Install onto a disk is a privileged device write.
         n if n == abi::SYS_INSTALL_RUN || n == abi::SYS_INSTALL_CREATE_ACCOUNT => {
@@ -232,7 +232,7 @@ fn class_of(nr: u64) -> Option<GateClass> {
 }
 
 /// Map a PCI class code (the high byte of the device's class:subclass) to the
-/// RaeShield [`DeviceKind`] the gate evaluates a raw claim against. This is the
+/// AthGuard [`DeviceKind`] the gate evaluates a raw claim against. This is the
 /// fix for the device-kind aliasing flaw: every gated device syscall used to
 /// build `DeviceKind::Gpu`, so the gate asked "may this task write the GPU?"
 /// for a NIC / storage / USB claim alike — a profile that ever granted
@@ -277,7 +277,7 @@ fn device_kind_of_id(device_id: u64) -> DeviceKind {
         .unwrap_or(DeviceKind::Other)
 }
 
-/// The RaeShield request a gate class represents, for the PolicyEnforcer.
+/// The AthGuard request a gate class represents, for the PolicyEnforcer.
 /// For the Device class the caller supplies the SPECIFIC [`DeviceKind`] of the
 /// claimed device (see `class_of_device`); the old hardcoded `Gpu` aliased
 /// every device claim to the GPU rule.
@@ -403,7 +403,7 @@ fn gate(
         SecurityDecision::Denied => {
             DENIALS.fetch_add(1, Ordering::Relaxed);
             crate::serial_println!(
-                "[sandbox] DENY pid={} syscall={} abi={} level={:?} (RaeShield policy)",
+                "[sandbox] DENY pid={} syscall={} abi={} level={:?} (AthGuard policy)",
                 pid,
                 nr,
                 abi,
@@ -528,7 +528,7 @@ pub fn dump_text() -> String {
     let checks = CHECKS.load(Ordering::Relaxed);
     let denials = DENIALS.load(Ordering::Relaxed);
     let grant_allows = GRANT_ALLOWS.load(Ordering::Relaxed);
-    let mut out = String::from("# RaeenOS sandbox enforcement (RaeShield PolicyEnforcer)\n");
+    let mut out = String::from("# AthenaOS sandbox enforcement (AthGuard PolicyEnforcer)\n");
     out.push_str(&alloc::format!(
         "sandboxed_tasks: {}\nchecks: {}\ndenials: {}\ngrant_allows: {}\ndefault_level: Trusted\n",
         count,

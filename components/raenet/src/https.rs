@@ -424,7 +424,7 @@ impl HttpsClient {
             cookie_jar: CookieJar::new(),
             redirect_limit: 10,
             timeout_ms: 30_000,
-            user_agent: String::from("RaeNet/1.0"),
+            user_agent: String::from("AthNet/1.0"),
             proxy: None,
             default_headers: Vec::new(),
             root_anchors_der: Vec::new(),
@@ -953,7 +953,7 @@ mod tests {
 // ===========================================================================
 // Verified TLS 1.3 HTTPS request flow (feature `tls13`).
 //
-// Concept §"RaeNet: real TLS 1.3, not a toy" + criterion #5 ("the apps people
+// Concept §"AthNet: real TLS 1.3, not a toy" + criterion #5 ("the apps people
 // use need working HTTPS"): the orchestration that drives the `tls_crypto`
 // engine end-to-end so `HttpsClient::get_over` returns a body that arrived over
 // an AUTHENTICATED, encrypted channel -- or a clear error, never a plaintext

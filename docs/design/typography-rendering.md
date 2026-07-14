@@ -7,14 +7,14 @@
 
 ## Concept promise + bar to clear
 
-> "Built for people who care about how things feel." — `RaeenOS_Concept.md`
+> "Built for people who care about how things feel." — `LEGACY_GAMING_CONCEPT.md`
 >
-> "A cohesive and visually stunning UI." — §RaeUI
+> "A cohesive and visually stunning UI." — §AthUI
 
 **The bar:** the *first thing the eye reads as "premium" is the text.* macOS (SF
 Pro + Core Text grayscale AA + light hinting) and Windows 11 (Segoe UI Variable +
 DirectWrite, ClearType/grayscale) both ship sub-pixel-clean, kerned, hinted UI
-text at every size. RaeenOS today ships an **8×8 bitmap block font**
+text at every size. AthenaOS today ships an **8×8 bitmap block font**
 (`font8x8::BASIC_FONTS`) — the same 64-pixel face nearest-neighbour/bilinear-
 upscaled for "large" text. raeen-visual-qa judged this the **single dominant
 "basic / not crisp" signal** in the first OS screenshot. Until this is fixed, no
@@ -51,7 +51,7 @@ because the type undercuts all of it. **This is THE highest-leverage UI fix.**
 
 **Distilled principle:** *real outlines + grayscale coverage AA + grid-fit
 hinting at small ppem + gamma-correct compositing + a per-(glyph,ppem) cache.*
-That is a FreeType-class pipeline. The relevant finding (below) is that RaeenOS
+That is a FreeType-class pipeline. The relevant finding (below) is that AthenaOS
 **already has one** — it is unwired, untested, and starved of a font file.
 
 ---
@@ -126,7 +126,7 @@ font engine initialises), and as the `'?'`-tofu fallback for unmapped glyphs.
 **Where the files live:** `components/raefont/assets/Inter-{Regular,Medium,
 SemiBold}.ttf` + `JetBrainsMono-{Regular,Medium}.ttf` + `OFL.txt`, embedded into
 the binary via `include_bytes!` behind a `raefont::builtin` module that returns
-`&'static [u8]` (no filesystem dependency — must work at first boot before RaeFS
+`&'static [u8]` (no filesystem dependency — must work at first boot before AthFS
 mounts). Subset with a tool like `fonttools subset` *offline* to control binary
 size; record the exact subset command in the assets README so the blob is
 reproducible (CLAUDE.md off-target/reproducibility discipline).
@@ -139,7 +139,7 @@ reproducible (CLAUDE.md off-target/reproducibility discipline).
 
 ---
 
-## RaeenOS design tokens this surface uses
+## AthenaOS design tokens this surface uses
 
 This surface consumes §6 wholesale and adds **rendering-mode** tokens (proposed
 for DESIGN_LANGUAGE.md §6 if accepted):
@@ -236,7 +236,7 @@ lib.rs:207 already uses `blend_pixel` correctly; reuse that). The new
 
 ### 3.5 Coexistence / fallback ladder
 
-1. **Before `FontEngine::init()`** (early boot, panic screen, pre-RaeFS): 8×8
+1. **Before `FontEngine::init()`** (early boot, panic screen, pre-AthFS): 8×8
    bitmap. Always available, zero deps.
 2. **After init + builtin font load:** `draw_text_aa` → raefont. This is the
    desktop, OOBE, login, every app.
@@ -391,9 +391,9 @@ striping artifact):
 
 ### Unblocks checklist lines
 
-- Phase 8 (RaeUI/RaeKit) — real text rendering is the precondition for "cohesive
+- Phase 8 (AthUI/AthKit) — real text rendering is the precondition for "cohesive
   and visually stunning" UI; every surface spec assumes crisp type.
-- Phase 14 (RaeShell + apps) — the 6 apps + terminal need readable text to be
+- Phase 14 (AthShell + apps) — the 6 apps + terminal need readable text to be
   shippable.
 - The `ui-glass-design-system` memory's open follow-up: "raefont = crisp-text
   follow-up" — this spec is its plan.

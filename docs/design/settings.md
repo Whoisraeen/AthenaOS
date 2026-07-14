@@ -1,6 +1,6 @@
 # Design Spec: Settings
 
-> *"Built for people who care about how things feel."* — RaeenOS_Concept.md
+> *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
 > Settings is the surface where the design language becomes **user-controllable**.
 > It must clear: **the cleanness of macOS System Settings, the legible category
@@ -17,7 +17,7 @@ flagged as a *proposed addition to `design-language.md`* (§ "Proposed tokens").
 ## Concept promise + bar to clear
 
 > "The user owns the machine… Vibe Mode changes wallpaper, accent, sound, font,
-> cursor, and animations as a coherent set." — RaeenOS_Concept.md (§Customization)
+> cursor, and animations as a coherent set." — LEGACY_GAMING_CONCEPT.md (§Customization)
 
 - **Bar to clear:** macOS System Settings (Ventura+) sidebar-list IA + Windows 11
   Settings' left-nav categories with a content pane. Plus Spotlight-grade
@@ -37,7 +37,7 @@ re-grouping** layer over it, NOT a rebuild.
 
 | Piece | Where | Today | This spec changes |
 |---|---|---|---|
-| Settings app (data model) | `components/raeshell/src/control_panel.rs` (`ControlPanel`, 2446 lines) | full page/category model, 11 categories, nav stack, search, profiles, MDM policy | → re-group IA (11 Windows-clone cats → 10 RaeenOS cats); re-skin render |
+| Settings app (data model) | `components/raeshell/src/control_panel.rs` (`ControlPanel`, 2446 lines) | full page/category model, 11 categories, nav stack, search, profiles, MDM policy | → re-group IA (11 Windows-clone cats → 10 AthenaOS cats); re-skin render |
 | Two-pane render | `control_panel.rs::ControlPanel::render` (l.2236) | sidebar (180px) + content; flat `CP_*` palette; 8px block glyphs; 28px rows | → `material.glass`/`mica`, token spacing/radius, real control kit, states |
 | Control kit (enum) | `control_panel.rs::SettingControl` | Toggle / Slider / Dropdown / TextInput / ColorPicker / KeyBinding / RadioGroup / CheckboxGroup / Button / Link / InfoBar / ExpandableSection | → spec full visual states per control (high fan-out; reused by all apps) |
 | Search | `control_panel.rs::SearchState::search` | substring match over title/desc/keywords + per-setting | → fuzzy ranking + Spotlight-style results panel; case-insensitive |
@@ -64,7 +64,7 @@ re-grouping** layer over it, NOT a rebuild.
   tint, neutral chrome. **Take:** the icon+label sidebar list, grouped cards in
   the content pane, accent-only-on-controls restraint. **Avoid:** the *over-long*
   flat sidebar — by Ventura the list scrolls past a screenful with no sub-grouping;
-  RaeenOS caps the top-level list at ~10 categories and pushes depth into the
+  AthenaOS caps the top-level list at ~10 categories and pushes depth into the
   content pane, not the sidebar.
 - **Windows 11 Settings:** left-nav with ~10 clear top-level categories, each
   opening a content pane of expandable "setting cards"; a persistent search box
@@ -76,10 +76,10 @@ re-grouping** layer over it, NOT a rebuild.
 - **GNOME Settings (libadwaita):** strict spacing, strong *visible* focus rings,
   generous row padding, a clean `AdwPreferencesGroup` (titled card with rows).
   **Take:** the titled-group-card structure and the always-visible focus ring
-  (we owe this for a11y + controller). **Avoid:** the flatness — RaeenOS panels
+  (we owe this for a11y + controller). **Avoid:** the flatness — AthenaOS panels
   are glass/mica with depth.
 
-**RaeenOS synthesis:** Win11's **clear ~10-category left nav + breadcrumb +
+**AthenaOS synthesis:** Win11's **clear ~10-category left nav + breadcrumb +
 persistent fuzzy search**, macOS's **grouped-cards content pane + accent
 restraint**, GNOME's **titled-group cards + visible focus**, all on the
 `material.glass`/`material.mica` system the shell already uses — and the
@@ -88,7 +88,7 @@ desktop is owned from one screen.
 
 ---
 
-## RaeenOS design tokens this surface uses
+## AthenaOS design tokens this surface uses
 
 Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 
@@ -176,25 +176,25 @@ Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 
 ---
 
-## 2. Category IA (the proposed RaeenOS list)
+## 2. Category IA (the proposed AthenaOS list)
 
 The current code has **11 Windows-clone categories** (System, Devices, Network,
 Personalization, Apps, Accounts, Time & Language, Gaming, Ease of Access,
-Privacy, Update & Security). This spec **re-groups to 10 RaeenOS-native
+Privacy, Update & Security). This spec **re-groups to 10 AthenaOS-native
 categories** — grounded in what the code actually has — to (a) lead with the
 showcase, (b) merge the thin "Time & Language" + "Update & Security" + "Apps"
-into clearer homes, and (c) name them the RaeenOS way.
+into clearer homes, and (c) name them the AthenaOS way.
 
 | # | Category | Icon role | Maps to existing pages | Why |
 |---|---|---|---|---|
 | 1 | **Appearance & Vibe** | palette | `pers.colors`, `pers.background`, `pers.taskbar`, + new Vibe grid | Leads with the showcase — the Concept's signature surface (§5) |
 | 2 | **Display** | monitor | `sys.display` | First-class; brightness/HDR/VRR are gaming-relevant, deserve top level (not buried in "System") |
-| 3 | **Sound** | speaker | `sys.sound` | First-class (RaeAudio is a pillar) |
+| 3 | **Sound** | speaker | `sys.sound` | First-class (AthAudio is a pillar) |
 | 4 | **Network** | globe | `net.wifi`, `net.vpn`, `net.proxy`, Ethernet/status | As-is |
 | 5 | **Bluetooth & Devices** | devices | `dev.bluetooth`, `dev.mouse`, `dev.printers`, USB | Merge Devices (macOS "Bluetooth & …" pattern) |
-| 6 | **Power & Gaming** | controller | `sys.power`, `game.mode`, `game.bar`, `game.gpu_power`, RGB, fan-curve | RaeenOS-native merge: "gaming isn't a mode" — power + game tuning + RGB together |
+| 6 | **Power & Gaming** | controller | `sys.power`, `game.mode`, `game.bar`, `game.gpu_power`, RGB, fan-curve | AthenaOS-native merge: "gaming isn't a mode" — power + game tuning + RGB together |
 | 7 | **Accounts** | person | `acc.info`, `acc.signin` | As-is |
-| 8 | **Privacy & Security** | shield | `priv.*`, sign-in/biometric, RaeShield manifests | Merge Privacy + Update&Security security bits (RaeShield home) |
+| 8 | **Privacy & Security** | shield | `priv.*`, sign-in/biometric, AthGuard manifests | Merge Privacy + Update&Security security bits (AthGuard home) |
 | 9 | **Accessibility** | accessibility | `access.display`, `access.narrator`, `access.highcontrast`, cursor | Renamed from "Ease of Access"; raeen-accessibility owns the contents |
 | 10 | **System & About** | info | `sys.storage`, `sys.notifications`, `time.*` (date/region/language), `apps.*`, `sys.about`, updates/recovery | Catch-all for time/language/storage/apps/about/update — the macOS "General" |
 
@@ -326,7 +326,7 @@ distinct from hover, and a defined reduced-motion path.
 ## 5. Appearance & Vibe page (the showcase)
 
 **Bar to clear:** macOS "Appearance" + "Wallpaper" panes; this is where the
-RaeenOS design language becomes user-owned. One screen drives the whole desktop.
+AthenaOS design language becomes user-owned. One screen drives the whole desktop.
 
 ### 5.1 Accent seed picker (feeds `derive_accent` → `ThemeAbi.accent_argb`)
 - A `ColorPicker` (§4.7) seeded from `ThemeAbi.accent_argb` (default `RAEBLUE`).
@@ -455,8 +455,8 @@ size is not a reusable token).
   Settings render. Log: `[settings] a11y: contrast_guard=fired hc_toggle=applied`.
 
 ### Unblocks (MasterChecklist)
-- **Phase 8.1/8.2 (RaeUI/RaeKit):** the control kit + group-card scaffold are the
-  reusable widget set RaeUI owes; the theming hook (8.2) lands here.
+- **Phase 8.1/8.2 (AthUI/AthKit):** the control kit + group-card scaffold are the
+  reusable widget set AthUI owes; the theming hook (8.2) lands here.
 - **Phase 13.1 (Customization):** the Vibe preset grid + accent seed picker make
   "Vibe Mode includes wallpaper, accent, sound, fonts, cursor, animations"
   user-drivable (l.1073–1074: the noted "Settings UI tile" gap closes here).

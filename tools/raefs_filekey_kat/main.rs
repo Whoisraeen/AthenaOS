@@ -1,4 +1,4 @@
-// Host harness for RaeFS per-file (FSCRYPT-equivalent) key derivation — the
+// Host harness for AthFS per-file (FSCRYPT-equivalent) key derivation — the
 // pure-logic proof of MasterChecklist Phase 5.2: "Per-file encryption keys
 // (FSCRYPT-equivalent) so per-app sandboxing keys don't leak."
 //
@@ -81,7 +81,7 @@ fn main() {
     // if the kernel `derive`/`file_encryption_key` math ever drifts, the kernel
     // boot smoketest's round-trip still passes (self-consistent) but THESE fail,
     // catching a silent algorithm change.
-    println!("RaeFS per-file key KAT (parent.key1 = 0xA7*32):");
+    println!("AthFS per-file key KAT (parent.key1 = 0xA7*32):");
     println!("  inode 128 key1 = {}", hex(&key_a.key1));
     println!("  inode 128 key2 = {}", hex(&key_a.key2));
 
@@ -154,9 +154,9 @@ fn main() {
 
     println!();
     if fail == 0 {
-        println!("RaeFS per-file-key KAT: ALL PASS");
+        println!("AthFS per-file-key KAT: ALL PASS");
     } else {
-        println!("RaeFS per-file-key KAT: {} FAIL", fail);
+        println!("AthFS per-file-key KAT: {} FAIL", fail);
         std::process::exit(1);
     }
 }

@@ -1,4 +1,4 @@
-# RaeManifest.toml — RaeenOS app permission manifest (Phase 9.2)
+# RaeManifest.toml — AthenaOS app permission manifest (Phase 9.2)
 # Strict = the unverified-sideload posture: all gated syscall classes denied,
 # and [permissions] grants are deliberately ignored at this level (fail-close).
 

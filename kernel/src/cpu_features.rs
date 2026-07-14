@@ -11,7 +11,7 @@
 //! timer mode), x2APIC (more than 256 cores), PCID/INVPCID (page-table
 //! switch acceleration), SMEP/SMAP/CET (kernel hardening), LAM/UAI (memory
 //! tagging — Concept §Security), VMX/SVM (virtualization), and Hybrid
-//! Topology (Intel P/E cores, AMD CCX/Node clusters — for SCHED_GAME).
+//! Topology (Intel P/E cores, AMD CCX/Node clusters — for SCHED_BODY).
 //!
 //! Output: `[cpu] vendor=… family=… brand="…" features=…` at boot, plus
 //! `/proc/raeen/cpu` for runtime introspection.
@@ -595,7 +595,7 @@ pub fn umip_active() -> bool {
 /// default and leak the linear addresses of the GDT / IDT / LDT / TSS to
 /// userspace — a KASLR-defeat information leak (the classic ret2dir / SIDT
 /// de-randomization primitive). Blocking them costs nothing and breaks no
-/// legitimate userspace (RaeenOS apps never need raw descriptor-table reads).
+/// legitimate userspace (AthenaOS apps never need raw descriptor-table reads).
 /// `CR4` is per-CPU: BSP via the hardening init, every AP via `ap_entry`.
 ///
 /// Concept §"Security by default, not by friction": a REAL hardware trap that
@@ -1196,7 +1196,7 @@ pub fn vulnerabilities_dump_text() -> alloc::string::String {
     let d = current_cpu_security_descriptor();
     let r = assess_vulnerabilities(&d);
     let mut out = String::new();
-    out.push_str("# RaeenOS CPU transient-execution vulnerability posture\n");
+    out.push_str("# AthenaOS CPU transient-execution vulnerability posture\n");
     out.push_str("# (Linux /sys .../vulnerabilities equivalent; Concept §Security)\n");
     out.push_str(&alloc::format!(
         "cpu                {:?} family={:#x} model={:#x} arch_caps={}\n",
@@ -1467,7 +1467,7 @@ pub fn dump_text() -> String {
         Vendor::Other => "Other",
     };
     let mut out = String::new();
-    out.push_str("# RaeenOS CPU feature detection\n");
+    out.push_str("# AthenaOS CPU feature detection\n");
     out.push_str(&alloc::format!("vendor: {} ({})\n", v, info.vendor_str));
     out.push_str(&alloc::format!("brand:  \"{}\"\n", info.brand));
     out.push_str(&alloc::format!(

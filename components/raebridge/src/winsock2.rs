@@ -1,4 +1,4 @@
-//! winsock2.dll — Extended WinSock 2 API emulation for RaeBridge.
+//! winsock2.dll — Extended WinSock 2 API emulation for AthBridge.
 //!
 //! Provides deep WinSock2 coverage beyond basic ws2_32: overlapped I/O,
 //! IOCP integration, multicast, raw sockets, async name resolution,

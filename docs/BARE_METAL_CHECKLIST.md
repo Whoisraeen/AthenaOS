@@ -1,6 +1,6 @@
 # Bare-Metal Testing Checklist
 
-A pass/fail acceptance list for running RaeenOS on real hardware. Strict criteria — no "kind of works" passes here. Every line either has a measurable Boot artifact or it doesn't ship.
+A pass/fail acceptance list for running AthenaOS on real hardware. Strict criteria — no "kind of works" passes here. Every line either has a measurable Boot artifact or it doesn't ship.
 
 We hold this checklist to one curated machine first: **Beelink Athena (AMD Ryzen 7 8845HS, Zen 4 Phoenix, Radeon 780M iGPU, NVMe M.2)** because the hardware-profile dispatcher (`kernel/src/hardware_profile.rs`) already matches it and applies the right quirks. Once Athena is green, we extend to a second SKU (Framework 13 AMD), then a third (Minisforum UM790 Pro), then a desktop (Intel 12th/13th gen reference).
 
@@ -42,7 +42,7 @@ We hold this checklist to one curated machine first: **Beelink Athena (AMD Ryzen
 | 1.1 | USB HID class driver works | Keyboard typing reaches serial echo via xHCI → USB-HID → input | ❌ |
 | 1.2 | xHCI controller enumerated | `[xhci] controller online at <BDF>` (not "no controller found") | ❌ |
 | 1.3 | NVMe driver detects real Samsung 980 / WD SN770 / Crucial P3 | `[nvme] controller: <real model name> serial=<real>` | ❌ |
-| 1.4 | NVMe sector 0 round-trip | `[nvme] smoketest: read sector 0 (Ncycles) marker=<MBR signature or RaeFS magic>` | ❌ |
+| 1.4 | NVMe sector 0 round-trip | `[nvme] smoketest: read sector 0 (Ncycles) marker=<MBR signature or AthFS magic>` | ❌ |
 | 1.5 | EDID parsing accepts monitor | `[gop] EDID: <vendor> <model> <native mode>` | ❌ |
 | 1.6 | Battery presence detected via `_BIF`/`_BST` | `/proc/raeen/power` reports battery percentage | ❌ |
 | 1.7 | AC adapter state detected | `[power] AC: present` (or `absent` if unplugged) | ❌ |
@@ -70,21 +70,21 @@ We hold this checklist to one curated machine first: **Beelink Athena (AMD Ryzen
 |---|------|----------------|--------|
 | 2.1 | Live USB boots kernel + ramdisk-only init | Serial log to `OS booted` from USB | ❌ |
 | 2.2 | Installer userspace process discovers target NVMe | `installer: target=/dev/nvme0n1 size=<GB>` | ❌ |
-| 2.3 | GPT partition table written to target | `parted -l` from a recovery USB shows ESP + RaeFS partitions | ❌ |
+| 2.3 | GPT partition table written to target | `parted -l` from a recovery USB shows ESP + AthFS partitions | ❌ |
 | 2.4 | ESP formatted FAT32 | `mlabel`/`mdir` from recovery shows EFI/BOOT/BOOTX64.EFI | ❌ |
-| 2.5 | RaeFS formatted on target | RaeFS magic + journal sequence visible in sector 0 of target partition | ❌ |
+| 2.5 | AthFS formatted on target | AthFS magic + journal sequence visible in sector 0 of target partition | ❌ |
 | 2.6 | Kernel written into ESP | First post-install boot finds the kernel | ❌ |
 | 2.7 | Second power-on boots from NVMe (no USB inserted) | Serial confirms boot from NVMe | ❌ |
-| 2.8 | RaeFS root mounts from PARTUUID | `[ OK ] RaeFS root mounted from <UUID>` | ❌ |
+| 2.8 | AthFS root mounts from PARTUUID | `[ OK ] AthFS root mounted from <UUID>` | ❌ |
 | 2.9 | Bootloader → kernel signature verified | `[secboot] kernel signature verified` (or `[secboot] disabled`) | ❌ |
-| 2.10 | First-run setup completes | Userspace prompts username, locale, timezone; persists to RaeFS | ❌ |
-| 2.11 | Reboot preserves RaeFS state | Second boot reads back what first boot wrote | ❌ |
+| 2.10 | First-run setup completes | Userspace prompts username, locale, timezone; persists to AthFS | ❌ |
+| 2.11 | Reboot preserves AthFS state | Second boot reads back what first boot wrote | ❌ |
 | 2.12 | Atomic kernel update | Slot A → Slot B switch, boot fallback if new kernel doesn't reach userspace | ❌ |
 
 **Known gaps blocking Tier 2:**
 - No installer at all (userspace doesn't exist)
 - No GPT writer in kernel
-- No RaeFS `mkfs` callable from anywhere
+- No AthFS `mkfs` callable from anywhere
 - No bootloader signing infrastructure
 - No A/B slot management
 
@@ -104,8 +104,8 @@ We hold this checklist to one curated machine first: **Beelink Athena (AMD Ryzen
 | 3.8 | PCIe AER uncorrectable handled | Inject, kernel logs `[aer] uncorrectable, isolating device`, doesn't panic | ❌ |
 | 3.9 | Machine Check Exception survived | Inject MCE, kernel logs + continues (degrade rather than panic) | ❌ |
 | 3.10 | Thermal throttling activates | CPU temp > T_target → frequency clamp, no shutdown | ❌ |
-| 3.11 | Battery depletion → safe shutdown | At 5% remaining: warn; at 2%: clean shutdown to RaeFS | ❌ |
-| 3.12 | Crash dump written to disk | Forced panic produces parseable dump in RaeFS `/var/crash` | ❌ |
+| 3.11 | Battery depletion → safe shutdown | At 5% remaining: warn; at 2%: clean shutdown to AthFS | ❌ |
+| 3.12 | Crash dump written to disk | Forced panic produces parseable dump in AthFS `/var/crash` | ❌ |
 | 3.13 | Watchdog reboots a wedged kernel | Hung kernel reboots within 30s instead of staying down | ❌ |
 | 3.14 | Network: 10 Gbps stress to localhost | Sustained throughput with no packet loss in `/proc/raeen/network` | ❌ |
 | 3.15 | Storage: 1 GB/s sustained reads via NVMe | `dd if=/dev/nvme0n1 of=/dev/null bs=1M count=10000` near nominal | ❌ |

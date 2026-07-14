@@ -10,7 +10,7 @@
 //! 2. **Top-Half Execution:** Zero-allocation kernel interrupt handlers push events
 //!    here and exit immediately.
 //! 3. **Direct Thread Injection:** The kernel top-half directly wakes the driver's
-//!    `SCHED_GAME` thread, bypassing the normal scheduling epoch for instant
+//!    `SCHED_BODY` thread, bypassing the normal scheduling epoch for instant
 //!    context switching.
 
 #![allow(dead_code)]
@@ -105,7 +105,7 @@ impl AerRing {
 pub struct AerRegistration {
     pub ring: Arc<AerRing>,
     pub target_thread: TaskId,
-    /// Is the target thread running with `SCHED_GAME` priority?
+    /// Is the target thread running with `SCHED_BODY` priority?
     pub is_sched_game: bool,
 }
 

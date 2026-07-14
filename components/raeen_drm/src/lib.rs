@@ -1,18 +1,18 @@
-//! RaeenOS DRM/KMS API island.
+//! AthenaOS DRM/KMS API island.
 //!
 //! This crate is the **DRM subsystem surface** that Linux GPU drivers (amdgpu,
 //! i915, nouveau) link against instead of `vmlinux`. It provides the
 //! `drm_*` / `ttm_*` / `dma_fence_*` / `drm_sched_*` types and entry points the
 //! driver expects, implemented on top of `raeen_linuxkpi` (the hardware bridge:
-//! ioremap, dma_alloc_coherent, request_irq) and RaeGFX (the compositor scanout).
+//! ioremap, dma_alloc_coherent, request_irq) and AthGFX (the compositor scanout).
 //!
 //! The driver believes it is talking to the in-kernel DRM core. In reality every
 //! object lives in the driver's sandboxed userspace daemon, and modeset / scanout
-//! requests are forwarded to the RaeenOS compositor via IPC.
+//! requests are forwarded to the AthenaOS compositor via IPC.
 //!
 //! Per `docs/LINUX_DRIVER_STRATEGY.md` (Path C) + `docs/LINUXKPI_PHASE2.md`. This
 //! is the DRM half of the "full amdgpu" port — the driver-facing API contract.
-//! It is a license-island: MPL-2.0 RaeenOS code providing a compatible *interface*,
+//! It is a license-island: MPL-2.0 AthenaOS code providing a compatible *interface*,
 //! not a copy of GPL Linux DRM source.
 
 #![no_std]
@@ -96,7 +96,7 @@ impl DrmDevice {
     }
 
     /// `drm_dev_register` — publish the device to userspace (`/dev/dri/cardN`).
-    /// On RaeenOS this registers the device with the compositor instead.
+    /// On AthenaOS this registers the device with the compositor instead.
     pub fn register(&mut self) -> i32 {
         self.registered = true;
         log(&alloc::format!(

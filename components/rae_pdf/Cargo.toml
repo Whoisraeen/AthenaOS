@@ -6,7 +6,7 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-# RaeenOS PDF reader — "open my PDFs" (RaeenOS_Concept.md §Compatibility Strategy /
+# AthenaOS PDF reader — "open my PDFs" (LEGACY_GAMING_CONCEPT.md §Compatibility Strategy /
 # criterion #5 "does my OS open my files"). A Windows/macOS switcher brings a folder
 # of PDFs; an OS that can't open them isn't a daily driver. This is the READER
 # (parse + text/structure extraction), distinct from raeprint's pdf.rs GENERATOR.

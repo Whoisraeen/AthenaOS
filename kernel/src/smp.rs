@@ -1,14 +1,14 @@
 //! Symmetric Multi-Processing — per-CPU run queues, load balancing, TLB
-//! shootdown, CPU topology, and CPU hotplug for RaeenOS.
+//! shootdown, CPU topology, and CPU hotplug for AthenaOS.
 //!
 //! Architecture:
 //!   * Each CPU owns a `CpuData` struct containing a local run queue split by
-//!     priority class (SCHED_GAME deadline, SCHED_GAME regular, SCHED_NORMAL,
+//!     priority class (SCHED_BODY deadline, SCHED_BODY regular, SCHED_NORMAL,
 //!     SCHED_IDLE). Enqueue/dequeue on the *local* queue requires only a
 //!     per-CPU spinlock — no global contention on the fast path.
 //!   * A periodic `LoadBalancer` (every 4 ms tick) migrates tasks from
 //!     overloaded CPUs to underloaded CPUs, respecting NUMA distance, LLC
-//!     sharing, and SCHED_GAME pinning rules.
+//!     sharing, and SCHED_BODY pinning rules.
 //!   * `CpuTopology` detects packages, cores, SMT threads, and LLC domains
 //!     from CPUID leaf 0x0B (extended topology enumeration).
 //!   * TLB shootdown sends targeted IPIs to invalidate stale TLB entries
@@ -113,9 +113,9 @@ mod boot_block {
 /// Per-CPU run queue with separate sub-queues per scheduling class.
 /// Access requires only the per-CPU spinlock — no global lock on the hot path.
 pub struct PerCpuRunQueue {
-    /// EDF-ordered deadline tasks (SCHED_GAME with deadline params).
+    /// EDF-ordered deadline tasks (SCHED_BODY with deadline params).
     deadline: VecDeque<Task>,
-    /// Round-robin SCHED_GAME tasks without deadline constraints.
+    /// Round-robin SCHED_BODY tasks without deadline constraints.
     game: VecDeque<Task>,
     /// CFS-managed SCHED_NORMAL tasks, sorted by vruntime.
     normal: VecDeque<Task>,
@@ -711,7 +711,7 @@ impl LoadBalancer {
 
             match task {
                 Some(task) => {
-                    // Check SCHED_GAME pinning: don't migrate pinned game tasks.
+                    // Check SCHED_BODY pinning: don't migrate pinned game tasks.
                     if task.priority == TaskPriority::Game && !task.affinity.is_allowed(to as u32) {
                         // Put it back.
                         CPU_DATA[from].run_queue.lock().enqueue(task);
@@ -1271,7 +1271,7 @@ fn select_cpu_for_task(task: &Task) -> usize {
         return best_cpu;
     }
 
-    // SCHED_GAME tasks prefer staying on the current CPU (cache warmth).
+    // SCHED_BODY tasks prefer staying on the current CPU (cache warmth).
     if task.priority == TaskPriority::Game {
         return current_cpu;
     }
@@ -2142,7 +2142,7 @@ fn init_ap_lapic(apic_id: u64, cpu_id: usize) {
 // §12b  PER-CPU TSC SYNC VERIFICATION  (MasterChecklist Phase 1.6)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// Concept (RaeenOS_Concept.md — low-latency gaming scheduler): the deadline
+// Concept (LEGACY_GAMING_CONCEPT.md — low-latency gaming scheduler): the deadline
 // scheduler and frame-pacing logic compare timestamps taken on different CPUs.
 // If the per-core TSCs are skewed, a task migrated between cores can observe
 // time running backwards, corrupting deadline math. On modern x86 the TSC is

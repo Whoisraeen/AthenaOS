@@ -1,6 +1,6 @@
 //! virtio-gpu driver — the QEMU on-ramp for CPU→GPU rendering (Phase 6).
 //!
-//! Concept §RaeGFX / "the GPU draws the pixels": today the compositor software-
+//! Concept §AthGFX / "the GPU draws the pixels": today the compositor software-
 //! rasterizes into the UEFI GOP framebuffer and the CPU copies every pixel. The
 //! transition to GPU rendering needs a real device that owns a framebuffer
 //! *resource* and *scans it out* itself. Under QEMU the GPU is `virtio-gpu`, so
@@ -732,7 +732,7 @@ fn present_smoketest(disp_w: u32, disp_h: u32) -> bool {
             None => return false,
         };
         let virt = phys + off;
-        // BGRA: opaque RaeenOS blue.
+        // BGRA: opaque AthenaOS blue.
         let px: u32 = 0xFF_1E_3A_5F;
         let p = virt as *mut u32;
         for i in 0..(W * H) as usize {

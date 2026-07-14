@@ -1,6 +1,6 @@
 //! winhttp.dll — Windows HTTP Services API: sessions, connections, requests,
 //! authentication, proxy configuration, SSL/TLS, async callbacks, WebSocket,
-//! cookie management, and connection pooling for RaeBridge.
+//! cookie management, and connection pooling for AthBridge.
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MPL-2.0 */
-/* Linux poll vocabulary used by the DRM file/event path.  The RaeenOS VFS
+/* Linux poll vocabulary used by the DRM file/event path.  The AthenaOS VFS
  * broker owns descriptor wake registration; drm_poll still reports the exact
  * readiness mask for already queued events. */
 #ifndef _LINUXKPI_LINUX_POLL_H

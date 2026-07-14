@@ -15,7 +15,7 @@ Honest assessment so nobody (human or agent) mistakes the foundation for the fin
   `WREG32_SOC15`, the `container_of`/`list_head`/`completion` idioms, …) does not
   exist yet and is the bulk of the work.
 
-This is FreeBSD `drm-kmod` scale (years of upstream effort there). RaeenOS does **not**
+This is FreeBSD `drm-kmod` scale (years of upstream effort there). AthenaOS does **not**
 need all 300 files — the MES bring-up subset is ~50–100 files — but that is still a
 multi-month, error-driven grind. Treat each milestone in `README.md` as weeks, not
 hours.
@@ -23,7 +23,7 @@ hours.
 ## Strategy: error-driven, host-first, subset-only
 
 1. **Host-first.** Compile on WSL/gcc natively. Fast loop, no flash, no cross-compile
-   noise. Only after the subset *compiles + links* do we cross-compile for RaeenOS.
+   noise. Only after the subset *compiles + links* do we cross-compile for AthenaOS.
 2. **Subset-only.** We are not porting "all of amdgpu". We need exactly the call graph
    that brings the GPU to a live MES + first submit: device/IP-discovery → GMC (GART)
    → PSP (firmware load) → GFX/RLC → MES → SMU (power) → IH. Everything else
@@ -31,7 +31,7 @@ hours.
 3. **Error-driven shim.** Don't pre-write headers. Compile, read the first error, add
    exactly the type/macro/decl it needs to `include/`, repeat. The shim grows to fit
    the actual call graph, nothing more. **Every stub returns a real error or a defined
-   value — no silent-success fakes** (RaeenOS rule 9 + `LinuxKabiError` discipline).
+   value — no silent-success fakes** (AthenaOS rule 9 + `LinuxKabiError` discipline).
 
 ## Milestone walls (what blocks each step)
 

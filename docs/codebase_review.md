@@ -1,4 +1,4 @@
-# RaeenOS Codebase Review — Pure Code Analysis
+# AthenaOS Codebase Review — Pure Code Analysis
 
 > Based on reading **~20 core kernel source files** and indexing the full module tree (152 `.rs` files + 3 subdirectories in `kernel/src/`).
 
@@ -6,32 +6,32 @@
 
 ## Executive Summary
 
-RaeenOS is an **impressively ambitious** x86_64 hybrid kernel that boots in QEMU, runs ELF userspace processes, has a working compositor, and touches nearly every OS subsystem imaginable. The boot path is real — ACPI, SMP, APIC, virtio-net, DHCP, ELF loading, and a SYSCALL-based user/kernel boundary all function end-to-end. However, the codebase has grown to **~5.5 MB of kernel source** across 152 modules, and the ratio of "proven on the boot path" to "compiled but untested" code is roughly 15:85. Below is a candid assessment.
+AthenaOS is an **impressively ambitious** x86_64 hybrid kernel that boots in QEMU, runs ELF userspace processes, has a working compositor, and touches nearly every OS subsystem imaginable. The boot path is real — ACPI, SMP, APIC, virtio-net, DHCP, ELF loading, and a SYSCALL-based user/kernel boundary all function end-to-end. However, the codebase has grown to **~5.5 MB of kernel source** across 152 modules, and the ratio of "proven on the boot path" to "compiled but untested" code is roughly 15:85. Below is a candid assessment.
 
 ---
 
 ## 🟢 What's Working Well (Genuinely Impressive)
 
-### 1. Boot Path ([main.rs](file:///c:/Users/woisr/Documents/RaeenOS/kernel/src/main.rs))
+### 1. Boot Path ([main.rs](file:///c:/Users/woisr/Documents/AthenaOS/kernel/src/main.rs))
 The 9-tier boot sequence is **well-structured and serial-observable**. TSC-based boot benchmarking against the concept target (6s) is a great practice. The boot path is real, not stubbed — each tier initializes concrete hardware or subsystem state, and smoke tests validate it.
 
-### 2. Context Switching ([context.rs](file:///c:/Users/woisr/Documents/RaeenOS/kernel/src/context.rs))
+### 2. Context Switching ([context.rs](file:///c:/Users/woisr/Documents/AthenaOS/kernel/src/context.rs))
 The `switch_context` assembly is **correct and clean** — 7-register save/restore, FPU state via FXSAVE64/FXRSTOR64, CR3 switching, null-pointer guards for both save-skip (exit_current_task) and FPU-skip (first run). The `thread_entry_user` trampoline zeroes all GPRs before `iretq` — a real security measure.
 
-### 3. SYSCALL Entry ([syscall.rs](file:///c:/Users/woisr/Documents/RaeenOS/kernel/src/syscall.rs#L114-L211))
+### 3. SYSCALL Entry ([syscall.rs](file:///c:/Users/woisr/Documents/AthenaOS/kernel/src/syscall.rs#L114-L211))
 The `syscall_handler` naked function handles SWAPGS correctly, uses per-CPU kernel stacks via `PerCpuSyscall`, and includes the **Intel SYSRET non-canonical RCX vulnerability mitigation** (line 185-209). This is a detail most hobby OSes miss entirely.
 
-### 4. Per-CPU GDT/TSS ([gdt.rs](file:///c:/Users/woisr/Documents/RaeenOS/kernel/src/gdt.rs))
+### 4. Per-CPU GDT/TSS ([gdt.rs](file:///c:/Users/woisr/Documents/AthenaOS/kernel/src/gdt.rs))
 Each AP gets its own heap-allocated TSS and GDT. The `current_cpu_id()` function has a **defense-in-depth clamp** (line 243-245) to survive SWAPGS pairing bugs — evidence of real debugging experience.
 
-### 5. Capability System ([capability.rs](file:///c:/Users/woisr/Documents/RaeenOS/kernel/src/capability.rs))
+### 5. Capability System ([capability.rs](file:///c:/Users/woisr/Documents/AthenaOS/kernel/src/capability.rs))
 The capability model is **well-designed**:
 - 14 cap flavors (Channel, Mmio, Irq, Port, Filesystem, Network, GPU, Audio, Camera, Process, CryptoKey, Hypervisor, Attestation, Debug)
 - Proper subset derivation rules with `is_valid_derivation()` — Mmio sub-ranges, port sub-ranges
 - Grant/revoke with parent chain tracking
 - Rights bitset is hand-rolled to avoid `bitflags` dependency
 
-### 6. Compositor ([compositor.rs](file:///c:/Users/woisr/Documents/RaeenOS/kernel/src/compositor.rs))
+### 6. Compositor ([compositor.rs](file:///c:/Users/woisr/Documents/AthenaOS/kernel/src/compositor.rs))
 At **2,588 lines and 89KB**, this is not a stub. It has:
 - Multi-window z-ordered compositing
 - VRR-aware frame pacing with weighted prediction
@@ -43,7 +43,7 @@ At **2,588 lines and 89KB**, this is not a stub. It has:
 
 This is the most feature-rich module in the kernel.
 
-### 7. Scheduler ([scheduler.rs](file:///c:/Users/woisr/Documents/RaeenOS/kernel/src/scheduler.rs))
+### 7. Scheduler ([scheduler.rs](file:///c:/Users/woisr/Documents/AthenaOS/kernel/src/scheduler.rs))
 Three-tier priority (Deadline EDF → Game RR → Normal CFS) with per-CPU runqueues, work stealing, game-mode background throttling, and NULL_LATENCY mode. The SMP smoketest spawns pinned workers across CPUs — a real end-to-end validation.
 
 ---
@@ -123,7 +123,7 @@ This means if a user process maps pages in any PML4 entry other than 0 (addresse
 
 ### 5. IPC Has Duplicate Capability Types
 
-[ipc.rs](file:///c:/Users/woisr/Documents/RaeenOS/kernel/src/ipc.rs) defines its own `CapRights`, `Capability`, and `CNode` types (lines 97-139) that are **completely unused** — the actual IPC permission checks go through [capability.rs](file:///c:/Users/woisr/Documents/RaeenOS/kernel/src/capability.rs). This dead code is confusing.
+[ipc.rs](file:///c:/Users/woisr/Documents/AthenaOS/kernel/src/ipc.rs) defines its own `CapRights`, `Capability`, and `CNode` types (lines 97-139) that are **completely unused** — the actual IPC permission checks go through [capability.rs](file:///c:/Users/woisr/Documents/AthenaOS/kernel/src/capability.rs). This dead code is confusing.
 
 ### 6. `copy_from_user` NOP Fences Are Not Memory Barriers
 
@@ -156,14 +156,14 @@ These NOPs with `nomem` don't provide any ordering guarantee. If the intent is t
 - `numa.rs` — 81 KB
 - `nvme.rs` — 69 KB
 
-The concept doc says RaeenOS is a **hybrid kernel** with userspace drivers, but right now the kernel contains complete implementations of: audio, Bluetooth, WireGuard, TLS, QUIC, DNS, DHCP, firewall, IPsec, GPU, display, anticheat, overclock, NVMe, AHCI, compositor, dynamic linker, shell, login UI, window chrome, theme engine, live wallpaper, game profiles, RGB lighting, app bundles, and more.
+The concept doc says AthenaOS is a **hybrid kernel** with userspace drivers, but right now the kernel contains complete implementations of: audio, Bluetooth, WireGuard, TLS, QUIC, DNS, DHCP, firewall, IPsec, GPU, display, anticheat, overclock, NVMe, AHCI, compositor, dynamic linker, shell, login UI, window chrome, theme engine, live wallpaper, game profiles, RGB lighting, app bundles, and more.
 
 > [!WARNING]
 > If all of this compiles into the kernel binary, you're looking at a **60+ MB** kernel image (evidenced by `kernel.release.asm` at 68 MB). This is 30x larger than Linux's default vmlinuz. Boot time, memory footprint, and attack surface all suffer.
 
 ### 2. Components Directory — 31 Crates, Unknown State
 
-The `components/` directory has 31 sub-crates (raefs, raenet, raeui, raeaudio, etc.), but only 5 are pulled in as kernel dependencies in [Cargo.toml](file:///c:/Users/woisr/Documents/RaeenOS/kernel/Cargo.toml#L39-L43): `pcid`, `raegfx`, `raeshell`, `raeid`, `raebridge`. The other 26 are likely stubs or aspirational.
+The `components/` directory has 31 sub-crates (raefs, raenet, raeui, raeaudio, etc.), but only 5 are pulled in as kernel dependencies in [Cargo.toml](file:///c:/Users/woisr/Documents/AthenaOS/kernel/Cargo.toml#L39-L43): `pcid`, `raegfx`, `raeshell`, `raeid`, `raebridge`. The other 26 are likely stubs or aspirational.
 
 ### 3. No Test Infrastructure
 

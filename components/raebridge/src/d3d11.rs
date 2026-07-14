@@ -1,6 +1,6 @@
-//! Direct3D 11 API emulation layer for RaeBridge.
+//! Direct3D 11 API emulation layer for AthBridge.
 //!
-//! Translates D3D11 calls to RaeGFX Vulkan backend.
+//! Translates D3D11 calls to AthGFX Vulkan backend.
 
 #![allow(non_camel_case_types, non_snake_case, dead_code)]
 
@@ -2073,7 +2073,7 @@ impl D3D11Runtime {
             return S_OK;
         }
 
-        self.adapter_description = String::from("RaeGFX Virtual Adapter (Vulkan)");
+        self.adapter_description = String::from("AthGFX Virtual Adapter (Vulkan)");
         self.adapter_vendor_id = 0x1002;
         self.adapter_device_id = 0x7340;
         self.dedicated_video_memory = 8 * 1024 * 1024 * 1024;

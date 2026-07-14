@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the RaeenOS Linux-ABI probe (see probe.c).
+# Build the AthenaOS Linux-ABI probe (see probe.c).
 #
 # This produces `linux_abi_probe.elf`, a tiny static x86_64 Linux binary that
 # the kernel embeds (kernel/src/linux_exec.rs) and spawns at boot to PROVE the

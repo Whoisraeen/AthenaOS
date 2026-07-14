@@ -1,4 +1,4 @@
-//! RaeenOS Photos — userspace ELF entry shim.
+//! AthenaOS Photos — userspace ELF entry shim.
 //!
 //! All the app (state, draw path, syscall wiring, the syscall-free decode
 //! dispatch + the design/pipeline proofs) lives in the `photos` LIBRARY crate

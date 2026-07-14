@@ -1,6 +1,6 @@
 //! # RaeJs core built-in library.
 //!
-//! RaeenOS_Concept.md §Compatibility Strategy (criterion #5 — "the web browser is the
+//! LEGACY_GAMING_CONCEPT.md §Compatibility Strategy (criterion #5 — "the web browser is the
 //! universal app runtime; PWAs that feel native"): a tree-walking interpreter is only
 //! useful to a page if the globals real scripts reach for exist. This module installs the
 //! synchronous core that interactive snippets depend on, all `no_std`+`alloc`,

@@ -1,6 +1,6 @@
 //! dbghelp.dll — Debug Help Library: symbol resolution, stack walking, minidump
 //! creation/reading, type information, image helpers, and exception handling
-//! for RaeBridge.
+//! for AthBridge.
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;

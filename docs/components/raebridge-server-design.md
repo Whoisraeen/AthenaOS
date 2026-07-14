@@ -5,7 +5,7 @@
 Builds on the committed in-process object model (`lib.rs` `SyncObject`, commit
 `e9be347`). Owner-assigned via /goal; interface-steward = Opus.
 
-**Concept line served** (`RaeenOS_Concept.md` §Compatibility): "apps run naturally."
+**Concept line served** (`LEGACY_GAMING_CONCEPT.md` §Compatibility): "apps run naturally."
 A multi-process Windows app — and Steam itself — needs a `Global\Name` mutex/event
 to be *shared across processes* and `WaitForSingleObject` to *actually block*. The
 in-process model (slice 1) handles a single `.exe`'s own threads; this broker is the
@@ -119,10 +119,10 @@ rendezvous), `/proc/raeen/raebridge_server` line, Concept docstring.
 
 ## 6. Non-goals / guardrails
 
-- Not a `wineserver` port — native daemon over RaeenOS primitives ([no Linux clones]).
+- Not a `wineserver` port — native daemon over AthenaOS primitives ([no Linux clones]).
 - No per-wait broker round-trip (that would tank latency — futex direct-path is the point).
 - Cap/sandbox: each broker object is capability-scoped; a guest only reaches names its
-  manifest permits (ties into RaeShield Phase 9, deferred — fail-open for bring-up, noted).
+  manifest permits (ties into AthGuard Phase 9, deferred — fail-open for bring-up, noted).
 
 ---
 
@@ -156,14 +156,14 @@ a mismatched `version` at open. Proposed layout (all fields `AtomicU32`, natural
 pub const RAEBRIDGE_SYNC_ABI_VERSION: u32 = 1;
 
 #[repr(u32)]
-pub enum RaeSyncKind { Event = 1, Mutex = 2, Semaphore = 3 }
+pub enum AthSyncKind { Event = 1, Mutex = 2, Semaphore = 3 }
 
 #[repr(C, align(8))]
-pub struct RaeSyncObject {
+pub struct AthSyncObject {
     state:      AtomicU32, // OFFSET 0 = futex word. Event: 0/1 signaled.
                            //   Mutex: owner tid (0=free). Semaphore: live count.
     version:    AtomicU32, // == RAEBRIDGE_SYNC_ABI_VERSION
-    kind:       AtomicU32, // RaeSyncKind
+    kind:       AtomicU32, // AthSyncKind
     flags:      AtomicU32, // bit0 = manual-reset (event); bit1 = initially-owned
     owner_tid:  AtomicU32, // mutex: current owner (mirror of state for clarity)
     recursion:  AtomicU32, // mutex: re-entrant acquire depth
@@ -186,7 +186,7 @@ picks:
 
 - **Outcome A — NO ABI change (preferred).** If existing channel/cap plumbing
   already lets a daemon grant a channel cap to a connecting client (the same way
-  other RaeenOS services hand back a channel), the broker uses it verbatim.
+  other AthenaOS services hand back a channel), the broker uses it verbatim.
   Deliverable: zero `rae_abi` edits; Slice 1 proves cap handoff with a boot KAT.
 - **Outcome B — ONE reserved slot.** If not, add a single syscall in the reserved
   sync block, e.g.:
@@ -207,12 +207,12 @@ No other slot is requested. No speculative widening. Composer files this as a
 
 ### 7.3 Acceptance checklist for sign-off
 
-1. Approve `RaeSyncObject` layout + `RAEBRIDGE_SYNC_ABI_VERSION` as the versioned
+1. Approve `AthSyncObject` layout + `RAEBRIDGE_SYNC_ABI_VERSION` as the versioned
    cross-process contract (or request field changes).
 2. Rule Outcome A vs B on cap handoff. If B, approve `SYS_RAEBRIDGE_SYNC_OPEN=259`
    (additive, no version bump).
 3. Confirm no per-wait broker round-trip (futex direct-path) — latency guardrail.
-4. Confirm capability scoping story (named object = cap-scoped; RaeShield Phase 9
+4. Confirm capability scoping story (named object = cap-scoped; AthGuard Phase 9
    enforcement deferred, fail-open noted).
 
 On sign-off, Slice 1 (§4) proceeds: broker skeleton + namespace + FAIL-able

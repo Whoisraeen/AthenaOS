@@ -1,14 +1,22 @@
+# Design Spec: GameOS Mode (PARKED — not an AthenaOS product goal)
+
+> **Athena note:** Couch / big-picture gaming UI is **abandoned** for AthenaOS.
+> See [`LEGACY_GAMING_CONCEPT.md`](../../LEGACY_GAMING_CONCEPT.md) and
+> [`PARKED_GAMING.md`](../PARKED_GAMING.md). Do not expand this surface.
+
+**Historical bootstrap text follows (do not treat as roadmap).**
+
 # Design Spec: GameOS Mode (couch / big-picture / controller-first shell)
 
-> *"Gaming isn't a mode. It's the default."* — RaeenOS_Concept.md §"What Makes It Different"
+> *"Gaming isn't a mode. It's the default."* — legacy gaming thesis (abandoned)
 >
 > *"GameOS Mode — couch UI, big-picture, controller-first. Toggle into it
-> instantly. Same OS, different shell."* — Concept §Gaming-First Design → Features
+> instantly. Same OS, different shell."* — legacy Concept (abandoned)
 >
 > *"Boot directly into GameOS Mode if configured. Couch UI, controller-driven,
 > optimized for living-room use. Same OS, same library, same saves as the desktop
 > experience. Competes with SteamOS on its home turf with a better app ecosystem."*
-> — Concept §Three User Experiences → Game Station
+> — legacy Concept (abandoned)
 
 **Bar to clear:** Steam Big Picture / SteamOS Gamescope (the gold standard for
 couch/controller UI) on responsiveness and library aggregation; Xbox dashboard on
@@ -39,7 +47,7 @@ NOT a rebuild (CLAUDE.md rule 7 — extend the wired module, never twin it).
 | Keyboard→controller map | **LIVE: `shell_runner.rs` scancode→`GamepadButton`** | arrows/Enter/Backspace/Tab/F11 | → reference map only; the real binding is live gamepad (below) |
 | Generic HID gamepad decoder | **LIVE: `kernel/src/hid_gamepad.rs`** — report-descriptor parser, axes/buttons/hat, host-KAT'd, `/proc/raeen/hid_pad` | parses + decodes; **not bound to xHCI interrupt-IN yet** (iron half open) | → consumes its `PadInput`; glyph set + chord layer sit on top |
 | Per-game profiles | **LIVE: `kernel/src/game_profile.rs`** (syscalls 58–61, `/proc/raeen/games`, 3 presets) + **`components/raeplay` `GameProfile`** (display/gpu/audio/input/sched/compat) | store + apply wired; **compositor/audio/cpufreq setters not exposed yet** (logged-intent) | → the per-game profile *surface* edits these; setters are raeen-gfx/raeen-kernel work, referenced not designed here |
-| Library aggregation | **LIVE: `components/raeplay`** — Steam(VDF)/Epic(JSON)/GOG/RaeStore/Manual connectors, `GameEntry`, launch manager | parsers + state machine real; cover-art is a hash, not pixels | → couch grid renders `raeplay::GameEntry`; cover-art fetch is a RaePlay/store concern |
+| Library aggregation | **LIVE: `components/raeplay`** — Steam(VDF)/Epic(JSON)/GOG/AthStore/Manual connectors, `GameEntry`, launch manager | parsers + state machine real; cover-art is a hash, not pixels | → couch grid renders `raeplay::GameEntry`; cover-art fetch is a AthPlay/store concern |
 | Game Bar overlay | partial: `GameOsState::Overlay` enum + `NowPlaying{fps,frametime}` bar exist | now-playing strip only | → full Game Bar overlay spec (FPS/frametime graph/temps/power/capture/voice), Guide-chord invoked |
 
 > **Note for the implementer mid-build:** `gameos.rs` currently `#![allow(unused)]`
@@ -56,7 +64,7 @@ NOT a rebuild (CLAUDE.md rule 7 — extend the wired module, never twin it).
 |---|---|---|---|
 | Entry/exit | "Toggle into it instantly. Same OS, different shell." | Steam Deck Steam/Desktop toggle (logout-feel, slow) | Instant cross-fade, **no session restart** — the compositor just swaps which shell owns the scanout |
 | Couch home | "Couch UI… optimized for living-room use" | PS5 focused-tile home, Switch home | One coherent grid that reads the live Vibe accent; large focused cover-art with parallax |
-| Library | "Steam, Epic, GOG, RaeStore unified" (RaePlay) | Steam library (Steam-only) | True cross-store aggregation in one grid, store badge per tile |
+| Library | "Steam, Epic, GOG, AthStore unified" (AthPlay) | Steam library (Steam-only) | True cross-store aggregation in one grid, store badge per tile |
 | Game Bar | "Game Bar that doesn't suck… all native, all fast" | Xbox Game Bar (laggy, Win-tax) | Compositor-native overlay, Guide-chord, <1-frame to paint, zero OBS-class overhead |
 | Per-game | "resolution, refresh rate, audio device, GPU power limit… auto-applied" | NVIDIA CP + Adrenalin + Steam Properties sprawl | One surface, one record (`game_profile`), auto-applied on launch |
 | Controller | "DualSense + Xbox + every controller, full feature parity" | SteamInput glyph system | Full no-keyboard nav + multi-glyph-set button hints + OSK |
@@ -90,7 +98,7 @@ NOT a rebuild (CLAUDE.md rule 7 — extend the wired module, never twin it).
 
 ---
 
-## RaeenOS design tokens (what this surface uses)
+## AthenaOS design tokens (what this surface uses)
 
 GameOS is the desktop shell's tokens at **couch distance**. Same palette, same
 accent ramp, same motion curves — scaled up for 10-foot viewing and 48px+ hit
@@ -242,8 +250,8 @@ Layout, left→right / top→bottom, all on the 4px grid with `space.8` outer ma
   over the current bracketed-text hints (`[A] Play`).
 
 **Library aggregation:** the grid is fed `raeplay::GameEntry` from all enabled
-connectors (Steam/Epic/GOG/RaeStore/Manual — all LIVE parsers). One unified library,
-store badge per tile. RaePlay owns scan/launch; GameOS owns the *presentation*.
+connectors (Steam/Epic/GOG/AthStore/Manual — all LIVE parsers). One unified library,
+store badge per tile. AthPlay owns scan/launch; GameOS owns the *presentation*.
 
 **Focus navigation model:** D-pad / left-stick moves focus one tile per press
 (`motion.micro`); LB/RB page; LT/RT jump section; left-edge → nav rail; up from grid
@@ -294,10 +302,10 @@ Fields (grouped, controller-editable rows, `type.couch.body` values):
   device + ducking.
 - **Input:** controller layout (Default/Xbox/DualSense/SteamDeck/Custom), gyro,
   adaptive triggers, vibration, mouse sens.
-- **Scheduler:** SCHED_GAME on, NULL_LATENCY, background throttle, core affinity,
+- **Scheduler:** SCHED_BODY on, NULL_LATENCY, background throttle, core affinity,
   render-thread pinning.
 
-**Auto-apply:** on launch, RaePlay's `LaunchManager` applies the profile via
+**Auto-apply:** on launch, AthPlay's `LaunchManager` applies the profile via
 `LaunchCallbacks` (LIVE trait) → `game_profile::apply_profile` → scheduler (LIVE) +
 compositor/audio/cpufreq setters (**not yet exposed** — raeen-gfx/raeen-kernel).
 The surface writes the record; the kernel applies it. Snapshot/rollback rides on
@@ -337,8 +345,8 @@ not reimplement them:
   with the desktop — *that's* the cohesion deliverable. (Today `gameos.rs` is the
   single biggest token-drift offender: ~20 file-local constants. Fixing it is the
   cohesion work.)
-- **SCHED_GAME** (LIVE EDF) — the running game's threads; GameOS's own render thread
-  should ride SCHED_GAME too (compositor-class), so the UI stays smooth under load.
+- **SCHED_BODY** (LIVE EDF) — the running game's threads; GameOS's own render thread
+  should ride SCHED_BODY too (compositor-class), so the UI stays smooth under load.
 - **Exclusive-fullscreen direct-to-GPU** (Concept §Performance) — when a game runs,
   GameOS yields the scanout to the direct path (`FullscreenMode::ExclusiveFullscreen`);
   the Game Bar composites *above* without forcing the game off the direct path.
@@ -407,9 +415,9 @@ contract):**
 - **raeen-gaming** — owns the controller stack (bind `hid_gamepad::PadInput` to live
   xHCI interrupt-IN; first-party DualSense/Xbox haptics/triggers/gyro; the glyph-set
   auto-select), the per-game profile *application* wiring (`raeplay::LaunchCallbacks`
-  → `game_profile::apply_profile`), library aggregation (RaePlay connectors → grid),
+  → `game_profile::apply_profile`), library aggregation (AthPlay connectors → grid),
   and the auto-enter triggers (controller-connect / TV-out).
-- **raeen-kernel / raeen-gfx** *(referenced, not specified here)* — SCHED_GAME for
+- **raeen-kernel / raeen-gfx** *(referenced, not specified here)* — SCHED_BODY for
   the couch render thread, the exclusive-fullscreen direct-scanout handoff, the
   compositor/audio/cpufreq profile **setters** that `game_profile::apply_profile`
   logs intent for today, and the `/proc/raeen/perf` telemetry the Game Bar reads.

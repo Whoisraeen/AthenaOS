@@ -10,7 +10,7 @@
 //! §3.2. New text work extends raefont, never this file.
 //!
 //! ---
-//! (historical) Font rendering engine for RaeenOS. TrueType / OpenType parser
+//! (historical) Font rendering engine for AthenaOS. TrueType / OpenType parser
 //! and rasterizer providing glyph-level metrics, bitmap rendering, text
 //! measurement, layout with word-wrapping, and a glyph cache.
 

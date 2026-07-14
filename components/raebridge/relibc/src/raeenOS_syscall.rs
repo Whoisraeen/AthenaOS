@@ -1,7 +1,7 @@
-//! RaeenOS syscall adapter for relibc (RaeBridge).
+//! AthenaOS syscall adapter for relibc (AthBridge).
 //!
-//! Maps relibc's POSIX expectations onto RaeenOS native syscalls from
-//! `docs/SYSCALL_TABLE.md`. Redox uses `syscall::` + scheme IPC; RaeenOS uses
+//! Maps relibc's POSIX expectations onto AthenaOS native syscalls from
+//! `docs/SYSCALL_TABLE.md`. Redox uses `syscall::` + scheme IPC; AthenaOS uses
 //! capability-gated ring-buffer IPC (`SYS_SEND`/`SYS_RECV`) and `SYS_SPAWN`
 //! instead of `fork`.
 
@@ -259,7 +259,7 @@ unsafe fn syscall3(mut num: usize, a: usize, b: usize, c: usize) -> usize {
     num
 }
 
-/// Map RaeenOS `u64::MAX - N` kernel errors to POSIX errno values.
+/// Map AthenaOS `u64::MAX - N` kernel errors to POSIX errno values.
 fn check_err(ret: usize) -> Result<usize> {
     match ret {
         usize::MAX => Err(Errno(EFAULT)),
@@ -328,7 +328,7 @@ pub fn sys_getpid() -> Result<usize> {
     check_err(ret)
 }
 
-/// RaeenOS has no `fork`; use `sys_spawn` (Redox `exec`/`spawn` model).
+/// AthenaOS has no `fork`; use `sys_spawn` (Redox `exec`/`spawn` model).
 pub fn sys_spawn(path: *const u8) -> Result<usize> {
     require_process_spawn()?;
     let len = c_strlen(path);

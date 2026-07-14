@@ -67,7 +67,7 @@ priority = 0
 check-cfg = ["cfg(fuzzing)"]
 
 # Standalone: consumed via [patch.crates-io] path (see the workspace-root
-# Cargo.toml), not as a workspace member. RaeenOS freelist-hardening fixes
+# Cargo.toml), not as a workspace member. AthenaOS freelist-hardening fixes
 # (MasterChecklist "Latent kernel bugs" — DMA-UAF-corrupts-freelist class):
 # src/hole.rs stores the intrusive `Hole.next` link XOR-obfuscated + location-
 # tied (CONFIG_SLAB_FREELIST_HARDENED technique) and validates it on every deref.

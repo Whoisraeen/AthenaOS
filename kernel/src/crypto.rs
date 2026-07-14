@@ -519,7 +519,7 @@ impl CipherAlgorithm for AesContext {
 //
 // Hardware AES via the AESENC/AESDEC instruction family — the same primitive
 // Windows (BCrypt) and macOS (CommonCrypto/corecrypto) use so bulk crypto (FDE
-// AES-XTS, TLS AES-GCM, RaeFS per-file keys) runs at silicon speed instead of
+// AES-XTS, TLS AES-GCM, AthFS per-file keys) runs at silicon speed instead of
 // the table-driven software core. This is Concept §"Fast is a feature" applied
 // to the crypto path.
 //
@@ -4258,7 +4258,7 @@ pub fn hash_known_answer_test() -> bool {
 }
 
 /// HMAC known-answer test against RFC 4231 — proves the HMAC ipad/opad
-/// construction is correct for SHA-256 (TLS HKDF, anticheat, QUIC, RaeFS) and
+/// construction is correct for SHA-256 (TLS HKDF, anticheat, QUIC, AthFS) and
 /// SHA-512 (the latter previously fell back to SHA-256 silently — a wrong
 /// digest). Pure deterministic; the published vectors ARE the proof.
 pub fn hmac_known_answer_test() -> bool {
@@ -4426,7 +4426,7 @@ pub fn ecdsa_p256_known_answer_test() -> bool {
 ///
 ///     openssl genrsa -out rsa2048.pem 2048
 ///     openssl rsa -in rsa2048.pem -pubout -out pub.pem
-///     printf '%s' 'RaeenOS RSA-PKCS1-SHA256 known-answer test vector v1' > msg.bin
+///     printf '%s' 'AthenaOS RSA-PKCS1-SHA256 known-answer test vector v1' > msg.bin
 ///     openssl dgst -sha256 -sign rsa2048.pem -out sig.bin msg.bin
 ///     openssl dgst -sha256 -verify pub.pem -signature sig.bin msg.bin   # -> Verified OK
 ///
@@ -4509,7 +4509,7 @@ pub fn rsa_pkcs1_sha256_known_answer_test() -> bool {
 ///
 ///     openssl genrsa -out rsa2048.pem 2048
 ///     openssl rsa -in rsa2048.pem -pubout -out pub.pem
-///     printf '%s' 'RaeenOS RSA-PKCS1-SHA512 known-answer test vector v1' > msg.bin
+///     printf '%s' 'AthenaOS RSA-PKCS1-SHA512 known-answer test vector v1' > msg.bin
 ///     openssl dgst -sha512 -sign rsa2048.pem -out sig.bin msg.bin
 ///     openssl dgst -sha512 -verify pub.pem -signature sig.bin msg.bin   # -> Verified OK
 ///
@@ -5759,7 +5759,7 @@ impl CryptoFramework {
         self.crng.init(&seed);
         let _ = self
             .drbg
-            .instantiate(&seed[..32], &seed[32..48], b"RaeenOS-DRBG");
+            .instantiate(&seed[..32], &seed[32..48], b"AthenaOS-DRBG");
         self.hw_seeded = hw;
 
         self.register_builtin_algorithms();

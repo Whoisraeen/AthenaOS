@@ -1,9 +1,9 @@
-//! Keyboard-layout data + pure lookup API for RaeenOS.
+//! Keyboard-layout data + pure lookup API for AthenaOS.
 //!
 //! # Concept alignment
-//! `RaeenOS_Concept.md` calls for an OS that can "rival Windows + macOS"
+//! `LEGACY_GAMING_CONCEPT.md` calls for an OS that can "rival Windows + macOS"
 //! globally — those ship dozens of keyboard layouts so a French or German
-//! user can actually type. Today RaeenOS's scancode→char mapping is
+//! user can actually type. Today AthenaOS's scancode→char mapping is
 //! hardcoded US-QWERTY (`kernel/src/shell_runner.rs::lock_scancode_to_ascii`),
 //! so any non-US switcher types garbage. This module is the locale-owned
 //! *data + lookup* half of the fix (parity gap #5): a registry of layouts and

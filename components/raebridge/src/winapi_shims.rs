@@ -1,6 +1,6 @@
 //! `extern "win64"` entry points for PE import resolution.
 //!
-//! Concept §Compatibility Strategy: "RaeBridge runs Windows apps on day
+//! Concept §Compatibility Strategy: "AthBridge runs Windows apps on day
 //! one." This module is the execution half of that promise: each function
 //! here is ABI-compatible with the real Win32 export of the same name, so
 //! the PE loader can write its address directly into a loaded image's IAT
@@ -11,7 +11,7 @@
 //! layer".
 //!
 //! Design notes:
-//!   • The Windows process runs *inside* the RaeBridge host process (Wine
+//!   • The Windows process runs *inside* the AthBridge host process (Wine
 //!     model), so guest pointers are host pointers and can be dereferenced
 //!     directly. No VA translation layer.
 //!   • All shims funnel through one process-global [`FullCompatSession`],
@@ -52,7 +52,7 @@ static HOST_CTX: HostCtxCell = HostCtxCell {
     ctx: UnsafeCell::new(None),
 };
 
-/// Install the process-global compat session. Called once by the RaeBridge
+/// Install the process-global compat session. Called once by the AthBridge
 /// host before jumping to a PE entry point. Returns the previous session if
 /// one was installed (callers should treat `Some` as a logic error).
 pub fn install_host_context(ctx: Box<FullCompatSession>) -> Option<Box<FullCompatSession>> {
@@ -118,7 +118,7 @@ pub fn gui_paint_pixel_count() -> u64 {
 /// EDIT window could not be created.
 ///
 /// # Safety
-/// Must run inside the RaeBridge host process (a real syscall ABI) with a host
+/// Must run inside the AthBridge host process (a real syscall ABI) with a host
 /// context installed; never from a host unit test.
 pub unsafe fn gui_edit_control_selftest() -> Option<(bool, bool)> {
     let cls = crate::string_to_wide("EDIT");
@@ -191,7 +191,7 @@ pub fn reset_message_state() {
 //
 // To *prove* that guest Windows code emitted bytes via WriteFile — rather than
 // trusting the serial port we can't read back from inside the process — the
-// RaeBridge smoketest enables a capture tee. While enabled, every byte
+// AthBridge smoketest enables a capture tee. While enabled, every byte
 // `shim_write_file` successfully writes to the seeded stdout fd is also
 // appended to this buffer. The harness then asserts the captured bytes equal
 // the image's expected output. Off in production (the tee allocates), so it
@@ -4146,7 +4146,7 @@ pub unsafe extern "win64" fn shim_fmod(x: f64, y: f64) -> f64 {
 //     table; the onexit table + `exit`/`_cexit` run destructors in LIFO order.
 //     Getting these right is what lets an unmodified /MD .exe reach main() and
 //     leave cleanly (the /MT path was already proven; this generalizes it to the
-//     dynamically-linked CRT). Concept §"RaeBridge runs Windows apps on day
+//     dynamically-linked CRT). Concept §"AthBridge runs Windows apps on day
 //     one." The guest-pointer calls run only on-target (guest VA == host VA);
 //     the registry bookkeeping they build on is host-KAT'd in crate::msvcrt. ---
 

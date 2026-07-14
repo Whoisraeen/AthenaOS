@@ -2,7 +2,7 @@
 //!
 //! This is the load-bearing slice of the RaeUpdate Concept pillar:
 //! *"atomic CoW updates + one-click rollback; no forced updates — the user owns
-//! the machine."* (`RaeenOS_Concept.md`). Everything here is **pure logic** —
+//! the machine."* (`LEGACY_GAMING_CONCEPT.md`). Everything here is **pure logic** —
 //! it consumes the leaf primitives `rae_diff` (byte delta apply), `rae_hash`
 //! (SHA-256 integrity) and `rae_crypto` (Ed25519 signature) read-only, decides
 //! *what should happen*, and produces the new slot image bytes in RAM. It never
@@ -545,8 +545,8 @@ mod tests {
     // --- the happy path: a valid signed delta applies to byte-correct content ---
     #[test]
     fn valid_signed_delta_applies_byte_correct() {
-        let old = b"RaeenOS kernel image v1.0.0 ... body ... tail".to_vec();
-        let new = b"RaeenOS kernel image v1.1.0 ... BODY!! ... tail".to_vec();
+        let old = b"AthenaOS kernel image v1.0.0 ... body ... tail".to_vec();
+        let new = b"AthenaOS kernel image v1.1.0 ... BODY!! ... tail".to_vec();
         let (payload, key) = make_payload(&SEED, &old, &new);
 
         let mut sess = UpdateSession::new(

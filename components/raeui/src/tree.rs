@@ -1,4 +1,4 @@
-//! RaeUI Widget Tree
+//! AthUI Widget Tree
 //!
 //! A tree structure that holds widgets, runs layout, renders them at computed
 //! positions, and performs hit-testing for input routing.

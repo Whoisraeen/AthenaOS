@@ -1,4 +1,4 @@
-//! RaeenOS File Manager — userspace ELF entry shim.
+//! AthenaOS File Manager — userspace ELF entry shim.
 //!
 //! All the app (state, draw path, syscall wiring, host-renderable `render_preview`)
 //! lives in the `files` LIBRARY crate (`src/lib.rs`) so the host screenshot

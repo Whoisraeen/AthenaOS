@@ -2,7 +2,7 @@
 //! PDF 1.7 byte stream (the format every printer driver and "Save as PDF" path
 //! consumes).
 //!
-//! RaeenOS_Concept.md "built for people who care about how things feel": a daily
+//! LEGACY_GAMING_CONCEPT.md "built for people who care about how things feel": a daily
 //! driver has to be able to *produce printable output* — Ctrl+P → a real file a
 //! printer (or another machine) can render. PostScript generation already lives
 //! in `FilterChain::text_to_postscript`; PDF is the universal modern target, so

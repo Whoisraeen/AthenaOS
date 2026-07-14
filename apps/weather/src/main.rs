@@ -1,4 +1,4 @@
-//! RaeenOS Weather — the bundled weather app (Concept §Three User Experiences:
+//! AthenaOS Weather — the bundled weather app (Concept §Three User Experiences:
 //! the daily-driver parity bar vs Win11 Weather / macOS Weather).
 //!
 //! A standalone userspace ELF (`exec_path = "weather"`). The rich data model

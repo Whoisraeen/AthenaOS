@@ -1,6 +1,6 @@
 //! QUIC Transport Protocol — UDP-based transport with built-in TLS 1.3.
 //!
-//! Implements the core QUIC protocol for RaeNet: connection management,
+//! Implements the core QUIC protocol for AthNet: connection management,
 //! packet encoding/decoding, stream multiplexing, flow control, and
 //! timeout-based loss detection. Uses `crate::crypto` for AEAD and
 //! `crate::tls` for the TLS 1.3 handshake integration.
@@ -970,7 +970,7 @@ pub fn init() {
 /// ZERO network I/O: the RFC 9000 §A.1 variable-length-integer test vectors
 /// (all four wire sizes, encode + decode), connection-ID handling, and a
 /// client connection opening a bidi stream and queueing application bytes.
-/// MasterChecklist Phase 10.2 — QUIC implementation. Concept §RaeNet.
+/// MasterChecklist Phase 10.2 — QUIC implementation. Concept §AthNet.
 pub fn run_boot_smoketest() {
     let mut pass = 0u32;
     let mut total = 0u32;
@@ -1043,7 +1043,7 @@ pub fn run_boot_smoketest() {
 pub fn dump_text() -> String {
     let qs = QUIC_SUBSYSTEM.lock();
     let mut out = String::new();
-    out.push_str("# RaeNet QUIC (RFC 9000)\n");
+    out.push_str("# AthNet QUIC (RFC 9000)\n");
     out.push_str(&alloc::format!("initialized: {}\n", qs.initialized));
     out.push_str(&alloc::format!(
         "active_connections: {}\n",

@@ -22,7 +22,7 @@ these tables through a prefix-free-checking generator (`tools/h264_vlc_gen`, the
 > "A daily driver must 'play my movies' and 'play my music.' MP4 … (the ISO Base Media File
 > Format) is the dominant container for both — phone video, downloaded video, and AAC audio
 > (`.m4a`/`.mp4`) all ship as BMFF."
-> (RaeenOS_Concept.md §creators / media — the line `rae_mp4/src/lib.rs` + `apps/video/src/lib.rs`
+> (LEGACY_GAMING_CONCEPT.md §creators / media — the line `rae_mp4/src/lib.rs` + `apps/video/src/lib.rs`
 > quote in their docstrings; the "it just works" media pillar. CAVLC residual decode is the entropy
 > layer without which an I-macroblock has no coefficients, so the picture can never reconstruct.)
 

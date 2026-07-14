@@ -15,7 +15,7 @@ pub struct WgpuCanvas {
 
 impl WgpuCanvas {
     /// Initialize a new GPU-accelerated Skia canvas on top of wgpu.
-    /// In RaeenOS, the wgpu Instance is backed by our zero-syscall RaeGfxApi HAL backend.
+    /// In AthenaOS, the wgpu Instance is backed by our zero-syscall RaeGfxApi HAL backend.
     pub async fn new(
         instance: Instance,
         wgpu_surface: WgpuSurface<'static>,
@@ -29,12 +29,12 @@ impl WgpuCanvas {
                 force_fallback_adapter: false,
             })
             .await
-            .expect("Failed to find a suitable wgpu adapter (RaeGFX backend)");
+            .expect("Failed to find a suitable wgpu adapter (AthGFX backend)");
 
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    label: Some("RaeenOS GPU Device"),
+                    label: Some("AthenaOS GPU Device"),
                     required_features: wgpu::Features::empty(),
                     required_limits: wgpu::Limits::default(),
                 },
@@ -49,7 +49,7 @@ impl WgpuCanvas {
         // Configure surface
         let config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: TextureFormat::Bgra8Unorm, // RaeenOS default
+            format: TextureFormat::Bgra8Unorm, // AthenaOS default
             width,
             height,
             present_mode: wgpu::PresentMode::Fifo,

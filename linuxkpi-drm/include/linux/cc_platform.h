@@ -4,7 +4,7 @@
  *
  * Confidential-computing platform attributes (AMD SEV/SEV-SNP, Intel TDX). amdgpu
  * consults cc_platform_has() to decide whether to force-decrypt its DMA buffers.
- * RaeenOS bring-up runs on bare metal with no memory encryption, so every
+ * AthenaOS bring-up runs on bare metal with no memory encryption, so every
  * attribute is absent — a truthful constant false (SCOPE.md rule 9: a no-op that
  * lied "encrypted" would corrupt DMA). License boundary (../../README.md): API.
  */

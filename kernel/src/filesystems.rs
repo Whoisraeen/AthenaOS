@@ -2663,7 +2663,7 @@ impl SysFs {
                 let mut kernel = BTreeMap::new();
                 kernel.insert(
                     "hostname".to_string(),
-                    SysEntry::Value("raeenos".to_string()),
+                    SysEntry::Value("athenaos".to_string()),
                 );
                 kernel.insert("version".to_string(), SysEntry::Value("0.0.1".to_string()));
                 kernel.insert("ostype".to_string(), SysEntry::Value("AthenaOS".to_string()));

@@ -1,7 +1,7 @@
 //! Zero-copy DMA bridge — Phase 3 of the LinuxKPI host.
 //!
 //! `dma_alloc_coherent` is the performance-critical interception. The Linux
-//! driver believes it owns the DMA buffer; in reality the RaeenOS host allocates
+//! driver believes it owns the DMA buffer; in reality the AthenaOS host allocates
 //! physically-contiguous frames, programs the device's IOMMU domain to permit
 //! DMA into exactly those frames, and hands back both the virtual address (for
 //! the driver to write descriptors) and the DMA/physical address (for the driver

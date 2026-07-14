@@ -10,7 +10,7 @@ const VIRTIO_BLK_T_IN: u32 = 0;
 const VIRTIO_BLK_T_OUT: u32 = 1;
 
 /// Upper bound (TSC cycles) on a virtio-blk completion busy-poll before giving up
-/// with an I/O error instead of spinning forever. The early-boot RaeFS smoketest
+/// with an I/O error instead of spinning forever. The early-boot AthFS smoketest
 /// intermittently never sees a completion (lost notification / used-ring race),
 /// which previously froze the whole boot. ~10e9 cycles is several seconds — far
 /// beyond a real completion (microseconds) yet bounded so boot always proceeds.

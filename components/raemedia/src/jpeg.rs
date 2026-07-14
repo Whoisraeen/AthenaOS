@@ -1,6 +1,6 @@
 //! # RaeMedia baseline JPEG decoder — the format real photos ship in.
 //!
-//! RaeenOS_Concept.md (§creators / media): the OS must let people "play my movies,
+//! LEGACY_GAMING_CONCEPT.md (§creators / media): the OS must let people "play my movies,
 //! show my photos." The overwhelming majority of real photos on a person's machine
 //! are JPEGs (camera output, phone exports, web downloads), so a daily-driver OS that
 //! cannot turn a `.jpg` into pixels has no photo library, no thumbnails, no Quick Look.
@@ -13,7 +13,7 @@
 //! baseline entropy decode (Huffman DC DPCM + AC run/level + EOB), dequantisation,
 //! zig-zag reorder, an 8x8 inverse DCT, YCbCr→RGB (BT.601 full-range JFIF), chroma
 //! upsampling for 4:4:4 / 4:2:2 / 4:2:0, grayscale, and output to a flat ARGB8888
-//! `Vec<u32>` (the RaeGFX compositor/Canvas pixel format).
+//! `Vec<u32>` (the AthGFX compositor/Canvas pixel format).
 //!
 //! ## Scope
 //! Only **baseline sequential DCT** (SOF0) is decoded — the overwhelmingly common

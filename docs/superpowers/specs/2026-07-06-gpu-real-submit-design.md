@@ -3,7 +3,7 @@
 **Date:** 2026-07-06
 **Author:** opus (lead), design approved by owner in-session
 **Status:** APPROVED — hand-off to implementation plan
-**Concept line served:** §RaeGFX ("looks like Metal, performs like Vulkan") + §Gaming ("gaming isn't a mode") — the Year-1 "Vulkan demo on a real GPU" deliverable and the substrate for "Steam day one."
+**Concept line served:** §AthGFX ("looks like Metal, performs like Vulkan") + §Gaming ("gaming isn't a mode") — the Year-1 "Vulkan demo on a real GPU" deliverable and the substrate for "Steam day one."
 
 ---
 
@@ -21,14 +21,14 @@ Owner decisions locked in-session (2026-07-06):
 
 **Directive pivot recorded:** the 2026-07-01 owner directive ("native Rust on bare metal, NOT linuxkpi") is superseded by the owner's 2026-07-06 request to pursue whichever route clears the MES wall fastest, explicitly including LinuxKPI (Strategy B) and a driver-VM. This spec is the record of that pivot.
 
-**Explicitly out of scope for this campaign's milestones** (but designed-for NOW — see §10): Steam, RaeBridge/Windows games, anti-cheat, compute/video workloads, perf tuning beyond 30 fps, NVIDIA/Intel, multi-monitor. Owner directive 2026-07-06: the GPU stack must be ready for Windows games and "anything we throw at the GPU" — §10 encodes that as forward design constraints on the seam so the follow-on campaigns are additive, not rework.
+**Explicitly out of scope for this campaign's milestones** (but designed-for NOW — see §10): Steam, AthBridge/Windows games, anti-cheat, compute/video workloads, perf tuning beyond 30 fps, NVIDIA/Intel, multi-monitor. Owner directive 2026-07-06: the GPU stack must be ready for Windows games and "anything we throw at the GPU" — §10 encodes that as forward design constraints on the seam so the follow-on campaigns are additive, not rework.
 
 ## 2. Gate experiment — results (2026-07-06)
 
 Run against the live Athena box (Arch, kernel 7.0.12-arch1-1, amdgpu 3.64.0) over SSH. **Zero flashes, zero reboots** — the needed boot pair already existed in the journal.
 
-**Q1 — does stock amdgpu init from the exact RaeenOS handoff state?**
-Boot `-1` (Jul 05 01:07) ran the vfio/blacklisted UKI — GPU dark all boot. Boot `0` (01:09:28) warm-rebooted into amdgpu-enabled Arch — the *identical* handoff RaeenOS's iron loop receives ("Arch reboot hands us a dark GPU").
+**Q1 — does stock amdgpu init from the exact AthenaOS handoff state?**
+Boot `-1` (Jul 05 01:07) ran the vfio/blacklisted UKI — GPU dark all boot. Boot `0` (01:09:28) warm-rebooted into amdgpu-enabled Arch — the *identical* handoff AthenaOS's iron loop receives ("Arch reboot hands us a dark GPU").
 
 - ✅ `SMU is initialized successfully!`
 - ✅ MES v11 configured (`gfx_hqd_mask 0x2, compute_hqd_mask 0xc, sdma_hqd_mask 0xfc`), **no `set_hw_resources` timeout, no "MES failed to respond" anywhere**
@@ -44,7 +44,7 @@ Boot `-1` (Jul 05 01:07) ran the vfio/blacklisted UKI — GPU dark all boot. Boo
 
 ## 3. Route decision
 
-**Route A — Strategy B KMD + Mesa-under-Linux-ABI UMD.** Chosen because it has the shortest path through already-proven RaeenOS assets:
+**Route A — Strategy B KMD + Mesa-under-Linux-ABI UMD.** Chosen because it has the shortest path through already-proven AthenaOS assets:
 
 - Real amdgpu C already **links** into a bare-metal `amdgpud` (M5, `df8c4b3`/`ad7b1de`, `RAEEN_AMDGPU_REAL=1`).
 - Dynamically-linked multithreaded glibc Linux ELFs already run on iron (`[x]`: ld.so, clone, futex, prlimit64).
@@ -122,7 +122,7 @@ M1 is deliberately one-deploy small; it decides the universe within a day.
 
 1. **Real amdgpu also halts under the shim** (moderate) — mitigated by the pre-agreed §8 fallback and by L2/L3 being KMD-agnostic.
 2. **Mesa's syscall surface** (high certainty, low unit cost) — memfd/epoll/eventfd/sysfs-read gaps; ground each with the strace oracle on Athena-Linux, fix in `linux_syscall.rs`, never guess.
-3. **Futex phys-rekey on the critical path** (possible) — RADV internal threading may exercise cross-process-grade sync; the design keeps game+RADV single-process to dodge it. If it becomes load-bearing: it is HUMAN-GATED `scheduler.rs` work (RaeBridge sync-gate item) — surface to owner, do not start unilaterally.
+3. **Futex phys-rekey on the critical path** (possible) — RADV internal threading may exercise cross-process-grade sync; the design keeps game+RADV single-process to dodge it. If it becomes load-bearing: it is HUMAN-GATED `scheduler.rs` work (AthBridge sync-gate item) — surface to owner, do not start unilaterally.
 4. **RaeWSI is bespoke** (certain, bounded) — no X11/Wayland (banned clones); shim scope is N shared BOs + acquire/present semantics + SDL2 video/input backend.
 5. **IPC-per-ioctl performance** (accepted) — M4 bar is 30 fps; shared-ring hot paths if needed; real perf work is a later campaign against `docs/PERFORMANCE_TARGETS.md`.
 
@@ -130,12 +130,12 @@ M1 is deliberately one-deploy small; it decides the universe within a day.
 
 The seam (L2) is designed from day one so the follow-on campaigns bolt on without reworking it. These are **design constraints on M2, not new milestones**:
 
-1. **Multi-client from the first line.** amdgpud serves N concurrent clients (game + compositor + overlay + RaeBridge guest later), each with its own DRM ctx and GPU VM address space — a client table keyed by connection, never a singleton pipe. MES user-queue scheduling is exactly what Phoenix's hardware is for; the seam must not assume one submitter.
+1. **Multi-client from the first line.** amdgpud serves N concurrent clients (game + compositor + overlay + AthBridge guest later), each with its own DRM ctx and GPU VM address space — a client table keyed by connection, never a singleton pipe. MES user-queue scheduling is exactly what Phoenix's hardware is for; the seam must not assume one submitter.
 2. **BO export/import (dma-buf equivalent).** Every GEM handle can be exported to a cross-client handle and imported by another client (compositor consuming a game's render target = zero-copy; DXVK swapchains need this). Reserved in the uapi message space at M2, implemented when the compositor consumes its first client BO (M3's present path).
-3. **Syncobj / timeline semaphores.** DXVK and VKD3D-Proton require `VK_KHR_timeline_semaphore`-grade sync; RADV provides it if the seam speaks drm-syncobj. M2 implements basic fences but **reserves the syncobj surface** (message opcodes + handle namespace) so it's additive. Cross-process sync ties into the RaeBridge sync-gate work (host-half done in `sync_engine.rs`); the kernel futex phys-rekey half stays HUMAN-GATED.
+3. **Syncobj / timeline semaphores.** DXVK and VKD3D-Proton require `VK_KHR_timeline_semaphore`-grade sync; RADV provides it if the seam speaks drm-syncobj. M2 implements basic fences but **reserves the syncobj surface** (message opcodes + handle namespace) so it's additive. Cross-process sync ties into the AthBridge sync-gate work (host-half done in `sync_engine.rs`); the kernel futex phys-rekey half stays HUMAN-GATED.
 4. **Ring-agnostic submit.** The CS message carries an IP type (GFX / compute / SDMA / VCN-decode / VCN-encode) + queue priority, not a hardcoded GFX target. Compute rides the same path (the 8 `comp_1.*` rings are already in the oracle roster); video decode (VCN 4.0.2) becomes a client of the same seam when the media campaign wants it. "Anything we throw at the GPU" = a new IP type enum value, not a new seam.
-5. **Queue priority → SCHED_GAME.** The priority field maps GameOS/SCHED_GAME intent onto MES high-priority queues (the hardware anti-jank mechanism), so "gaming isn't a mode" reaches the GPU scheduler too.
-6. **Windows-games checkpoint (post-M4 campaign C2).** RaeBridge D3D path = DXVK/VKD3D-Proton on this same Vulkan substrate; DXGI presents through RaeWSI. Already in-tree: `dxbc_spirv.rs` (D3D9/11 shaders, spirv-val-clean). Still Phase 11 items: DXIL→SPIR-V (D3D12), the runtime ports, and RaeBridge guest execution (human-gated). C2's *GPU-side* prerequisites are exactly items 1–3 above — which is why they're constraints now.
+5. **Queue priority → SCHED_BODY.** The priority field maps GameOS/SCHED_BODY intent onto MES high-priority queues (the hardware anti-jank mechanism), so "gaming isn't a mode" reaches the GPU scheduler too.
+6. **Windows-games checkpoint (post-M4 campaign C2).** AthBridge D3D path = DXVK/VKD3D-Proton on this same Vulkan substrate; DXGI presents through RaeWSI. Already in-tree: `dxbc_spirv.rs` (D3D9/11 shaders, spirv-val-clean). Still Phase 11 items: DXIL→SPIR-V (D3D12), the runtime ports, and AthBridge guest execution (human-gated). C2's *GPU-side* prerequisites are exactly items 1–3 above — which is why they're constraints now.
 7. **Compute/media checkpoint (post-M4 campaign C3).** Headless compute contexts (no WSI), VCN decode for the media stack, encode for capture/streaming — all IP-type additions per item 4.
 
 ## 11. Open items intentionally deferred
@@ -143,7 +143,7 @@ The seam (L2) is designed from day one so the follow-on campaigns bolt on withou
 - Q2 VFIO-guest oracle (buys Route B feasibility data) — run only on §8 trigger.
 - Exclusive-fullscreen direct-to-GPU + frame-time <16.6 ms (checklist 6.5) — next campaign, on this substrate.
 - `MMMC_VM_FB_OFFSET` live read (replace the Athena `0x3E0000000` scanout const) — hardening follow-up rides M2/M3.
-- Steam / RaeBridge / DXVK — Phase 11, separate campaign, human-gated.
+- Steam / AthBridge / DXVK — Phase 11, separate campaign, human-gated.
 
 ## 12. Hand-off
 

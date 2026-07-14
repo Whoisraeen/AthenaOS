@@ -4,7 +4,7 @@
 //! control (windows). This module is the pure-logic half: parse/build every
 //! channel message, dispatch the session requests, and run the window
 //! accounting state machine. The actual shell/pty backing (wiring a channel to
-//! a RaeShell session) is the integration slice; here everything is
+//! a AthShell session) is the integration slice; here everything is
 //! host-KAT-provable and never panics on a hostile peer.
 
 use crate::{read_string, read_u32, write_string, write_u32, SshError};

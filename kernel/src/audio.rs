@@ -1268,7 +1268,7 @@ pub struct AudioMixer {
 impl AudioMixer {
     pub fn new(format: AudioStreamFormat) -> Self {
         // Mix one DMA period (128 frames) per tick so the mixer cadence
-        // matches the SCHED_GAME audio thread's drain period exactly.
+        // matches the SCHED_BODY audio thread's drain period exactly.
         let buffer_samples = AUDIO_PERIOD_SAMPLES;
         Self {
             master_volume: 0.8,
@@ -2281,7 +2281,7 @@ fn sqrt_approx(x: f32) -> f32 {
 //   ITD — Interaural Time Delay: fractional-sample delay between ears
 //   ILD — Interaural Level Difference: frequency-dependent gain difference
 //
-// The HRTF table is compact (~2.3 KiB) and runs in the SCHED_GAME audio
+// The HRTF table is compact (~2.3 KiB) and runs in the SCHED_BODY audio
 // thread, so every lookup must be O(1) with no allocations.
 
 const HRTF_DIRECTIONS: usize = 72; // 360° / 5° = 72 entries
@@ -2755,7 +2755,7 @@ impl AudioManager {
         self.mixer.set_app_volume(pid, volume);
     }
 
-    /// PRODUCER tick, driven once per period by the SCHED_GAME audio thread.
+    /// PRODUCER tick, driven once per period by the SCHED_BODY audio thread.
     /// Mixes all registered voices into `mixer.mix_buffer`, feeds the
     /// loopback monitor, then pushes the mixed samples into AUDIO_RING. The
     /// drain side of the audio thread is the sole ring consumer (SPSC).
@@ -2808,7 +2808,7 @@ impl AudioManager {
     }
 }
 
-// ─── SCHED_GAME Audio Thread ────────────────────────────────────────────────
+// ─── SCHED_BODY Audio Thread ────────────────────────────────────────────────
 //
 // Runs at TaskPriority::Game — the highest real-time priority class.
 // Wakes on timer tick (in production: HDA IOC interrupt), reads mixed
@@ -2879,7 +2879,7 @@ extern "C" fn audio_thread_entry() {
             }
         }
 
-        // Yield THEN halt — never a bare `hlt()`. As a SCHED_GAME deadline
+        // Yield THEN halt — never a bare `hlt()`. As a SCHED_BODY deadline
         // (EDF) task this MUST call `yield_task()` so the scheduler runs
         // `dl.finish()` and the period is released to the Normal/CFS class until
         // the next 2.667 ms boundary. A bare `hlt()` here would halt the CPU
@@ -2913,7 +2913,7 @@ pub static AUDIO_MANAGER: Mutex<Option<AudioManager>> = Mutex::new(None);
 /// SINGLE-CPU DEADLOCK GUARD (flagged by raeen-reviewer when SYS_AUDIO_SUBMIT
 /// (267) made the window reachable; same class as compositor.rs `lock_compositor`,
 /// root-caused iron 2026-06-15). `AUDIO_MANAGER` is shared between a preemptible
-/// kernel thread (the SCHED_GAME audio thread's `process_tick` producer + the DMA
+/// kernel thread (the SCHED_BODY audio thread's `process_tick` producer + the DMA
 /// drain consumer) and syscall handlers — `submit_samples` (← SYS_AUDIO_SUBMIT)
 /// and `dump_text` (← /proc/raeen/audio read) — which run with `RFLAGS.IF=0`
 /// (SFMASK clears it on SYSCALL entry). On this kernel only the BSP schedules
@@ -2974,7 +2974,7 @@ fn lock_audio() -> AudioGuard {
 
 /// Quick Settings / Control Center accessor: the live master volume in
 /// `0.0..=1.0` (Concept §Unified Settings — "every control reaches the real
-/// engine"). Reads through `lock_audio` so it is atomic w.r.t. the SCHED_GAME
+/// engine"). Reads through `lock_audio` so it is atomic w.r.t. the SCHED_BODY
 /// audio thread. Returns the pre-boot default (0.8) before the mixer is up.
 #[must_use]
 pub fn quick_master_volume() -> f32 {
@@ -3038,7 +3038,7 @@ pub fn init() {
 
     spawn_audio_thread();
     crate::serial_println!(
-        "[audio] SCHED_GAME audio thread spawned (period={}frames, ~2.67ms)",
+        "[audio] SCHED_BODY audio thread spawned (period={}frames, ~2.67ms)",
         AUDIO_PERIOD_FRAMES
     );
 }
@@ -3353,7 +3353,7 @@ pub fn run_boot_smoketest() {
 
 pub fn dump_text() -> String {
     let mut out = String::new();
-    out.push_str("# RaeenOS audio subsystem\n");
+    out.push_str("# AthenaOS audio subsystem\n");
     if let Some(mgr) = lock_audio().as_ref() {
         let (playback, capture) = mgr.stream_count();
         out.push_str(&alloc::format!(
@@ -3370,7 +3370,7 @@ pub fn dump_text() -> String {
         TEST_TONE_WRITES.load(Ordering::Relaxed),
         TEST_TONE_SAMPLES_WRITTEN.load(Ordering::Relaxed)
     ));
-    // Mixer producer telemetry: periods in which the SCHED_GAME thread mixed
+    // Mixer producer telemetry: periods in which the SCHED_BODY thread mixed
     // registered voices into AUDIO_RING, and total samples published. Nonzero
     // here means audio is flowing through the real mixer→ring path.
     let active_sources = lock_audio()

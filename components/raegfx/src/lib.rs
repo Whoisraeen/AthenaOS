@@ -736,7 +736,7 @@ pub fn init() {
 pub fn resource_manager() -> &'static mut ResourceManager {
     unsafe {
         #[allow(static_mut_refs)]
-        RESOURCE_MANAGER.as_mut().expect("RaeGFX not initialized")
+        RESOURCE_MANAGER.as_mut().expect("AthGFX not initialized")
     }
 }
 
@@ -765,7 +765,7 @@ pub fn run_boot_smoketest() -> bool {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// RaeGFX Pipeline API — Vulkan-level capabilities, friendlier surface
+// AthGFX Pipeline API — Vulkan-level capabilities, friendlier surface
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Handles ──────────────────────────────────────────────────────────────
@@ -1928,7 +1928,7 @@ impl FrameTimingHistory {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// RaeGFX Command Submission API — Vulkan-equivalent resource management,
+// AthGFX Command Submission API — Vulkan-equivalent resource management,
 // pipeline state, render passes, and queue submission
 // ═══════════════════════════════════════════════════════════════════════════
 

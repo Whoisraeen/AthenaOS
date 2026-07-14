@@ -1,4 +1,4 @@
-//! Linux ELF execution entry point for RaeenOS.
+//! Linux ELF execution entry point for AthenaOS.
 //!
 //! This is intentionally minimal: it supports launching static x86_64 Linux
 //! binaries (busybox-style) via a dedicated kernel entry point, and routes
@@ -66,7 +66,7 @@ pub fn linux_exec_bytes(data: &[u8], argv: &[&str]) -> Result<TaskId, Errno> {
 
 // ── Linux-ABI boot smoketest ────────────────────────────────────────────────
 //
-// Concept (RaeenOS_Concept.md — RaeBridge / "Steam day one"): running real
+// Concept (LEGACY_GAMING_CONCEPT.md — AthBridge / "Steam day one"): running real
 // Windows games through Proton means running real *Linux* binaries, so the
 // Linux syscall-translation layer (`linux_syscall.rs`) must actually work, not
 // merely build. The ~31 translated syscalls (memory: linux-syscall-oracle-gap-
@@ -74,9 +74,9 @@ pub fn linux_exec_bytes(data: &[u8], argv: &[&str]) -> Result<TaskId, Errno> {
 //
 // This embeds a tiny static x86_64 Linux probe (`tools/linux_abi_probe`, built
 // + validated on the Athena Arch box → it prints PASS there) and spawns it
-// through the very same `linux_exec` path RaeBridge/Proton binaries use. The
+// through the very same `linux_exec` path AthBridge/Proton binaries use. The
 // probe self-checks getuid/getrandom/sysinfo/uname/statx and prints, to the
-// RaeenOS console:
+// AthenaOS console:
 //     [linux-abi-probe] PASS ...        (every checked syscall returned sanely)
 //   or
 //     [linux-abi-probe] FAIL: <what>    (a translated syscall misbehaved)
@@ -138,7 +138,7 @@ pub fn run_boot_smoketest() {
     // spawns 4 threads that each mutex-increment a shared counter 1000×, joins
     // all four, and prints `raeen-pthread-ok` iff the total is exactly 4000.
     // This is the payoff of the threading work: stock multithreaded Linux
-    // software (the Proton/Wine class) runs on RaeenOS.
+    // software (the Proton/Wine class) runs on AthenaOS.
     match linux_exec("/bin/pthreadtest", &["/bin/pthreadtest"]) {
         Ok(tid) => crate::serial_println!(
             "[ld.so] glibc pthread test spawned (task {:?}) -> expect `raeen-pthread-ok` below",

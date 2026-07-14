@@ -1,4 +1,4 @@
-//! Feedback widgets for RaeUI.
+//! Feedback widgets for AthUI.
 //!
 //! Toast, Snackbar, Skeleton, Spinner, AlertDialog, Banner, EmptyState,
 //! StepIndicator — all theme-aware and keyboard-navigable.
