@@ -1,0 +1,34 @@
+# Off-target runner for the REAL upstream amdgpu init (Concept §RaeGFX — the
+# Year-1 real-GPU-submit path; GPU campaign M1.x diagnostics).
+#
+# Links the exact merged C object graph amdgpud carries on iron
+# (linuxkpi-drm/m4c-link.sh, HOST mode) against the exact raeen_linuxkpi shim,
+# with the shim's syscall seam backed by a functional Linux-host implementation
+# (`hostrun` feature): mmap-backed BARs/carveouts, file-backed request_firmware,
+# stderr printk. `amdgpu_device_init` then runs AS A NORMAL LINUX PROCESS on the
+# dev box — debuggable with gdb in seconds instead of an Athena flash per probe.
+# The GPU equivalent of tools/aml_probe (which root-caused the 0-devices ACPI
+# bug entirely off-target).
+#
+# Build the C object first (host mode, NOT freestanding):
+#   bash linuxkpi-drm/m4c-link.sh          # -> $HOME/m4-obj/amdgpu-bringup.o
+# Then:
+#   cargo run --release --manifest-path tools/amdgpu_hostrun/Cargo.toml
+#
+# Own workspace: keeps hostrun/host-target builds out of the main no_std build
+# and out of feature unification with the workspace crates.
+[package]
+name = "amdgpu_hostrun"
+version = "0.0.1"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "amdgpu_hostrun"
+path = "main.rs"
+
+[dependencies]
+raeen_linuxkpi = { path = "../../components/raeen_linuxkpi", features = ["hostrun"] }
+rae_abi = { path = "../../components/rae_abi" }
+
+[workspace]

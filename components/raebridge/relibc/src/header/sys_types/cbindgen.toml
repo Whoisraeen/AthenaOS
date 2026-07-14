@@ -1,0 +1,19 @@
+# POSIX header spec: https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/sys_types.h.html
+#
+# There are no spec quotations relating to includes
+#
+# - sys/types/internal.h are fundamental C types (which includes stddef.h)
+# - sys/types/internal.h brings in features.h for deprecated annotations for useconds_t
+# - bits/pthread.h is separate for convenience
+sys_includes = [
+    # Import most necessary, internal types first
+    "sys/types/internal.h",
+    "bits/pthread.h",
+]
+include_guard = "_SYS_TYPES_H"
+no_includes = true
+language = "C"
+style = "Tag"
+
+[enum]
+prefix_with_name = true

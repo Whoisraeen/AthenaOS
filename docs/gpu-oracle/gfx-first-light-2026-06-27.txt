@@ -1,0 +1,13 @@
+# GFX FIRST LIGHT — Athena Phoenix cold-vfio 2026-06-27 (commit d189031)
+# async EnableGfxImu -> RLC autoload COMPLETE -> GFX UP -> CP/SDMA latch + GART live.
+# ----
+[linuxkpi] [amdgpu] reg probe (BAR5): GRBM_STATUS=0x00000000 gui_active=false CP_RB0_CNTL=0x00000000 CP_RB0_BASE=0x00000004:0x00000000 RPTR=0x1 WPTR=0x3ffa208 CP_ME_CNTL=
+[linuxkpi] [amdgpu] PSP fw-load 3b done (returned true) — watch the seg1-probe for GFX DEAD->live (first light)
+[linuxkpi] [amdgpu] stage 6 cold GFX power-up: SMU EnableGfxImu(0x16) arg=1 ASYNC (the IMU-start trigger; the SYNC response-poll wedges, so we never read the response)
+[linuxkpi] [amdgpu] stage 6 post-power-up RLC autoload re-poll: RLC_BOOTLOAD_STATUS=0xc000001f complete=true => FIRST LIGHT (GFX is UP)
+[linuxkpi] [amdgpu] stage 6 CP_ME_CNTL=0x15000000 (GOP/PSP CP enable state; gfx11 ucode is PSP-loaded)
+[linuxkpi] [amdgpu] stage 6 CP unhalted: CP_ME_CNTL 0x15000000 -> 0x01000000
+[linuxkpi] [amdgpu] GART (identity) built post-first-light: table@0x179ab0000 (3070 PTEs) maps GPU VA==PA over 0x179a80000..0x17a67e000; FB aperture [0x8000000000..0x807f
+[linuxkpi] [amdgpu] gfxhub VM: CONTEXT0_CNTL=0x01fffe01 PAGE_TABLE_BASE=0x00000001:0x79ab0001 (CNTL!=0 + page table set => VMID0 live; inherit-GART candidate)
+[linuxkpi] [amdgpu] stage 6 SDMA readback A: RB_BASE=0x0179a900 (want 0x0179a900) RB_RPTR=0x00000000 RB_WPTR=0x00000000
+[linuxkpi] [amdgpu] stage 6 CP ring readback MISMATCH: BASE wrote 0x00000000:0x0179a800 read 0x00000000:0x0179a800 | CNTL wrote 0xe10 read 0x00000e10 | WPTR wrote 14 read

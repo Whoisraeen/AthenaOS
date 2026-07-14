@@ -1,0 +1,28 @@
+[package]
+name = "aarch64_logic"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS aarch64 (ARM64) PURE-LOGIC foundation — the four host-KAT-able pieces
+# the aarch64 bring-up spec (docs/research/aarch64-bringup-spec.md, ADR 0009)
+# names as "host-KAT-able BEFORE any aarch64 boot": the VMSAv8-64 stage-1
+# page-table descriptor encoder (mmu), the ESR_EL1 exception-syndrome decode
+# (esr), the GICv2 register/offset math (gic), and the DTB/FDT walk (dtb).
+#
+# This crate is `#![no_std]` PURE LOGIC ONLY: no aarch64 assembly, no MMIO, no
+# kernel dependencies — just integer/bit math and parsing that returns values.
+# It therefore compiles on ANY target (incl. the host) so `cargo test -p
+# aarch64_logic` runs the KATs natively — de-risking the riskiest aarch64 logic
+# off-target, exactly the way the ACPI 0->159-device bug was root-caused.
+#
+# It is NOT yet wired into the kernel build; the kernel's future
+# `arch/aarch64/{mmu,irq,firmware}.rs` (spec slices A4/A5/A8) will depend on it.
+
+[dependencies]
+# Flattened DeviceTree parser, #![no_std] (spec/ADR 0009 §4 names the `fdt`
+# crate as the aarch64 firmware-discovery backend that replaces ACPI). Pinned
+# to the stable 0.1 line (0.2 is alpha).
+fdt = { version = "0.1.5", default-features = false }

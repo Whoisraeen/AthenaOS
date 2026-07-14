@@ -1,0 +1,16 @@
+# Normalize line endings across platforms
+* text=auto eol=lf
+
+# Force LF for Rust and config files
+*.rs text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.asm text eol=lf
+
+# Binary files
+*.iso binary
+*.img binary
+*.bin binary
+*.elf binary

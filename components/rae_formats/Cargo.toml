@@ -1,0 +1,24 @@
+[package]
+name = "rae_formats"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS content-type sniffer — "detect a file's TRUE type by its bytes, never
+# trust an extension" (RaeenOS_Concept.md criterion #5 cohesion seam + #6 security:
+# Files / Quick Look / decoders must pick the right handler, and the security layer
+# must never decide what a file IS from its name). This is the COHESION SEAM: one
+# crate that answers "what IS this?" and "which decoder handles it?" — the caller
+# then invokes that decoder. It is deliberately a SNIFFER, not a decoder hub: it
+# inspects only the leading / structural bytes (bounded peeks) and depends on NO
+# decoder crate, so it never becomes a heavy dependency hub.
+#
+# `#![cfg_attr(not(test), no_std)]` (the rae_mime / rae_png pattern): the lib is
+# `no_std` + `alloc` in every shipped build and toggles to `std` only under
+# `cfg(test)` for the host KAT harness. Zero dependencies,
+# `#![forbid(unsafe_code)]`, never-panic on empty / truncated / hostile input. Run
+# the FAIL-able proof with `cargo test -p rae_formats` — no QEMU, no image build.
+
+[dependencies]

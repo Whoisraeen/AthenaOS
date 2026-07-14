@@ -1,0 +1,114 @@
+# RaeenOS crate ownership manifest.
+#
+# Owner directive (2026-06): development is CONSOLIDATED under `opus`, the lead
+# developer, who has full read/write access to every crate. Guardrail scripts
+# (scripts/ownership-lock.sh) grant opus a full-access bypass; the per-crate map
+# below is retained as a SUBSYSTEM AREA map — it documents intent and navigation
+# (which crate is the filesystem, which is audio, …), NOT an access boundary.
+#
+# The architecture-gate (scripts/architecture-gate.sh) still runs for opus:
+# no Linux clones (§R7), no deleted RaeShield capability checks, the R10
+# 4-artifact contract for new kernel modules, and the [interface] sign-off for
+# rae_abi / rae_driver_api. Full access, same quality bar.
+#
+# `gemini` and `composer` are retained as historical co-development identities;
+# if reactivated they remain constrained to the areas marked with their name.
+#
+# RULES:
+#   * Concept doc (RaeenOS_Concept.md) wins every conflict.
+#   * Interface changes (rae_abi, rae_driver_api, root Cargo.toml, syscall
+#     surface) carry the `[interface]` tag and RAEEN_AGENT=opus.
+#   * A crate appears exactly once. New crates are added here before commit.
+
+[meta]
+version = 2
+agents = ["opus", "gemini", "composer"]
+lead = "opus"                     # full-access lead developer (ownership-lock bypass)
+concept_doc = "RaeenOS_Concept.md"
+checklist = "MasterChecklist.md"
+
+# ── Opus-only meta paths (interface + build contract + governance) ───────────
+# Still meaningful if a constrained agent is ever reactivated. Opus owns these.
+[meta.opus_only_paths]
+paths = [
+  "agents/",
+  "scripts/",
+  ".git/hooks/pre-commit",
+  "components/rae_abi/",
+  "components/rae_driver_api/",
+  "Cargo.toml",
+  "docs/SYSCALL_TABLE.md",
+  ".gitignore",
+  "CLAUDE.md",
+  ".gemini/",
+  ".cursor/rules/",
+]
+
+# ── Shared paths (any agent may edit) ────────────────────────────────────────
+[meta.shared_paths]
+prefixes = ["docs/", "MasterChecklist.md", "README.md", "Audit.md", "AGENTS.md"]
+
+# ── Crate ownership (longest-path-prefix match wins) ─────────────────────────
+# All crates are owned by opus (lead developer). Grouping comments below record
+# the conceptual subsystem area each crate belongs to.
+[crates]
+# Core slice + interface steward
+"kernel" = "opus"
+"xtask" = "opus"
+"components/raeshield" = "opus"
+"components/rae_abi" = "opus"
+"components/rae_driver_api" = "opus"
+
+# Area: mid-tier subsystems (filesystem, audio, net, graphics API, UI stack)
+"components/raefs" = "opus"
+"components/raefat" = "opus"
+"components/raeaudio" = "opus"
+"components/raemedia" = "opus"
+"components/raenet" = "opus"
+"components/raevpn" = "opus"
+"components/raegfx" = "opus"
+"components/raeui" = "opus"
+"components/raekit" = "opus"
+"components/raefont" = "opus"
+"components/raeshell" = "opus"
+"components/raelocale" = "opus"
+"components/raeaccessibility" = "opus"
+
+# Area: drivers/hardware + LinuxKPI shim + installer + services + apps + tests
+"components/pcid" = "opus"
+"components/raeen_linuxkpi" = "opus"
+"components/raeen_drm" = "opus"
+"amdgpud" = "opus"
+"i915d" = "opus"
+"raeinstaller" = "opus"
+"components/kanata_daemon" = "opus"
+"components/raestore" = "opus"
+"components/raeid" = "opus"
+"components/raesync" = "opus"
+"components/raeplay" = "opus"
+"components/raeprint" = "opus"
+"components/raeweb" = "opus"
+"components/raecloud" = "opus"
+"components/raeupdate" = "opus"
+"components/raesettings" = "opus"
+"components/raeai" = "opus"
+"components/raebackup" = "opus"
+"components/raecontainer" = "opus"
+"components/raepackage" = "opus"
+"user_init" = "opus"
+"driver_supervisor" = "opus"
+"hello_window" = "opus"
+"hello_relibc" = "opus"
+"hello_linuxkpi" = "opus"
+"apps/terminal" = "opus"
+"apps/calculator" = "opus"
+"apps/rae-sh" = "opus"
+"apps/files" = "opus"
+"apps/settings" = "opus"
+"apps/text_editor" = "opus"
+"apps/task_mgr" = "opus"
+"apps/hello_raeui" = "opus"
+"ports" = "opus"
+
+# Area: Windows compatibility (RaeBridge) — now owned by opus (was OWNERLESS).
+"components/raebridge" = "opus"

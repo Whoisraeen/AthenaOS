@@ -1,0 +1,10 @@
+[package]
+name = "raepkg"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "RaePkg — host-side packer for RaeenOS app bundles (the REBP manifest the kernel's app_bundle loader verifies)"
+
+[dependencies]

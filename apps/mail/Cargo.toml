@@ -1,0 +1,54 @@
+[package]
+name = "mail"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# Library target: the app's state + draw path + the syscall-free MAIL MODEL
+# (`MailModel`) so a host KAT can link the LIVE engines (rae_mail / rae_pim /
+# rae_kv) with NO kernel and NO network — the same structure apps/calendar and
+# apps/browser use.
+[lib]
+name = "mail"
+path = "src/lib.rs"
+
+# Binary target: the freestanding userspace ELF (`_start` -> `mail::run()`).
+# `exec_path = "mail"` in the start-menu manifest resolves to this.
+[[bin]]
+name = "mail"
+path = "src/main.rs"
+# The bin is a freestanding `#![no_main]` ELF shim — it has no libtest entry
+# point, so exclude it from `cargo test` (otherwise the host test build tries to
+# link it as a test exe and fails). The host KAT lives entirely in the LIBRARY
+# target.
+test = false
+
+[features]
+# Forwards to `raekit/host`: lets the std `cargo test` harness link `mail`
+# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# duplicate panic_impl). The normal `cargo build -p mail --target
+# x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
+# with `cargo test -p mail --features host`.
+host = ["raekit/host"]
+
+[dependencies]
+raegfx = { path = "../../components/raegfx" }
+raekit = { path = "../../components/raekit" }
+rae_tokens = { path = "../../components/rae_tokens" }
+# The LIVE, already-host-KAT'd mail protocol core: SMTP (RFC 5321) / IMAP (RFC
+# 3501) / POP3 (RFC 1939) state machines over the injectable `MailTransport`
+# byte-pipe trait, plus the RFC 822 / 2045 message parse (headers, multipart,
+# base64 / quoted-printable). This app is the clickable shell over it. The crate
+# opens NO sockets and has NO raenet dep — the live TLS/TCP transport is a
+# `cfg(not(test))`-only wrapper the host KAT never links, so the host proof needs
+# no raenet (avoids the known poly1305 SIMD bare-build issue entirely).
+rae_mail = { path = "../../components/rae_mail" }
+# The LIVE PIM engine — used ONLY for vCard (`.vcf`) contact import that powers
+# the compose To: autocomplete (the same engine apps/calendar's Contacts uses).
+rae_pim = { path = "../../components/rae_pim" }
+# The LIVE ordered embedded KV store: the local mailbox cache (one entry per
+# message, ordered by mailbox/seq), account settings, and drafts persist here and
+# round-trip through its versioned, CRC-checked snapshot format.
+rae_kv = { path = "../../components/rae_kv" }

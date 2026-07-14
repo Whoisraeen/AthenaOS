@@ -1,0 +1,16 @@
+# IMU-not-executing root cause — Athena Phoenix cold-vfio 2026-06-27
+# MES added (PSP-rejected 0xffff0006, non-fatal) + CORE_STATUS probe. KEY:
+# IMU CORE_STATUS=0x02 (PWAIT_MODE=1, CBUSY=0) = powered but NOT executing.
+# Working driver=0x03 (CBUSY=1). The IMU never runs -> autoload never drives.
+# -------------------------------------------------------------------------
+[linuxkpi] [amdgpu] PSP fw-load 3b: LOAD_TOC -> SETUP_TMR -> LOAD_IP_FW x13 -> AUTOLOAD_RLC...
+[linuxkpi] [amdgpu] PSP LOAD_IP_FW(type 76) REJECTED — status 0xffff0006
+[linuxkpi] [amdgpu] PSP LOAD_IP_FW(type 77) REJECTED — status 0xffff0006
+[linuxkpi] [amdgpu] PSP LOAD_IP_FW(type 78) REJECTED — status 0xffff0006
+[linuxkpi] [amdgpu] PSP LOAD_IP_FW(type 79) REJECTED — status 0xffff0006
+[linuxkpi] [amdgpu] PSP AUTOLOAD_RLC OK — RLC autoload started; polling for completion
+[linuxkpi] [amdgpu] PSP autoload poll TIMEOUT (2s) — RLC_BOOTLOAD_STATUS=0x00000000 BOOTLOAD_COMPLETE clear (autoload accepted but engines not up — may need rlc_resum
+[linuxkpi] [amdgpu] stage 6 GFX-up probe: RLC_BOOTLOAD_STATUS=0x00000000 (autoload_complete=false); GFX_IMU_GFX_RESET_CTRL=0x00000010 (&0x1f reset_done=false)
+[linuxkpi] [amdgpu] stage 6 IMU CORE_STATUS=0x00000002 (CBUSY=false = IMU not running) — the reliable alive signal vs the gated reset/bootload regs above
+[linuxkpi] [amdgpu] stage 6 VERDICT: GFX is DOWN (PSP did NOT bring GFX up) — attempting the IMU-core wake (imu_v11_0_start: release GFX_IMU_CORE_CTRL.CRESET)
+[linuxkpi] [amdgpu] stage 6 post-power-up RLC autoload re-poll: RLC_BOOTLOAD_STATUS=0x00000000 complete=false (still gated — power-up ack did not bring GFX up)

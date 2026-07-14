@@ -1,0 +1,792 @@
+# tracer: function_graph
+#
+#     TIME        CPU  TASK/PID         DURATION                  FUNCTION CALLS
+#      |          |     |    |           |   |                     |   |   |   |
+19014.957793 |    5) kworker-13086  |               |  mes_v11_0_hw_init [amdgpu]() {
+19014.957794 |    5) kworker-13086  |   0.210 us    |    amdgpu_in_reset [amdgpu]();
+19014.957798 |    5) kworker-13086  |               |    mes_v11_0_mqd_init.isra.0 [amdgpu]() {
+19014.957798 |    5) kworker-13086  |   0.130 us    |      amdgpu_device_flush_hdp [amdgpu]();
+19014.957798 |    5) kworker-13086  |   0.792 us    |    }
+19014.957799 |    5) kworker-13086  |   0.301 us    |    amdgpu_ring_alloc [amdgpu]();
+19014.957799 |    5) kworker-13086  |               |    gfx11_kiq_map_queues [amdgpu]() {
+19014.957799 |    5) kworker-13086  |               |      amdgpu_bo_gpu_offset [amdgpu]() {
+19014.957800 |    5) kworker-13086  |   0.130 us    |        mutex_is_locked();
+19014.957801 |    5) kworker-13086  |               |        amdgpu_bo_gpu_offset_no_check [amdgpu]() {
+19014.957801 |    5) kworker-13086  |   0.130 us    |          amdgpu_ttm_domain_start [amdgpu]();
+19014.957801 |    5) kworker-13086  |   0.411 us    |        }
+19014.957801 |    5) kworker-13086  |   1.834 us    |      }
+19014.957802 |    5) kworker-13086  |   2.334 us    |    }
+19014.957802 |    5) kworker-13086  |               |    amdgpu_ring_test_helper [amdgpu]() {
+19014.957802 |    5) kworker-13086  |               |      gfx_v11_0_ring_test_ring [amdgpu]() {
+19014.957802 |    5) kworker-13086  |               |        amdgpu_device_wreg [amdgpu]() {
+19014.957802 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_wreg.part.0 [amdgpu]();
+19014.957803 |    5) kworker-13086  |   0.651 us    |        }
+19014.957803 |    5) kworker-13086  |   0.141 us    |        amdgpu_ring_alloc [amdgpu]();
+19014.957803 |    5) kworker-13086  |   0.190 us    |        gfx_v11_0_ring_emit_wreg [amdgpu]();
+19014.957804 |    5) kworker-13086  |               |        amdgpu_ring_commit [amdgpu]() {
+19014.957804 |    5) kworker-13086  |   0.301 us    |          amdgpu_ring_insert_nop [amdgpu]();
+19014.957804 |    5) kworker-13086  |               |          gfx_v11_0_ring_set_wptr_compute [amdgpu]() {
+19014.957805 |    5) kworker-13086  |               |            amdgpu_mm_wdoorbell64 [amdgpu]() {
+19014.957805 |    5) kworker-13086  |   0.140 us    |              amdgpu_device_skip_hw_access [amdgpu]();
+19014.957810 |    5) kworker-13086  |   0.521 us    |            }
+19014.957810 |    5) kworker-13086  |   5.781 us    |          }
+19014.957810 |    5) kworker-13086  |   6.712 us    |        }
+19014.957811 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957811 |    5) kworker-13086  |   0.140 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957812 |    5) kworker-13086  |   0.981 us    |        }
+19014.957812 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957812 |    5) kworker-13086  |               |          delay_halt() {
+19014.957812 |    5) kworker-13086  |   1.633 us    |            delay_halt_mwaitx();
+19014.957814 |    5) kworker-13086  |   1.934 us    |          }
+19014.957814 |    5) kworker-13086  |   2.224 us    |        }
+19014.957814 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957814 |    5) kworker-13086  |   0.131 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957815 |    5) kworker-13086  |   0.962 us    |        }
+19014.957815 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957815 |    5) kworker-13086  |               |          delay_halt() {
+19014.957816 |    5) kworker-13086  |   1.753 us    |            delay_halt_mwaitx();
+19014.957817 |    5) kworker-13086  |   2.053 us    |          }
+19014.957818 |    5) kworker-13086  |   2.345 us    |        }
+19014.957818 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957818 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957819 |    5) kworker-13086  |   0.962 us    |        }
+19014.957819 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957819 |    5) kworker-13086  |               |          delay_halt() {
+19014.957819 |    5) kworker-13086  |   1.683 us    |            delay_halt_mwaitx();
+19014.957821 |    5) kworker-13086  |   1.984 us    |          }
+19014.957821 |    5) kworker-13086  |   2.274 us    |        }
+19014.957821 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957821 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957822 |    5) kworker-13086  |   0.961 us    |        }
+19014.957822 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957823 |    5) kworker-13086  |               |          delay_halt() {
+19014.957823 |    5) kworker-13086  |   1.643 us    |            delay_halt_mwaitx();
+19014.957824 |    5) kworker-13086  |   1.944 us    |          }
+19014.957825 |    5) kworker-13086  |   2.234 us    |        }
+19014.957825 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957825 |    5) kworker-13086  |   0.131 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957826 |    5) kworker-13086  |   0.962 us    |        }
+19014.957826 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957826 |    5) kworker-13086  |               |          delay_halt() {
+19014.957826 |    5) kworker-13086  |   1.633 us    |            delay_halt_mwaitx();
+19014.957828 |    5) kworker-13086  |   1.934 us    |          }
+19014.957828 |    5) kworker-13086  |   2.214 us    |        }
+19014.957828 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957828 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957829 |    5) kworker-13086  |   0.951 us    |        }
+19014.957829 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957829 |    5) kworker-13086  |               |          delay_halt() {
+19014.957830 |    5) kworker-13086  |   1.724 us    |            delay_halt_mwaitx();
+19014.957832 |    5) kworker-13086  |   2.014 us    |          }
+19014.957832 |    5) kworker-13086  |   2.304 us    |        }
+19014.957832 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957832 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957833 |    5) kworker-13086  |   0.962 us    |        }
+19014.957833 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957834 |    5) kworker-13086  |               |          delay_halt() {
+19014.957834 |    5) kworker-13086  |   1.683 us    |            delay_halt_mwaitx();
+19014.957836 |    5) kworker-13086  |   1.983 us    |          }
+19014.957836 |    5) kworker-13086  |   2.275 us    |        }
+19014.957836 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957836 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957837 |    5) kworker-13086  |   0.962 us    |        }
+19014.957837 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957837 |    5) kworker-13086  |               |          delay_halt() {
+19014.957837 |    5) kworker-13086  |   1.633 us    |            delay_halt_mwaitx();
+19014.957839 |    5) kworker-13086  |   1.934 us    |          }
+19014.957839 |    5) kworker-13086  |   2.224 us    |        }
+19014.957839 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957839 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957840 |    5) kworker-13086  |   0.962 us    |        }
+19014.957840 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957841 |    5) kworker-13086  |               |          delay_halt() {
+19014.957841 |    5) kworker-13086  |   1.643 us    |            delay_halt_mwaitx();
+19014.957842 |    5) kworker-13086  |   1.943 us    |          }
+19014.957843 |    5) kworker-13086  |   2.235 us    |        }
+19014.957843 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957843 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957844 |    5) kworker-13086  |   0.962 us    |        }
+19014.957844 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957844 |    5) kworker-13086  |               |          delay_halt() {
+19014.957844 |    5) kworker-13086  |   1.703 us    |            delay_halt_mwaitx();
+19014.957846 |    5) kworker-13086  |   2.004 us    |          }
+19014.957846 |    5) kworker-13086  |   2.284 us    |        }
+19014.957846 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957846 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957847 |    5) kworker-13086  |   0.951 us    |        }
+19014.957847 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957848 |    5) kworker-13086  |               |          delay_halt() {
+19014.957848 |    5) kworker-13086  |   1.703 us    |            delay_halt_mwaitx();
+19014.957850 |    5) kworker-13086  |   2.004 us    |          }
+19014.957850 |    5) kworker-13086  |   2.284 us    |        }
+19014.957850 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957850 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957851 |    5) kworker-13086  |   0.952 us    |        }
+19014.957851 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957851 |    5) kworker-13086  |               |          delay_halt() {
+19014.957851 |    5) kworker-13086  |   1.633 us    |            delay_halt_mwaitx();
+19014.957853 |    5) kworker-13086  |   1.933 us    |          }
+19014.957853 |    5) kworker-13086  |   2.215 us    |        }
+19014.957853 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957854 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957854 |    5) kworker-13086  |   1.052 us    |        }
+19014.957855 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957855 |    5) kworker-13086  |               |          delay_halt() {
+19014.957855 |    5) kworker-13086  |   1.633 us    |            delay_halt_mwaitx();
+19014.957857 |    5) kworker-13086  |   1.934 us    |          }
+19014.957857 |    5) kworker-13086  |   2.214 us    |        }
+19014.957857 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957857 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957858 |    5) kworker-13086  |   1.041 us    |        }
+19014.957858 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957858 |    5) kworker-13086  |               |          delay_halt() {
+19014.957858 |    5) kworker-13086  |   1.694 us    |            delay_halt_mwaitx();
+19014.957860 |    5) kworker-13086  |   1.994 us    |          }
+19014.957860 |    5) kworker-13086  |   2.274 us    |        }
+19014.957861 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957861 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957862 |    5) kworker-13086  |   0.952 us    |        }
+19014.957862 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957862 |    5) kworker-13086  |               |          delay_halt() {
+19014.957862 |    5) kworker-13086  |   1.693 us    |            delay_halt_mwaitx();
+19014.957864 |    5) kworker-13086  |   1.983 us    |          }
+19014.957864 |    5) kworker-13086  |   2.275 us    |        }
+19014.957864 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957864 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957865 |    5) kworker-13086  |   0.952 us    |        }
+19014.957865 |    5) kworker-13086  |               |        __const_udelay() {
+19014.957865 |    5) kworker-13086  |               |          delay_halt() {
+19014.957866 |    5) kworker-13086  |   1.643 us    |            delay_halt_mwaitx();
+19014.957867 |    5) kworker-13086  |   1.934 us    |          }
+19014.957867 |    5) kworker-13086  |   2.224 us    |        }
+19014.957868 |    5) kworker-13086  |               |        amdgpu_device_rreg [amdgpu]() {
+19014.957868 |    5) kworker-13086  |   0.130 us    |          amdgpu_device_rreg.part.0 [amdgpu]();
+19014.957869 |    5) kworker-13086  |   0.961 us    |        }
+19014.957869 |    5) kworker-13086  | + 66.595 us   |      }
+19014.957869 |    5) kworker-13086  |   0.150 us    |      __drm_dev_dbg();
+19014.957870 |    5) kworker-13086  | + 67.717 us   |    }
+19014.957870 |    5) kworker-13086  |               |    mes_v11_0_set_hw_resources [amdgpu]() {
+19014.957870 |    5) kworker-13086  |               |      mes_v11_0_submit_pkt_and_poll_completion.constprop.0 [amdgpu]() {
+19014.957871 |    5) kworker-13086  |               |        amdgpu_device_wb_get [amdgpu]() {
+19014.957871 |    5) kworker-13086  |   0.141 us    |          _raw_spin_lock_irqsave();
+19014.957871 |    5) kworker-13086  |   0.130 us    |          _raw_spin_unlock_irqrestore();
+19014.957871 |    5) kworker-13086  |   0.731 us    |        }
+19014.957871 |    5) kworker-13086  |   0.140 us    |        _raw_spin_lock_irqsave();
+19014.957872 |    5) kworker-13086  |   0.140 us    |        amdgpu_ring_alloc [amdgpu]();
+19014.957872 |    5) kworker-13086  |   0.150 us    |        amdgpu_fence_wait_polling [amdgpu]();
+19014.957872 |    5) kworker-13086  |               |        amdgpu_ring_commit [amdgpu]() {
+19014.957873 |    5) kworker-13086  |               |          mes_v11_0_ring_set_wptr [amdgpu]() {
+19014.957873 |    5) kworker-13086  |               |            amdgpu_mm_wdoorbell64 [amdgpu]() {
+19014.957873 |    5) kworker-13086  |   0.131 us    |              amdgpu_device_skip_hw_access [amdgpu]();
+19014.957874 |    5) kworker-13086  |   0.411 us    |            }
+19014.957874 |    5) kworker-13086  |   1.092 us    |          }
+19014.957874 |    5) kworker-13086  |   1.432 us    |        }
+19014.957874 |    5) kworker-13086  |   0.141 us    |        _raw_spin_unlock_irqrestore();
+19014.957874 |    5) kworker-13086  |               |        amdgpu_fence_wait_polling [amdgpu]() {
+19014.957874 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957875 |    5) kworker-13086  |               |            delay_halt() {
+19014.957875 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957878 |    5) kworker-13086  |   2.935 us    |            }
+19014.957878 |    5) kworker-13086  |   3.226 us    |          }
+19014.957878 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957878 |    5) kworker-13086  |               |            delay_halt() {
+19014.957878 |    5) kworker-13086  |   2.745 us    |              delay_halt_mwaitx();
+19014.957881 |    5) kworker-13086  |   3.056 us    |            }
+19014.957881 |    5) kworker-13086  |   3.336 us    |          }
+19014.957881 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957881 |    5) kworker-13086  |               |            delay_halt() {
+19014.957882 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957884 |    5) kworker-13086  |   2.935 us    |            }
+19014.957885 |    5) kworker-13086  |   3.226 us    |          }
+19014.957885 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957885 |    5) kworker-13086  |               |            delay_halt() {
+19014.957885 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957888 |    5) kworker-13086  |   2.935 us    |            }
+19014.957888 |    5) kworker-13086  |   3.226 us    |          }
+19014.957888 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957888 |    5) kworker-13086  |               |            delay_halt() {
+19014.957888 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957891 |    5) kworker-13086  |   2.936 us    |            }
+19014.957891 |    5) kworker-13086  |   3.216 us    |          }
+19014.957891 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957892 |    5) kworker-13086  |               |            delay_halt() {
+19014.957892 |    5) kworker-13086  |   2.695 us    |              delay_halt_mwaitx();
+19014.957895 |    5) kworker-13086  |   2.996 us    |            }
+19014.957895 |    5) kworker-13086  |   3.276 us    |          }
+19014.957895 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957895 |    5) kworker-13086  |               |            delay_halt() {
+19014.957895 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957898 |    5) kworker-13086  |   2.935 us    |            }
+19014.957898 |    5) kworker-13086  |   3.216 us    |          }
+19014.957898 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957898 |    5) kworker-13086  |               |            delay_halt() {
+19014.957899 |    5) kworker-13086  |   3.015 us    |              delay_halt_mwaitx();
+19014.957902 |    5) kworker-13086  |   3.326 us    |            }
+19014.957902 |    5) kworker-13086  |   3.607 us    |          }
+19014.957902 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957902 |    5) kworker-13086  |               |            delay_halt() {
+19014.957902 |    5) kworker-13086  |   2.725 us    |              delay_halt_mwaitx();
+19014.957905 |    5) kworker-13086  |   3.016 us    |            }
+19014.957905 |    5) kworker-13086  |   3.306 us    |          }
+19014.957905 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957906 |    5) kworker-13086  |               |            delay_halt() {
+19014.957906 |    5) kworker-13086  |   2.735 us    |              delay_halt_mwaitx();
+19014.957909 |    5) kworker-13086  |   3.025 us    |            }
+19014.957909 |    5) kworker-13086  |   3.316 us    |          }
+19014.957909 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957909 |    5) kworker-13086  |               |            delay_halt() {
+19014.957909 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.957912 |    5) kworker-13086  |   2.946 us    |            }
+19014.957912 |    5) kworker-13086  |   3.226 us    |          }
+19014.957912 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957912 |    5) kworker-13086  |               |            delay_halt() {
+19014.957913 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957915 |    5) kworker-13086  |   2.935 us    |            }
+19014.957916 |    5) kworker-13086  |   3.216 us    |          }
+19014.957916 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957916 |    5) kworker-13086  |               |            delay_halt() {
+19014.957916 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.957919 |    5) kworker-13086  |   3.266 us    |            }
+19014.957919 |    5) kworker-13086  |   3.556 us    |          }
+19014.957919 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957920 |    5) kworker-13086  |               |            delay_halt() {
+19014.957920 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.957923 |    5) kworker-13086  |   2.946 us    |            }
+19014.957923 |    5) kworker-13086  |   3.226 us    |          }
+19014.957923 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957923 |    5) kworker-13086  |               |            delay_halt() {
+19014.957923 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.957926 |    5) kworker-13086  |   2.936 us    |            }
+19014.957926 |    5) kworker-13086  |   3.216 us    |          }
+19014.957926 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957926 |    5) kworker-13086  |               |            delay_halt() {
+19014.957927 |    5) kworker-13086  |   2.715 us    |              delay_halt_mwaitx();
+19014.957929 |    5) kworker-13086  |   3.005 us    |            }
+19014.957930 |    5) kworker-13086  |   3.296 us    |          }
+19014.957930 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957930 |    5) kworker-13086  |               |            delay_halt() {
+19014.957930 |    5) kworker-13086  |   2.755 us    |              delay_halt_mwaitx();
+19014.957933 |    5) kworker-13086  |   3.056 us    |            }
+19014.957933 |    5) kworker-13086  |   3.336 us    |          }
+19014.957933 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957933 |    5) kworker-13086  |               |            delay_halt() {
+19014.957933 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957936 |    5) kworker-13086  |   2.935 us    |            }
+19014.957936 |    5) kworker-13086  |   3.226 us    |          }
+19014.957937 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957937 |    5) kworker-13086  |               |            delay_halt() {
+19014.957937 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.957940 |    5) kworker-13086  |   2.946 us    |            }
+19014.957940 |    5) kworker-13086  |   3.226 us    |          }
+19014.957940 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957940 |    5) kworker-13086  |               |            delay_halt() {
+19014.957940 |    5) kworker-13086  |   2.715 us    |              delay_halt_mwaitx();
+19014.957943 |    5) kworker-13086  |   3.006 us    |            }
+19014.957943 |    5) kworker-13086  |   3.296 us    |          }
+19014.957943 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957944 |    5) kworker-13086  |               |            delay_halt() {
+19014.957944 |    5) kworker-13086  |   2.705 us    |              delay_halt_mwaitx();
+19014.957947 |    5) kworker-13086  |   3.016 us    |            }
+19014.957947 |    5) kworker-13086  |   3.296 us    |          }
+19014.957947 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957947 |    5) kworker-13086  |               |            delay_halt() {
+19014.957947 |    5) kworker-13086  |   2.665 us    |              delay_halt_mwaitx();
+19014.957950 |    5) kworker-13086  |   2.956 us    |            }
+19014.957950 |    5) kworker-13086  |   3.246 us    |          }
+19014.957950 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957950 |    5) kworker-13086  |               |            delay_halt() {
+19014.957951 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957953 |    5) kworker-13086  |   2.925 us    |            }
+19014.957953 |    5) kworker-13086  |   3.216 us    |          }
+19014.957954 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957954 |    5) kworker-13086  |               |            delay_halt() {
+19014.957954 |    5) kworker-13086  |   2.706 us    |              delay_halt_mwaitx();
+19014.957957 |    5) kworker-13086  |   3.016 us    |            }
+19014.957957 |    5) kworker-13086  |   3.296 us    |          }
+19014.957957 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957957 |    5) kworker-13086  |               |            delay_halt() {
+19014.957957 |    5) kworker-13086  |   2.745 us    |              delay_halt_mwaitx();
+19014.957960 |    5) kworker-13086  |   3.045 us    |            }
+19014.957960 |    5) kworker-13086  |   3.327 us    |          }
+19014.957961 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957961 |    5) kworker-13086  |               |            delay_halt() {
+19014.957961 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957964 |    5) kworker-13086  |   2.936 us    |            }
+19014.957964 |    5) kworker-13086  |   3.216 us    |          }
+19014.957964 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957964 |    5) kworker-13086  |               |            delay_halt() {
+19014.957964 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957967 |    5) kworker-13086  |   2.936 us    |            }
+19014.957967 |    5) kworker-13086  |   3.226 us    |          }
+19014.957967 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957967 |    5) kworker-13086  |               |            delay_halt() {
+19014.957968 |    5) kworker-13086  |   2.675 us    |              delay_halt_mwaitx();
+19014.957970 |    5) kworker-13086  |   2.985 us    |            }
+19014.957971 |    5) kworker-13086  |   3.266 us    |          }
+19014.957971 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957971 |    5) kworker-13086  |               |            delay_halt() {
+19014.957971 |    5) kworker-13086  |   2.715 us    |              delay_halt_mwaitx();
+19014.957974 |    5) kworker-13086  |   3.016 us    |            }
+19014.957974 |    5) kworker-13086  |   3.306 us    |          }
+19014.957974 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957974 |    5) kworker-13086  |               |            delay_halt() {
+19014.957975 |    5) kworker-13086  |   2.715 us    |              delay_halt_mwaitx();
+19014.957978 |    5) kworker-13086  |   3.196 us    |            }
+19014.957978 |    5) kworker-13086  |   3.477 us    |          }
+19014.957978 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957978 |    5) kworker-13086  |               |            delay_halt() {
+19014.957978 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.957981 |    5) kworker-13086  |   2.945 us    |            }
+19014.957981 |    5) kworker-13086  |   3.226 us    |          }
+19014.957981 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957981 |    5) kworker-13086  |               |            delay_halt() {
+19014.957981 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957984 |    5) kworker-13086  |   2.935 us    |            }
+19014.957984 |    5) kworker-13086  |   3.226 us    |          }
+19014.957985 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957985 |    5) kworker-13086  |               |            delay_halt() {
+19014.957985 |    5) kworker-13086  |   2.696 us    |              delay_halt_mwaitx();
+19014.957988 |    5) kworker-13086  |   2.996 us    |            }
+19014.957988 |    5) kworker-13086  |   3.276 us    |          }
+19014.957988 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957988 |    5) kworker-13086  |               |            delay_halt() {
+19014.957988 |    5) kworker-13086  |   2.695 us    |              delay_halt_mwaitx();
+19014.957991 |    5) kworker-13086  |   2.995 us    |            }
+19014.957991 |    5) kworker-13086  |   3.276 us    |          }
+19014.957991 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957992 |    5) kworker-13086  |               |            delay_halt() {
+19014.957992 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.957994 |    5) kworker-13086  |   2.936 us    |            }
+19014.957995 |    5) kworker-13086  |   3.226 us    |          }
+19014.957995 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957995 |    5) kworker-13086  |               |            delay_halt() {
+19014.957995 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.957998 |    5) kworker-13086  |   2.946 us    |            }
+19014.957998 |    5) kworker-13086  |   3.236 us    |          }
+19014.957998 |    5) kworker-13086  |               |          __const_udelay() {
+19014.957998 |    5) kworker-13086  |               |            delay_halt() {
+19014.957998 |    5) kworker-13086  |   2.705 us    |              delay_halt_mwaitx();
+19014.958001 |    5) kworker-13086  |   2.995 us    |            }
+19014.958001 |    5) kworker-13086  |   3.277 us    |          }
+19014.958002 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958002 |    5) kworker-13086  |               |            delay_halt() {
+19014.958002 |    5) kworker-13086  |   2.706 us    |              delay_halt_mwaitx();
+19014.958005 |    5) kworker-13086  |   2.996 us    |            }
+19014.958005 |    5) kworker-13086  |   3.286 us    |          }
+19014.958005 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958005 |    5) kworker-13086  |               |            delay_halt() {
+19014.958005 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.958008 |    5) kworker-13086  |   2.945 us    |            }
+19014.958008 |    5) kworker-13086  |   3.226 us    |          }
+19014.958009 |    5) kworker-13086  | ! 134.332 us  |        }
+19014.958009 |    5) kworker-13086  |               |        amdgpu_device_wb_free [amdgpu]() {
+19014.958009 |    5) kworker-13086  |   0.130 us    |          _raw_spin_lock_irqsave();
+19014.958009 |    5) kworker-13086  |   0.131 us    |          _raw_spin_unlock_irqrestore();
+19014.958010 |    5) kworker-13086  |   0.691 us    |        }
+19014.958010 |    5) kworker-13086  | ! 139.421 us  |      }
+19014.958010 |    5) kworker-13086  | ! 139.932 us  |    }
+19014.958010 |    5) kworker-13086  |               |    mes_v11_0_set_hw_resources_1 [amdgpu]() {
+19014.958010 |    5) kworker-13086  |               |      mes_v11_0_submit_pkt_and_poll_completion.constprop.0 [amdgpu]() {
+19014.958011 |    5) kworker-13086  |               |        amdgpu_device_wb_get [amdgpu]() {
+19014.958011 |    5) kworker-13086  |   0.130 us    |          _raw_spin_lock_irqsave();
+19014.958011 |    5) kworker-13086  |   0.141 us    |          _raw_spin_unlock_irqrestore();
+19014.958011 |    5) kworker-13086  |   0.711 us    |        }
+19014.958011 |    5) kworker-13086  |   0.131 us    |        _raw_spin_lock_irqsave();
+19014.958012 |    5) kworker-13086  |   0.130 us    |        amdgpu_ring_alloc [amdgpu]();
+19014.958012 |    5) kworker-13086  |   0.141 us    |        amdgpu_fence_wait_polling [amdgpu]();
+19014.958012 |    5) kworker-13086  |               |        amdgpu_ring_commit [amdgpu]() {
+19014.958013 |    5) kworker-13086  |               |          mes_v11_0_ring_set_wptr [amdgpu]() {
+19014.958013 |    5) kworker-13086  |               |            amdgpu_mm_wdoorbell64 [amdgpu]() {
+19014.958013 |    5) kworker-13086  |   0.130 us    |              amdgpu_device_skip_hw_access [amdgpu]();
+19014.958032 |    5) kworker-13086  |   0.400 us    |            }
+19014.958032 |    5) kworker-13086  | + 19.297 us   |          }
+19014.958032 |    5) kworker-13086  | + 19.697 us   |        }
+19014.958032 |    5) kworker-13086  |               |        _raw_spin_unlock_irqrestore() {
+19014.958033 |    5) kworker-13086  |               |          irq_enter_rcu() {
+19014.958033 |    5) kworker-13086  |   0.161 us    |            irqtime_account_irq();
+19014.958033 |    5) kworker-13086  |   0.451 us    |          }
+19014.958033 |    5) kworker-13086  |               |          __sysvec_apic_timer_interrupt() {
+19014.958033 |    5) kworker-13086  |               |            hrtimer_interrupt() {
+19014.958034 |    5) kworker-13086  |   0.130 us    |              _raw_spin_lock_irqsave();
+19014.958034 |    5) kworker-13086  |   0.161 us    |              ktime_get_update_offsets_now();
+19014.958034 |    5) kworker-13086  |               |              __hrtimer_run_queues() {
+19014.958035 |    5) kworker-13086  |   0.451 us    |                _raw_spin_unlock_irqrestore();
+19014.958035 |    5) kworker-13086  |               |                tick_nohz_handler() {
+19014.958035 |    5) kworker-13086  |   0.330 us    |                  ktime_get();
+19014.958036 |    5) kworker-13086  |               |                  tick_do_update_jiffies64() {
+19014.958036 |    5) kworker-13086  |   0.130 us    |                    _raw_spin_lock();
+19014.958036 |    5) kworker-13086  |   0.150 us    |                    calc_global_load();
+19014.958036 |    5) kworker-13086  |   0.140 us    |                    _raw_spin_unlock();
+19014.958037 |    5) kworker-13086  |               |                    update_wall_time() {
+19014.958037 |    5) kworker-13086  |   0.141 us    |                      _raw_spin_lock_irqsave();
+19014.958037 |    5) kworker-13086  |               |                      __timekeeping_advance() {
+19014.958037 |    5) kworker-13086  |   0.130 us    |                        ntp_tick_length();
+19014.958038 |    5) kworker-13086  |   0.140 us    |                        ntp_tick_length();
+19014.958038 |    5) kworker-13086  |   0.591 us    |                        timekeeping_update_from_shadow();
+19014.958039 |    5) kworker-13086  |   1.483 us    |                      }
+19014.958039 |    5) kworker-13086  |   0.140 us    |                      _raw_spin_unlock_irqrestore();
+19014.958039 |    5) kworker-13086  |   2.354 us    |                    }
+19014.958039 |    5) kworker-13086  |   3.677 us    |                  }
+19014.958039 |    5) kworker-13086  |               |                  update_process_times() {
+19014.958040 |    5) kworker-13086  |               |                    account_process_tick() {
+19014.958040 |    5) kworker-13086  |               |                      irqtime_account_process_tick() {
+19014.958040 |    5) kworker-13086  |   0.240 us    |                        account_system_index_time();
+19014.958040 |    5) kworker-13086  |   0.521 us    |                      }
+19014.958040 |    5) kworker-13086  |   0.802 us    |                    }
+19014.958041 |    5) kworker-13086  |   0.130 us    |                    hrtimer_run_queues();
+19014.958041 |    5) kworker-13086  |               |                    tmigr_requires_handle_remote() {
+19014.958041 |    5) kworker-13086  |   0.140 us    |                      get_jiffies_update();
+19014.958041 |    5) kworker-13086  |   0.420 us    |                    }
+19014.958041 |    5) kworker-13086  |               |                    rcu_sched_clock_irq() {
+19014.958042 |    5) kworker-13086  |   0.130 us    |                      rcu_segcblist_ready_cbs();
+19014.958042 |    5) kworker-13086  |   0.430 us    |                    }
+19014.958042 |    5) kworker-13086  |               |                    sched_tick() {
+19014.958042 |    5) kworker-13086  |   0.200 us    |                      arch_scale_freq_tick();
+19014.958043 |    5) kworker-13086  |               |                      raw_spin_rq_lock_nested() {
+19014.958043 |    5) kworker-13086  |   0.130 us    |                        _raw_spin_lock();
+19014.958043 |    5) kworker-13086  |   0.411 us    |                      }
+19014.958043 |    5) kworker-13086  |               |                      psi_account_irqtime() {
+19014.958043 |    5) kworker-13086  |   0.130 us    |                        record_times();
+19014.958044 |    5) kworker-13086  |   0.451 us    |                      }
+19014.958044 |    5) kworker-13086  |               |                      update_rq_clock() {
+19014.958044 |    5) kworker-13086  |   0.201 us    |                        update_irq_load_avg();
+19014.958044 |    5) kworker-13086  |   0.130 us    |                        arch_scale_cpu_capacity();
+19014.958045 |    5) kworker-13086  |   0.801 us    |                      }
+19014.958045 |    5) kworker-13086  |               |                      task_tick_fair() {
+19014.958045 |    5) kworker-13086  |   0.501 us    |                        update_curr();
+19014.958045 |    5) kworker-13086  |   0.151 us    |                        __update_load_avg_se();
+19014.958046 |    5) kworker-13086  |   0.160 us    |                        __update_load_avg_cfs_rq();
+19014.958046 |    5) kworker-13086  |   0.131 us    |                        update_cfs_group();
+19014.958046 |    5) kworker-13086  |   1.713 us    |                      }
+19014.958047 |    5) kworker-13086  |   0.131 us    |                      calc_global_load_tick();
+19014.958047 |    5) kworker-13086  |   0.130 us    |                      scx_tick();
+19014.958047 |    5) kworker-13086  |               |                      raw_spin_rq_unlock() {
+19014.958047 |    5) kworker-13086  |   0.130 us    |                        _raw_spin_unlock();
+19014.958048 |    5) kworker-13086  |   0.421 us    |                      }
+19014.958048 |    5) kworker-13086  |               |                      perf_event_task_tick() {
+19014.958048 |    5) kworker-13086  |   0.130 us    |                        perf_adjust_freq_unthr_context();
+19014.958048 |    5) kworker-13086  |   0.140 us    |                        __rcu_read_lock();
+19014.958048 |    5) kworker-13086  |   0.140 us    |                        __rcu_read_unlock();
+19014.958049 |    5) kworker-13086  |   0.992 us    |                      }
+19014.958049 |    5) kworker-13086  |               |                      wq_worker_tick() {
+19014.958049 |    5) kworker-13086  |   0.130 us    |                        kthread_data();
+19014.958049 |    5) kworker-13086  |   0.410 us    |                      }
+19014.958049 |    5) kworker-13086  |   0.140 us    |                      idle_cpu();
+19014.958050 |    5) kworker-13086  |               |                      sched_balance_trigger() {
+19014.958050 |    5) kworker-13086  |   0.131 us    |                        nohz_balance_exit_idle();
+19014.958050 |    5) kworker-13086  |   0.130 us    |                        __rcu_read_lock();
+19014.958050 |    5) kworker-13086  |   0.130 us    |                        arch_scale_cpu_capacity();
+19014.958051 |    5) kworker-13086  |   0.221 us    |                        sched_use_asym_prio.isra.0();
+19014.958051 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958052 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958052 |    5) kworker-13086  |   0.201 us    |                        sched_use_asym_prio.isra.0();
+19014.958052 |    5) kworker-13086  |   0.140 us    |                        arch_asym_cpu_priority();
+19014.958053 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958053 |    5) kworker-13086  |   0.200 us    |                        sched_use_asym_prio.isra.0();
+19014.958053 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958053 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958054 |    5) kworker-13086  |   0.210 us    |                        sched_use_asym_prio.isra.0();
+19014.958054 |    5) kworker-13086  |   0.131 us    |                        arch_asym_cpu_priority();
+19014.958054 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958055 |    5) kworker-13086  |   0.231 us    |                        sched_use_asym_prio.isra.0();
+19014.958055 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958055 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958056 |    5) kworker-13086  |   0.201 us    |                        sched_use_asym_prio.isra.0();
+19014.958056 |    5) kworker-13086  |   0.140 us    |                        arch_asym_cpu_priority();
+19014.958056 |    5) kworker-13086  |   0.141 us    |                        arch_asym_cpu_priority();
+19014.958057 |    5) kworker-13086  |   0.220 us    |                        sched_use_asym_prio.isra.0();
+19014.958057 |    5) kworker-13086  |   0.210 us    |                        sched_use_asym_prio.isra.0();
+19014.958057 |    5) kworker-13086  |   0.131 us    |                        arch_asym_cpu_priority();
+19014.958058 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958058 |    5) kworker-13086  |   0.201 us    |                        sched_use_asym_prio.isra.0();
+19014.958058 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958058 |    5) kworker-13086  |   0.130 us    |                        arch_asym_cpu_priority();
+19014.958059 |    5) kworker-13086  |   0.201 us    |                        sched_use_asym_prio.isra.0();
+19014.958059 |    5) kworker-13086  |   0.130 us    |                        __rcu_read_unlock();
+19014.958059 |    5) kworker-13086  |   0.131 us    |                        housekeeping_cpumask();
+19014.958060 |    5) kworker-13086  |   0.140 us    |                        idle_cpu();
+19014.958060 |    5) kworker-13086  |   0.450 us    |                        smp_call_function_single_async();
+19014.958061 |    5) kworker-13086  | + 11.171 us   |                      }
+19014.958061 |    5) kworker-13086  | + 18.965 us   |                    }
+19014.958061 |    5) kworker-13086  |   0.140 us    |                    run_posix_cpu_timers();
+19014.958061 |    5) kworker-13086  | + 21.981 us   |                  }
+19014.958062 |    5) kworker-13086  |               |                  profile_tick() {
+19014.958062 |    5) kworker-13086  |   0.130 us    |                    profile_pc();
+19014.958062 |    5) kworker-13086  |   0.420 us    |                  }
+19014.958062 |    5) kworker-13086  |   0.140 us    |                  hrtimer_forward();
+19014.958062 |    5) kworker-13086  | + 27.471 us   |                }
+19014.958063 |    5) kworker-13086  |   0.141 us    |                _raw_spin_lock_irq();
+19014.958063 |    5) kworker-13086  |   0.170 us    |                enqueue_hrtimer();
+19014.958063 |    5) kworker-13086  | + 29.055 us   |              }
+19014.958063 |    5) kworker-13086  |               |              hrtimer_update_next_event() {
+19014.958064 |    5) kworker-13086  |   0.130 us    |                __hrtimer_next_event_base();
+19014.958064 |    5) kworker-13086  |   0.140 us    |                __hrtimer_next_event_base();
+19014.958064 |    5) kworker-13086  |   0.711 us    |              }
+19014.958064 |    5) kworker-13086  |   0.131 us    |              _raw_spin_unlock_irqrestore();
+19014.958065 |    5) kworker-13086  |               |              tick_program_event() {
+19014.958065 |    5) kworker-13086  |               |                clockevents_program_event() {
+19014.958065 |    5) kworker-13086  |   0.160 us    |                  ktime_get();
+19014.958065 |    5) kworker-13086  |   0.151 us    |                  lapic_next_event();
+19014.958066 |    5) kworker-13086  |   1.183 us    |                }
+19014.958066 |    5) kworker-13086  |   1.583 us    |              }
+19014.958066 |    5) kworker-13086  | + 32.932 us   |            }
+19014.958066 |    5) kworker-13086  | + 33.232 us   |          }
+19014.958067 |    5) kworker-13086  |               |          irq_exit_rcu() {
+19014.958067 |    5) kworker-13086  |   0.170 us    |            irqtime_account_irq();
+19014.958067 |    5) kworker-13086  |   0.140 us    |            sched_core_idle_cpu();
+19014.958067 |    5) kworker-13086  |   0.751 us    |          }
+19014.958067 |    5) kworker-13086  |   0.141 us    |          raw_irqentry_exit_cond_resched();
+19014.958070 |    5) kworker-13086  | + 38.012 us   |        }
+19014.958070 |    5) kworker-13086  |               |        amdgpu_fence_wait_polling [amdgpu]() {
+19014.958071 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958071 |    5) kworker-13086  |               |            delay_halt() {
+19014.958071 |    5) kworker-13086  |   3.537 us    |              delay_halt_mwaitx();
+19014.958075 |    5) kworker-13086  |   3.827 us    |            }
+19014.958075 |    5) kworker-13086  |   4.108 us    |          }
+19014.958075 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958075 |    5) kworker-13086  |               |            delay_halt() {
+19014.958075 |    5) kworker-13086  |   3.356 us    |              delay_halt_mwaitx();
+19014.958079 |    5) kworker-13086  |   3.657 us    |            }
+19014.958079 |    5) kworker-13086  |   3.938 us    |          }
+19014.958079 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958079 |    5) kworker-13086  |               |            delay_halt() {
+19014.958079 |    5) kworker-13086  |   2.745 us    |              delay_halt_mwaitx();
+19014.958082 |    5) kworker-13086  |   3.036 us    |            }
+19014.958082 |    5) kworker-13086  |   3.326 us    |          }
+19014.958082 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958083 |    5) kworker-13086  |               |            delay_halt() {
+19014.958083 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.958086 |    5) kworker-13086  |   2.945 us    |            }
+19014.958086 |    5) kworker-13086  |   3.236 us    |          }
+19014.958086 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958086 |    5) kworker-13086  |               |            delay_halt() {
+19014.958086 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.958089 |    5) kworker-13086  |   2.936 us    |            }
+19014.958089 |    5) kworker-13086  |   3.216 us    |          }
+19014.958089 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958089 |    5) kworker-13086  |               |            delay_halt() {
+19014.958090 |    5) kworker-13086  |   2.695 us    |              delay_halt_mwaitx();
+19014.958092 |    5) kworker-13086  |   2.985 us    |            }
+19014.958093 |    5) kworker-13086  |   3.266 us    |          }
+19014.958093 |    5) kworker-13086  | + 22.512 us   |        }
+19014.958093 |    5) kworker-13086  |               |        amdgpu_device_wb_free [amdgpu]() {
+19014.958093 |    5) kworker-13086  |   0.130 us    |          _raw_spin_lock_irqsave();
+19014.958094 |    5) kworker-13086  |   0.140 us    |          _raw_spin_unlock_irqrestore();
+19014.958094 |    5) kworker-13086  |   0.701 us    |        }
+19014.958094 |    5) kworker-13086  | + 83.717 us   |      }
+19014.958094 |    5) kworker-13086  | + 84.038 us   |    }
+19014.958095 |    5) kworker-13086  |               |    mes_v11_0_query_sched_status [amdgpu]() {
+19014.958095 |    5) kworker-13086  |               |      mes_v11_0_submit_pkt_and_poll_completion.constprop.0 [amdgpu]() {
+19014.958095 |    5) kworker-13086  |               |        amdgpu_device_wb_get [amdgpu]() {
+19014.958095 |    5) kworker-13086  |   0.130 us    |          _raw_spin_lock_irqsave();
+19014.958095 |    5) kworker-13086  |   0.140 us    |          _raw_spin_unlock_irqrestore();
+19014.958096 |    5) kworker-13086  |   0.701 us    |        }
+19014.958096 |    5) kworker-13086  |   0.130 us    |        _raw_spin_lock_irqsave();
+19014.958096 |    5) kworker-13086  |   0.130 us    |        amdgpu_ring_alloc [amdgpu]();
+19014.958096 |    5) kworker-13086  |   0.130 us    |        amdgpu_fence_wait_polling [amdgpu]();
+19014.958097 |    5) kworker-13086  |               |        amdgpu_ring_commit [amdgpu]() {
+19014.958097 |    5) kworker-13086  |               |          mes_v11_0_ring_set_wptr [amdgpu]() {
+19014.958097 |    5) kworker-13086  |               |            amdgpu_mm_wdoorbell64 [amdgpu]() {
+19014.958097 |    5) kworker-13086  |   0.130 us    |              amdgpu_device_skip_hw_access [amdgpu]();
+19014.958116 |    5) kworker-13086  |   0.411 us    |            }
+19014.958116 |    5) kworker-13086  | + 19.306 us   |          }
+19014.958116 |    5) kworker-13086  | + 19.607 us   |        }
+19014.958116 |    5) kworker-13086  |   0.141 us    |        _raw_spin_unlock_irqrestore();
+19014.958117 |    5) kworker-13086  |               |        amdgpu_fence_wait_polling [amdgpu]() {
+19014.958117 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958117 |    5) kworker-13086  |               |            delay_halt() {
+19014.958117 |    5) kworker-13086  |   2.755 us    |              delay_halt_mwaitx();
+19014.958120 |    5) kworker-13086  |   3.056 us    |            }
+19014.958120 |    5) kworker-13086  |   3.336 us    |          }
+19014.958120 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958120 |    5) kworker-13086  |               |            delay_halt() {
+19014.958121 |    5) kworker-13086  |   2.715 us    |              delay_halt_mwaitx();
+19014.958124 |    5) kworker-13086  |   3.016 us    |            }
+19014.958124 |    5) kworker-13086  |   3.306 us    |          }
+19014.958124 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958124 |    5) kworker-13086  |               |            delay_halt() {
+19014.958124 |    5) kworker-13086  |   2.615 us    |              delay_halt_mwaitx();
+19014.958127 |    5) kworker-13086  |   2.916 us    |            }
+19014.958127 |    5) kworker-13086  |   3.206 us    |          }
+19014.958127 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958127 |    5) kworker-13086  |               |            delay_halt() {
+19014.958127 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.958130 |    5) kworker-13086  |   2.955 us    |            }
+19014.958130 |    5) kworker-13086  |   3.237 us    |          }
+19014.958131 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958131 |    5) kworker-13086  |               |            delay_halt() {
+19014.958131 |    5) kworker-13086  |   2.675 us    |              delay_halt_mwaitx();
+19014.958134 |    5) kworker-13086  |   2.986 us    |            }
+19014.958134 |    5) kworker-13086  |   3.266 us    |          }
+19014.958134 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958134 |    5) kworker-13086  |               |            delay_halt() {
+19014.958134 |    5) kworker-13086  |   2.765 us    |              delay_halt_mwaitx();
+19014.958137 |    5) kworker-13086  |   3.056 us    |            }
+19014.958138 |    5) kworker-13086  |   3.346 us    |          }
+19014.958138 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958138 |    5) kworker-13086  |               |            delay_halt() {
+19014.958138 |    5) kworker-13086  |   2.725 us    |              delay_halt_mwaitx();
+19014.958141 |    5) kworker-13086  |   3.016 us    |            }
+19014.958141 |    5) kworker-13086  |   3.306 us    |          }
+19014.958141 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958141 |    5) kworker-13086  |               |            delay_halt() {
+19014.958141 |    5) kworker-13086  |   2.645 us    |              delay_halt_mwaitx();
+19014.958144 |    5) kworker-13086  |   2.945 us    |            }
+19014.958144 |    5) kworker-13086  |   3.226 us    |          }
+19014.958145 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958145 |    5) kworker-13086  |               |            delay_halt() {
+19014.958145 |    5) kworker-13086  |   2.745 us    |              delay_halt_mwaitx();
+19014.958148 |    5) kworker-13086  |   3.036 us    |            }
+19014.958148 |    5) kworker-13086  |   3.326 us    |          }
+19014.958148 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958148 |    5) kworker-13086  |               |            delay_halt() {
+19014.958148 |    5) kworker-13086  |   3.757 us    |              delay_halt_mwaitx();
+19014.958152 |    5) kworker-13086  |   4.057 us    |            }
+19014.958152 |    5) kworker-13086  |   4.348 us    |          }
+19014.958152 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958153 |    5) kworker-13086  |               |            delay_halt() {
+19014.958153 |    5) kworker-13086  |   3.526 us    |              delay_halt_mwaitx();
+19014.958156 |    5) kworker-13086  |   3.827 us    |            }
+19014.958157 |    5) kworker-13086  |   4.118 us    |          }
+19014.958157 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958157 |    5) kworker-13086  |               |            delay_halt() {
+19014.958157 |    5) kworker-13086  |   2.624 us    |              delay_halt_mwaitx();
+19014.958160 |    5) kworker-13086  |   2.916 us    |            }
+19014.958160 |    5) kworker-13086  |   3.206 us    |          }
+19014.958160 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958160 |    5) kworker-13086  |               |            delay_halt() {
+19014.958160 |    5) kworker-13086  |   2.635 us    |              delay_halt_mwaitx();
+19014.958163 |    5) kworker-13086  |   2.935 us    |            }
+19014.958163 |    5) kworker-13086  |   3.216 us    |          }
+19014.958163 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958164 |    5) kworker-13086  |               |            delay_halt() {
+19014.958164 |    5) kworker-13086  |   2.715 us    |              delay_halt_mwaitx();
+19014.958167 |    5) kworker-13086  |   3.006 us    |            }
+19014.958167 |    5) kworker-13086  |   3.296 us    |          }
+19014.958167 |    5) kworker-13086  |               |          __const_udelay() {
+19014.958167 |    5) kworker-13086  |               |            delay_halt() {
+19014.958167 |    5) kworker-13086  |   2.705 us    |              delay_halt_mwaitx();
+19014.958170 |    5) kworker-13086  |   2.996 us    |            }
+19014.958170 |    5) kworker-13086  |   3.276 us    |          }
+19014.958171 |    5) kworker-13086  | + 53.841 us   |        }
+19014.958171 |    5) kworker-13086  |               |        amdgpu_device_wb_free [amdgpu]() {
+19014.958171 |    5) kworker-13086  |   0.130 us    |          _raw_spin_lock_irqsave();
+19014.958171 |    5) kworker-13086  |   0.131 us    |          _raw_spin_unlock_irqrestore();
+19014.958172 |    5) kworker-13086  |   0.692 us    |        }
+19014.958172 |    5) kworker-13086  | + 76.954 us   |      }
+19014.958172 |    5) kworker-13086  | + 77.275 us   |    }
+19014.958172 |    5) kworker-13086  |               |    amdgpu_mes_update_enforce_isolation [amdgpu]() {
+19014.958172 |    5) kworker-13086  |   0.130 us    |      mutex_lock();
+19014.958173 |    5) kworker-13086  |               |      amdgpu_mes_set_enforce_isolation.isra.0 [amdgpu]() {
+19014.958173 |    5) kworker-13086  |   0.131 us    |        mutex_lock();
+19014.958173 |    5) kworker-13086  |               |        mes_v11_0_misc_op [amdgpu]() {
+19014.958173 |    5) kworker-13086  |               |          mes_v11_0_submit_pkt_and_poll_completion.constprop.0 [amdgpu]() {
+19014.958174 |    5) kworker-13086  |               |            amdgpu_device_wb_get [amdgpu]() {
+19014.958174 |    5) kworker-13086  |   0.130 us    |              _raw_spin_lock_irqsave();
+19014.958174 |    5) kworker-13086  |   0.141 us    |              _raw_spin_unlock_irqrestore();
+19014.958174 |    5) kworker-13086  |   0.701 us    |            }
+19014.958174 |    5) kworker-13086  |   0.140 us    |            _raw_spin_lock_irqsave();
+19014.958175 |    5) kworker-13086  |   0.140 us    |            amdgpu_ring_alloc [amdgpu]();
+19014.958175 |    5) kworker-13086  |   0.140 us    |            amdgpu_fence_wait_polling [amdgpu]();
+19014.958175 |    5) kworker-13086  |               |            amdgpu_ring_commit [amdgpu]() {
+19014.958175 |    5) kworker-13086  |               |              mes_v11_0_ring_set_wptr [amdgpu]() {
+19014.958176 |    5) kworker-13086  |               |                amdgpu_mm_wdoorbell64 [amdgpu]() {
+19014.958176 |    5) kworker-13086  |   0.120 us    |                  amdgpu_device_skip_hw_access [amdgpu]();
+19014.958195 |    5) kworker-13086  |   0.401 us    |                }
+19014.958195 |    5) kworker-13086  | + 19.867 us   |              }
+19014.958196 |    5) kworker-13086  | + 20.178 us   |            }
+19014.958196 |    5) kworker-13086  |   0.140 us    |            _raw_spin_unlock_irqrestore();
+19014.958196 |    5) kworker-13086  |               |            amdgpu_fence_wait_polling [amdgpu]() {
+19014.958196 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958196 |    5) kworker-13086  |               |                delay_halt() {
+19014.958197 |    5) kworker-13086  |   2.645 us    |                  delay_halt_mwaitx();
+19014.958199 |    5) kworker-13086  |   3.116 us    |                }
+19014.958200 |    5) kworker-13086  |   3.386 us    |              }
+19014.958200 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958200 |    5) kworker-13086  |               |                delay_halt() {
+19014.958200 |    5) kworker-13086  |   2.645 us    |                  delay_halt_mwaitx();
+19014.958203 |    5) kworker-13086  |   2.945 us    |                }
+19014.958203 |    5) kworker-13086  |   3.226 us    |              }
+19014.958203 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958203 |    5) kworker-13086  |               |                delay_halt() {
+19014.958203 |    5) kworker-13086  |   2.635 us    |                  delay_halt_mwaitx();
+19014.958206 |    5) kworker-13086  |   2.926 us    |                }
+19014.958206 |    5) kworker-13086  |   3.216 us    |              }
+19014.958207 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958207 |    5) kworker-13086  |               |                delay_halt() {
+19014.958207 |    5) kworker-13086  |   2.715 us    |                  delay_halt_mwaitx();
+19014.958210 |    5) kworker-13086  |   3.015 us    |                }
+19014.958210 |    5) kworker-13086  |   3.297 us    |              }
+19014.958210 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958210 |    5) kworker-13086  |               |                delay_halt() {
+19014.958210 |    5) kworker-13086  |   2.736 us    |                  delay_halt_mwaitx();
+19014.958213 |    5) kworker-13086  |   3.026 us    |                }
+19014.958213 |    5) kworker-13086  |   3.316 us    |              }
+19014.958213 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958214 |    5) kworker-13086  |               |                delay_halt() {
+19014.958214 |    5) kworker-13086  |   2.665 us    |                  delay_halt_mwaitx();
+19014.958217 |    5) kworker-13086  |   2.965 us    |                }
+19014.958217 |    5) kworker-13086  |   3.256 us    |              }
+19014.958217 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958217 |    5) kworker-13086  |               |                delay_halt() {
+19014.958217 |    5) kworker-13086  |   2.655 us    |                  delay_halt_mwaitx();
+19014.958220 |    5) kworker-13086  |   2.956 us    |                }
+19014.958220 |    5) kworker-13086  |   3.236 us    |              }
+19014.958220 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958220 |    5) kworker-13086  |               |                delay_halt() {
+19014.958221 |    5) kworker-13086  |   2.825 us    |                  delay_halt_mwaitx();
+19014.958224 |    5) kworker-13086  |   3.116 us    |                }
+19014.958224 |    5) kworker-13086  |   3.406 us    |              }
+19014.958224 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958224 |    5) kworker-13086  |               |                delay_halt() {
+19014.958224 |    5) kworker-13086  |   2.756 us    |                  delay_halt_mwaitx();
+19014.958227 |    5) kworker-13086  |   3.056 us    |                }
+19014.958227 |    5) kworker-13086  |   3.336 us    |              }
+19014.958227 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958227 |    5) kworker-13086  |               |                delay_halt() {
+19014.958228 |    5) kworker-13086  |   3.276 us    |                  delay_halt_mwaitx();
+19014.958231 |    5) kworker-13086  |   3.566 us    |                }
+19014.958231 |    5) kworker-13086  |   3.848 us    |              }
+19014.958231 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958231 |    5) kworker-13086  |               |                delay_halt() {
+19014.958232 |    5) kworker-13086  |   3.216 us    |                  delay_halt_mwaitx();
+19014.958235 |    5) kworker-13086  |   3.507 us    |                }
+19014.958235 |    5) kworker-13086  |   3.797 us    |              }
+19014.958235 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958235 |    5) kworker-13086  |               |                delay_halt() {
+19014.958236 |    5) kworker-13086  |   2.695 us    |                  delay_halt_mwaitx();
+19014.958238 |    5) kworker-13086  |   2.995 us    |                }
+19014.958239 |    5) kworker-13086  |   3.276 us    |              }
+19014.958239 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958239 |    5) kworker-13086  |               |                delay_halt() {
+19014.958239 |    5) kworker-13086  |   2.705 us    |                  delay_halt_mwaitx();
+19014.958242 |    5) kworker-13086  |   3.006 us    |                }
+19014.958242 |    5) kworker-13086  |   3.296 us    |              }
+19014.958242 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958242 |    5) kworker-13086  |               |                delay_halt() {
+19014.958242 |    5) kworker-13086  |   2.635 us    |                  delay_halt_mwaitx();
+19014.958245 |    5) kworker-13086  |   2.936 us    |                }
+19014.958245 |    5) kworker-13086  |   3.216 us    |              }
+19014.958245 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958246 |    5) kworker-13086  |               |                delay_halt() {
+19014.958246 |    5) kworker-13086  |   2.635 us    |                  delay_halt_mwaitx();
+19014.958249 |    5) kworker-13086  |   2.935 us    |                }
+19014.958249 |    5) kworker-13086  |   3.227 us    |              }
+19014.958249 |    5) kworker-13086  |               |              __const_udelay() {
+19014.958249 |    5) kworker-13086  |               |                delay_halt() {
+19014.958249 |    5) kworker-13086  |   2.675 us    |                  delay_halt_mwaitx();
+19014.958252 |    5) kworker-13086  |   2.986 us    |                }
+19014.958252 |    5) kworker-13086  |   3.266 us    |              }
+19014.958253 |    5) kworker-13086  | + 56.646 us   |            }
+19014.958253 |    5) kworker-13086  |               |            amdgpu_device_wb_free [amdgpu]() {
+19014.958253 |    5) kworker-13086  |   0.130 us    |              _raw_spin_lock_irqsave();
+19014.958253 |    5) kworker-13086  |   0.140 us    |              _raw_spin_unlock_irqrestore();
+19014.958254 |    5) kworker-13086  |   0.692 us    |            }
+19014.958254 |    5) kworker-13086  | + 80.481 us   |          }
+19014.958254 |    5) kworker-13086  | + 80.802 us   |        }
+19014.958254 |    5) kworker-13086  |   0.140 us    |        mutex_unlock();
+19014.958254 |    5) kworker-13086  | + 81.673 us   |      }
+19014.958255 |    5) kworker-13086  |   0.130 us    |      mutex_unlock();
+19014.958255 |    5) kworker-13086  | + 82.745 us   |    }
+19014.958255 |    5) kworker-13086  | ! 462.227 us  |  }
+19014.961486 |    5) kworker-13086  |   0.331 us    |  mes_v11_0_hw_init [amdgpu]();

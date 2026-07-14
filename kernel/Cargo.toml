@@ -1,0 +1,201 @@
+[package]
+name = "kernel"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaeKernel — hybrid kernel for RaeenOS. Boots bare-metal x86_64."
+build = "build.rs"
+
+[[bin]]
+name = "kernel"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+# rwlock feature unlocks spin::RwLock, used by the new module fleet
+# (wayland, ebpf, netfilter, ...). spin_mutex stays for the existing Mutex.
+spin = { version = "0.9", default-features = false, features = ["spin_mutex", "rwlock"] }
+lazy_static = { version = "1.5", features = ["spin_no_std"] }
+linked_list_allocator = "0.10"
+smoltcp = { version = "0.11", default-features = false, features = ["medium-ethernet", "proto-ipv4", "proto-ipv6", "proto-dhcpv4", "socket-tcp", "socket-udp", "socket-icmp", "alloc"] }
+raenet = { path = "../components/raenet" }
+
+# Bitflags crate for the bulk-generated modules that use the bitflags! macro.
+bitflags = { version = "2", default-features = false }
+# Pure-Rust Zstd decompressor — MasterChecklist Phase 5.4: zstd read path
+ruzstd           = { version = "0.7", default-features = false }
+# NOTE: symphonia (audio decoder) goes in components/raeaudio NOT the kernel.
+# It requires arrayvec which needs std. Wire into userspace RaeAudio daemon (Phase 7).
+# RaeenOS component crates used by kernel-side services.
+pcid    = { path = "../components/pcid" }
+raegfx  = { path = "../components/raegfx" }
+# raeui — the native widget toolkit (#![no_std], default features only; the
+# wgpu/skia renderer is behind the userspace-only `gpu_userspace` feature so the
+# kernel's transitive build never pulls std). The kernel a11y bridge
+# (a11y::publish_window_widgets_from_tree) walks a `raeui::accessibility::
+# AccessibilityTree` for the focused window's controls and converts its
+# `provider_nodes_for_window` output into kernel `AccessNode`s — the widget-tier
+# accessibility seam (Phase 19 audit P0 #1: apps name their controls). RaeUI is
+# the single source of role/label inference; the kernel never holds a shadow copy.
+raeui   = { path = "../components/raeui" }
+raeshell = { path = "../components/raeshell" }
+# raeweb — the from-scratch no_std HTML/CSS/layout/paint engine. The kernel-drawn
+# browser surface (webview.rs) drives RenderPipeline → backend::paint_displaylist_to_
+# _canvas → raegfx, presented by the compositor like Settings/GameOS (Concept §3:
+# "renders through RaeUI", §Core Principles #1: "No Electron tax"). The kernel's
+# build-std/soft-float config links its raenet crypto cleanly (the userspace apps/web
+# poly1305/sha2 SIMD-split error does not apply here).
+raeweb  = { path = "../components/raeweb" }
+raeid   = { path = "../components/raeid" }
+raebridge = { path = "../components/raebridge" }
+# raeshield — RaeShield's no_std PolicyEnforcer/SandboxProfile types. The
+# kernel sandbox.rs module imports these to gate syscall classes per task.
+# Policy *model* lives in the component; kernel only binds it to live tasks.
+raeshield = { path = "../components/raeshield" }
+# rae_abi — the frozen, version-locked interface contract (syscall numbers,
+# sys_claim_device packing, capability/IPC surfaces). The kernel binds to it so
+# the dispatch and the contract can never silently drift apart. Opus-only crate.
+rae_abi = { path = "../components/rae_abi" }
+# Host-KAT-proven fail-closed DRM ioctl type/number/size allowlist. The live
+# render broker consults it before copying anything to amdgpud.
+rae_render_broker = { path = "../components/rae_render_broker" }
+# rae_tokens — the shared #![no_std] zero-dependency design-token home
+# (docs/design/design-language.md): palettes, derive_accent, radius/elevation/
+# type/material tokens. The kernel-drawn chrome (window_chrome.rs) and toasts
+# (notify.rs) consume it so a Vibe-Mode re-skin flows from one seed. NOT an ABI
+# surface — rae_abi stays frozen; visual tokens churn here freely.
+rae_tokens = { path = "../components/rae_tokens" }
+# rae_crypto — shared no_std Argon2id/BLAKE2b (RFC 9106/7693). FDE key
+# derivation in encryption.rs calls here instead of carrying its own copy, so
+# the kernel and raeid share one KAT-proven implementation.
+rae_crypto = { path = "../components/rae_crypto" }
+# raessh — the from-scratch #![no_std]/forbid(unsafe_code) SSH-2.0 server (RFC
+# 4251/4253/4252/4254): curve25519 KEX, chacha20-poly1305@openssh transport,
+# ed25519 publickey auth, channels — all on rae_crypto (already linked above).
+# ssh.rs runs its loopback self-test at boot; the TCP :22 listener binds it to a
+# RaeShell login. So you own your machine remotely (Concept §"the user owns the
+# machine"). Sans-io + host-KAT-proven; links under the kernel's soft-float config.
+raessh = { path = "../components/raessh" }
+# raelang — the Swift-flavored Rae script interpreter (Concept §Customization
+# Engine). scripting.rs runs ≤64 KiB scripts inline through it, fuel-limited;
+# the same crate ships in the future userspace raelang daemon.
+raelang = { path = "../components/raelang" }
+# raehid — HID report-descriptor decoding (wraps the `hidreport` crate, the same
+# parser Redox OS uses) so the xHCI HID path can read NON-boot-protocol gaming
+# mice/keyboards, not just the fixed boot layout. Additive: boot parsing stays
+# the fallback. See components/raehid + docs/REDOX_EXTRACTION_MAP.md.
+raehid = { path = "../components/raehid" }
+# raemedia — from-scratch #![no_std] media codecs. The kernel uses its PNG
+# *encoder* (png_encode) so a screenshot saves as a real `.png` instead of a raw
+# `.argb` blob (shell_runner::execute_capture). Decode side (png/jpeg/exif) is
+# the foundation for the future Photos app + Files thumbnails.
+raemedia = { path = "../components/raemedia" }
+# raelocale — keyboard-layout data + pure (layout, scancode, mods) -> char lookup.
+# The kernel input path (shell_runner::lock_scancode_to_ascii) delegates to
+# raelocale::keyboard::resolve_key so non-US layouts (AZERTY/QWERTZ/Dvorak) type
+# correctly (parity gap #5). #![no_std] crate.
+raelocale = { path = "../components/raelocale" }
+spinning_top = "0.2.5"
+# rangemap — no_std interval map. Backs the DMA coherent address-space pool
+# (BUG-28) and is the foundation for VMA / free-range tracking.
+rangemap = { version = "1", default-features = false }
+# lz4_flex — pure-Rust LZ4 (no_std). Fast transparent-compression path for RaeFS
+# and snapshot diffs (complements the ruzstd decompressor above).
+lz4_flex = { version = "0.11", default-features = false, features = ["safe-encode", "safe-decode"] }
+# slab — no_std O(1) handle table with id reuse. Backs kernel handle registries
+# (sockets / IPC channels) without per-op BTreeMap churn.
+slab = { version = "0.4", default-features = false }
+# volatile — typed MMIO register access. Wraps the raw read_volatile/write_volatile
+# sites (nvme/xhci/hda/virtio) into typed register cells — the class of offset bug
+# that bit us (xHCI DCI, HDA RIRB). 0.4 has the simple Volatile<&T> reference API
+# (0.5+ switched to a more involved VolatilePtr/NonNull surface).
+volatile = "0.4"
+# heapless — fixed-capacity, alloc-free collections for SCHED_GAME / IRQ hot
+# paths (Concept §"allocation-free in steady state"): SPSC ring for IRQ->task
+# events, bounded Vec where a heap alloc on the frame/audio path is unacceptable.
+heapless = "0.8"
+# modular-bitfield — typed register bitfields. Pairs with the volatile Reg<T>:
+# declare a control register's fields once instead of hand-masking bits (the
+# xHCI/HDA offset/bit bug class).
+modular-bitfield = "0.11"
+# gimli — no_std DWARF reader for in-kernel panic symbolization (a raw RIP ->
+# source line, the backtrace.sh equivalent on iron). read-only, no_std.
+gimli = { version = "0.31", default-features = false, features = ["read"] }
+
+# ── x86_64-ONLY dependencies (multi-arch Slice A2) ───────────────────────────
+# These crates are inherently x86-specific (the `x86_64` register/paging crate,
+# the bootloader_api x86 boot protocol, the 16550 UART, the 8259 PIC, x2APIC, the
+# ACPI/AML firmware parsers, the PC keyboard scancode set). They are NOT usable on
+# aarch64 (ADR 0009 §4: aarch64 uses PL011/GIC/Generic-Timer/DeviceTree instead),
+# so they are gated to the x86_64 target. The aarch64 build therefore reaches the
+# kernel-SOURCE x86-isms (the A3-A9 gap inventory) instead of dying at dependency
+# resolution on the `x86_64` crate. The x86_64 build is UNCHANGED — it still pulls
+# exactly these crates.
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+bootloader_api = "0.11"
+uart_16550 = "0.3"
+x86_64 = "0.15"
+pic8259 = "0.11"
+pc-keyboard = "0.7"
+acpi = "4.1"
+aml = "0.16"
+x2apic = "0.5.0"
+
+# ── aarch64-ONLY dependencies (multi-arch Slice A2) ──────────────────────────
+# aarch64_logic: the host-KAT'd aarch64 pure-logic foundation (VMSAv8 descriptor
+# encoder, GICv2 register math, ESR_EL1 decode, DTB walk). The arch::aarch64
+# backend (cfg-gated) lowers PageFlags -> VMSAv8 LeafAttrs through it. Pulled in
+# ONLY for the aarch64 build, so the x86_64 build is unaffected.
+[target.'cfg(target_arch = "aarch64")'.dependencies]
+aarch64_logic = { path = "../components/aarch64_logic" }
+
+[features]
+default = []
+smp = []
+# Installer/release image (`xtask dist`): boots straight into the graphical
+# install wizard (`/installer/autostart` compiled in). Off by default — a
+# normal image boots login/OOBE exactly as before.
+installer_image = []
+# Dev/CI-only: pre-complete first-boot (`/setup/first_boot_done`) so a headless
+# QEMU boot skips the OOBE (which needs a live keyboard) and lands on the desktop
+# via login auto-sign-in. The reliable path for the QMP screenshot-driven UI loop.
+# Off by default — NEVER in a shipped image. Enabled by `xtask run --skip-oobe`.
+dev_skip_oobe = []
+# Kernel Address Sanitizer: requires compiler shadow-memory instrumentation.
+# Off by default; arming the bookkeeping without it would be false advertising.
+kasan = []
+# Kernel Electric Fence: sampled guard-page detector. Off by default.
+kfence = []
+# Compiler KCFI: set only alongside nightly `-Z sanitizer=kcfi`. Off by default.
+kcfi = []
+# Safe-boot mode for bare-metal smoke tests. When enabled, every
+# `BlockDevice::write_sector` (NVMe/AHCI/virtio-blk/USB-MSC/RaeFS adapter)
+# is gated by `block_io::safe_mode_guard_write` and rejected with a
+# `[safe-mode] BLOCKED ...` log line. Read paths are unaffected, so boot
+# proceeds normally — only the path that could clobber a host Windows
+# install is severed. Set by `xtask --safe` when building bare-metal
+# images intended to be flashed onto a dev machine with an OS already on
+# the disk.
+safe_mode = []
+# Production build: a clean, silent consumer boot. The serial->GOP framebuffer
+# mirror starts OFF (no boot-log scrolling on screen — the machine shows the
+# UEFI splash then the desktop, like Windows/macOS), while COM1 + the bootlog
+# RAM ring (-> BOOTLOG.TXT) + netlog stay on so diagnostics are still captured.
+# Dev/default builds keep the on-screen mirror during boot for bring-up. The
+# FAIL-able boot smoketests are NOT compiled out here — they remain the proof
+# the OS works (and several also perform real init); a true shipping image
+# silences them separately. Set by `xtask --production`.
+production = []
+# DEV-ONLY visual-QA screenshot path: with no keyboard in the headless QMP
+# screendump harness, sign in as guest at boot and bring up the desktop so the
+# capture lands on the live shell instead of the login/OOBE screen. NEVER in a
+# shipped image — it bypasses the owner-mandated "wait for live login". Set by
+# the screenshot tooling only.
+desktop_autologin = []
+# Debug repro: substitute a real board's dumped ACPI tables (target/dsdt.dat +
+# target/acpi_dump/ssdt*.dat) for the firmware's, so QEMU parses the exact AML
+# bytes that fail on metal (MasterChecklist 1.4 — Athena's empty namespace).
+# Never set in shipping builds.
+embed_test_dsdt = []

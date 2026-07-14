@@ -1,0 +1,11 @@
+[package]
+name = "driver_supervisor"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "RaeenOS driver supervisor — userspace ELF that holds master device caps and (eventually) spawns child driver tasks."
+
+[dependencies]
+rae_abi = { path = "../components/rae_abi" }

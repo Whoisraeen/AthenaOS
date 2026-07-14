@@ -1,0 +1,24 @@
+[package]
+name = "rae_gif"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS animated-GIF decoder (87a + 89a) — pixels and frames, not bytes
+# (RaeenOS_Concept.md §creators / media: "show my photos" extends to animated
+# images — stickers, messaging, web GIFs). RaeenOS already decodes PNG/JPEG
+# but nothing animated; this is the missing consumer format. A from-scratch,
+# zero-dependency LZW + frame-composition pipeline that outputs ready-to-blit
+# ARGB8888 full-canvas frames.
+#
+# `#![cfg_attr(not(test), no_std)]` (the rae_json / rae_calc pattern) so the lib
+# is `no_std` + `alloc` in every shipped build and toggles to `std` only under
+# `cfg(test)` for the host KAT harness. Run the FAIL-able proof with
+# `cargo test -p rae_gif` — no QEMU, no image build. Treats every byte as hostile
+# (GIF/LZW is a classic fuzz/RCE surface): no `unwrap`/`expect`/raw-index-panic
+# is reachable from `decode_gif`, dimensions / pixel budget / LZW output / frame
+# count are all bounded, and a decompression bomb is rejected.
+
+[dependencies]

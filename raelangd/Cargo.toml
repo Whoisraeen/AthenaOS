@@ -1,0 +1,16 @@
+[package]
+name = "raelangd"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "raelangd — RaeenOS userspace Rae-script interpreter daemon. Drains queued (>64 KiB) scripts the kernel refuses to run inline: SYS_SCRIPT_FETCH claims a job, the shared raelang interpreter runs it fuel-limited under the submitter's cap_mask, SYS_SCRIPT_COMPLETE reports exit + output."
+
+[dependencies]
+rae_abi = { path = "../components/rae_abi" }
+raelang = { path = "../components/raelang" }
+
+[[bin]]
+name = "raelangd"
+path = "src/main.rs"

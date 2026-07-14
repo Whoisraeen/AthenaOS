@@ -1,0 +1,20 @@
+# Host harness that runs the RFC 9106 / RFC 7693 known-answer tests against the
+# SHARED `rae_crypto` crate (the same code the kernel and raeid use), so the KAT
+# validates the real implementation — not a copy. Useful while the QEMU kernel
+# build is embargoed: `cargo run --release --manifest-path tools/argon2_kat/Cargo.toml`.
+#
+# Declared as its own workspace so it stays out of the main workspace build.
+[package]
+name = "argon2_kat"
+version = "0.0.1"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "argon2_kat"
+path = "main.rs"
+
+[dependencies]
+rae_crypto = { path = "../../components/rae_crypto" }
+
+[workspace]

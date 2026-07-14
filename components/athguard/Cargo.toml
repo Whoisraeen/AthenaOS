@@ -1,0 +1,9 @@
+[package]
+name = "athguard"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "AthGuard — AthenaOS safety face: caps, E-stop policy, consent, attestation hooks."
+
+[dependencies]

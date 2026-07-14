@@ -1,0 +1,44 @@
+[package]
+name = "video"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# Library target: the app's state + open/demux pipeline + the syscall-free
+# decode-dispatch (`open_media` / `decode_first_video` / `decode_audio_pcm`) so a
+# host KAT can link the LIVE engines (rae_mp4 demuxer + raemedia H264/AAC) with no
+# kernel. Same lib+bin split the `photos` / `files` apps use.
+[lib]
+name = "video"
+path = "src/lib.rs"
+
+# Binary target: the freestanding userspace ELF (`_start` -> `video::run()`).
+# `exec_path = "video"` in the start-menu manifest resolves to this.
+[[bin]]
+name = "video"
+path = "src/main.rs"
+# The bin is a freestanding `#![no_main]` ELF shim with no libtest entry point, so
+# exclude it from `cargo test` (otherwise the host test build tries to link it as a
+# test exe and fails). The host KAT lives in the LIBRARY target.
+test = false
+
+[features]
+# Forwards to `raekit/host`: lets the std `cargo test` harness link `video`
+# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# duplicate panic_impl). The normal `cargo build -p video --target
+# x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
+# with `cargo test -p video --features host`.
+host = ["raekit/host"]
+
+[dependencies]
+raegfx = { path = "../../components/raegfx" }
+raekit = { path = "../../components/raekit" }
+rae_tokens = { path = "../../components/rae_tokens" }
+# The MP4 / ISO-BMFF container demuxer: box tree -> tracks -> sample tables ->
+# per-sample offset/size/dts/keyframe + codec fourcc + codec-private (avcC/esds).
+rae_mp4 = { path = "../../components/rae_mp4" }
+# The codec engines: H264Decoder (VideoDecoder), AacDecoder (AudioDecoder), the
+# MediaPacket shape, and PixelConverter (YUV420 -> RGB for the ARGB8888 blit).
+raemedia = { path = "../../components/raemedia" }

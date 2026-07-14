@@ -1,0 +1,61 @@
+# Cold-vfio (C)/PSP GFX-DOWN wedge trace — Athena Phoenix, 2026-06-27
+# Captured by streaming QEMU serial over TCP/SSH (survived the host hang).
+# The (C) RLC-backdoor path engaged; GFX came up DOWN; the IMU I-RAM regs
+# read 0xffffffff (GFX power domain off); the EnableGfxImu(SYNC) fallthrough
+# WEDGED the APU (last line before host death). Fixed: gate EnableGfxImu off.
+# ---------------------------------------------------------------------------
+[linuxkpi] [amdgpu] stage 3 GMC/GPUVM init (VRAM 2048 MiB from CONFIG_MEMSIZE)
+[linuxkpi] [amdgpu] gfxhub VM: FB[0x0..0x0] AGP=0x0 SYS_APERTURE[0x0..0x0] L1_TLB_CNTL=0x00000000
+[linuxkpi] [amdgpu] gfxhub VM: CONTEXT0_CNTL=0x00000000 PAGE_TABLE_BASE=0x00000000:0x00000000 (CNTL!=0 + page table set => VMID0 live; inherit-GART candidate)
+[linuxkpi] [amdgpu] CKPT 2: reg-probe + VBIOS + GMC survived (reads OK) — NEXT init_ih (FIRST MMIO WRITES)
+[linuxkpi] [amdgpu] stage 4 IH ring allocated (256 KiB, IOMMU-sandboxed)
+[linuxkpi] [amdgpu] stage 4 IH ring base programmed + RPTR/WPTR cleared
+[linuxkpi] [amdgpu] CKPT 3: init_ih survived (IH ring writes OK) — NEXT init_smu (SMU mailbox writes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/psp_13_0_4_toc.bin' loaded (2560 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/psp_13_0_4_ta.bin' loaded (254976 bytes)
+[linuxkpi] [amdgpu] stage 5 PSP firmware loaded (APU PMFW from BIOS); mailbox power-up next
+[linuxkpi] [amdgpu] stage 5 SMU bootup clocks from VBIOS: sclk=200 MHz mclk=200 MHz
+[linuxkpi] [amdgpu] stage 5 SMU mailbox @ msg=0x58a08 arg=0x58a48 resp=0x58a68 pre-resp=0x00000001
+[linuxkpi] [amdgpu] stage 5 SMU mailbox OK (GetSmuVersion = 0x004c5700)
+[linuxkpi] [amdgpu] CKPT 4: init_smu survived (SMU mailbox OK) — NEXT init_rings (RLC/CP/SDMA writes)
+[linuxkpi] [amdgpu] PSP sign-of-life: C2PMSG_81(sol)=0x0051ba43 sos_fw_ver(58)=0x002d007d bl_status(35)=0xffffffff vmbx(33)=0x80000000 -> ALIVE (PSP secure-OS up — chan
+[linuxkpi] [amdgpu] PSP mailbox resolved: sol@0x58244 cmd@0x58200 ring_lo@0x58214 (MP0 seg0) — next: ring create + TMR + LOAD_IP_FW
+[linuxkpi] [amdgpu] CKPT 4b: PSP sign-of-life probed (MP0 mailbox) — NEXT ring create
+[linuxkpi] [amdgpu] PSP ring-create: ring@MC 0x8004000000 size 0x1000 -> C2PMSG_69/70/71, cmd 0x00020000 to C2PMSG_64
+[linuxkpi] [amdgpu] PSP ring-create OK — GPCOM ring live @ MC 0x8004000000 (C2PMSG_64=0x80c20000); NEXT: LOAD_TOC + SETUP_TMR
+[linuxkpi] [amdgpu] CKPT 4c: PSP ring-create attempted — NEXT init_rings
+[linuxkpi] [amdgpu] VRAM self-test: writing 4 dwords via MM_INDEX @ VRAM+0x6000000...
+[linuxkpi] [amdgpu] VRAM self-test (MM_INDEX): read [
+[linuxkpi] [amdgpu] PSP LOAD_IP_FW SKIPPED — RLC-backdoor autoload path (option C); init_rings' IMU loads all engines + SDMA from the autoload buffer
+[linuxkpi] [amdgpu] stage 6 GFX pipe idle (GRBM_STATUS.GUI_ACTIVE clear)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_imu.bin' loaded (132352 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_me.bin' loaded (263424 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_pfp.bin' loaded (263424 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_mec.bin' loaded (268160 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_rlc.bin' loaded (157040 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/sdma_6_0_1.bin' loaded (34560 bytes)
+[linuxkpi] [amdgpu] stage 6 GFX/SDMA microcode loaded (incl. IMU)
+[linuxkpi] [amdgpu] stage 6 SDMA ring: 9 dwords (CONSTANT_FILL 0xA5A5A5A5 + FENCE)
+[syscall] Unknown syscall: 0
+[linuxkpi] [amdgpu] stage 6 SMU DisallowGfxOff acked
+[linuxkpi] [amdgpu] stage 6 RLC safe mode entered — GFX held writable for CP programming
+[linuxkpi] [amdgpu] CP firmware: gc_11_0_1_pfp hdr v1 -> F32 CP path (NOT RS64); config_gfx_rs64 N/A for this ASIC
+[linuxkpi] [amdgpu] stage 6 config_gfx_rs64 SKIPPED — CP is F32 (v1 ucode) on this ASIC, RS64 N/A; or offsets unresolved (QEMU). Phoenix=F32: PSP loads ucode, CP enable
+[linuxkpi] [amdgpu] stage 6 CP regs: SOC15 (discovery-resolved gfx11 offsets)
+[linuxkpi] [amdgpu] stage 6 GFX-up probe: RLC_BOOTLOAD_STATUS=0x00000000 (autoload_complete=false); GFX_IMU_GFX_RESET_CTRL=0x00000010 (&0x1f reset_done=false)
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_C2PMSG_0 (imu) dword=0x4000 byte=0x38000 = 0x00000000 [ok]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_CORE_CTRL (imu) dword=0x40b6 byte=0x382d8 = 0x00000009 [ok]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_ACCESS_CTRL0 (imu) dword=0x4040 byte=0x38100 = 0x00000000 [ok]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_D_RAM_ADDR (imu) dword=0x40fc byte=0x383f0 = 0x00000000 [ok]
+[linuxkpi] [amdgpu] seg1-probe GRBM_SEC_CNTL (non-imu) dword=0x5e0d byte=0x3f834 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GCMC_VM_MARC_BASE_LO_0 (non-imu) dword=0x5e48 byte=0x3f920 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_RLC_BOOTLOADER_HI (imu) dword=0x5f81 byte=0x3fe04 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_I_RAM_ADDR (imu) dword=0x5f90 byte=0x3fe40 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_I_RAM_DATA (imu) dword=0x5f91 byte=0x3fe44 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] stage 6 VERDICT: GFX is DOWN (PSP did NOT bring GFX up) — attempting the IMU-core wake (imu_v11_0_start: release GFX_IMU_CORE_CTRL.CRESET)
+[linuxkpi] [amdgpu] stage 6 cold GFX power-up: SMU EnableGfxImu(0x16) arg=1 (SYNC — PSP path waits for the PMFW ack)
+[syscall] Unknown syscall: 0
+[syscall] Unknown syscall: 18446744073709551615
+[syscall] Unknown syscall: 18446744073709551615
+[syscall] Unknown syscall: 18446744073709551615
+Timeout, server 192.168.1.244 not responding.

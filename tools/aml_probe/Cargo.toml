@@ -1,0 +1,19 @@
+# Host-side AML parser probe (MasterChecklist Phase 1.4).
+#
+# Feeds real dumped ACPI tables (firmware/acpi/<board>/) to the SAME vendored
+# `aml` crate the kernel uses, on the host with RUST_LOG=trace — so a parser
+# failure that costs a 12-minute QEMU cycle (or an Athena flash) reproduces in
+# milliseconds with full parse tracing. Own [workspace] so the root workspace's
+# bare-metal profile/panic settings don't apply (same pattern as
+# tools/linuxkpi_harness).
+[package]
+name = "aml_probe"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aml = { path = "../../components/vendored/aml" }
+env_logger = "0.11"
+log = "0.4"
+
+[workspace]

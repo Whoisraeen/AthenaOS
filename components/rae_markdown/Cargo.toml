@@ -1,0 +1,23 @@
+[package]
+name = "rae_markdown"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS Markdown render-model — a zero-dependency, never-panic CommonMark
+# SUBSET parser that produces a typed block/inline model (RaeenOS_Concept.md
+# "Built for people who care about how things feel"). It is the foundation for
+# the Notes app, the docs viewer, README rendering, and chat message bodies:
+# turning untrusted Markdown text into a structured `Document` the UI layer can
+# render, and a `to_plain_text` projection for search indexing / previews.
+#
+# `#![cfg_attr(not(test), no_std)]` (the rae_calc / rae_tokens pattern) so the
+# lib is `no_std` in the shipped build and toggles to `std` only under
+# `cfg(test)` for the host KAT harness — run with `cargo test -p rae_markdown`,
+# never on a bare no_std bin or `--workspace`. Zero external deps; the parser is
+# `#![forbid(unsafe_code)]` and has no `unwrap`/`expect`/raw-index-panic path
+# reachable from `parse`, because note/web/chat text is hostile input.
+
+[dependencies]

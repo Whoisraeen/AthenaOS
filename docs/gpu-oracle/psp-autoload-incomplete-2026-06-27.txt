@@ -1,0 +1,135 @@
+# Clean non-wedging PSP-path GFX bring-up trace — Athena Phoenix 2026-06-27
+# (after the EnableGfxImu wedge fix ef62a6f — the bring-up now runs to completion
+#  WITHOUT hanging the host, so the iron GPU loop is iterable). Core blocker:
+#  the PSP accepts the whole fw-load handshake but RLC_BOOTLOAD_STATUS never
+#  completes -> GFX stays gated -> all CP/SDMA ring writes read back 0.
+# -------------------------------------------------------------------------
+[linuxkpi] [amdgpu] amdgpud starting: amdgpu_device_init pipeline
+[linuxkpi] [amdgpu] firmware 'raeen-selftest.bin' loaded (334 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/psp_13_0_4_toc.bin' loaded (2560 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/psp_13_0_4_ta.bin' loaded (254976 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_imu.bin' loaded (132352 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_me.bin' loaded (263424 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_pfp.bin' loaded (263424 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_mec.bin' loaded (268160 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_rlc.bin' loaded (157040 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_mes_2.bin' loaded (258368 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_mes1.bin' loaded (235344 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/sdma_6_0_1.bin' loaded (34560 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/dcn_3_1_4_dmcub.bin' loaded (350880 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/vcn_4_0_2.bin' loaded (395664 bytes)
+[linuxkpi] [amdgpu] firmware preflight: loader=ok amdgpu_blobs=12/12 present
+[linuxkpi] [amdgpu] CKPT 0: staged bring-up start — firmware preflight persisted, probing next
+[linuxkpi] [amdgpu] doorbell BAR (BAR2) mapped
+[linuxkpi] [amdgpu] DISC 1: read_discovery entered — requesting ip_discovery.bin (raw ptr/sz)
+[linuxkpi] [amdgpu] DISC 2: syscall returned ptr=0x71c00000 sz=10240 — about to read first dword (UC test)
+[linuxkpi] [amdgpu] DISC 3: first dword = 0x28211407 (want 0x28211407) — copying full 10240 bytes
+[linuxkpi] [amdgpu] DISC 4: full blob copied (10240 bytes) — parsing
+[linuxkpi] [amdgpu] DISC 5: parsed 39 IP blocks — SOC15 offsets ACTIVE
+[linuxkpi] [amdgpu] stage 1 probe + BAR5 OK (Radeon 760M/780M / Phoenix1)
+[linuxkpi] [amdgpu] CKPT 1: probe OK + DISCOVERY ACTIVE — SOC15 offsets LIVE (real register writes ahead)
+[linuxkpi] [amdgpu] reg probe (BAR5): GRBM_STATUS=0x00000000 gui_active=false CP_RB0_CNTL=0x00000000 CP_RB0_BASE=0x00000004:0x00000000 RPTR=0x1 WPTR=0x3ffa208 CP_ME_CNTL=
+[linuxkpi] [amdgpu] reg probe: register aperture LIVE (GFX idle; GOP left CP ring programmed)
+[linuxkpi] [amdgpu] reg-addr-test GRBM_STATUS: byte[0x8010]=0x00000000  dword[0x20040]=0xffffffff
+[linuxkpi] [amdgpu] reg-addr-test CP_RB0_BASE: byte[0x3040]=0x00000000  dword[0xc100]=0x00000000
+[linuxkpi] [amdgpu] reg-addr-test CP_RB0_CNTL: byte[0x3041]=0x00000000  dword[0xc104]=0x00000000
+[linuxkpi] [amdgpu] reg-addr-test CP_RB0_WPTR: byte[0x3048]=0x03ffa208  dword[0xc120]=0x00000000
+[linuxkpi] [amdgpu] stage 2 VBIOS: no expansion ROM; using VFCT-captured image
+[linuxkpi] [amdgpu] stage 2 ATOMBIOS OK: hdr@0x194 cmd_tbl=0x39b0 data_tbl=0x300
+[linuxkpi] [amdgpu] stage 2 firmware_info: rev=0x160c001b sclk=200 MHz mclk=200 MHz cap=0x00000001
+[linuxkpi] [amdgpu] stage 2 integrated_system_info@0x3148 v2.2 (1024 B) — APU memory config
+[linuxkpi] [amdgpu] stage 3 GMC/GPUVM init (VRAM 2048 MiB from CONFIG_MEMSIZE)
+[linuxkpi] [amdgpu] gfxhub VM: FB[0x0..0x0] AGP=0x0 SYS_APERTURE[0x0..0x0] L1_TLB_CNTL=0x00000000
+[linuxkpi] [amdgpu] gfxhub VM: CONTEXT0_CNTL=0x00000000 PAGE_TABLE_BASE=0x00000000:0x00000000 (CNTL!=0 + page table set => VMID0 live; inherit-GART candidate)
+[linuxkpi] [amdgpu] CKPT 2: reg-probe + VBIOS + GMC survived (reads OK) — NEXT init_ih (FIRST MMIO WRITES)
+[linuxkpi] [amdgpu] stage 4 IH ring allocated (256 KiB, IOMMU-sandboxed)
+[linuxkpi] [amdgpu] stage 4 IH ring base programmed + RPTR/WPTR cleared
+[linuxkpi] [amdgpu] CKPT 3: init_ih survived (IH ring writes OK) — NEXT init_smu (SMU mailbox writes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/psp_13_0_4_toc.bin' loaded (2560 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/psp_13_0_4_ta.bin' loaded (254976 bytes)
+[linuxkpi] [amdgpu] stage 5 PSP firmware loaded (APU PMFW from BIOS); mailbox power-up next
+[linuxkpi] [amdgpu] stage 5 SMU bootup clocks from VBIOS: sclk=200 MHz mclk=200 MHz
+[linuxkpi] [amdgpu] stage 5 SMU mailbox @ msg=0x58a08 arg=0x58a48 resp=0x58a68 pre-resp=0x00000001
+[linuxkpi] [amdgpu] stage 5 SMU mailbox OK (GetSmuVersion = 0x004c5700)
+[linuxkpi] [amdgpu] CKPT 4: init_smu survived (SMU mailbox OK) — NEXT init_rings (RLC/CP/SDMA writes)
+[linuxkpi] [amdgpu] PSP sign-of-life: C2PMSG_81(sol)=0x00517c9c sos_fw_ver(58)=0x002d007d bl_status(35)=0xffffffff vmbx(33)=0x80000000 -> ALIVE (PSP secure-OS up — chan
+[linuxkpi] [amdgpu] PSP mailbox resolved: sol@0x58244 cmd@0x58200 ring_lo@0x58214 (MP0 seg0) — next: ring create + TMR + LOAD_IP_FW
+[linuxkpi] [amdgpu] CKPT 4b: PSP sign-of-life probed (MP0 mailbox) — NEXT ring create
+[linuxkpi] [amdgpu] PSP ring-create: ring@MC 0x8004000000 size 0x1000 -> C2PMSG_69/70/71, cmd 0x00020000 to C2PMSG_64
+[linuxkpi] [amdgpu] PSP ring-create OK — GPCOM ring live @ MC 0x8004000000 (C2PMSG_64=0x80c20000); NEXT: LOAD_TOC + SETUP_TMR
+[linuxkpi] [amdgpu] CKPT 4c: PSP ring-create attempted — NEXT init_rings
+[linuxkpi] [amdgpu] VRAM self-test: writing 4 dwords via MM_INDEX @ VRAM+0x6000000...
+[linuxkpi] [amdgpu] VRAM self-test (MM_INDEX): read [
+] -> PASS — CPU->VRAM writes work; PSP firmware st
+[linuxkpi] [amdgpu] PSP fw-load 3b: LOAD_TOC -> SETUP_TMR -> LOAD_IP_FW x9 -> AUTOLOAD_RLC...
+[linuxkpi] [amdgpu] PSP LOAD_TOC OK — TMR size 0x4000000; NEXT: SETUP_TMR
+[linuxkpi] [amdgpu] PSP SETUP_TMR OK @ MC 0x8078000000; NEXT: LOAD_IP_FW x9
+[linuxkpi] [amdgpu] PSP AUTOLOAD_RLC OK — RLC autoload started; polling for completion
+[linuxkpi] [amdgpu] PSP autoload poll TIMEOUT (2s) — RLC_BOOTLOAD_STATUS=0x00000000 BOOTLOAD_COMPLETE clear (autoload accepted but engines not up — may need rlc_resum
+[linuxkpi] [amdgpu] PSP fw-load 3b done (returned true) — watch the seg1-probe for GFX DEAD->live (first light)
+[linuxkpi] [amdgpu] stage 6 GFX pipe idle (GRBM_STATUS.GUI_ACTIVE clear)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_imu.bin' loaded (132352 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_me.bin' loaded (263424 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_pfp.bin' loaded (263424 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_mec.bin' loaded (268160 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_rlc.bin' loaded (157040 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/sdma_6_0_1.bin' loaded (34560 bytes)
+[linuxkpi] [amdgpu] stage 6 GFX/SDMA microcode loaded (incl. IMU)
+[linuxkpi] [amdgpu] stage 6 SDMA ring: 9 dwords (CONSTANT_FILL 0xA5A5A5A5 + FENCE)
+[linuxkpi] [amdgpu] stage 6 SMU DisallowGfxOff acked
+[linuxkpi] [amdgpu] stage 6 RLC safe mode entered — GFX held writable for CP programming
+[linuxkpi] [amdgpu] CP firmware: gc_11_0_1_pfp hdr v1 -> F32 CP path (NOT RS64); config_gfx_rs64 N/A for this ASIC
+[linuxkpi] [amdgpu] stage 6 config_gfx_rs64 SKIPPED — CP is F32 (v1 ucode) on this ASIC, RS64 N/A; or offsets unresolved (QEMU). Phoenix=F32: PSP loads ucode, CP enable
+[linuxkpi] [amdgpu] stage 6 CP regs: SOC15 (discovery-resolved gfx11 offsets)
+[linuxkpi] [amdgpu] stage 6 GFX-up probe: RLC_BOOTLOAD_STATUS=0x00000000 (autoload_complete=false); GFX_IMU_GFX_RESET_CTRL=0x00000010 (&0x1f reset_done=false)
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_C2PMSG_0 (imu) dword=0x4000 byte=0x38000 = 0x00000000 [ok]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_CORE_CTRL (imu) dword=0x40b6 byte=0x382d8 = 0x00000008 [ok]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_ACCESS_CTRL0 (imu) dword=0x4040 byte=0x38100 = 0x00000000 [ok]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_D_RAM_ADDR (imu) dword=0x40fc byte=0x383f0 = 0x00000000 [ok]
+[linuxkpi] [amdgpu] seg1-probe GRBM_SEC_CNTL (non-imu) dword=0x5e0d byte=0x3f834 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GCMC_VM_MARC_BASE_LO_0 (non-imu) dword=0x5e48 byte=0x3f920 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_RLC_BOOTLOADER_HI (imu) dword=0x5f81 byte=0x3fe04 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_I_RAM_ADDR (imu) dword=0x5f90 byte=0x3fe40 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_I_RAM_DATA (imu) dword=0x5f91 byte=0x3fe44 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] stage 6 VERDICT: GFX is DOWN (PSP did NOT bring GFX up) — attempting the IMU-core wake (imu_v11_0_start: release GFX_IMU_CORE_CTRL.CRESET)
+[linuxkpi] [amdgpu] stage 6 cold GFX power-up: SMU EnableGfxImu DISABLED — it WEDGES the APU on Phoenix (iron 2026-06-27 capture: SYNC send -> no ack -> host hang). GFX
+[linuxkpi] [amdgpu] stage 6 EnableGfxImu PMFW response: None (Some=>GFX powered up + acked; None=>no ack within 1s = power-up failed)
+[linuxkpi] [amdgpu] stage 6 SMU DisallowGfxOff RE-SENT post-EnableGfxImu — holds GFX awake for the CP/SDMA seg1 writes (the GFXOFF re-arm fix)
+[linuxkpi] [amdgpu] stage 6 post-EnableGfxImu re-probe (did the GFX domain come alive?):
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_C2PMSG_0 (imu) dword=0x4000 byte=0x38000 = 0x00000000 [ok]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_CORE_CTRL (imu) dword=0x40b6 byte=0x382d8 = 0x00000008 [ok]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_ACCESS_CTRL0 (imu) dword=0x4040 byte=0x38100 = 0x00000000 [ok]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_D_RAM_ADDR (imu) dword=0x40fc byte=0x383f0 = 0x00000000 [ok]
+[linuxkpi] [amdgpu] seg1-probe GRBM_SEC_CNTL (non-imu) dword=0x5e0d byte=0x3f834 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GCMC_VM_MARC_BASE_LO_0 (non-imu) dword=0x5e48 byte=0x3f920 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_RLC_BOOTLOADER_HI (imu) dword=0x5f81 byte=0x3fe04 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_I_RAM_ADDR (imu) dword=0x5f90 byte=0x3fe40 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] seg1-probe GFX_IMU_I_RAM_DATA (imu) dword=0x5f91 byte=0x3fe44 = 0xffffffff [DEAD]
+[linuxkpi] [amdgpu] stage 6 post-power-up RLC autoload re-poll: RLC_BOOTLOAD_STATUS=0x00000000 complete=false (still gated — power-up ack did not bring GFX up)
+[linuxkpi] [amdgpu] stage 6 GMC aperture opened: AGP/SYS cover [0..0x179800000] so the IMU can read the autoload buffer
+[linuxkpi] [amdgpu] stage 6 RLC autoload buffer: 6680576 bytes @ bus 0x179000000; RLC_G @ 0x179000000 size 24576 -> bootloader regs
+[linuxkpi] [amdgpu] stage 6 IMU ucode loaded into SRAM: I-RAM 16512 dwords + D-RAM 16512 dwords (fw_version=0xb012d00)
+[linuxkpi] [amdgpu] stage 6 IMU I-RAM readback: expect=[7295230d, 2d242180, 2c1bf9bc, fa6dc2fa] got=[ffffffff, ffffffff, ffffffff, ffffffff] -> ALL-ONES (register apertur
+[linuxkpi] [amdgpu] stage 6 setup_imu done (IMU debug access + clock features configured)
+[linuxkpi] [amdgpu] stage 6 GFX_IMU_CORE_CTRL: before=0x00000008 after-clear=0x00000008 (creset_cleared=false)
+[linuxkpi] [amdgpu] stage 6 IMU-core wake TIMEOUT — GFX still in reset (GFX_IMU_GFX_RESET_CTRL=0x00000010 &0x1f != 0x1f); see I-RAM readback + CORE_CTRL above to locali
+[linuxkpi] [amdgpu] stage 6 RLC_PG_CNTL: 0x00000000 -> 0x00000000 (cleared all GFX power-gating enables; amdgpu writes 0 here so GFX cannot gate)
+[linuxkpi] [amdgpu] stage 6 RLC enable_srm: RLC_SRM_CNTL 0x00000000 -> 0x00000000
+[linuxkpi] [amdgpu] stage 6 CP_ME_CNTL=0x00000000 (GOP/PSP CP enable state; gfx11 ucode is PSP-loaded)
+[linuxkpi] [amdgpu] stage 6 CP unhalted: CP_ME_CNTL 0x00000000 -> 0x00000000
+[linuxkpi] [amdgpu] stage 6 GFX still GATED after wake-wait (CP_RB0_WPTR=0) — ring writes will be dropped (need a stronger GFXOFF exit)
+[linuxkpi] [amdgpu] GART (identity) built post-first-light: table@0x179d90000 (3200 PTEs) maps GPU VA==PA over 0x179a00000..0x17a680000; FB aperture [0x8000000000..0x807f
+[linuxkpi] [amdgpu] stage 6 gfxhub VM readback AFTER GART build (want CONTEXT0_CNTL=0x1fffe01, L1_TLB=0x1859, PAGE_TABLE_BASE!=0):
+[linuxkpi] [amdgpu] gfxhub VM: FB[0x0..0x0] AGP=0x0 SYS_APERTURE[0x0..0x0] L1_TLB_CNTL=0x00000000
+[linuxkpi] [amdgpu] gfxhub VM: CONTEXT0_CNTL=0x00000000 PAGE_TABLE_BASE=0x00000000:0x00000000 (CNTL!=0 + page table set => VMID0 live; inherit-GART candidate)
+[linuxkpi] [amdgpu] stage 6 SDMA RS64 ucode DIRECT-loaded (TH0@0 + TH1@0x8000 via BROADCAST_UCODE) — engine now has firmware
+[linuxkpi] [amdgpu] stage 6 SDMA submitted via F32 WPTR-poll; fence STILL not posted — see the queue readback below (RB_RPTR>0 => ran but fence wrong; ==0 => engine did
+[linuxkpi] [amdgpu] stage 6 SDMA readback A: RB_BASE=0x00000000 (want 0x0179a000) RB_RPTR=0x00000000 RB_WPTR=0x00000000
+[linuxkpi] [amdgpu] stage 6 SDMA readback B: RB_CNTL=0x00000000 (bit0=RB_ENABLE bit11=F32_WPTR_POLL) F32_CNTL=0x00000000 (bit0=HALT, 0xffffffff=gated)
+[linuxkpi] [amdgpu] stage 6 SDMA readback C: UTCL1_CNTL=0x00000000 (want low 0x609) WPTR_poll_mem=0x24 (want 0x24)
+[linuxkpi] [amdgpu] stage 6 CP ring readback MISMATCH: BASE wrote 0x00000000:0x017a6700 read 0x00000000:0x00000000 | CNTL wrote 0xe10 read 0x00000000 | WPTR wrote 14 read
+[linuxkpi] [amdgpu] stage 6 hint: if reads == GOP values, GFX is gated (wire RLC/SMU ungate offsets); if garbage, gfx11 CP offsets wrong
+[linuxkpi] [amdgpu] CKPT 5: init_rings RETURNED (CP+SDMA programmed/submitted) — NEXT init_display
+[linuxkpi] [amdgpu] stage 7 DC modeset committed
+[linuxkpi] [amdgpu] CKPT 6: init_display RETURNED — staged bring-up sequence complete
+[linuxkpi] [amdgpu] staged bring-up finished with stage failures (see CKPT markers)

@@ -1,0 +1,159 @@
+diff --git a/kernel/src/syscall.rs b/kernel/src/syscall.rs
+index 6f92a88..89ad522 100644
+--- a/kernel/src/syscall.rs
++++ b/kernel/src/syscall.rs
+@@ -1279,7 +1279,16 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
+                         }
+                     } else {
+                         match crate::scheduler::spawn_elf_task_with_pty(&data, parent_id, pty_id) {
+-                            Ok(id) => regs.rax = id.raw(),
++                            Ok(id) => {
++                                // Delegate driver-claim authority to a first-party
++                                // driver daemon IFF this (parent) task is itself
++                                // authorized — capability delegation, not
++                                // amplification. Unblocks amdgpud's sys_claim_device
++                                // after the 5731136 claim gate. Fail-CLOSED: an
++                                // unprivileged spawner delegates nothing.
++                                crate::userspace_driver::maybe_seed_driver_daemon(id, name);
++                                regs.rax = id.raw();
++                            }
+                             Err(_) => regs.rax = u64::MAX,
+                         }
+                     }
+diff --git a/kernel/src/userspace_driver.rs b/kernel/src/userspace_driver.rs
+index 8808cc4..613eb79 100644
+--- a/kernel/src/userspace_driver.rs
++++ b/kernel/src/userspace_driver.rs
+@@ -708,6 +708,35 @@ pub fn run_boot_smoketest() {
+     }
+     unregister(pci_handle);
+ 
++    // -- Driver-daemon authority delegation policy (FAIL-able) ----------
++    // The seed-at-spawn policy ([`should_seed_driver_daemon`]) must hold in
++    // BOTH directions, or it is a sandbox escape:
++    //   * authorized parent + first-party daemon   -> SEED   (unblocks amdgpud)
++    //   * UNauthorized parent + same daemon         -> REFUSE (no delegation of
++    //     authority the parent lacks; safe under ungated SYS_SPAWN)
++    //   * authorized parent + non-driver binary     -> REFUSE (allowlist holds)
++    //   * path-prefixed daemon name                 -> SEED   (basename match)
++    // If any negative case flips to a grant, that is an over-grant -> FAIL.
++    let grant_ok = should_seed_driver_daemon("amdgpud", true);
++    let unauth_denied = !should_seed_driver_daemon("amdgpud", false);
++    let path_ok = should_seed_driver_daemon("/bin/i915d", true);
++    let nondriver_denied = !should_seed_driver_daemon("shell", true);
++    if grant_ok && unauth_denied && path_ok && nondriver_denied {
++        crate::serial_println!(
++            "[usdriver] driver-seed policy smoketest: PASS (authorized+daemon grants; \
++             unauthorized parent & non-daemon refused; basename match)"
++        );
++    } else {
++        crate::serial_println!(
++            "[usdriver] driver-seed policy smoketest: FAIL (grant={} unauth_denied={} \
++             path={} nondriver_denied={} — OVER-GRANT / delegation escape)",
++            grant_ok,
++            unauth_denied,
++            path_ok,
++            nondriver_denied,
++        );
++    }
++
+     let s = stats();
+     crate::serial_println!(
+         "[usdriver] smoketest: lifecycle OK — register/claim/dma/release/unregister; \
+@@ -774,6 +803,96 @@ fn caller_holds_driver_authority() -> bool {
+     allowed
+ }
+ 
++/// First-party driver daemons that legitimately call `sys_claim_device` /
++/// `sys_enable_dma` and therefore need the `Cap::System{WRITE}` authority the
++/// claim gate demands. Matched on the final path component so a VFS prefix
++/// (`/bin/amdgpud`) resolves the same as a bare name. This is an ALLOWLIST:
++/// anything not named here is never seeded, no matter who spawns it.
++///
++/// Scoped deliberately to the GPU daemons we are bringing up on real silicon
++/// (Path C). NOT `driver_supervisor` (it brokers, it does not claim) and NOT a
++/// wildcard — widening this is a security decision, not a convenience.
++fn is_trusted_driver_daemon(name: &str) -> bool {
++    let base = name
++        .rsplit(|c| c == '/' || c == '\\')
++        .next()
++        .unwrap_or(name);
++    matches!(base, "amdgpud" | "i915d" | "nvidiad")
++}
++
++/// Policy: should a freshly-spawned child named `name` be seeded the driver-
++/// claim authority cap? Pure decision function so the boot smoketest can drive
++/// the full truth table and FAIL on any over-grant. Both conditions are
++/// required:
++///  1. `parent_authorized` — the spawning parent already holds
++///     `Cap::System{WRITE}`. This makes the seed a capability *delegation*
++///     (you can only hand out authority you hold), NOT an amplification.
++///  2. `is_trusted_driver_daemon(name)` — the child is a known first-party
++///     driver binary.
++///
++/// Condition 1 is why this stays safe even though `SYS_SPAWN` is itself ungated
++/// (open audit item): an unprivileged/sandboxed task holds no System cap, so
++/// even if it spawns the real `amdgpud` binary, `parent_authorized` is false
++/// and the child gets NOTHING — it hits the same claim gate and is refused.
++fn should_seed_driver_daemon(name: &str, parent_authorized: bool) -> bool {
++    parent_authorized && is_trusted_driver_daemon(name)
++}
++
++/// Called from the `SYS_SPAWN` handler immediately after a native child ELF
++/// task is created. Delegates a `Cap::System{WRITE}` into the child iff the
++/// spawn-authority policy ([`should_seed_driver_daemon`]) approves. The parent
++/// is the current task (the syscall runs in the caller's context; the child is
++/// enqueued but not yet switched to), so [`caller_holds_driver_authority`]
++/// reads the *parent's* caps here.
++///
++/// TODO(MasterChecklist Phase 9): replace the broad `Cap::System{WRITE}` with a
++/// narrow, device-class-scoped `Cap::Gpu{WRITE}` / dedicated `Cap::Device` and
++/// teach the claim gate to accept it for the matching PCI class — so a GPU
++/// daemon cannot also reach `SYS_RAEEN_SHUTDOWN` / perm-prompt respond. This
++/// slice grants the exact authority the existing gate checks to avoid an ABI
++/// change; the over-grant is bounded to the allowlisted first-party binaries.
++pub fn maybe_seed_driver_daemon(child_id: crate::task::TaskId, name: &str) {
++    let parent_authorized = caller_holds_driver_authority();
++    if !should_seed_driver_daemon(name, parent_authorized) {
++        return;
++    }
++    seed_driver_authority(child_id, name);
++}
++
++/// Insert a `Cap::System{WRITE}` into `child_id`'s cap table. Idempotent — if
++/// the task somehow already holds a WRITE-bearing System cap we do not stack a
++/// duplicate. Emits a serial line either way so an iron bootlog shows the grant
++/// (or its failure) on the exact line the claim would otherwise be refused.
++fn seed_driver_authority(child_id: crate::task::TaskId, name: &str) {
++    use crate::capability::{Cap, Rights};
++    let seeded = crate::scheduler::with_task_by_id(child_id, |task| {
++        let already = task
++            .cap_table
++            .iter()
++            .any(|(_, c)| matches!(c, Cap::System { rights } if rights.contains(Rights::WRITE)));
++        if !already {
++            task.cap_table.insert_root(Cap::System {
++                rights: Rights::WRITE,
++            });
++        }
++        true
++    })
++    .unwrap_or(false);
++    if seeded {
++        crate::serial_println!(
++            "[usdriver] seeded driver authority (Cap::System{{WRITE}}) to first-party daemon '{}' (task {}) — delegated from authorized parent",
++            name,
++            child_id.raw(),
++        );
++    } else {
++        crate::serial_println!(
++            "[usdriver] WARN: driver-authority seed for '{}' skipped — task {} not found",
++            name,
++            child_id.raw(),
++        );
++    }
++}
++
+ /// Verify the current task owns the driver behind `driver_handle`. Driver
+ /// handles are a global monotonic counter (`NEXT_HANDLE`) shared across every
+ /// task, so a handle from another task is trivially guessable. `sys_dma_map`

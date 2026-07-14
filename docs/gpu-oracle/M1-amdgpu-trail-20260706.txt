@@ -1,0 +1,40 @@
+[ OS ] System successfully booted.
+[user-thread] msg: 9000
+[linuxkpi] [amdgpu] amdgpud starting: amdgpu_device_init pipeline
+[linuxkpi] [amdgpu] firmware 'raeen-selftest.bin' loaded (334 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/psp_13_0_4_toc.bin' loaded (2560 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/psp_13_0_4_ta.bin' loaded (254976 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_imu.bin' loaded (132352 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_me.bin' loaded (263424 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_pfp.bin' loaded (263424 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_mec.bin' loaded (268160 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_rlc.bin' loaded (157040 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_mes_2.bin' loaded (258368 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_mes1.bin' loaded (235344 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/sdma_6_0_1.bin' loaded (34560 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/dcn_3_1_4_dmcub.bin' loaded (350880 bytes)
+[linuxkpi] [amdgpu] firmware 'amdgpu/vcn_4_0_2.bin' loaded (395664 bytes)
+[linuxkpi] [amdgpu] firmware preflight: loader=ok amdgpu_blobs=12/12 present
+[linuxkpi] [amdgpu] CKPT 0: staged bring-up start — firmware preflight persisted, probing next
+[linuxkpi] [amdgpu] doorbell BAR (BAR2) mapped
+[linuxkpi] [amdgpu] DISC 1: read_discovery entered — requesting ip_discovery.bin (raw ptr/sz)
+[linuxkpi] [amdgpu] DISC 2: syscall returned ptr=0x71c00000 sz=10240 — about to read first dword (UC test)
+[linuxkpi] [amdgpu] DISC 3: first dword = 0x28211407 (want 0x28211407) — copying full 10240 bytes
+[linuxkpi] [amdgpu] DISC 4: full blob copied (10240 bytes) — parsing
+[linuxkpi] [amdgpu] DISC 5: parsed 39 IP blocks — SOC15 offsets ACTIVE
+[linuxkpi] [amdgpu] probe-time SMU mailbox check: GetSmuVersion->Some(1) (no GFXOFF messages — oracle: working driver sends none pre-MES; GFXOFF is boot-disallowed)
+[linuxkpi] [amdgpu] stage 1 probe + BAR5 OK (Radeon 760M/780M / Phoenix1)
+[user-thread] msg: 9001
+[linuxkpi] [amdgpu] CKPT 1: probe OK + DISCOVERY ACTIVE — SOC15 offsets LIVE (real register writes ahead)
+[user-thread] msg: 9002
+[linuxkpi] [amdgpu] REAL-INIT: wiring device_map + entering amdgpu_device_init (C)
+[linuxkpi] [amdgpu] RELOC-CHK nbio_v4_3_funcs@0x17aea0 slot35(set_reg_remap)=0x146a46 (want ~0x12bc2c) slot0(get_rev)=0x0 (want ~0x12b96f)
+[linuxkpi] [amdgpu] DBG a=0xade7 b=0x188aa0 c=0x599e8
+[linuxkpi] initializing kernel modesetting (IP DISCOVERY 0x1002:0x15BF 0x0000:0x0000 0xC3).
+[linuxkpi] number of hardware IPs on die0: 39
+[linuxkpi] set register base offset for ATHUB
+[linuxkpi] CLKA(6) #0 v13.0.3:
+[linuxkpi] set register base offset for CLKA
+[linuxkpi] CLKA(6) #1 v13.0.3:
+[linuxkpi] set register base offset for CLKA
+[linuxkpi] CLKA(6) #2 v13.0.3:

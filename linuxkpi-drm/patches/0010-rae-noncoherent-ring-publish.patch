@@ -1,0 +1,48 @@
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_ring.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_ring.c
+@@ -37,6 +37,13 @@
+ #include "atom.h"
+ 
+ /*
++ * RaeenOS maps large DMA buffers write-back for usable CPU performance.  The
++ * GPU is not cache-coherent with those userspace mappings, so publishing a
++ * ring write requires an explicit writeback before the MMIO wptr/doorbell.
++ */
++extern void rae_cpu_cache_flush(const void *ptr, unsigned long len);
++
++/*
+  * Rings
+  * Most engines on the GPU are fed via ring buffers.  Ring
+  * buffers are areas of GPU accessible memory that the host
+@@ -189,6 +196,7 @@
+ void amdgpu_ring_commit(struct amdgpu_ring *ring)
+ {
+ 	uint32_t count;
++	u64 written_dw, start_dw, first_dw;
+ 
+ 	if (ring->count_dw < 0)
+ 		drm_err(adev_to_drm(ring->adev), "writing more dwords to the ring than expected!\n");
+@@ -201,6 +209,23 @@
+ 	if (count != 0)
+ 		ring->funcs->insert_nop(ring, count);
+ 
++	/*
++	 * Linux normally relies on dma_alloc_coherent() here.  RaeenOS uses a
++	 * write-back CPU mapping for large rings, so evict exactly the dwords
++	 * produced since amdgpu_ring_alloc() before making the new wptr visible.
++	 * Handle the circular-buffer wrap as two cache-flush ranges.
++	 */
++	written_dw = (ring->wptr - ring->wptr_old) & ring->ptr_mask;
++	if (written_dw > ring->buf_mask + 1)
++		written_dw = ring->buf_mask + 1;
++	start_dw = ring->wptr_old & ring->buf_mask;
++	first_dw = min_t(u64, written_dw, ring->buf_mask + 1 - start_dw);
++	if (first_dw)
++		rae_cpu_cache_flush(&ring->ring[start_dw], first_dw * sizeof(u32));
++	if (written_dw > first_dw)
++		rae_cpu_cache_flush(ring->ring,
++				    (written_dw - first_dw) * sizeof(u32));
++
+ 	mb();
+ 	amdgpu_ring_set_wptr(ring);
+ 

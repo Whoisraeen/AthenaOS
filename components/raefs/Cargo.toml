@@ -1,0 +1,23 @@
+[package]
+name = "raefs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaeFS — copy-on-write filesystem with snapshots, tiered storage, native encryption."
+
+[dependencies]
+ruzstd = { version = "0.7", default-features = false }
+# ntfs — pure-Rust read-only NTFS reader (no_std). Reads an existing Windows
+# partition for the dual-boot migration story (files, Steam library). Behind
+# `ntfs_ro`; uses binrw's no_std io over a block source.
+ntfs = { version = "0.4", default-features = false, optional = true }
+# binrw pinned to EXACTLY ntfs 0.4's version (0.11) so its no_std io traits are
+# the same ones ntfs's reader bound expects (a newer binrw = a second,
+# incompatible trait).
+binrw = { version = "0.11", default-features = false, optional = true }
+
+[features]
+default = []
+# Read-only NTFS support (dual-boot Windows partition reads).
+ntfs_ro = ["ntfs", "binrw"]

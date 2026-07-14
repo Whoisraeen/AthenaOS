@@ -1,0 +1,9 @@
+# The GPL amdgpu source is NEVER committed (license boundary — see README.md).
+# fetch-source.sh populates this; it stays local-only.
+vendor/
+
+# Build artifacts
+build/
+*.o
+*.a
+*.d

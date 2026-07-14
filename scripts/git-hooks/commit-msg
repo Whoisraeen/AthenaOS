@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# RaeenOS commit-msg hook (TRACKED COPY). Install via scripts/install-hooks.sh.
+#
+# Enforces the interface sign-off: if the commit's staged diff touches the
+# interface crates (rae_abi / rae_driver_api), the commit message MUST carry the
+# `[interface]` tag. This runs at commit-msg time (unlike pre-commit) so the
+# message in "$1" is the real, final commit message.
+set -uo pipefail
+
+MSG_FILE="$1"
+[ -z "${MSG_FILE:-}" ] && exit 0
+msg=$(cat "$MSG_FILE" 2>/dev/null || true)
+
+# Does this commit touch an interface crate?
+staged=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null || true)
+if echo "$staged" | grep -qE '^components/rae_abi/|^components/rae_driver_api/'; then
+  if ! echo "$msg" | grep -q '\[interface\]'; then
+    printf '\033[31m%s\033[0m\n' "commit-msg: interface crate changed without an '[interface]' sign-off tag."
+    printf '\033[33m%s\033[0m\n' "           Interface changes are deliberate, batched events. Add [interface] to the subject."
+    exit 1
+  fi
+  printf '\033[32m%s\033[0m\n' "commit-msg: [interface] sign-off present. OK."
+fi
+exit 0

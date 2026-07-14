@@ -1,0 +1,9 @@
+[package]
+name = "pcid"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "PCI device identification helpers (R03 extraction from pciids patterns)."
+
+[dependencies]

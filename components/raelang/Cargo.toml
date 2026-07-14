@@ -1,0 +1,9 @@
+[package]
+name = "raelang"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Rae script — the Swift-flavored automation language (lexer, parser, fuel-limited tree-walk interpreter). no_std; shared by the kernel scripting layer and the userspace raelang daemon."
+
+[dependencies]

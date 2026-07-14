@@ -1,0 +1,2774 @@
+#![allow(dead_code)]
+
+extern crate alloc;
+
+use alloc::boxed::Box;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::sync::Arc;
+use alloc::vec::Vec;
+use spin::Mutex;
+
+// ─── VFS Error ──────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VfsError {
+    NotFound,
+    PermissionDenied,
+    Exists,
+    NotDirectory,
+    IsDirectory,
+    InvalidArgument,
+    NoSpace,
+    ReadOnly,
+    CrossDevice,
+    NotEmpty,
+    NameTooLong,
+    Loop,
+    NoSuchFileSystem,
+    Busy,
+    IoError,
+    Deadlock,
+    WouldBlock,
+    Interrupted,
+    NotSupported,
+    Stale,
+    Overflow,
+    QuotaExceeded,
+    NoLock,
+    Range,
+    NotImplemented,
+}
+
+impl core::fmt::Display for VfsError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::NotFound => write!(f, "no such file or directory"),
+            Self::PermissionDenied => write!(f, "permission denied"),
+            Self::Exists => write!(f, "file exists"),
+            Self::NotDirectory => write!(f, "not a directory"),
+            Self::IsDirectory => write!(f, "is a directory"),
+            Self::InvalidArgument => write!(f, "invalid argument"),
+            Self::NoSpace => write!(f, "no space left on device"),
+            Self::ReadOnly => write!(f, "read-only file system"),
+            Self::CrossDevice => write!(f, "cross-device link"),
+            Self::NotEmpty => write!(f, "directory not empty"),
+            Self::NameTooLong => write!(f, "file name too long"),
+            Self::Loop => write!(f, "too many symbolic links"),
+            Self::NoSuchFileSystem => write!(f, "no such filesystem type"),
+            Self::Busy => write!(f, "device or resource busy"),
+            Self::IoError => write!(f, "I/O error"),
+            Self::Deadlock => write!(f, "resource deadlock avoided"),
+            Self::WouldBlock => write!(f, "operation would block"),
+            Self::Interrupted => write!(f, "interrupted system call"),
+            Self::NotSupported => write!(f, "operation not supported"),
+            Self::Stale => write!(f, "stale file handle"),
+            Self::Overflow => write!(f, "value too large"),
+            Self::QuotaExceeded => write!(f, "disk quota exceeded"),
+            Self::NoLock => write!(f, "no locks available"),
+            Self::Range => write!(f, "result too large"),
+            Self::NotImplemented => write!(f, "not implemented"),
+        }
+    }
+}
+
+pub type VfsResult<T> = Result<T, VfsError>;
+
+// ─── Time ───────────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct VfsTimespec {
+    pub tv_sec: i64,
+    pub tv_nsec: i64,
+}
+
+// ─── File Mode & Type Constants ─────────────────────────────────────────────
+
+pub const S_IFMT: u32   = 0o170000;
+pub const S_IFSOCK: u32 = 0o140000;
+pub const S_IFLNK: u32  = 0o120000;
+pub const S_IFREG: u32  = 0o100000;
+pub const S_IFBLK: u32  = 0o060000;
+pub const S_IFDIR: u32  = 0o040000;
+pub const S_IFCHR: u32  = 0o020000;
+pub const S_IFIFO: u32  = 0o010000;
+
+pub const S_ISUID: u32 = 0o004000;
+pub const S_ISGID: u32 = 0o002000;
+pub const S_ISVTX: u32 = 0o001000;
+
+pub const S_IRWXU: u32 = 0o0700;
+pub const S_IRUSR: u32 = 0o0400;
+pub const S_IWUSR: u32 = 0o0200;
+pub const S_IXUSR: u32 = 0o0100;
+pub const S_IRWXG: u32 = 0o0070;
+pub const S_IRGRP: u32 = 0o0040;
+pub const S_IWGRP: u32 = 0o0020;
+pub const S_IXGRP: u32 = 0o0010;
+pub const S_IRWXO: u32 = 0o0007;
+pub const S_IROTH: u32 = 0o0004;
+pub const S_IWOTH: u32 = 0o0002;
+pub const S_IXOTH: u32 = 0o0001;
+
+pub fn s_isreg(m: u32) -> bool  { (m & S_IFMT) == S_IFREG }
+pub fn s_isdir(m: u32) -> bool  { (m & S_IFMT) == S_IFDIR }
+pub fn s_ischr(m: u32) -> bool  { (m & S_IFMT) == S_IFCHR }
+pub fn s_isblk(m: u32) -> bool  { (m & S_IFMT) == S_IFBLK }
+pub fn s_isfifo(m: u32) -> bool { (m & S_IFMT) == S_IFIFO }
+pub fn s_islnk(m: u32) -> bool  { (m & S_IFMT) == S_IFLNK }
+pub fn s_issock(m: u32) -> bool { (m & S_IFMT) == S_IFSOCK }
+
+// ─── Open Flags ─────────────────────────────────────────────────────────────
+
+pub const O_RDONLY: u32    = 0x0000;
+pub const O_WRONLY: u32    = 0x0001;
+pub const O_RDWR: u32      = 0x0002;
+pub const O_ACCMODE: u32   = 0x0003;
+pub const O_CREAT: u32     = 0x0040;
+pub const O_EXCL: u32      = 0x0080;
+pub const O_NOCTTY: u32    = 0x0100;
+pub const O_TRUNC: u32     = 0x0200;
+pub const O_APPEND: u32    = 0x0400;
+pub const O_NONBLOCK: u32  = 0x0800;
+pub const O_DSYNC: u32     = 0x1000;
+pub const O_DIRECTORY: u32 = 0x10000;
+pub const O_NOFOLLOW: u32  = 0x20000;
+pub const O_CLOEXEC: u32   = 0x80000;
+
+// ─── Seek Whence ────────────────────────────────────────────────────────────
+
+pub const SEEK_SET: i32 = 0;
+pub const SEEK_CUR: i32 = 1;
+pub const SEEK_END: i32 = 2;
+pub const SEEK_DATA: i32 = 3;
+pub const SEEK_HOLE: i32 = 4;
+
+// ─── Stat Results ───────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Default)]
+pub struct Kstat {
+    pub ino: u64,
+    pub dev: u64,
+    pub mode: u32,
+    pub nlink: u32,
+    pub uid: u32,
+    pub gid: u32,
+    pub rdev: u64,
+    pub size: i64,
+    pub atime: VfsTimespec,
+    pub mtime: VfsTimespec,
+    pub ctime: VfsTimespec,
+    pub blksize: u32,
+    pub blocks: u64,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Statfs {
+    pub f_type: u64,
+    pub f_bsize: u64,
+    pub f_blocks: u64,
+    pub f_bfree: u64,
+    pub f_bavail: u64,
+    pub f_files: u64,
+    pub f_ffree: u64,
+    pub f_fsid: u64,
+    pub f_namelen: u64,
+    pub f_frsize: u64,
+    pub f_flags: u64,
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPERBLOCK
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub type SuperBlockId = u64;
+static NEXT_SB_ID: Mutex<SuperBlockId> = Mutex::new(1);
+
+fn alloc_sb_id() -> SuperBlockId {
+    let mut id = NEXT_SB_ID.lock();
+    let ret = *id;
+    *id += 1;
+    ret
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SuperBlockFlag {
+    ReadOnly,
+    NoSuid,
+    NoDev,
+    NoExec,
+    Synchronous,
+    MandLock,
+    DirSync,
+    NoAtime,
+    RelAtime,
+    StrictAtime,
+    LazytTime,
+    Posixacl,
+}
+
+pub struct SuperOperations {
+    pub alloc_inode: fn(sb: &SuperBlock) -> VfsResult<InodeData>,
+    pub destroy_inode: fn(inode: &InodeData),
+    pub dirty_inode: fn(inode: &InodeData, flags: u32),
+    pub write_inode: fn(inode: &InodeData, sync: bool) -> VfsResult<()>,
+    pub drop_inode: fn(inode: &InodeData) -> bool,
+    pub evict_inode: fn(inode: &InodeData),
+    pub put_super: fn(sb: &SuperBlock),
+    pub sync_fs: fn(sb: &SuperBlock, wait: bool) -> VfsResult<()>,
+    pub freeze_fs: fn(sb: &SuperBlock) -> VfsResult<()>,
+    pub unfreeze_fs: fn(sb: &SuperBlock) -> VfsResult<()>,
+    pub statfs: fn(sb: &SuperBlock, buf: &mut Statfs) -> VfsResult<()>,
+    pub remount_fs: fn(sb: &SuperBlock, flags: &[SuperBlockFlag], data: &str) -> VfsResult<()>,
+    pub show_options: fn(sb: &SuperBlock, buf: &mut String),
+}
+
+impl Default for SuperOperations {
+    fn default() -> Self {
+        Self {
+            alloc_inode: |_| Err(VfsError::NotImplemented),
+            destroy_inode: |_| {},
+            dirty_inode: |_, _| {},
+            write_inode: |_, _| Ok(()),
+            drop_inode: |_| true,
+            evict_inode: |_| {},
+            put_super: |_| {},
+            sync_fs: |_, _| Ok(()),
+            freeze_fs: |_| Ok(()),
+            unfreeze_fs: |_| Ok(()),
+            statfs: |_, _| Err(VfsError::NotImplemented),
+            remount_fs: |_, _, _| Ok(()),
+            show_options: |_, _| {},
+        }
+    }
+}
+
+pub struct SuperBlock {
+    pub s_id: SuperBlockId,
+    pub s_type: String,
+    pub s_dev: u64,
+    pub s_blocksize: u32,
+    pub s_blocksize_bits: u8,
+    pub s_flags: Vec<SuperBlockFlag>,
+    pub s_magic: u64,
+    pub s_root: Option<DentryId>,
+    pub s_op: SuperOperations,
+    pub s_maxbytes: u64,
+    pub s_time_gran: u32,
+    pub s_count: u32,
+    pub s_active: bool,
+    pub s_freeze_count: u32,
+    pub s_inodes: Vec<u64>,
+    pub s_dirty_inodes: Vec<u64>,
+}
+
+impl SuperBlock {
+    pub fn new(fs_type: &str, dev: u64, magic: u64) -> Self {
+        Self {
+            s_id: alloc_sb_id(),
+            s_type: String::from(fs_type),
+            s_dev: dev,
+            s_blocksize: 4096,
+            s_blocksize_bits: 12,
+            s_flags: Vec::new(),
+            s_magic: magic,
+            s_root: None,
+            s_op: SuperOperations::default(),
+            s_maxbytes: i64::MAX as u64,
+            s_time_gran: 1_000_000_000,
+            s_count: 1,
+            s_active: true,
+            s_freeze_count: 0,
+            s_inodes: Vec::new(),
+            s_dirty_inodes: Vec::new(),
+        }
+    }
+
+    pub fn is_readonly(&self) -> bool {
+        self.s_flags.contains(&SuperBlockFlag::ReadOnly)
+    }
+
+    pub fn statfs(&self, buf: &mut Statfs) -> VfsResult<()> {
+        (self.s_op.statfs)(self, buf)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INODE
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub type InodeId = u64;
+static NEXT_INODE_ID: Mutex<InodeId> = Mutex::new(1);
+
+fn alloc_inode_id() -> InodeId {
+    let mut id = NEXT_INODE_ID.lock();
+    let ret = *id;
+    *id += 1;
+    ret
+}
+
+pub struct InodeOperations {
+    pub lookup: fn(dir: &InodeData, name: &str) -> VfsResult<InodeId>,
+    pub create: fn(dir: &InodeData, name: &str, mode: u32, excl: bool) -> VfsResult<InodeId>,
+    pub link: fn(old: &InodeData, dir: &InodeData, name: &str) -> VfsResult<()>,
+    pub unlink: fn(dir: &InodeData, name: &str) -> VfsResult<()>,
+    pub symlink: fn(dir: &InodeData, name: &str, target: &str) -> VfsResult<InodeId>,
+    pub mkdir: fn(dir: &InodeData, name: &str, mode: u32) -> VfsResult<InodeId>,
+    pub rmdir: fn(dir: &InodeData, name: &str) -> VfsResult<()>,
+    pub mknod: fn(dir: &InodeData, name: &str, mode: u32, dev: u64) -> VfsResult<InodeId>,
+    pub rename: fn(old_dir: &InodeData, old_name: &str, new_dir: &InodeData, new_name: &str, flags: u32) -> VfsResult<()>,
+    pub readlink: fn(inode: &InodeData, buf: &mut [u8]) -> VfsResult<usize>,
+    pub get_link: fn(inode: &InodeData) -> VfsResult<String>,
+    pub setattr: fn(inode: &InodeData, attr: &InodeAttr) -> VfsResult<()>,
+    pub getattr: fn(inode: &InodeData, stat: &mut Kstat) -> VfsResult<()>,
+    pub listxattr: fn(inode: &InodeData, list: &mut Vec<String>) -> VfsResult<()>,
+    pub fiemap: fn(inode: &InodeData, start: u64, len: u64, extents: &mut Vec<FiemapExtent>) -> VfsResult<()>,
+    pub get_acl: fn(inode: &InodeData, acl_type: AclType) -> VfsResult<PosixAcl>,
+    pub set_acl: fn(inode: &InodeData, acl: &PosixAcl, acl_type: AclType) -> VfsResult<()>,
+    pub tmpfile: fn(dir: &InodeData, mode: u32) -> VfsResult<InodeId>,
+    pub atomic_open: fn(dir: &InodeData, name: &str, flags: u32, mode: u32) -> VfsResult<(InodeId, FileData)>,
+}
+
+impl Default for InodeOperations {
+    fn default() -> Self {
+        Self {
+            lookup: |_, _| Err(VfsError::NotFound),
+            create: |_, _, _, _| Err(VfsError::NotSupported),
+            link: |_, _, _| Err(VfsError::NotSupported),
+            unlink: |_, _| Err(VfsError::NotSupported),
+            symlink: |_, _, _| Err(VfsError::NotSupported),
+            mkdir: |_, _, _| Err(VfsError::NotSupported),
+            rmdir: |_, _| Err(VfsError::NotSupported),
+            mknod: |_, _, _, _| Err(VfsError::NotSupported),
+            rename: |_, _, _, _, _| Err(VfsError::NotSupported),
+            readlink: |_, _| Err(VfsError::NotSupported),
+            get_link: |_| Err(VfsError::NotSupported),
+            setattr: |_, _| Ok(()),
+            getattr: |_, _| Err(VfsError::NotImplemented),
+            listxattr: |_, _| Ok(()),
+            fiemap: |_, _, _, _| Err(VfsError::NotSupported),
+            get_acl: |_, _| Err(VfsError::NotSupported),
+            set_acl: |_, _| Err(VfsError::NotSupported),
+            tmpfile: |_, _| Err(VfsError::NotSupported),
+            atomic_open: |_, _, _, _| Err(VfsError::NotSupported),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct InodeAttr {
+    pub ia_valid: u32,
+    pub ia_mode: u32,
+    pub ia_uid: u32,
+    pub ia_gid: u32,
+    pub ia_size: i64,
+    pub ia_atime: VfsTimespec,
+    pub ia_mtime: VfsTimespec,
+    pub ia_ctime: VfsTimespec,
+}
+
+pub const ATTR_MODE: u32  = 1 << 0;
+pub const ATTR_UID: u32   = 1 << 1;
+pub const ATTR_GID: u32   = 1 << 2;
+pub const ATTR_SIZE: u32  = 1 << 3;
+pub const ATTR_ATIME: u32 = 1 << 4;
+pub const ATTR_MTIME: u32 = 1 << 5;
+pub const ATTR_CTIME: u32 = 1 << 6;
+pub const ATTR_OPEN: u32  = 1 << 15;
+
+#[derive(Debug, Clone)]
+pub struct FiemapExtent {
+    pub fe_logical: u64,
+    pub fe_physical: u64,
+    pub fe_length: u64,
+    pub fe_flags: u32,
+}
+
+pub struct InodeData {
+    pub i_ino: InodeId,
+    pub i_mode: u32,
+    pub i_nlink: u32,
+    pub i_uid: u32,
+    pub i_gid: u32,
+    pub i_size: i64,
+    pub i_atime: VfsTimespec,
+    pub i_mtime: VfsTimespec,
+    pub i_ctime: VfsTimespec,
+    pub i_blocks: u64,
+    pub i_blkbits: u8,
+    pub i_op: InodeOperations,
+    pub i_fop: FileOperations,
+    pub i_sb: SuperBlockId,
+    pub i_rdev: u64,
+    pub i_flags: u32,
+    pub i_generation: u32,
+    pub i_state: InodeState,
+    pub i_mapping: Option<AddressSpaceId>,
+    pub i_dentry_list: Vec<DentryId>,
+    pub i_data: Vec<u8>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InodeState {
+    New,
+    Active,
+    Dirty,
+    Freeing,
+    Clear,
+    WillFree,
+}
+
+impl Default for InodeState {
+    fn default() -> Self { Self::New }
+}
+
+impl InodeData {
+    pub fn new(mode: u32, sb: SuperBlockId) -> Self {
+        Self {
+            i_ino: alloc_inode_id(),
+            i_mode: mode,
+            i_nlink: 1,
+            i_uid: 0,
+            i_gid: 0,
+            i_size: 0,
+            i_atime: VfsTimespec::default(),
+            i_mtime: VfsTimespec::default(),
+            i_ctime: VfsTimespec::default(),
+            i_blocks: 0,
+            i_blkbits: 12,
+            i_op: InodeOperations::default(),
+            i_fop: FileOperations::default(),
+            i_sb: sb,
+            i_rdev: 0,
+            i_flags: 0,
+            i_generation: 0,
+            i_state: InodeState::New,
+            i_mapping: None,
+            i_dentry_list: Vec::new(),
+            i_data: Vec::new(),
+        }
+    }
+
+    pub fn is_dir(&self) -> bool  { s_isdir(self.i_mode) }
+    pub fn is_reg(&self) -> bool  { s_isreg(self.i_mode) }
+    pub fn is_lnk(&self) -> bool  { s_islnk(self.i_mode) }
+    pub fn is_chr(&self) -> bool  { s_ischr(self.i_mode) }
+    pub fn is_blk(&self) -> bool  { s_isblk(self.i_mode) }
+    pub fn is_fifo(&self) -> bool { s_isfifo(self.i_mode) }
+    pub fn is_sock(&self) -> bool { s_issock(self.i_mode) }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DENTRY
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub type DentryId = u64;
+static NEXT_DENTRY_ID: Mutex<DentryId> = Mutex::new(1);
+
+fn alloc_dentry_id() -> DentryId {
+    let mut id = NEXT_DENTRY_ID.lock();
+    let ret = *id;
+    *id += 1;
+    ret
+}
+
+pub const DCACHE_ENTRY_HASHED: u32      = 0x0001;
+pub const DCACHE_DISCONNECTED: u32      = 0x0002;
+pub const DCACHE_REFERENCED: u32        = 0x0004;
+pub const DCACHE_RCUACCESS: u32         = 0x0008;
+pub const DCACHE_CANT_MOUNT: u32        = 0x0010;
+pub const DCACHE_GENOCIDE: u32          = 0x0020;
+pub const DCACHE_SHRINK_LIST: u32       = 0x0040;
+pub const DCACHE_OP_HASH: u32           = 0x0080;
+pub const DCACHE_OP_COMPARE: u32        = 0x0100;
+pub const DCACHE_OP_REVALIDATE: u32     = 0x0200;
+pub const DCACHE_OP_DELETE: u32         = 0x0400;
+pub const DCACHE_OP_PRUNE: u32          = 0x0800;
+pub const DCACHE_MOUNTED: u32           = 0x1000;
+pub const DCACHE_NEED_AUTOMOUNT: u32    = 0x2000;
+pub const DCACHE_MANAGE_TRANSIT: u32    = 0x4000;
+pub const DCACHE_DIRECTORY_TYPE: u32    = 0x0020_0000;
+pub const DCACHE_AUTODIR_TYPE: u32      = 0x0040_0000;
+pub const DCACHE_REGULAR_TYPE: u32      = 0x0060_0000;
+pub const DCACHE_SPECIAL_TYPE: u32      = 0x0080_0000;
+pub const DCACHE_SYMLINK_TYPE: u32      = 0x00a0_0000;
+pub const DCACHE_WHITEOUT_TYPE: u32     = 0x00c0_0000;
+
+pub struct DentryOperations {
+    pub d_revalidate: fn(dentry: &Dentry) -> bool,
+    pub d_hash: fn(name: &str) -> u64,
+    pub d_compare: fn(a: &str, b: &str) -> bool,
+    pub d_delete: fn(dentry: &Dentry) -> bool,
+    pub d_release: fn(dentry: &Dentry),
+    pub d_iput: fn(dentry: &Dentry, inode: InodeId),
+    pub d_prune: fn(dentry: &Dentry),
+}
+
+impl Default for DentryOperations {
+    fn default() -> Self {
+        Self {
+            d_revalidate: |_| true,
+            d_hash: default_dentry_hash,
+            d_compare: |a, b| a == b,
+            d_delete: |_| false,
+            d_release: |_| {},
+            d_iput: |_, _| {},
+            d_prune: |_| {},
+        }
+    }
+}
+
+fn default_dentry_hash(name: &str) -> u64 {
+    let mut hash: u64 = 5381;
+    for b in name.bytes() {
+        hash = hash.wrapping_mul(33).wrapping_add(b as u64);
+    }
+    hash
+}
+
+pub struct Dentry {
+    pub d_id: DentryId,
+    pub d_name: String,
+    pub d_inode: Option<InodeId>,
+    pub d_parent: Option<DentryId>,
+    pub d_sb: SuperBlockId,
+    pub d_flags: u32,
+    pub d_op: DentryOperations,
+    pub d_children: Vec<DentryId>,
+    pub d_mounted: bool,
+    pub d_ref_count: u32,
+    pub d_lock_count: u32,
+}
+
+impl Dentry {
+    pub fn new(name: &str, parent: Option<DentryId>, sb: SuperBlockId) -> Self {
+        Self {
+            d_id: alloc_dentry_id(),
+            d_name: String::from(name),
+            d_inode: None,
+            d_parent: parent,
+            d_sb: sb,
+            d_flags: 0,
+            d_op: DentryOperations::default(),
+            d_children: Vec::new(),
+            d_mounted: false,
+            d_ref_count: 1,
+            d_lock_count: 0,
+        }
+    }
+
+    pub fn is_root(&self) -> bool {
+        self.d_parent.is_none() || self.d_parent == Some(self.d_id)
+    }
+
+    pub fn is_negative(&self) -> bool {
+        self.d_inode.is_none()
+    }
+
+    pub fn is_hashed(&self) -> bool {
+        self.d_flags & DCACHE_ENTRY_HASHED != 0
+    }
+}
+
+// ─── Dentry Cache (dcache) ──────────────────────────────────────────────────
+
+const DCACHE_HASH_BITS: usize = 10;
+const DCACHE_HASH_SIZE: usize = 1 << DCACHE_HASH_BITS;
+
+pub struct DentryCache {
+    hash_table: Vec<Vec<DentryId>>,
+    lru_list: Vec<DentryId>,
+    dentries: BTreeMap<DentryId, Dentry>,
+    lru_capacity: usize,
+    nr_dentries: usize,
+    nr_unused: usize,
+}
+
+impl DentryCache {
+    pub fn new() -> Self {
+        let mut hash_table = Vec::with_capacity(DCACHE_HASH_SIZE);
+        for _ in 0..DCACHE_HASH_SIZE {
+            hash_table.push(Vec::new());
+        }
+        Self {
+            hash_table,
+            lru_list: Vec::new(),
+            dentries: BTreeMap::new(),
+            lru_capacity: 4096,
+            nr_dentries: 0,
+            nr_unused: 0,
+        }
+    }
+
+    fn hash_bucket(&self, parent: DentryId, name: &str) -> usize {
+        let h = default_dentry_hash(name).wrapping_add(parent);
+        (h as usize) & (DCACHE_HASH_SIZE - 1)
+    }
+
+    pub fn d_alloc(&mut self, name: &str, parent: Option<DentryId>, sb: SuperBlockId) -> DentryId {
+        let mut dentry = Dentry::new(name, parent, sb);
+        let id = dentry.d_id;
+        dentry.d_flags |= DCACHE_ENTRY_HASHED;
+        if let Some(pid) = parent {
+            if let Some(p) = self.dentries.get_mut(&pid) {
+                p.d_children.push(id);
+            }
+            let bucket = self.hash_bucket(pid, name);
+            self.hash_table[bucket].push(id);
+        }
+        self.dentries.insert(id, dentry);
+        self.nr_dentries += 1;
+        id
+    }
+
+    pub fn d_add(&mut self, dentry_id: DentryId, inode: InodeId) {
+        if let Some(d) = self.dentries.get_mut(&dentry_id) {
+            d.d_inode = Some(inode);
+        }
+    }
+
+    pub fn d_lookup(&self, parent: DentryId, name: &str) -> Option<DentryId> {
+        let bucket = self.hash_bucket(parent, name);
+        for &did in &self.hash_table[bucket] {
+            if let Some(d) = self.dentries.get(&did) {
+                if d.d_parent == Some(parent) && d.d_name == name {
+                    return Some(did);
+                }
+            }
+        }
+        None
+    }
+
+    pub fn d_drop(&mut self, dentry_id: DentryId) {
+        if let Some(d) = self.dentries.get_mut(&dentry_id) {
+            d.d_flags &= !DCACHE_ENTRY_HASHED;
+            if let Some(pid) = d.d_parent {
+                let name = d.d_name.clone();
+                let bucket = self.hash_bucket(pid, &name);
+                self.hash_table[bucket].retain(|&id| id != dentry_id);
+            }
+        }
+    }
+
+    pub fn d_delete(&mut self, dentry_id: DentryId) {
+        self.d_drop(dentry_id);
+        if let Some(d) = self.dentries.get(&dentry_id) {
+            if let Some(pid) = d.d_parent {
+                if let Some(p) = self.dentries.get_mut(&pid) {
+                    p.d_children.retain(|&id| id != dentry_id);
+                }
+            }
+        }
+        self.dentries.remove(&dentry_id);
+        self.nr_dentries -= 1;
+    }
+
+    pub fn lru_add(&mut self, dentry_id: DentryId) {
+        if !self.lru_list.contains(&dentry_id) {
+            self.lru_list.push(dentry_id);
+            self.nr_unused += 1;
+        }
+        self.shrink_if_needed();
+    }
+
+    pub fn lru_remove(&mut self, dentry_id: DentryId) {
+        if let Some(pos) = self.lru_list.iter().position(|&id| id == dentry_id) {
+            self.lru_list.remove(pos);
+            self.nr_unused -= 1;
+        }
+    }
+
+    fn shrink_if_needed(&mut self) {
+        while self.nr_unused > self.lru_capacity {
+            if let Some(victim) = self.lru_list.first().copied() {
+                self.lru_list.remove(0);
+                self.nr_unused -= 1;
+                self.d_delete(victim);
+            } else {
+                break;
+            }
+        }
+    }
+
+    pub fn get(&self, id: DentryId) -> Option<&Dentry> {
+        self.dentries.get(&id)
+    }
+
+    pub fn get_mut(&mut self, id: DentryId) -> Option<&mut Dentry> {
+        self.dentries.get_mut(&id)
+    }
+}
+
+// ─── Path Lookup ────────────────────────────────────────────────────────────
+
+pub const LOOKUP_FOLLOW: u32      = 0x0001;
+pub const LOOKUP_DIRECTORY: u32   = 0x0002;
+pub const LOOKUP_PARENT: u32      = 0x0004;
+pub const LOOKUP_REVAL: u32       = 0x0008;
+pub const LOOKUP_AUTOMOUNT: u32   = 0x0010;
+pub const LOOKUP_CREATE: u32      = 0x0020;
+pub const LOOKUP_EXCL: u32        = 0x0040;
+pub const LOOKUP_OPEN: u32        = 0x0080;
+pub const LOOKUP_EMPTY: u32       = 0x0100;
+pub const LOOKUP_NO_SYMLINKS: u32 = 0x0200;
+pub const LOOKUP_BENEATH: u32     = 0x0400;
+pub const LOOKUP_IN_ROOT: u32     = 0x0800;
+
+#[derive(Debug, Clone)]
+pub struct PathComponent {
+    pub name: String,
+    pub hash: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct NameiData {
+    pub path: PathData,
+    pub last: PathComponent,
+    pub root: PathData,
+    pub flags: u32,
+    pub depth: u32,
+    pub total_link_count: u32,
+    pub last_type: LastType,
+}
+
+#[derive(Debug, Clone)]
+pub struct PathData {
+    pub mnt: Option<MountId>,
+    pub dentry: Option<DentryId>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LastType {
+    Normal,
+    Root,
+    Dot,
+    DotDot,
+    Bind,
+}
+
+const MAX_NESTED_LINKS: u32 = 40;
+const MAX_SYMLINK_DEPTH: u32 = 8;
+
+pub fn walk_component(vfs: &mut VfsState, nd: &mut NameiData, name: &str) -> VfsResult<DentryId> {
+    if name == "." || name.is_empty() {
+        nd.last_type = LastType::Dot;
+        return nd.path.dentry.ok_or(VfsError::NotFound);
+    }
+    if name == ".." {
+        nd.last_type = LastType::DotDot;
+        let current = nd.path.dentry.ok_or(VfsError::NotFound)?;
+        if let Some(d) = vfs.dcache.get(current) {
+            return d.d_parent.ok_or(VfsError::NotFound);
+        }
+        return Err(VfsError::NotFound);
+    }
+    nd.last_type = LastType::Normal;
+    let parent = nd.path.dentry.ok_or(VfsError::NotFound)?;
+    if let Some(found) = vfs.dcache.d_lookup(parent, name) {
+        if nd.flags & LOOKUP_REVAL != 0 {
+            if let Some(d) = vfs.dcache.get(found) {
+                if !(d.d_op.d_revalidate)(d) {
+                    return Err(VfsError::Stale);
+                }
+            }
+        }
+        return Ok(found);
+    }
+    let parent_inode = vfs.dcache.get(parent)
+        .and_then(|d| d.d_inode)
+        .ok_or(VfsError::NotFound)?;
+    let inode = vfs.inodes.get(&parent_inode).ok_or(VfsError::NotFound)?;
+    let child_ino = (inode.i_op.lookup)(inode, name)?;
+    let sb = vfs.dcache.get(parent).map(|d| d.d_sb).unwrap_or(0);
+    let child_did = vfs.dcache.d_alloc(name, Some(parent), sb);
+    vfs.dcache.d_add(child_did, child_ino);
+    Ok(child_did)
+}
+
+pub fn link_path_walk(vfs: &mut VfsState, path: &str, nd: &mut NameiData) -> VfsResult<()> {
+    let path = path.trim_start_matches('/');
+    if path.is_empty() {
+        return Ok(());
+    }
+    let components: Vec<&str> = path.split('/').collect();
+    let last_idx = components.len() - 1;
+    for (i, component) in components.iter().enumerate() {
+        if component.is_empty() {
+            continue;
+        }
+        nd.last = PathComponent {
+            name: String::from(*component),
+            hash: default_dentry_hash(component),
+        };
+        if i == last_idx && nd.flags & LOOKUP_PARENT != 0 {
+            return Ok(());
+        }
+        let next = walk_component(vfs, nd, component)?;
+        if i < last_idx {
+            if let Some(did) = vfs.dcache.get(next) {
+                if let Some(ino) = did.d_inode {
+                    if let Some(inode) = vfs.inodes.get(&ino) {
+                        if inode.is_lnk() && nd.flags & LOOKUP_FOLLOW != 0 {
+                            nd.total_link_count += 1;
+                            if nd.total_link_count > MAX_NESTED_LINKS {
+                                return Err(VfsError::Loop);
+                            }
+                            nd.depth += 1;
+                            if nd.depth > MAX_SYMLINK_DEPTH {
+                                return Err(VfsError::Loop);
+                            }
+                            let target = (inode.i_op.get_link)(inode)?;
+                            let saved_path = nd.path.clone();
+                            link_path_walk(vfs, &target, nd)?;
+                            nd.depth -= 1;
+                            let _ = saved_path;
+                            continue;
+                        }
+                        if !inode.is_dir() {
+                            return Err(VfsError::NotDirectory);
+                        }
+                    }
+                }
+            }
+        }
+        if nd.flags & LOOKUP_AUTOMOUNT != 0 {
+            if let Some(d) = vfs.dcache.get(next) {
+                if d.d_flags & DCACHE_NEED_AUTOMOUNT != 0 {
+                    // trigger automount (placeholder)
+                }
+            }
+        }
+        nd.path.dentry = Some(next);
+    }
+    Ok(())
+}
+
+pub fn path_lookupat(vfs: &mut VfsState, path: &str, flags: u32) -> VfsResult<PathData> {
+    let is_absolute = path.starts_with('/');
+    let start_dentry = if is_absolute {
+        vfs.root_dentry
+    } else {
+        vfs.cwd_dentry
+    };
+    let start_mnt = if is_absolute {
+        vfs.root_mount
+    } else {
+        vfs.cwd_mount
+    };
+    let mut nd = NameiData {
+        path: PathData { mnt: start_mnt, dentry: start_dentry },
+        last: PathComponent { name: String::new(), hash: 0 },
+        root: PathData { mnt: vfs.root_mount, dentry: vfs.root_dentry },
+        flags,
+        depth: 0,
+        total_link_count: 0,
+        last_type: LastType::Root,
+    };
+    link_path_walk(vfs, path, &mut nd)?;
+    if flags & LOOKUP_DIRECTORY != 0 {
+        if let Some(did) = nd.path.dentry {
+            if let Some(d) = vfs.dcache.get(did) {
+                if let Some(ino) = d.d_inode {
+                    if let Some(inode) = vfs.inodes.get(&ino) {
+                        if !inode.is_dir() {
+                            return Err(VfsError::NotDirectory);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(nd.path)
+}
+
+pub fn filename_lookup(vfs: &mut VfsState, path: &str, flags: u32) -> VfsResult<PathData> {
+    path_lookupat(vfs, path, flags)
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILE
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub type FileId = u64;
+static NEXT_FILE_ID: Mutex<FileId> = Mutex::new(1);
+
+fn alloc_file_id() -> FileId {
+    let mut id = NEXT_FILE_ID.lock();
+    let ret = *id;
+    *id += 1;
+    ret
+}
+
+pub struct FileOperations {
+    pub llseek: fn(file: &mut FileData, offset: i64, whence: i32) -> VfsResult<i64>,
+    pub read: fn(file: &FileData, buf: &mut [u8], pos: &mut i64) -> VfsResult<usize>,
+    pub write: fn(file: &FileData, buf: &[u8], pos: &mut i64) -> VfsResult<usize>,
+    pub read_iter: fn(file: &FileData, iter: &mut KiovIter) -> VfsResult<usize>,
+    pub write_iter: fn(file: &FileData, iter: &mut KiovIter) -> VfsResult<usize>,
+    pub iterate_shared: fn(file: &FileData, ctx: &mut DirContext) -> VfsResult<()>,
+    pub poll: fn(file: &FileData, mask: u32) -> u32,
+    pub unlocked_ioctl: fn(file: &FileData, cmd: u32, arg: u64) -> VfsResult<i64>,
+    pub compat_ioctl: fn(file: &FileData, cmd: u32, arg: u64) -> VfsResult<i64>,
+    pub mmap: fn(file: &FileData, vma: &mut VmAreaDesc) -> VfsResult<()>,
+    pub open: fn(inode: &InodeData, file: &mut FileData) -> VfsResult<()>,
+    pub flush: fn(file: &FileData) -> VfsResult<()>,
+    pub release: fn(inode: &InodeData, file: &FileData) -> VfsResult<()>,
+    pub fsync: fn(file: &FileData, start: i64, end: i64, datasync: bool) -> VfsResult<()>,
+    pub fasync: fn(file: &FileData, fd: i32, on: bool) -> VfsResult<()>,
+    pub lock: fn(file: &FileData, cmd: i32, fl: &mut FileLock) -> VfsResult<()>,
+    pub sendpage: fn(file: &FileData, page: &PageDesc, offset: usize, size: usize, flags: u32) -> VfsResult<usize>,
+    pub get_unmapped_area: fn(file: &FileData, addr: u64, len: u64, pgoff: u64, flags: u64) -> VfsResult<u64>,
+    pub flock: fn(file: &FileData, cmd: i32, fl: &mut FileLock) -> VfsResult<()>,
+    pub splice_write: fn(file: &FileData, pipe: &PipeDesc, len: usize, flags: u32) -> VfsResult<usize>,
+    pub splice_read: fn(file: &FileData, pipe: &PipeDesc, len: usize, flags: u32) -> VfsResult<usize>,
+    pub fallocate: fn(file: &FileData, mode: i32, offset: i64, len: i64) -> VfsResult<()>,
+    pub copy_file_range: fn(src: &FileData, src_pos: i64, dst: &FileData, dst_pos: i64, len: usize) -> VfsResult<usize>,
+    pub clone_file_range: fn(src: &FileData, src_off: u64, dst: &FileData, dst_off: u64, len: u64) -> VfsResult<()>,
+}
+
+impl Default for FileOperations {
+    fn default() -> Self {
+        Self {
+            llseek: default_llseek,
+            read: |_, _, _| Err(VfsError::NotSupported),
+            write: |_, _, _| Err(VfsError::NotSupported),
+            read_iter: |_, _| Err(VfsError::NotSupported),
+            write_iter: |_, _| Err(VfsError::NotSupported),
+            iterate_shared: |_, _| Err(VfsError::NotSupported),
+            poll: |_, _| 0,
+            unlocked_ioctl: |_, _, _| Err(VfsError::NotSupported),
+            compat_ioctl: |_, _, _| Err(VfsError::NotSupported),
+            mmap: |_, _| Err(VfsError::NotSupported),
+            open: |_, _| Ok(()),
+            flush: |_| Ok(()),
+            release: |_, _| Ok(()),
+            fsync: |_, _, _, _| Ok(()),
+            fasync: |_, _, _| Err(VfsError::NotSupported),
+            lock: |_, _, _| Err(VfsError::NotSupported),
+            sendpage: |_, _, _, _, _| Err(VfsError::NotSupported),
+            get_unmapped_area: |_, _, _, _, _| Err(VfsError::NotSupported),
+            flock: |_, _, _| Err(VfsError::NotSupported),
+            splice_write: |_, _, _, _| Err(VfsError::NotSupported),
+            splice_read: |_, _, _, _| Err(VfsError::NotSupported),
+            fallocate: |_, _, _, _| Err(VfsError::NotSupported),
+            copy_file_range: |_, _, _, _, _| Err(VfsError::NotSupported),
+            clone_file_range: |_, _, _, _, _| Err(VfsError::NotSupported),
+        }
+    }
+}
+
+fn default_llseek(file: &mut FileData, offset: i64, whence: i32) -> VfsResult<i64> {
+    let new_pos = match whence {
+        SEEK_SET => offset,
+        SEEK_CUR => file.f_pos + offset,
+        SEEK_END => file.f_size + offset,
+        _ => return Err(VfsError::InvalidArgument),
+    };
+    if new_pos < 0 {
+        return Err(VfsError::InvalidArgument);
+    }
+    file.f_pos = new_pos;
+    Ok(new_pos)
+}
+
+#[derive(Debug, Clone)]
+pub struct KiovIter {
+    pub iov: Vec<KiovSeg>,
+    pub nr_segs: usize,
+    pub count: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct KiovSeg {
+    pub base: u64,
+    pub len: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct DirContext {
+    pub pos: i64,
+    pub entries: Vec<DirEntry>,
+}
+
+#[derive(Debug, Clone)]
+pub struct DirEntry {
+    pub d_ino: u64,
+    pub d_off: i64,
+    pub d_type: u8,
+    pub d_name: String,
+}
+
+pub const DT_UNKNOWN: u8 = 0;
+pub const DT_FIFO: u8    = 1;
+pub const DT_CHR: u8     = 2;
+pub const DT_DIR: u8     = 4;
+pub const DT_BLK: u8     = 6;
+pub const DT_REG: u8     = 8;
+pub const DT_LNK: u8     = 10;
+pub const DT_SOCK: u8    = 12;
+pub const DT_WHT: u8     = 14;
+
+#[derive(Debug, Clone)]
+pub struct VmAreaDesc {
+    pub vm_start: u64,
+    pub vm_end: u64,
+    pub vm_pgoff: u64,
+    pub vm_flags: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct PageDesc {
+    pub index: u64,
+    pub flags: u32,
+    pub data: Vec<u8>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PipeDesc {
+    pub buf_count: usize,
+    pub buf_size: usize,
+}
+
+pub struct FileData {
+    pub f_id: FileId,
+    pub f_path: PathData,
+    pub f_inode: Option<InodeId>,
+    pub f_op: FileOperations,
+    pub f_flags: u32,
+    pub f_mode: u32,
+    pub f_pos: i64,
+    pub f_size: i64,
+    pub f_owner: u32,
+    pub f_cred_uid: u32,
+    pub f_cred_gid: u32,
+    pub f_count: u32,
+    pub f_version: u64,
+    pub f_lock: Option<FileLock>,
+}
+
+impl FileData {
+    pub fn new(inode: InodeId, flags: u32) -> Self {
+        Self {
+            f_id: alloc_file_id(),
+            f_path: PathData { mnt: None, dentry: None },
+            f_inode: Some(inode),
+            f_op: FileOperations::default(),
+            f_flags: flags,
+            f_mode: flags & O_ACCMODE,
+            f_pos: 0,
+            f_size: 0,
+            f_owner: 0,
+            f_cred_uid: 0,
+            f_cred_gid: 0,
+            f_count: 1,
+            f_version: 0,
+            f_lock: None,
+        }
+    }
+
+    pub fn is_readable(&self) -> bool {
+        self.f_mode == O_RDONLY || self.f_mode == O_RDWR
+    }
+
+    pub fn is_writable(&self) -> bool {
+        self.f_mode == O_WRONLY || self.f_mode == O_RDWR
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MOUNT
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub type MountId = u64;
+static NEXT_MOUNT_ID: Mutex<MountId> = Mutex::new(1);
+
+fn alloc_mount_id() -> MountId {
+    let mut id = NEXT_MOUNT_ID.lock();
+    let ret = *id;
+    *id += 1;
+    ret
+}
+
+pub const MNT_NOSUID: u32    = 0x01;
+pub const MNT_NODEV: u32     = 0x02;
+pub const MNT_NOEXEC: u32    = 0x04;
+pub const MNT_NOATIME: u32   = 0x08;
+pub const MNT_RELATIME: u32  = 0x10;
+pub const MNT_READONLY: u32  = 0x20;
+pub const MNT_SHRINKABLE: u32 = 0x40;
+pub const MNT_WRITE_HOLD: u32 = 0x80;
+pub const MNT_SHARED: u32    = 0x1000;
+pub const MNT_UNBINDABLE: u32 = 0x2000;
+
+pub const MS_RDONLY: u32      = 1;
+pub const MS_NOSUID: u32     = 2;
+pub const MS_NODEV: u32      = 4;
+pub const MS_NOEXEC: u32     = 8;
+pub const MS_SYNCHRONOUS: u32 = 16;
+pub const MS_REMOUNT: u32    = 32;
+pub const MS_MANDLOCK: u32   = 64;
+pub const MS_DIRSYNC: u32    = 128;
+pub const MS_NOATIME: u32    = 1024;
+pub const MS_NODIRATIME: u32 = 2048;
+pub const MS_BIND: u32       = 4096;
+pub const MS_MOVE: u32       = 8192;
+pub const MS_SILENT: u32     = 32768;
+pub const MS_POSIXACL: u32   = 1 << 16;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MountPropagation {
+    Private,
+    Shared,
+    Slave,
+    Unbindable,
+}
+
+pub struct VfsMount {
+    pub mnt_root: DentryId,
+    pub mnt_sb: SuperBlockId,
+    pub mnt_flags: u32,
+}
+
+pub struct Mount {
+    pub mnt_id: MountId,
+    pub mnt_parent: Option<MountId>,
+    pub mnt_mountpoint: Option<DentryId>,
+    pub mnt_root: DentryId,
+    pub mnt_sb: SuperBlockId,
+    pub mnt_flags: u32,
+    pub mnt_propagation: MountPropagation,
+    pub mnt_children: Vec<MountId>,
+    pub mnt_ns: Option<MountNamespaceId>,
+    pub mnt_count: u32,
+    pub mnt_expiry_mark: bool,
+    pub mnt_group_id: u32,
+    pub mnt_master: Option<MountId>,
+}
+
+impl Mount {
+    pub fn new(root: DentryId, sb: SuperBlockId) -> Self {
+        Self {
+            mnt_id: alloc_mount_id(),
+            mnt_parent: None,
+            mnt_mountpoint: None,
+            mnt_root: root,
+            mnt_sb: sb,
+            mnt_flags: 0,
+            mnt_propagation: MountPropagation::Private,
+            mnt_children: Vec::new(),
+            mnt_ns: None,
+            mnt_count: 1,
+            mnt_expiry_mark: false,
+            mnt_group_id: 0,
+            mnt_master: None,
+        }
+    }
+
+    pub fn is_readonly(&self) -> bool {
+        self.mnt_flags & MNT_READONLY != 0
+    }
+}
+
+pub type MountNamespaceId = u64;
+
+pub struct MountNamespace {
+    pub ns_id: MountNamespaceId,
+    pub root: MountId,
+    pub mounts: Vec<MountId>,
+    pub nr_mounts: u32,
+    pub pending_mounts: u32,
+}
+
+pub struct MountTree {
+    pub mounts: BTreeMap<MountId, Mount>,
+    pub namespaces: BTreeMap<MountNamespaceId, MountNamespace>,
+}
+
+impl MountTree {
+    pub fn new() -> Self {
+        Self {
+            mounts: BTreeMap::new(),
+            namespaces: BTreeMap::new(),
+        }
+    }
+
+    pub fn do_mount(
+        &mut self,
+        dcache: &mut DentryCache,
+        dev: &str,
+        dir_dentry: DentryId,
+        fs_type: &str,
+        flags: u32,
+        sb: SuperBlockId,
+        root_dentry: DentryId,
+    ) -> VfsResult<MountId> {
+        if flags & MS_REMOUNT != 0 {
+            return self.do_remount(dir_dentry, flags);
+        }
+        if flags & MS_BIND != 0 {
+            return self.do_bind_mount(dir_dentry, root_dentry, sb);
+        }
+        if flags & MS_MOVE != 0 {
+            return self.do_move_mount(dir_dentry, root_dentry);
+        }
+        let mut mnt = Mount::new(root_dentry, sb);
+        mnt.mnt_mountpoint = Some(dir_dentry);
+        mnt.mnt_flags = flags;
+        let mid = mnt.mnt_id;
+        self.mounts.insert(mid, mnt);
+        if let Some(d) = dcache.get_mut(dir_dentry) {
+            d.d_mounted = true;
+            d.d_flags |= DCACHE_MOUNTED;
+        }
+        let _ = (dev, fs_type);
+        Ok(mid)
+    }
+
+    fn do_remount(&mut self, _dentry: DentryId, _flags: u32) -> VfsResult<MountId> {
+        Err(VfsError::NotImplemented)
+    }
+
+    fn do_bind_mount(&mut self, target: DentryId, source: DentryId, sb: SuperBlockId) -> VfsResult<MountId> {
+        let mut mnt = Mount::new(source, sb);
+        mnt.mnt_mountpoint = Some(target);
+        let mid = mnt.mnt_id;
+        self.mounts.insert(mid, mnt);
+        Ok(mid)
+    }
+
+    fn do_move_mount(&mut self, target: DentryId, source: DentryId) -> VfsResult<MountId> {
+        for (_, mnt) in self.mounts.iter_mut() {
+            if mnt.mnt_root == source {
+                mnt.mnt_mountpoint = Some(target);
+                return Ok(mnt.mnt_id);
+            }
+        }
+        Err(VfsError::NotFound)
+    }
+
+    pub fn do_umount(&mut self, mount_id: MountId, _flags: u32) -> VfsResult<()> {
+        if let Some(mnt) = self.mounts.get(&mount_id) {
+            if !mnt.mnt_children.is_empty() {
+                return Err(VfsError::Busy);
+            }
+        }
+        self.mounts.remove(&mount_id);
+        Ok(())
+    }
+
+    pub fn propagate_mount(&mut self, mount_id: MountId) {
+        if let Some(mnt) = self.mounts.get(&mount_id) {
+            if mnt.mnt_propagation == MountPropagation::Shared {
+                let _group = mnt.mnt_group_id;
+                // propagate to peer mounts in the same group
+            }
+        }
+    }
+
+    pub fn get(&self, id: MountId) -> Option<&Mount> {
+        self.mounts.get(&id)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILESYSTEM TYPES
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub const FS_REQUIRES_DEV: u32       = 0x0001;
+pub const FS_BINARY_MOUNTDATA: u32   = 0x0002;
+pub const FS_HAS_SUBTYPE: u32        = 0x0004;
+pub const FS_USERNS_MOUNT: u32       = 0x0008;
+pub const FS_RENAME_DOES_D_MOVE: u32 = 0x0010;
+pub const FS_DISALLOW_NOTIFY_PERM: u32 = 0x0020;
+pub const FS_ALLOW_IDMAP: u32        = 0x0040;
+
+pub struct FilesystemType {
+    pub name: String,
+    pub fs_flags: u32,
+    pub mount: fn(fs_type: &FilesystemType, flags: u32, dev: &str, data: &str) -> VfsResult<SuperBlockId>,
+    pub kill_sb: fn(sb: &SuperBlock),
+}
+
+pub struct FilesystemRegistry {
+    pub filesystems: Vec<FilesystemType>,
+}
+
+impl FilesystemRegistry {
+    pub fn new() -> Self {
+        Self { filesystems: Vec::new() }
+    }
+
+    pub fn register_filesystem(&mut self, fs: FilesystemType) -> VfsResult<()> {
+        if self.filesystems.iter().any(|f| f.name == fs.name) {
+            return Err(VfsError::Exists);
+        }
+        self.filesystems.push(fs);
+        Ok(())
+    }
+
+    pub fn unregister_filesystem(&mut self, name: &str) -> VfsResult<()> {
+        if let Some(pos) = self.filesystems.iter().position(|f| f.name == name) {
+            self.filesystems.remove(pos);
+            Ok(())
+        } else {
+            Err(VfsError::NoSuchFileSystem)
+        }
+    }
+
+    pub fn find(&self, name: &str) -> Option<&FilesystemType> {
+        self.filesystems.iter().find(|f| f.name == name)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PAGE CACHE
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub type AddressSpaceId = u64;
+static NEXT_ASPACE_ID: Mutex<AddressSpaceId> = Mutex::new(1);
+
+fn alloc_aspace_id() -> AddressSpaceId {
+    let mut id = NEXT_ASPACE_ID.lock();
+    let ret = *id;
+    *id += 1;
+    ret
+}
+
+pub struct AddressSpaceOperations {
+    pub readpage: fn(file: &FileData, page: &mut CachedPage) -> VfsResult<()>,
+    pub readahead: fn(aspace: &AddressSpace, start: u64, nr_pages: u32) -> VfsResult<()>,
+    pub writepage: fn(page: &CachedPage, wbc: &WritebackControl) -> VfsResult<()>,
+    pub writepages: fn(aspace: &AddressSpace, wbc: &WritebackControl) -> VfsResult<()>,
+    pub write_begin: fn(file: &FileData, pos: i64, len: usize, page: &mut CachedPage) -> VfsResult<()>,
+    pub write_end: fn(file: &FileData, pos: i64, len: usize, copied: usize, page: &CachedPage) -> VfsResult<usize>,
+    pub set_page_dirty: fn(page: &mut CachedPage) -> bool,
+    pub invalidatepage: fn(page: &mut CachedPage, offset: u64, length: u64),
+    pub releasepage: fn(page: &CachedPage) -> bool,
+    pub direct_io: fn(iocb: &KioCb, iter: &KiovIter) -> VfsResult<isize>,
+    pub migratepage: fn(aspace: &AddressSpace, new: &mut CachedPage, old: &CachedPage) -> VfsResult<()>,
+    pub launder_page: fn(page: &CachedPage) -> VfsResult<()>,
+}
+
+impl Default for AddressSpaceOperations {
+    fn default() -> Self {
+        Self {
+            readpage: |_, _| Err(VfsError::NotImplemented),
+            readahead: |_, _, _| Err(VfsError::NotImplemented),
+            writepage: |_, _| Err(VfsError::NotImplemented),
+            writepages: |_, _| Err(VfsError::NotImplemented),
+            write_begin: |_, _, _, _| Err(VfsError::NotImplemented),
+            write_end: |_, _, _, _, _| Err(VfsError::NotImplemented),
+            set_page_dirty: |_| false,
+            invalidatepage: |_, _, _| {},
+            releasepage: |_| true,
+            direct_io: |_, _| Err(VfsError::NotImplemented),
+            migratepage: |_, _, _| Err(VfsError::NotImplemented),
+            launder_page: |_| Ok(()),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct WritebackControl {
+    pub nr_to_write: i64,
+    pub pages_skipped: i64,
+    pub sync_mode: WbSyncMode,
+    pub for_kupdate: bool,
+    pub for_background: bool,
+    pub for_reclaim: bool,
+    pub range_start: i64,
+    pub range_end: i64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WbSyncMode {
+    None,
+    All,
+}
+
+impl Default for WritebackControl {
+    fn default() -> Self {
+        Self {
+            nr_to_write: i64::MAX,
+            pages_skipped: 0,
+            sync_mode: WbSyncMode::None,
+            for_kupdate: false,
+            for_background: false,
+            for_reclaim: false,
+            range_start: 0,
+            range_end: i64::MAX,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct KioCb {
+    pub ki_filp: FileId,
+    pub ki_pos: i64,
+    pub ki_complete: bool,
+}
+
+pub struct CachedPage {
+    pub index: u64,
+    pub flags: u32,
+    pub data: Vec<u8>,
+    pub mapping: AddressSpaceId,
+    pub private: u64,
+    pub dirty: bool,
+    pub uptodate: bool,
+    pub locked: bool,
+    pub writeback: bool,
+    pub referenced: bool,
+}
+
+impl CachedPage {
+    pub fn new(index: u64, mapping: AddressSpaceId, page_size: usize) -> Self {
+        Self {
+            index,
+            flags: 0,
+            data: alloc::vec![0u8; page_size],
+            mapping,
+            private: 0,
+            dirty: false,
+            uptodate: false,
+            locked: false,
+            writeback: false,
+            referenced: false,
+        }
+    }
+}
+
+pub struct AddressSpace {
+    pub a_id: AddressSpaceId,
+    pub host_inode: Option<InodeId>,
+    pub a_ops: AddressSpaceOperations,
+    pub pages: BTreeMap<u64, CachedPage>,
+    pub nr_pages: u64,
+    pub nr_dirty: u64,
+    pub nr_writeback: u64,
+    pub page_size: usize,
+    pub flags: u32,
+}
+
+impl AddressSpace {
+    pub fn new(inode: Option<InodeId>) -> Self {
+        Self {
+            a_id: alloc_aspace_id(),
+            host_inode: inode,
+            a_ops: AddressSpaceOperations::default(),
+            pages: BTreeMap::new(),
+            nr_pages: 0,
+            nr_dirty: 0,
+            nr_writeback: 0,
+            page_size: 4096,
+            flags: 0,
+        }
+    }
+
+    pub fn find_get_page(&self, index: u64) -> Option<&CachedPage> {
+        self.pages.get(&index)
+    }
+
+    pub fn find_or_create_page(&mut self, index: u64) -> &mut CachedPage {
+        if !self.pages.contains_key(&index) {
+            let page = CachedPage::new(index, self.a_id, self.page_size);
+            self.pages.insert(index, page);
+            self.nr_pages += 1;
+        }
+        self.pages.get_mut(&index).unwrap()
+    }
+
+    pub fn readahead(&mut self, start: u64, nr_pages: u32) {
+        for i in 0..nr_pages as u64 {
+            let idx = start + i;
+            if !self.pages.contains_key(&idx) {
+                let page = CachedPage::new(idx, self.a_id, self.page_size);
+                self.pages.insert(idx, page);
+                self.nr_pages += 1;
+            }
+        }
+    }
+
+    pub fn writeback_range(&mut self, start: u64, end: u64) {
+        for (_, page) in self.pages.range_mut(start..=end) {
+            if page.dirty {
+                page.writeback = true;
+                page.dirty = false;
+                self.nr_dirty = self.nr_dirty.saturating_sub(1);
+                self.nr_writeback += 1;
+            }
+        }
+    }
+
+    pub fn invalidate_range(&mut self, start: u64, end: u64) {
+        let keys: Vec<u64> = self.pages.range(start..=end).map(|(&k, _)| k).collect();
+        for k in keys {
+            self.pages.remove(&k);
+            self.nr_pages = self.nr_pages.saturating_sub(1);
+        }
+    }
+
+    pub fn truncate_pages(&mut self, from: u64) {
+        let keys: Vec<u64> = self.pages.range(from..).map(|(&k, _)| k).collect();
+        for k in keys {
+            self.pages.remove(&k);
+            self.nr_pages = self.nr_pages.saturating_sub(1);
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BUFFER CACHE
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BufferState {
+    Uptodate,
+    Dirty,
+    Locked,
+    Mapped,
+    New,
+    Async,
+    Write,
+    ReadError,
+    WriteError,
+}
+
+pub struct BufferHead {
+    pub b_blocknr: u64,
+    pub b_size: u32,
+    pub b_dev: u64,
+    pub b_state: Vec<BufferState>,
+    pub b_data: Vec<u8>,
+    pub b_page: Option<u64>,
+    pub b_count: u32,
+    pub b_bh_next: Option<usize>,
+}
+
+impl BufferHead {
+    pub fn new(blocknr: u64, size: u32, dev: u64) -> Self {
+        Self {
+            b_blocknr: blocknr,
+            b_size: size,
+            b_dev: dev,
+            b_state: Vec::new(),
+            b_data: alloc::vec![0u8; size as usize],
+            b_page: None,
+            b_count: 1,
+            b_bh_next: None,
+        }
+    }
+
+    pub fn is_uptodate(&self) -> bool { self.b_state.contains(&BufferState::Uptodate) }
+    pub fn is_dirty(&self) -> bool    { self.b_state.contains(&BufferState::Dirty) }
+    pub fn is_locked(&self) -> bool   { self.b_state.contains(&BufferState::Locked) }
+    pub fn is_mapped(&self) -> bool   { self.b_state.contains(&BufferState::Mapped) }
+
+    pub fn mark_dirty(&mut self) {
+        if !self.is_dirty() {
+            self.b_state.push(BufferState::Dirty);
+        }
+    }
+
+    pub fn clear_dirty(&mut self) {
+        self.b_state.retain(|s| *s != BufferState::Dirty);
+    }
+
+    pub fn set_uptodate(&mut self) {
+        if !self.is_uptodate() {
+            self.b_state.push(BufferState::Uptodate);
+        }
+    }
+
+    pub fn lock(&mut self) {
+        if !self.is_locked() {
+            self.b_state.push(BufferState::Locked);
+        }
+    }
+
+    pub fn unlock(&mut self) {
+        self.b_state.retain(|s| *s != BufferState::Locked);
+    }
+}
+
+pub struct BufferCache {
+    buffers: BTreeMap<(u64, u64), BufferHead>,
+    nr_buffers: u64,
+    nr_dirty: u64,
+}
+
+impl BufferCache {
+    pub fn new() -> Self {
+        Self {
+            buffers: BTreeMap::new(),
+            nr_buffers: 0,
+            nr_dirty: 0,
+        }
+    }
+
+    pub fn getblk(&mut self, dev: u64, blocknr: u64, size: u32) -> &mut BufferHead {
+        let key = (dev, blocknr);
+        if !self.buffers.contains_key(&key) {
+            let bh = BufferHead::new(blocknr, size, dev);
+            self.buffers.insert(key, bh);
+            self.nr_buffers += 1;
+        }
+        self.buffers.get_mut(&key).unwrap()
+    }
+
+    pub fn bread(&mut self, dev: u64, blocknr: u64, size: u32) -> VfsResult<&BufferHead> {
+        let bh = self.getblk(dev, blocknr, size);
+        if !bh.is_uptodate() {
+            self.submit_bh_read(dev, blocknr)?;
+        }
+        Ok(self.buffers.get(&(dev, blocknr)).unwrap())
+    }
+
+    fn submit_bh_read(&mut self, dev: u64, blocknr: u64) -> VfsResult<()> {
+        if let Some(bh) = self.buffers.get_mut(&(dev, blocknr)) {
+            bh.lock();
+            bh.set_uptodate();
+            bh.unlock();
+        }
+        Ok(())
+    }
+
+    pub fn submit_bh(&mut self, dev: u64, blocknr: u64, write: bool) -> VfsResult<()> {
+        if write {
+            if let Some(bh) = self.buffers.get_mut(&(dev, blocknr)) {
+                bh.lock();
+                bh.clear_dirty();
+                bh.unlock();
+                self.nr_dirty = self.nr_dirty.saturating_sub(1);
+            }
+        } else {
+            self.submit_bh_read(dev, blocknr)?;
+        }
+        Ok(())
+    }
+
+    pub fn brelse(&mut self, dev: u64, blocknr: u64) {
+        if let Some(bh) = self.buffers.get_mut(&(dev, blocknr)) {
+            bh.b_count = bh.b_count.saturating_sub(1);
+            if bh.b_count == 0 {
+                self.buffers.remove(&(dev, blocknr));
+                self.nr_buffers = self.nr_buffers.saturating_sub(1);
+            }
+        }
+    }
+
+    pub fn sync_buffers(&mut self, dev: u64) -> VfsResult<()> {
+        let dirty_keys: Vec<(u64, u64)> = self.buffers.iter()
+            .filter(|(&(d, _), bh)| d == dev && bh.is_dirty())
+            .map(|(&k, _)| k)
+            .collect();
+        for key in dirty_keys {
+            self.submit_bh(key.0, key.1, true)?;
+        }
+        Ok(())
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BLOCK DEVICE INTERFACE
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub type BlockDevId = u64;
+
+pub struct BlockDevice {
+    pub bd_dev: BlockDevId,
+    pub bd_name: String,
+    pub bd_block_size: u32,
+    pub bd_nr_sectors: u64,
+    pub bd_read_only: bool,
+    pub bd_openers: u32,
+    pub bd_disk: Option<GenDisk>,
+}
+
+pub struct GenDisk {
+    pub major: u32,
+    pub first_minor: u32,
+    pub minors: u32,
+    pub disk_name: String,
+    pub capacity: u64,
+    pub queue: RequestQueue,
+}
+
+pub struct RequestQueue {
+    pub max_sectors: u32,
+    pub max_segments: u32,
+    pub max_segment_size: u32,
+    pub nr_requests: u32,
+    pub nr_pending: u32,
+    pub queue_depth: u32,
+    pub logical_block_size: u32,
+    pub physical_block_size: u32,
+}
+
+impl Default for RequestQueue {
+    fn default() -> Self {
+        Self {
+            max_sectors: 256,
+            max_segments: 128,
+            max_segment_size: 65536,
+            nr_requests: 128,
+            nr_pending: 0,
+            queue_depth: 64,
+            logical_block_size: 512,
+            physical_block_size: 4096,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct BioVec {
+    pub bv_page: u64,
+    pub bv_len: u32,
+    pub bv_offset: u32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BioOp {
+    Read,
+    Write,
+    Flush,
+    Discard,
+    SecureErase,
+    WriteZeroes,
+}
+
+pub struct Bio {
+    pub bi_opf: BioOp,
+    pub bi_sector: u64,
+    pub bi_size: u32,
+    pub bi_vcnt: u16,
+    pub bi_io_vec: Vec<BioVec>,
+    pub bi_status: i32,
+    pub bi_dev: BlockDevId,
+}
+
+impl Bio {
+    pub fn new(op: BioOp, sector: u64, dev: BlockDevId) -> Self {
+        Self {
+            bi_opf: op,
+            bi_sector: sector,
+            bi_size: 0,
+            bi_vcnt: 0,
+            bi_io_vec: Vec::new(),
+            bi_status: 0,
+            bi_dev: dev,
+        }
+    }
+
+    pub fn add_page(&mut self, page: u64, len: u32, offset: u32) {
+        self.bi_io_vec.push(BioVec {
+            bv_page: page,
+            bv_len: len,
+            bv_offset: offset,
+        });
+        self.bi_vcnt += 1;
+        self.bi_size += len;
+    }
+}
+
+pub fn submit_bio(bio: &mut Bio) -> VfsResult<()> {
+    if bio.bi_io_vec.is_empty() {
+        return Err(VfsError::InvalidArgument);
+    }
+    bio.bi_status = 0;
+    Ok(())
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EXTENDED ATTRIBUTES
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum XattrNamespace {
+    User,
+    System,
+    Trusted,
+    Security,
+}
+
+impl XattrNamespace {
+    pub fn prefix(&self) -> &'static str {
+        match self {
+            Self::User => "user.",
+            Self::System => "system.",
+            Self::Trusted => "trusted.",
+            Self::Security => "security.",
+        }
+    }
+
+    pub fn from_name(name: &str) -> Option<Self> {
+        if name.starts_with("user.") { return Some(Self::User); }
+        if name.starts_with("system.") { return Some(Self::System); }
+        if name.starts_with("trusted.") { return Some(Self::Trusted); }
+        if name.starts_with("security.") { return Some(Self::Security); }
+        None
+    }
+}
+
+pub struct XattrHandler {
+    pub namespace: XattrNamespace,
+    pub get: fn(inode: &InodeData, name: &str, buf: &mut Vec<u8>) -> VfsResult<usize>,
+    pub set: fn(inode: &InodeData, name: &str, value: &[u8], flags: u32) -> VfsResult<()>,
+}
+
+pub struct XattrEntry {
+    pub name: String,
+    pub value: Vec<u8>,
+    pub namespace: XattrNamespace,
+}
+
+pub struct XattrStore {
+    pub entries: BTreeMap<InodeId, Vec<XattrEntry>>,
+}
+
+impl XattrStore {
+    pub fn new() -> Self {
+        Self { entries: BTreeMap::new() }
+    }
+
+    pub fn getxattr(&self, inode: InodeId, name: &str) -> VfsResult<Vec<u8>> {
+        let entries = self.entries.get(&inode).ok_or(VfsError::NotFound)?;
+        let entry = entries.iter().find(|e| e.name == name).ok_or(VfsError::NotFound)?;
+        Ok(entry.value.clone())
+    }
+
+    pub fn setxattr(&mut self, inode: InodeId, name: &str, value: &[u8], _flags: u32) -> VfsResult<()> {
+        let ns = XattrNamespace::from_name(name).ok_or(VfsError::InvalidArgument)?;
+        let entries = self.entries.entry(inode).or_insert_with(Vec::new);
+        if let Some(entry) = entries.iter_mut().find(|e| e.name == name) {
+            entry.value = value.to_vec();
+        } else {
+            entries.push(XattrEntry {
+                name: String::from(name),
+                value: value.to_vec(),
+                namespace: ns,
+            });
+        }
+        Ok(())
+    }
+
+    pub fn removexattr(&mut self, inode: InodeId, name: &str) -> VfsResult<()> {
+        if let Some(entries) = self.entries.get_mut(&inode) {
+            let len_before = entries.len();
+            entries.retain(|e| e.name != name);
+            if entries.len() == len_before {
+                return Err(VfsError::NotFound);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn listxattr(&self, inode: InodeId) -> Vec<String> {
+        self.entries.get(&inode)
+            .map(|entries| entries.iter().map(|e| e.name.clone()).collect())
+            .unwrap_or_default()
+    }
+}
+
+// ─── POSIX ACL ──────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AclType {
+    Access,
+    Default,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AclTag {
+    UserObj,
+    User,
+    GroupObj,
+    Group,
+    Mask,
+    Other,
+}
+
+#[derive(Debug, Clone)]
+pub struct AclEntry {
+    pub tag: AclTag,
+    pub perm: u16,
+    pub id: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct PosixAcl {
+    pub entries: Vec<AclEntry>,
+}
+
+impl PosixAcl {
+    pub fn new() -> Self {
+        Self { entries: Vec::new() }
+    }
+
+    pub fn from_mode(mode: u32) -> Self {
+        let mut acl = Self::new();
+        acl.entries.push(AclEntry { tag: AclTag::UserObj, perm: ((mode >> 6) & 7) as u16, id: 0 });
+        acl.entries.push(AclEntry { tag: AclTag::GroupObj, perm: ((mode >> 3) & 7) as u16, id: 0 });
+        acl.entries.push(AclEntry { tag: AclTag::Other, perm: (mode & 7) as u16, id: 0 });
+        acl
+    }
+
+    pub fn to_mode(&self) -> u32 {
+        let mut mode: u32 = 0;
+        for entry in &self.entries {
+            match entry.tag {
+                AclTag::UserObj => mode |= (entry.perm as u32) << 6,
+                AclTag::GroupObj | AclTag::Mask => mode |= (entry.perm as u32) << 3,
+                AclTag::Other => mode |= entry.perm as u32,
+                _ => {}
+            }
+        }
+        mode
+    }
+
+    pub fn check_permission(&self, uid: u32, gid: u32, want: u16) -> bool {
+        for entry in &self.entries {
+            match entry.tag {
+                AclTag::UserObj => {
+                    if entry.perm & want == want { return true; }
+                }
+                AclTag::User => {
+                    if entry.id == uid && entry.perm & want == want { return true; }
+                }
+                AclTag::GroupObj => {
+                    if entry.perm & want == want { return true; }
+                }
+                AclTag::Group => {
+                    if entry.id == gid && entry.perm & want == want { return true; }
+                }
+                AclTag::Other => {
+                    if entry.perm & want == want { return true; }
+                }
+                AclTag::Mask => {}
+            }
+        }
+        false
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILE LOCKING
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub const F_RDLCK: i16 = 0;
+pub const F_WRLCK: i16 = 1;
+pub const F_UNLCK: i16 = 2;
+
+pub const F_GETLK: i32  = 5;
+pub const F_SETLK: i32  = 6;
+pub const F_SETLKW: i32 = 7;
+pub const F_SETLEASE: i32 = 1024;
+pub const F_GETLEASE: i32 = 1025;
+
+pub const LOCK_SH: i32 = 1;
+pub const LOCK_EX: i32 = 2;
+pub const LOCK_NB: i32 = 4;
+pub const LOCK_UN: i32 = 8;
+
+#[derive(Debug, Clone)]
+pub struct FileLock {
+    pub l_type: i16,
+    pub l_whence: i16,
+    pub l_start: i64,
+    pub l_len: i64,
+    pub l_pid: u32,
+    pub fl_owner: u64,
+    pub fl_flags: u32,
+}
+
+impl FileLock {
+    pub fn new(l_type: i16, start: i64, len: i64, pid: u32) -> Self {
+        Self {
+            l_type,
+            l_whence: SEEK_SET as i16,
+            l_start: start,
+            l_len: len,
+            l_pid: pid,
+            fl_owner: 0,
+            fl_flags: 0,
+        }
+    }
+
+    pub fn end(&self) -> i64 {
+        if self.l_len == 0 { i64::MAX } else { self.l_start + self.l_len - 1 }
+    }
+
+    pub fn overlaps(&self, other: &FileLock) -> bool {
+        self.l_start <= other.end() && other.l_start <= self.end()
+    }
+
+    pub fn conflicts(&self, other: &FileLock) -> bool {
+        if !self.overlaps(other) { return false; }
+        if self.l_type == F_RDLCK && other.l_type == F_RDLCK { return false; }
+        true
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LeaseType {
+    None,
+    Read,
+    Write,
+}
+
+pub struct FileLockManager {
+    posix_locks: BTreeMap<InodeId, Vec<FileLock>>,
+    flock_locks: BTreeMap<InodeId, Vec<FileLock>>,
+    leases: BTreeMap<InodeId, LeaseType>,
+}
+
+impl FileLockManager {
+    pub fn new() -> Self {
+        Self {
+            posix_locks: BTreeMap::new(),
+            flock_locks: BTreeMap::new(),
+            leases: BTreeMap::new(),
+        }
+    }
+
+    pub fn posix_lock(&mut self, inode: InodeId, lock: &FileLock, cmd: i32) -> VfsResult<()> {
+        let locks = self.posix_locks.entry(inode).or_insert_with(Vec::new);
+
+        if lock.l_type == F_UNLCK {
+            locks.retain(|l| l.l_pid != lock.l_pid || !l.overlaps(lock));
+            return Ok(());
+        }
+
+        for existing in locks.iter() {
+            if existing.l_pid != lock.l_pid && existing.conflicts(lock) {
+                if cmd == F_SETLKW {
+                    if self.detect_deadlock(lock.l_pid, existing.l_pid) {
+                        return Err(VfsError::Deadlock);
+                    }
+                    return Err(VfsError::WouldBlock);
+                }
+                return Err(VfsError::WouldBlock);
+            }
+        }
+
+        locks.retain(|l| l.l_pid != lock.l_pid || !l.overlaps(lock));
+        locks.push(lock.clone());
+        Ok(())
+    }
+
+    pub fn posix_getlk(&self, inode: InodeId, lock: &mut FileLock) -> VfsResult<()> {
+        if let Some(locks) = self.posix_locks.get(&inode) {
+            for existing in locks {
+                if existing.l_pid != lock.l_pid && existing.conflicts(lock) {
+                    *lock = existing.clone();
+                    return Ok(());
+                }
+            }
+        }
+        lock.l_type = F_UNLCK;
+        Ok(())
+    }
+
+    pub fn flock(&mut self, inode: InodeId, lock: &FileLock, cmd: i32) -> VfsResult<()> {
+        let locks = self.flock_locks.entry(inode).or_insert_with(Vec::new);
+
+        if cmd & LOCK_UN != 0 {
+            locks.retain(|l| l.fl_owner != lock.fl_owner);
+            return Ok(());
+        }
+
+        for existing in locks.iter() {
+            if existing.fl_owner != lock.fl_owner && existing.conflicts(lock) {
+                if cmd & LOCK_NB != 0 {
+                    return Err(VfsError::WouldBlock);
+                }
+                return Err(VfsError::WouldBlock);
+            }
+        }
+
+        locks.retain(|l| l.fl_owner != lock.fl_owner);
+        locks.push(lock.clone());
+        Ok(())
+    }
+
+    pub fn set_lease(&mut self, inode: InodeId, lease: LeaseType) -> VfsResult<()> {
+        if lease != LeaseType::None {
+            if let Some(&existing) = self.leases.get(&inode) {
+                if existing != LeaseType::None && existing != lease {
+                    return Err(VfsError::WouldBlock);
+                }
+            }
+        }
+        self.leases.insert(inode, lease);
+        Ok(())
+    }
+
+    pub fn get_lease(&self, inode: InodeId) -> LeaseType {
+        self.leases.get(&inode).copied().unwrap_or(LeaseType::None)
+    }
+
+    fn detect_deadlock(&self, waiter_pid: u32, holder_pid: u32) -> bool {
+        let mut visited = Vec::new();
+        let mut stack = alloc::vec![holder_pid];
+        while let Some(pid) = stack.pop() {
+            if pid == waiter_pid { return true; }
+            if visited.contains(&pid) { continue; }
+            visited.push(pid);
+            for locks in self.posix_locks.values() {
+                for lock in locks {
+                    if lock.l_pid == pid {
+                        for other_locks in self.posix_locks.values() {
+                            for other in other_locks {
+                                if other.l_pid != pid && other.conflicts(lock) {
+                                    stack.push(other.l_pid);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FS NOTIFICATION (inotify / fanotify / dnotify / fsnotify)
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub const IN_ACCESS: u32        = 0x0000_0001;
+pub const IN_MODIFY: u32        = 0x0000_0002;
+pub const IN_ATTRIB: u32        = 0x0000_0004;
+pub const IN_CLOSE_WRITE: u32   = 0x0000_0008;
+pub const IN_CLOSE_NOWRITE: u32 = 0x0000_0010;
+pub const IN_OPEN: u32          = 0x0000_0020;
+pub const IN_MOVED_FROM: u32    = 0x0000_0040;
+pub const IN_MOVED_TO: u32      = 0x0000_0080;
+pub const IN_CREATE: u32        = 0x0000_0100;
+pub const IN_DELETE: u32        = 0x0000_0200;
+pub const IN_DELETE_SELF: u32   = 0x0000_0400;
+pub const IN_MOVE_SELF: u32     = 0x0000_0800;
+pub const IN_ALL_EVENTS: u32    = 0x0000_0FFF;
+pub const IN_ISDIR: u32         = 0x4000_0000;
+
+pub const FAN_ACCESS: u32       = 0x0000_0001;
+pub const FAN_MODIFY: u32       = 0x0000_0002;
+pub const FAN_CLOSE_WRITE: u32  = 0x0000_0008;
+pub const FAN_CLOSE_NOWRITE: u32 = 0x0000_0010;
+pub const FAN_OPEN: u32         = 0x0000_0020;
+pub const FAN_ACCESS_PERM: u32  = 0x0002_0000;
+pub const FAN_OPEN_PERM: u32    = 0x0001_0000;
+pub const FAN_OPEN_EXEC_PERM: u32 = 0x0004_0000;
+
+pub type WatchDescriptor = i32;
+static NEXT_WD: Mutex<WatchDescriptor> = Mutex::new(1);
+
+fn alloc_wd() -> WatchDescriptor {
+    let mut wd = NEXT_WD.lock();
+    let ret = *wd;
+    *wd += 1;
+    ret
+}
+
+#[derive(Debug, Clone)]
+pub struct FsNotifyEvent {
+    pub mask: u32,
+    pub cookie: u32,
+    pub name: String,
+    pub wd: WatchDescriptor,
+}
+
+#[derive(Debug, Clone)]
+pub struct InotifyWatch {
+    pub wd: WatchDescriptor,
+    pub inode: InodeId,
+    pub mask: u32,
+}
+
+pub struct FsNotifyBackend {
+    inotify_watches: Vec<InotifyWatch>,
+    fanotify_marks: Vec<FanotifyMark>,
+    dnotify_dirs: BTreeMap<InodeId, u32>,
+    event_queue: Vec<FsNotifyEvent>,
+    max_events: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct FanotifyMark {
+    pub inode: InodeId,
+    pub mask: u32,
+    pub flags: u32,
+}
+
+impl FsNotifyBackend {
+    pub fn new() -> Self {
+        Self {
+            inotify_watches: Vec::new(),
+            fanotify_marks: Vec::new(),
+            dnotify_dirs: BTreeMap::new(),
+            event_queue: Vec::new(),
+            max_events: 16384,
+        }
+    }
+
+    pub fn inotify_add_watch(&mut self, inode: InodeId, mask: u32) -> WatchDescriptor {
+        if let Some(w) = self.inotify_watches.iter_mut().find(|w| w.inode == inode) {
+            w.mask |= mask;
+            return w.wd;
+        }
+        let wd = alloc_wd();
+        self.inotify_watches.push(InotifyWatch { wd, inode, mask });
+        wd
+    }
+
+    pub fn inotify_rm_watch(&mut self, wd: WatchDescriptor) -> VfsResult<()> {
+        if let Some(pos) = self.inotify_watches.iter().position(|w| w.wd == wd) {
+            self.inotify_watches.remove(pos);
+            Ok(())
+        } else {
+            Err(VfsError::NotFound)
+        }
+    }
+
+    pub fn fanotify_mark(&mut self, inode: InodeId, mask: u32, flags: u32) {
+        if let Some(m) = self.fanotify_marks.iter_mut().find(|m| m.inode == inode) {
+            m.mask |= mask;
+            return;
+        }
+        self.fanotify_marks.push(FanotifyMark { inode, mask, flags });
+    }
+
+    pub fn dnotify_register(&mut self, dir_inode: InodeId, events: u32) {
+        self.dnotify_dirs.insert(dir_inode, events);
+    }
+
+    pub fn emit_event(&mut self, inode: InodeId, mask: u32, name: &str) {
+        for watch in &self.inotify_watches {
+            if watch.inode == inode && watch.mask & mask != 0 {
+                if self.event_queue.len() < self.max_events {
+                    self.event_queue.push(FsNotifyEvent {
+                        mask,
+                        cookie: 0,
+                        name: String::from(name),
+                        wd: watch.wd,
+                    });
+                }
+            }
+        }
+        for mark in &self.fanotify_marks {
+            if mark.inode == inode && mark.mask & mask != 0 {
+                if self.event_queue.len() < self.max_events {
+                    self.event_queue.push(FsNotifyEvent {
+                        mask,
+                        cookie: 0,
+                        name: String::from(name),
+                        wd: -1,
+                    });
+                }
+            }
+        }
+    }
+
+    pub fn read_events(&mut self, max: usize) -> Vec<FsNotifyEvent> {
+        let count = core::cmp::min(max, self.event_queue.len());
+        self.event_queue.drain(..count).collect()
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILESYSTEM FREEZE / THAW
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub struct FreezeState {
+    pub frozen_sbs: BTreeMap<SuperBlockId, u32>,
+}
+
+impl FreezeState {
+    pub fn new() -> Self {
+        Self { frozen_sbs: BTreeMap::new() }
+    }
+
+    pub fn freeze_super(&mut self, sb_id: SuperBlockId, sb: &mut SuperBlock) -> VfsResult<()> {
+        let count = self.frozen_sbs.entry(sb_id).or_insert(0);
+        if *count == 0 {
+            (sb.s_op.sync_fs)(sb, true)?;
+            (sb.s_op.freeze_fs)(sb)?;
+        }
+        *count += 1;
+        sb.s_freeze_count = *count;
+        Ok(())
+    }
+
+    pub fn thaw_super(&mut self, sb_id: SuperBlockId, sb: &mut SuperBlock) -> VfsResult<()> {
+        let count = self.frozen_sbs.get_mut(&sb_id).ok_or(VfsError::InvalidArgument)?;
+        if *count == 0 {
+            return Err(VfsError::InvalidArgument);
+        }
+        *count -= 1;
+        if *count == 0 {
+            (sb.s_op.unfreeze_fs)(sb)?;
+            self.frozen_sbs.remove(&sb_id);
+        }
+        sb.s_freeze_count = *count;
+        Ok(())
+    }
+
+    pub fn is_frozen(&self, sb_id: SuperBlockId) -> bool {
+        self.frozen_sbs.get(&sb_id).map_or(false, |&c| c > 0)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DISK QUOTA
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum QuotaType {
+    User,
+    Group,
+    Project,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct DiskQuota {
+    pub dq_id: u32,
+    pub dq_type: u32,
+    pub dq_bhardlimit: u64,
+    pub dq_bsoftlimit: u64,
+    pub dq_curspace: u64,
+    pub dq_ihardlimit: u64,
+    pub dq_isoftlimit: u64,
+    pub dq_curinodes: u64,
+    pub dq_btime: i64,
+    pub dq_itime: i64,
+    pub dq_valid: bool,
+}
+
+pub struct DquotOperations {
+    pub write_dquot: fn(dquot: &DiskQuota) -> VfsResult<()>,
+    pub read_dquot: fn(id: u32, qtype: QuotaType) -> VfsResult<DiskQuota>,
+    pub alloc_dquot: fn(id: u32, qtype: QuotaType) -> DiskQuota,
+    pub destroy_dquot: fn(dquot: &DiskQuota),
+    pub acquire_dquot: fn(dquot: &mut DiskQuota) -> VfsResult<()>,
+    pub release_dquot: fn(dquot: &DiskQuota) -> VfsResult<()>,
+}
+
+impl Default for DquotOperations {
+    fn default() -> Self {
+        Self {
+            write_dquot: |_| Ok(()),
+            read_dquot: |_, _| Err(VfsError::NotImplemented),
+            alloc_dquot: |id, _| DiskQuota { dq_id: id, dq_valid: true, ..Default::default() },
+            destroy_dquot: |_| {},
+            acquire_dquot: |_| Ok(()),
+            release_dquot: |_| Ok(()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum QuotaFormat {
+    V1,
+    V2,
+    VfsOld,
+    VfsV0,
+    VfsV1,
+}
+
+pub struct QuotaManager {
+    quotas: BTreeMap<(QuotaType, u32), DiskQuota>,
+    enabled: BTreeMap<SuperBlockId, Vec<QuotaType>>,
+    dq_op: DquotOperations,
+    format: QuotaFormat,
+}
+
+impl QuotaManager {
+    pub fn new() -> Self {
+        Self {
+            quotas: BTreeMap::new(),
+            enabled: BTreeMap::new(),
+            dq_op: DquotOperations::default(),
+            format: QuotaFormat::VfsV1,
+        }
+    }
+
+    pub fn enable_quota(&mut self, sb: SuperBlockId, qt: QuotaType) {
+        self.enabled.entry(sb).or_insert_with(Vec::new).push(qt);
+    }
+
+    pub fn disable_quota(&mut self, sb: SuperBlockId, qt: QuotaType) {
+        if let Some(types) = self.enabled.get_mut(&sb) {
+            types.retain(|t| *t != qt);
+        }
+    }
+
+    pub fn get_quota(&self, qt: QuotaType, id: u32) -> Option<&DiskQuota> {
+        self.quotas.get(&(qt, id))
+    }
+
+    pub fn set_quota(&mut self, qt: QuotaType, id: u32, quota: DiskQuota) {
+        self.quotas.insert((qt, id), quota);
+    }
+
+    pub fn alloc_space(&mut self, qt: QuotaType, id: u32, space: u64) -> VfsResult<()> {
+        let q = self.quotas.entry((qt, id)).or_insert_with(Default::default);
+        let new_space = q.dq_curspace + space;
+        if q.dq_bhardlimit > 0 && new_space > q.dq_bhardlimit {
+            return Err(VfsError::QuotaExceeded);
+        }
+        q.dq_curspace = new_space;
+        Ok(())
+    }
+
+    pub fn free_space(&mut self, qt: QuotaType, id: u32, space: u64) {
+        if let Some(q) = self.quotas.get_mut(&(qt, id)) {
+            q.dq_curspace = q.dq_curspace.saturating_sub(space);
+        }
+    }
+
+    pub fn alloc_inode(&mut self, qt: QuotaType, id: u32) -> VfsResult<()> {
+        let q = self.quotas.entry((qt, id)).or_insert_with(Default::default);
+        let new_count = q.dq_curinodes + 1;
+        if q.dq_ihardlimit > 0 && new_count > q.dq_ihardlimit {
+            return Err(VfsError::QuotaExceeded);
+        }
+        q.dq_curinodes = new_count;
+        Ok(())
+    }
+
+    pub fn free_inode(&mut self, qt: QuotaType, id: u32) {
+        if let Some(q) = self.quotas.get_mut(&(qt, id)) {
+            q.dq_curinodes = q.dq_curinodes.saturating_sub(1);
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GLOBAL VFS STATE
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub struct VfsState {
+    pub superblocks: BTreeMap<SuperBlockId, SuperBlock>,
+    pub inodes: BTreeMap<InodeId, InodeData>,
+    pub dcache: DentryCache,
+    pub files: BTreeMap<FileId, FileData>,
+    pub mount_tree: MountTree,
+    pub fs_registry: FilesystemRegistry,
+    pub address_spaces: BTreeMap<AddressSpaceId, AddressSpace>,
+    pub buffer_cache: BufferCache,
+    pub xattr_store: XattrStore,
+    pub lock_manager: FileLockManager,
+    pub notify: FsNotifyBackend,
+    pub freeze_state: FreezeState,
+    pub quota_manager: QuotaManager,
+    pub root_dentry: Option<DentryId>,
+    pub root_mount: Option<MountId>,
+    pub cwd_dentry: Option<DentryId>,
+    pub cwd_mount: Option<MountId>,
+    pub nr_open_files: u64,
+    pub nr_inodes: u64,
+}
+
+impl VfsState {
+    pub fn new() -> Self {
+        Self {
+            superblocks: BTreeMap::new(),
+            inodes: BTreeMap::new(),
+            dcache: DentryCache::new(),
+            files: BTreeMap::new(),
+            mount_tree: MountTree::new(),
+            fs_registry: FilesystemRegistry::new(),
+            address_spaces: BTreeMap::new(),
+            buffer_cache: BufferCache::new(),
+            xattr_store: XattrStore::new(),
+            lock_manager: FileLockManager::new(),
+            notify: FsNotifyBackend::new(),
+            freeze_state: FreezeState::new(),
+            quota_manager: QuotaManager::new(),
+            root_dentry: None,
+            root_mount: None,
+            cwd_dentry: None,
+            cwd_mount: None,
+            nr_open_files: 0,
+            nr_inodes: 0,
+        }
+    }
+
+    pub fn register_superblock(&mut self, sb: SuperBlock) -> SuperBlockId {
+        let id = sb.s_id;
+        self.superblocks.insert(id, sb);
+        id
+    }
+
+    pub fn register_inode(&mut self, inode: InodeData) -> InodeId {
+        let id = inode.i_ino;
+        self.inodes.insert(id, inode);
+        self.nr_inodes += 1;
+        id
+    }
+
+    pub fn open_file(&mut self, inode_id: InodeId, flags: u32) -> VfsResult<FileId> {
+        let inode = self.inodes.get(&inode_id).ok_or(VfsError::NotFound)?;
+
+        if inode.is_dir() && flags & O_ACCMODE != O_RDONLY {
+            return Err(VfsError::IsDirectory);
+        }
+
+        let mut file = FileData::new(inode_id, flags);
+        file.f_size = inode.i_size;
+        file.f_op = FileOperations::default();
+
+        let fid = file.f_id;
+        self.files.insert(fid, file);
+        self.nr_open_files += 1;
+        Ok(fid)
+    }
+
+    pub fn close_file(&mut self, file_id: FileId) -> VfsResult<()> {
+        self.files.remove(&file_id).ok_or(VfsError::NotFound)?;
+        self.nr_open_files = self.nr_open_files.saturating_sub(1);
+        Ok(())
+    }
+
+    pub fn read_file(&mut self, file_id: FileId, buf: &mut [u8]) -> VfsResult<usize> {
+        let file = self.files.get(&file_id).ok_or(VfsError::NotFound)?;
+        if !file.is_readable() {
+            return Err(VfsError::PermissionDenied);
+        }
+        let inode_id = file.f_inode.ok_or(VfsError::NotFound)?;
+        let pos = file.f_pos;
+        let inode = self.inodes.get(&inode_id).ok_or(VfsError::NotFound)?;
+        let size = inode.i_size;
+        if pos >= size {
+            return Ok(0);
+        }
+        let available = (size - pos) as usize;
+        let to_read = core::cmp::min(available, buf.len());
+        let data = &inode.i_data;
+        let start = pos as usize;
+        let end = core::cmp::min(start + to_read, data.len());
+        let actual = end - start;
+        buf[..actual].copy_from_slice(&data[start..end]);
+        if let Some(f) = self.files.get_mut(&file_id) {
+            f.f_pos += actual as i64;
+        }
+        Ok(actual)
+    }
+
+    pub fn write_file(&mut self, file_id: FileId, buf: &[u8]) -> VfsResult<usize> {
+        let file = self.files.get(&file_id).ok_or(VfsError::NotFound)?;
+        if !file.is_writable() {
+            return Err(VfsError::PermissionDenied);
+        }
+        let inode_id = file.f_inode.ok_or(VfsError::NotFound)?;
+        let pos = file.f_pos;
+        let start = pos as usize;
+        let end = start + buf.len();
+        if let Some(inode) = self.inodes.get_mut(&inode_id) {
+            if end > inode.i_data.len() {
+                inode.i_data.resize(end, 0);
+            }
+            inode.i_data[start..end].copy_from_slice(buf);
+            inode.i_size = inode.i_data.len() as i64;
+            inode.i_blocks = (inode.i_size as u64 + 511) / 512;
+        }
+        if let Some(f) = self.files.get_mut(&file_id) {
+            f.f_pos += buf.len() as i64;
+        }
+        self.notify.emit_event(inode_id, IN_MODIFY, "");
+        Ok(buf.len())
+    }
+
+    pub fn seek_file(&mut self, file_id: FileId, offset: i64, whence: i32) -> VfsResult<i64> {
+        let file = self.files.get_mut(&file_id).ok_or(VfsError::NotFound)?;
+        (file.f_op.llseek)(file, offset, whence)
+    }
+
+    pub fn resolve_path(&mut self, path: &str) -> VfsResult<InodeId> {
+        let pd = filename_lookup(self, path, LOOKUP_FOLLOW)?;
+        let did = pd.dentry.ok_or(VfsError::NotFound)?;
+        let dentry = self.dcache.get(did).ok_or(VfsError::NotFound)?;
+        dentry.d_inode.ok_or(VfsError::NotFound)
+    }
+
+    pub fn create_file(&mut self, path: &str, mode: u32) -> VfsResult<InodeId> {
+        let sb_id = self.superblocks.keys().next().copied().unwrap_or(0);
+        let mut inode = InodeData::new(S_IFREG | (mode & 0o7777), sb_id);
+        let id = inode.i_ino;
+        self.register_inode(inode);
+
+        let parts: Vec<&str> = path.rsplitn(2, '/').collect();
+        let name = parts[0];
+        if let Some(root) = self.root_dentry {
+            let parent = if parts.len() > 1 && !parts[1].is_empty() {
+                let pd = path_lookupat(self, parts[1], LOOKUP_DIRECTORY)?;
+                pd.dentry.unwrap_or(root)
+            } else {
+                root
+            };
+            let sb = self.dcache.get(parent).map(|d| d.d_sb).unwrap_or(0);
+            let did = self.dcache.d_alloc(name, Some(parent), sb);
+            self.dcache.d_add(did, id);
+        }
+
+        self.notify.emit_event(id, IN_CREATE, path);
+        Ok(id)
+    }
+
+    pub fn mkdir(&mut self, path: &str, mode: u32) -> VfsResult<InodeId> {
+        let sb_id = self.superblocks.keys().next().copied().unwrap_or(0);
+        let inode = InodeData::new(S_IFDIR | (mode & 0o7777), sb_id);
+        let id = inode.i_ino;
+        self.register_inode(inode);
+        Ok(id)
+    }
+
+    pub fn stat(&self, inode_id: InodeId) -> VfsResult<Kstat> {
+        let inode = self.inodes.get(&inode_id).ok_or(VfsError::NotFound)?;
+        Ok(Kstat {
+            ino: inode.i_ino,
+            dev: 0,
+            mode: inode.i_mode,
+            nlink: inode.i_nlink,
+            uid: inode.i_uid,
+            gid: inode.i_gid,
+            rdev: inode.i_rdev,
+            size: inode.i_size,
+            atime: inode.i_atime,
+            mtime: inode.i_mtime,
+            ctime: inode.i_ctime,
+            blksize: 1 << inode.i_blkbits,
+            blocks: inode.i_blocks,
+        })
+    }
+}
+
+pub static VFS: Mutex<Option<VfsState>> = Mutex::new(None);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BACKWARD COMPATIBILITY — kept for syscall.rs, task.rs, raefs.rs
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub trait Inode: Send + Sync {
+    fn read_at(&self, offset: usize, buf: &mut [u8]) -> usize;
+    fn write_at(&self, offset: usize, buf: &[u8]) -> usize;
+    fn size(&self) -> usize;
+}
+
+pub struct File {
+    pub inode: Arc<dyn Inode>,
+    pub offset: usize,
+    pub flags: u32,
+}
+
+impl core::fmt::Debug for File {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("File")
+            .field("offset", &self.offset)
+            .field("flags", &self.flags)
+            .finish()
+    }
+}
+
+impl File {
+    pub fn new(inode: Arc<dyn Inode>, flags: u32) -> Self {
+        Self { inode, offset: 0, flags }
+    }
+
+    pub fn read(&mut self, buf: &mut [u8]) -> usize {
+        let bytes_read = self.inode.read_at(self.offset, buf);
+        self.offset += bytes_read;
+        bytes_read
+    }
+
+    pub fn write(&mut self, buf: &[u8]) -> usize {
+        let bytes_written = self.inode.write_at(self.offset, buf);
+        self.offset += bytes_written;
+        bytes_written
+    }
+
+    pub fn seek(&mut self, offset: usize) -> usize {
+        self.offset = offset;
+        self.offset
+    }
+}
+
+pub struct InitramfsInode {
+    pub data: &'static [u8],
+}
+
+impl Inode for InitramfsInode {
+    fn read_at(&self, offset: usize, buf: &mut [u8]) -> usize {
+        if offset >= self.data.len() {
+            return 0;
+        }
+        let available = self.data.len() - offset;
+        let to_copy = core::cmp::min(available, buf.len());
+        buf[..to_copy].copy_from_slice(&self.data[offset..offset + to_copy]);
+        to_copy
+    }
+
+    fn write_at(&self, _offset: usize, _buf: &[u8]) -> usize {
+        0
+    }
+
+    fn size(&self) -> usize {
+        self.data.len()
+    }
+}
+
+pub fn open_path(path: &str) -> Option<Arc<dyn Inode>> {
+    let archive = crate::tar::TarArchive::new(crate::INITRAMFS);
+    if let Some(file) = archive.get_file(path) {
+        let data: &'static [u8] = unsafe { core::slice::from_raw_parts(file.data.as_ptr(), file.data.len()) };
+        return Some(Arc::new(InitramfsInode { data }));
+    }
+
+    if let Some(inode_id) = crate::raefs::RaeFS::find_or_create_file(path) {
+        return Some(Arc::new(crate::raefs::RaeFSInode { id: inode_id }));
+    }
+
+    None
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+
+pub fn init() {
+    let mut state = VfsState::new();
+
+    let mut root_sb = SuperBlock::new("rootfs", 0, 0x7261_6566);
+    let root_dentry = state.dcache.d_alloc("/", None, root_sb.s_id);
+    root_sb.s_root = Some(root_dentry);
+    let sb_id = state.register_superblock(root_sb);
+
+    let mut root_inode = InodeData::new(S_IFDIR | 0o755, sb_id);
+    let root_ino = root_inode.i_ino;
+    state.register_inode(root_inode);
+    state.dcache.d_add(root_dentry, root_ino);
+
+    let mnt = Mount::new(root_dentry, sb_id);
+    let mnt_id = mnt.mnt_id;
+    state.mount_tree.mounts.insert(mnt_id, mnt);
+
+    state.root_dentry = Some(root_dentry);
+    state.root_mount = Some(mnt_id);
+    state.cwd_dentry = Some(root_dentry);
+    state.cwd_mount = Some(mnt_id);
+
+    state.fs_registry.register_filesystem(FilesystemType {
+        name: String::from("rootfs"),
+        fs_flags: 0,
+        mount: |_, _, _, _| Err(VfsError::NotSupported),
+        kill_sb: |_| {},
+    }).ok();
+    state.fs_registry.register_filesystem(FilesystemType {
+        name: String::from("tmpfs"),
+        fs_flags: 0,
+        mount: |_, _, _, _| Err(VfsError::NotImplemented),
+        kill_sb: |_| {},
+    }).ok();
+
+    *VFS.lock() = Some(state);
+}

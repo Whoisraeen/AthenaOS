@@ -1,0 +1,75 @@
+msi_stub!(msi_stub_000, 0); msi_stub!(msi_stub_001, 1); msi_stub!(msi_stub_002, 2); msi_stub!(msi_stub_003, 3); 
+msi_stub!(msi_stub_004, 4); msi_stub!(msi_stub_005, 5); msi_stub!(msi_stub_006, 6); msi_stub!(msi_stub_007, 7); 
+msi_stub!(msi_stub_008, 8); msi_stub!(msi_stub_009, 9); msi_stub!(msi_stub_010, 10); msi_stub!(msi_stub_011, 11); 
+msi_stub!(msi_stub_012, 12); msi_stub!(msi_stub_013, 13); msi_stub!(msi_stub_014, 14); msi_stub!(msi_stub_015, 15); 
+msi_stub!(msi_stub_016, 16); msi_stub!(msi_stub_017, 17); msi_stub!(msi_stub_018, 18); msi_stub!(msi_stub_019, 19); 
+msi_stub!(msi_stub_020, 20); msi_stub!(msi_stub_021, 21); msi_stub!(msi_stub_022, 22); msi_stub!(msi_stub_023, 23); 
+msi_stub!(msi_stub_024, 24); msi_stub!(msi_stub_025, 25); msi_stub!(msi_stub_026, 26); msi_stub!(msi_stub_027, 27); 
+msi_stub!(msi_stub_028, 28); msi_stub!(msi_stub_029, 29); msi_stub!(msi_stub_030, 30); msi_stub!(msi_stub_031, 31); 
+msi_stub!(msi_stub_032, 32); msi_stub!(msi_stub_033, 33); msi_stub!(msi_stub_034, 34); msi_stub!(msi_stub_035, 35); 
+msi_stub!(msi_stub_036, 36); msi_stub!(msi_stub_037, 37); msi_stub!(msi_stub_038, 38); msi_stub!(msi_stub_039, 39); 
+msi_stub!(msi_stub_040, 40); msi_stub!(msi_stub_041, 41); msi_stub!(msi_stub_042, 42); msi_stub!(msi_stub_043, 43); 
+msi_stub!(msi_stub_044, 44); msi_stub!(msi_stub_045, 45); msi_stub!(msi_stub_046, 46); msi_stub!(msi_stub_047, 47); 
+msi_stub!(msi_stub_048, 48); msi_stub!(msi_stub_049, 49); msi_stub!(msi_stub_050, 50); msi_stub!(msi_stub_051, 51); 
+msi_stub!(msi_stub_052, 52); msi_stub!(msi_stub_053, 53); msi_stub!(msi_stub_054, 54); msi_stub!(msi_stub_055, 55); 
+msi_stub!(msi_stub_056, 56); msi_stub!(msi_stub_057, 57); msi_stub!(msi_stub_058, 58); msi_stub!(msi_stub_059, 59); 
+msi_stub!(msi_stub_060, 60); msi_stub!(msi_stub_061, 61); msi_stub!(msi_stub_062, 62); msi_stub!(msi_stub_063, 63); 
+msi_stub!(msi_stub_064, 64); msi_stub!(msi_stub_065, 65); msi_stub!(msi_stub_066, 66); msi_stub!(msi_stub_067, 67); 
+msi_stub!(msi_stub_068, 68); msi_stub!(msi_stub_069, 69); msi_stub!(msi_stub_070, 70); msi_stub!(msi_stub_071, 71); 
+msi_stub!(msi_stub_072, 72); msi_stub!(msi_stub_073, 73); msi_stub!(msi_stub_074, 74); msi_stub!(msi_stub_075, 75); 
+msi_stub!(msi_stub_076, 76); msi_stub!(msi_stub_077, 77); msi_stub!(msi_stub_078, 78); msi_stub!(msi_stub_079, 79); 
+msi_stub!(msi_stub_080, 80); msi_stub!(msi_stub_081, 81); msi_stub!(msi_stub_082, 82); msi_stub!(msi_stub_083, 83); 
+msi_stub!(msi_stub_084, 84); msi_stub!(msi_stub_085, 85); msi_stub!(msi_stub_086, 86); msi_stub!(msi_stub_087, 87); 
+msi_stub!(msi_stub_088, 88); msi_stub!(msi_stub_089, 89); msi_stub!(msi_stub_090, 90); msi_stub!(msi_stub_091, 91); 
+msi_stub!(msi_stub_092, 92); msi_stub!(msi_stub_093, 93); msi_stub!(msi_stub_094, 94); msi_stub!(msi_stub_095, 95); 
+msi_stub!(msi_stub_096, 96); msi_stub!(msi_stub_097, 97); msi_stub!(msi_stub_098, 98); msi_stub!(msi_stub_099, 99); 
+msi_stub!(msi_stub_100, 100); msi_stub!(msi_stub_101, 101); msi_stub!(msi_stub_102, 102); msi_stub!(msi_stub_103, 103); 
+msi_stub!(msi_stub_104, 104); msi_stub!(msi_stub_105, 105); msi_stub!(msi_stub_106, 106); msi_stub!(msi_stub_107, 107); 
+msi_stub!(msi_stub_108, 108); msi_stub!(msi_stub_109, 109); msi_stub!(msi_stub_110, 110); msi_stub!(msi_stub_111, 111); 
+msi_stub!(msi_stub_112, 112); msi_stub!(msi_stub_113, 113); msi_stub!(msi_stub_114, 114); msi_stub!(msi_stub_115, 115); 
+msi_stub!(msi_stub_116, 116); msi_stub!(msi_stub_117, 117); msi_stub!(msi_stub_118, 118); msi_stub!(msi_stub_119, 119); 
+msi_stub!(msi_stub_120, 120); msi_stub!(msi_stub_121, 121); msi_stub!(msi_stub_122, 122); msi_stub!(msi_stub_123, 123); 
+msi_stub!(msi_stub_124, 124); msi_stub!(msi_stub_125, 125); msi_stub!(msi_stub_126, 126); msi_stub!(msi_stub_127, 127); 
+msi_stub!(msi_stub_128, 128); msi_stub!(msi_stub_129, 129); msi_stub!(msi_stub_130, 130); msi_stub!(msi_stub_131, 131); 
+msi_stub!(msi_stub_132, 132); msi_stub!(msi_stub_133, 133); msi_stub!(msi_stub_134, 134); msi_stub!(msi_stub_135, 135); 
+msi_stub!(msi_stub_136, 136); msi_stub!(msi_stub_137, 137); msi_stub!(msi_stub_138, 138); msi_stub!(msi_stub_139, 139); 
+msi_stub!(msi_stub_140, 140); msi_stub!(msi_stub_141, 141); msi_stub!(msi_stub_142, 142); msi_stub!(msi_stub_143, 143); 
+msi_stub!(msi_stub_144, 144); msi_stub!(msi_stub_145, 145); msi_stub!(msi_stub_146, 146); msi_stub!(msi_stub_147, 147); 
+msi_stub!(msi_stub_148, 148); msi_stub!(msi_stub_149, 149); msi_stub!(msi_stub_150, 150); msi_stub!(msi_stub_151, 151); 
+msi_stub!(msi_stub_152, 152); msi_stub!(msi_stub_153, 153); msi_stub!(msi_stub_154, 154); msi_stub!(msi_stub_155, 155); 
+msi_stub!(msi_stub_156, 156); msi_stub!(msi_stub_157, 157); msi_stub!(msi_stub_158, 158); msi_stub!(msi_stub_159, 159); 
+msi_stub!(msi_stub_160, 160); msi_stub!(msi_stub_161, 161); msi_stub!(msi_stub_162, 162); msi_stub!(msi_stub_163, 163); 
+msi_stub!(msi_stub_164, 164); msi_stub!(msi_stub_165, 165); msi_stub!(msi_stub_166, 166); msi_stub!(msi_stub_167, 167); 
+msi_stub!(msi_stub_168, 168); msi_stub!(msi_stub_169, 169); msi_stub!(msi_stub_170, 170); msi_stub!(msi_stub_171, 171); 
+msi_stub!(msi_stub_172, 172); msi_stub!(msi_stub_173, 173); msi_stub!(msi_stub_174, 174); msi_stub!(msi_stub_175, 175); 
+msi_stub!(msi_stub_176, 176); msi_stub!(msi_stub_177, 177); msi_stub!(msi_stub_178, 178); msi_stub!(msi_stub_179, 179); 
+msi_stub!(msi_stub_180, 180); msi_stub!(msi_stub_181, 181); msi_stub!(msi_stub_182, 182); msi_stub!(msi_stub_183, 183); 
+msi_stub!(msi_stub_184, 184); msi_stub!(msi_stub_185, 185); msi_stub!(msi_stub_186, 186); msi_stub!(msi_stub_187, 187); 
+msi_stub!(msi_stub_188, 188); msi_stub!(msi_stub_189, 189); msi_stub!(msi_stub_190, 190); msi_stub!(msi_stub_191, 191); 
+
+const MSI_STUBS: [extern "x86-interrupt" fn(InterruptStackFrame); MSI_VEC_COUNT] = [
+    msi_stub_000, msi_stub_001, msi_stub_002, msi_stub_003, msi_stub_004, msi_stub_005, msi_stub_006, msi_stub_007, 
+    msi_stub_008, msi_stub_009, msi_stub_010, msi_stub_011, msi_stub_012, msi_stub_013, msi_stub_014, msi_stub_015, 
+    msi_stub_016, msi_stub_017, msi_stub_018, msi_stub_019, msi_stub_020, msi_stub_021, msi_stub_022, msi_stub_023, 
+    msi_stub_024, msi_stub_025, msi_stub_026, msi_stub_027, msi_stub_028, msi_stub_029, msi_stub_030, msi_stub_031, 
+    msi_stub_032, msi_stub_033, msi_stub_034, msi_stub_035, msi_stub_036, msi_stub_037, msi_stub_038, msi_stub_039, 
+    msi_stub_040, msi_stub_041, msi_stub_042, msi_stub_043, msi_stub_044, msi_stub_045, msi_stub_046, msi_stub_047, 
+    msi_stub_048, msi_stub_049, msi_stub_050, msi_stub_051, msi_stub_052, msi_stub_053, msi_stub_054, msi_stub_055, 
+    msi_stub_056, msi_stub_057, msi_stub_058, msi_stub_059, msi_stub_060, msi_stub_061, msi_stub_062, msi_stub_063, 
+    msi_stub_064, msi_stub_065, msi_stub_066, msi_stub_067, msi_stub_068, msi_stub_069, msi_stub_070, msi_stub_071, 
+    msi_stub_072, msi_stub_073, msi_stub_074, msi_stub_075, msi_stub_076, msi_stub_077, msi_stub_078, msi_stub_079, 
+    msi_stub_080, msi_stub_081, msi_stub_082, msi_stub_083, msi_stub_084, msi_stub_085, msi_stub_086, msi_stub_087, 
+    msi_stub_088, msi_stub_089, msi_stub_090, msi_stub_091, msi_stub_092, msi_stub_093, msi_stub_094, msi_stub_095, 
+    msi_stub_096, msi_stub_097, msi_stub_098, msi_stub_099, msi_stub_100, msi_stub_101, msi_stub_102, msi_stub_103, 
+    msi_stub_104, msi_stub_105, msi_stub_106, msi_stub_107, msi_stub_108, msi_stub_109, msi_stub_110, msi_stub_111, 
+    msi_stub_112, msi_stub_113, msi_stub_114, msi_stub_115, msi_stub_116, msi_stub_117, msi_stub_118, msi_stub_119, 
+    msi_stub_120, msi_stub_121, msi_stub_122, msi_stub_123, msi_stub_124, msi_stub_125, msi_stub_126, msi_stub_127, 
+    msi_stub_128, msi_stub_129, msi_stub_130, msi_stub_131, msi_stub_132, msi_stub_133, msi_stub_134, msi_stub_135, 
+    msi_stub_136, msi_stub_137, msi_stub_138, msi_stub_139, msi_stub_140, msi_stub_141, msi_stub_142, msi_stub_143, 
+    msi_stub_144, msi_stub_145, msi_stub_146, msi_stub_147, msi_stub_148, msi_stub_149, msi_stub_150, msi_stub_151, 
+    msi_stub_152, msi_stub_153, msi_stub_154, msi_stub_155, msi_stub_156, msi_stub_157, msi_stub_158, msi_stub_159, 
+    msi_stub_160, msi_stub_161, msi_stub_162, msi_stub_163, msi_stub_164, msi_stub_165, msi_stub_166, msi_stub_167, 
+    msi_stub_168, msi_stub_169, msi_stub_170, msi_stub_171, msi_stub_172, msi_stub_173, msi_stub_174, msi_stub_175, 
+    msi_stub_176, msi_stub_177, msi_stub_178, msi_stub_179, msi_stub_180, msi_stub_181, msi_stub_182, msi_stub_183, 
+    msi_stub_184, msi_stub_185, msi_stub_186, msi_stub_187, msi_stub_188, msi_stub_189, msi_stub_190, msi_stub_191,
+];

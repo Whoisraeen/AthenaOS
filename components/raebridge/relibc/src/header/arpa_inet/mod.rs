@@ -1,0 +1,239 @@
+//! `arpa/inet.h` implementation.
+//!
+//! See <https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/arpa_inet.h.html>.
+
+use core::{
+    ptr, slice,
+    str::{self, FromStr},
+};
+
+use crate::{
+    c_str::CStr,
+    header::{
+        bits_arpainet::ntohl,
+        errno::{EAFNOSUPPORT, ENOSPC},
+        netinet_in::{INADDR_NONE, in_addr, in_addr_t},
+        sys_socket::{constants::AF_INET, socklen_t},
+    },
+    io::Write,
+    platform::{
+        self,
+        types::{c_char, c_int, c_void},
+    },
+    raw_cell::RawCell,
+};
+
+/// See <https://pubs.opengroup.org/onlinepubs/9799919799/functions/inet_addr.html>.
+///
+/// # Deprecated
+/// The `inet_addr()` function was marked obsolescent in the Open Group Base
+/// Specifications Issue 8.
+#[deprecated]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn inet_addr(cp: *const c_char) -> in_addr_t {
+    let mut val: in_addr = in_addr { s_addr: 0 };
+
+    if unsafe { inet_aton(cp, &raw mut val) } > 0 {
+        val.s_addr
+    } else {
+        INADDR_NONE
+    }
+}
+
+/// Non-POSIX, see <https://www.man7.org/linux/man-pages/man3/inet_aton.3.html>.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn inet_aton(cp: *const c_char, inp: *mut in_addr) -> c_int {
+    let cp_cstr = unsafe { CStr::from_ptr(cp) };
+    let mut four_parts_decimal_only = false;
+    if cp_cstr.contains(b'.') {
+        // 2, 3 or 4 part address
+        let parts = unsafe { str::from_utf8_unchecked(cp_cstr.to_bytes()).split('.') };
+        let mut count = 0;
+        for part in parts {
+            if let Some(hex_or_oct) = part.strip_prefix('0')
+                && part.len() > 1
+            {
+                match hex_or_oct.bytes().next() {
+                    Some(b'x' | b'X') => todo_skip!(0, "parsing hex values unimplemented"),
+                    // TODO: C2Y accept `0o` or `0O` as octal prefixes, C23 and below only use `0`
+                    _ => todo_skip!(0, "parsing octal values unimplemented"),
+                }
+            } else {
+                count += 1;
+            }
+        }
+        if count == 4 {
+            four_parts_decimal_only = true;
+        }
+    } else if cp_cstr.len() == 4 {
+        // 1 part address (32 bit value to be stored directly into address without byte rearrangement)
+        let s_addr_bytes: [u8; 4] = cp_cstr.to_bytes().try_into().expect("guaranteed 4 bytes");
+        unsafe {
+            (*inp.cast::<in_addr>()).s_addr = in_addr_t::from_ne_bytes(s_addr_bytes);
+        }
+        return 1; // successful
+    }
+    if four_parts_decimal_only {
+        unsafe { inet_pton(AF_INET, cp, inp.cast::<c_void>()) }
+    } else {
+        todo_skip!(0, "parsing 2 or more non-decimal values unimplemented");
+        // TODO convert octal and hexadecimal parts into decimal and feed into `inet_pton`
+        0 // indicates `cp` is an invalid string
+    }
+}
+
+/// See <https://pubs.opengroup.org/onlinepubs/7908799/xns/inet_lnaof.html>.
+///
+/// # Deprecation
+/// The `inet_lnaof()` function was specified in Networking Services Issue 5,
+/// but not in the Open Group Base Specifications Issue 6 and later.
+#[deprecated]
+#[unsafe(no_mangle)]
+pub extern "C" fn inet_lnaof(r#in: in_addr) -> in_addr_t {
+    if r#in.s_addr >> 24 < 128 {
+        r#in.s_addr & 0xff_ffff
+    } else if r#in.s_addr >> 24 < 192 {
+        r#in.s_addr & 0xffff
+    } else {
+        r#in.s_addr & 0xff
+    }
+}
+
+/// See <https://pubs.opengroup.org/onlinepubs/7908799/xns/inet_makeaddr.html>.
+///
+/// # Deprecation
+/// The `inet_makeaddr()` function was specified in Networking Services Issue
+/// 5, but not in the Open Group Base Specifications Issue 6 and later.
+#[deprecated]
+#[unsafe(no_mangle)]
+pub extern "C" fn inet_makeaddr(net: in_addr_t, lna: in_addr_t) -> in_addr {
+    let mut output: in_addr = in_addr { s_addr: 0 };
+
+    if net < 256 {
+        output.s_addr = lna | net << 24;
+    } else if net < 65536 {
+        output.s_addr = lna | net << 16;
+    } else {
+        output.s_addr = lna | net << 8;
+    }
+
+    output
+}
+
+/// See <https://pubs.opengroup.org/onlinepubs/7908799/xns/inet_netof.html>.
+///
+/// # Deprecation
+/// The `inet_netof()` function was specified in Networking Services Issue 5,
+/// but not in the Open Group Base Specifications Issue 6 and later.
+#[deprecated]
+#[unsafe(no_mangle)]
+pub extern "C" fn inet_netof(r#in: in_addr) -> in_addr_t {
+    if r#in.s_addr >> 24 < 128 {
+        r#in.s_addr & 0xff_ffff
+    } else if r#in.s_addr >> 24 < 192 {
+        r#in.s_addr & 0xffff
+    } else {
+        r#in.s_addr & 0xff
+    }
+}
+
+/// See <https://pubs.opengroup.org/onlinepubs/7908799/xns/inet_network.html>.
+///
+/// # Deprecation
+/// The `inet_network()` function was specified in Networking Services Issue 5,
+/// but not in the Open Group Base Specifications Issue 6 and later.
+#[deprecated]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn inet_network(cp: *const c_char) -> in_addr_t {
+    ntohl(unsafe {
+        #[allow(deprecated)]
+        inet_addr(cp)
+    })
+}
+
+/// See <https://pubs.opengroup.org/onlinepubs/9799919799/functions/inet_addr.html>.
+///
+/// # Deprecation
+/// The `inet_ntoa()` function was marked obsolescent in the Open Group Base
+/// Specifications Issue 8.
+#[deprecated]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn inet_ntoa(r#in: in_addr) -> *mut c_char {
+    static NTOA_ADDR: RawCell<[c_char; 16]> = RawCell::new([0; 16]);
+
+    unsafe {
+        let ptr = inet_ntop(
+            AF_INET,
+            ptr::from_ref::<in_addr>(&r#in).cast::<c_void>(),
+            NTOA_ADDR.unsafe_mut().as_mut_ptr(),
+            NTOA_ADDR.unsafe_ref().len() as socklen_t,
+        );
+        // Mutable pointer is required, inet_ntop returns destination as const pointer
+        ptr.cast_mut()
+    }
+}
+
+/// See <https://pubs.opengroup.org/onlinepubs/9799919799/functions/inet_ntop.html>.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn inet_ntop(
+    af: c_int,
+    src: *const c_void,
+    dst: *mut c_char,
+    size: socklen_t,
+) -> *const c_char {
+    if af != AF_INET {
+        platform::ERRNO.set(EAFNOSUPPORT);
+        ptr::null()
+    } else if size < 16 {
+        platform::ERRNO.set(ENOSPC);
+        ptr::null()
+    } else {
+        let s_addr = unsafe {
+            slice::from_raw_parts(
+                ptr::from_ref(&(*(src.cast::<in_addr>())).s_addr).cast::<u8>(),
+                4,
+            )
+        };
+        let mut w = platform::StringWriter(dst, size as usize);
+        let _ = write!(
+            w,
+            "{}.{}.{}.{}\0",
+            s_addr[0], s_addr[1], s_addr[2], s_addr[3]
+        );
+        dst
+    }
+}
+
+/// See <https://pubs.opengroup.org/onlinepubs/9799919799/functions/inet_ntop.html>.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn inet_pton(af: c_int, src: *const c_char, dst: *mut c_void) -> c_int {
+    if af != AF_INET {
+        platform::ERRNO.set(EAFNOSUPPORT);
+        -1
+    } else {
+        let s_addr = unsafe {
+            slice::from_raw_parts_mut(
+                ptr::from_mut(&mut (*dst.cast::<in_addr>()).s_addr).cast::<u8>(),
+                4,
+            )
+        };
+        let src_cstr = unsafe { CStr::from_ptr(src) };
+        let mut octets = unsafe { str::from_utf8_unchecked(src_cstr.to_bytes()).split('.') };
+        for part in s_addr.iter_mut().take(4) {
+            if let Some(n) = octets
+                .next()
+                .filter(|x| !x.len() > 3)
+                .and_then(|x| u8::from_str(x).ok())
+            {
+                *part = n;
+            } else {
+                return 0;
+            }
+        }
+        if octets.next().is_none() {
+            1 // Success
+        } else {
+            0
+        }
+    }
+}

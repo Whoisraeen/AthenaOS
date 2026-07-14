@@ -1,0 +1,106 @@
+# Stock amdgpu init oracle — captured 2026-07-06 (opus)
+#
+# THE decisive gate-experiment record for the GPU real-submit campaign
+# (docs/superpowers/specs/2026-07-06-gpu-real-submit-design.md §2).
+#
+# Handoff provenance (journalctl --list-boots on Athena):
+#   boot -1  Jul 05 01:07:26–01:09:10  cmdline: ...module_blacklist=amdgpu vfio-pci.ids=1002:15bf  (GPU DARK all boot)
+#   boot  0  Jul 05 01:09:28           cmdline: no blacklist -> amdgpu loads from the WARM-REBOOT-DARK handoff
+# This is byte-for-byte the handoff state RaeenOS's iron loop receives.
+# Host: Arch, kernel 7.0.12-arch1-1, linux-firmware 20260519-1, amdgpu DRM 3.64.0
+#
+# VERDICT: full init, MES set_hw_resources acked (no timeout), gfx_0.0.0 mapped,
+# fbcon on amdgpudrmfb, stable 1.6 days. Cold-handoff + firmware-version hypotheses ELIMINATED.
+
+## Firmware versions (sudo cat /sys/kernel/debug/dri/1/amdgpu_firmware_info, MES-relevant + hashes)
+# MES      feature 1  fw 0x00000088   gc_11_0_1_mes.bin   sha256[:16]=4844bb3873ba1c14  (== vendored firmware/amdgpu/)
+# MES_KIQ  feature 6  fw 0x00000109   gc_11_0_1_mes1.bin  sha256[:16]=8f2c02490e295197  (== vendored)
+#                                     gc_11_0_1_mes_2.bin sha256[:16]=31796311104f03b9  (== vendored)
+# ME 0x67 / PFP 0x6d / MEC 0x46 / RLC 0x8b / RLCP 0xf / IMU 0x0b012d00 / SDMA0 0x18
+# SMC 76.87.0 (BIOS-shipped APU PMFW) / DMCUB 0x08005b00 / TOC 0x0b / VBIOS 113-PHXGENERIC-001
+# imu/me/pfp/mec/rlc/sdma/toc blobs ALL byte-identical to vendored (toc via psp_13_0_11_toc.bin symlink, 11e3529d748e2b6b)
+
+## Ring roster (all MES-mapped, boot 0)
+# gfx_0.0.0 | comp_1.{0..3}.{0,1} (8) | sdma0 | vcn_unified_0 | jpeg_dec | mes_kiq_3.1.0
+
+## dmesg (boot 0, amdgpu + [drm] lines)
+Jul 05 01:09:28 archlinux kernel: simple-framebuffer simple-framebuffer.0: [drm] Registered 1 planes with drm panic
+Jul 05 01:09:28 archlinux kernel: [drm] Initialized simpledrm 1.0.0 for simple-framebuffer.0 on minor 0
+Jul 05 01:09:28 archlinux kernel: simple-framebuffer simple-framebuffer.0: [drm] fb0: simpledrmdrmfb frame buffer device
+Jul 05 01:09:28 archlinux kernel: amdgpu: Virtual CRAT table created for CPU
+Jul 05 01:09:28 archlinux kernel: amdgpu: Topology: Add CPU node
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: enabling device (0006 -> 0007)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: initializing kernel modesetting (IP DISCOVERY 0x1002:0x15BF 0x1F4C:0xB016 0xC3).
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: register mmio base: 0xDC500000
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: register mmio size: 524288
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 0 <common_v1_0_0> (soc21_common)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 1 <gmc_v11_0_0> (gmc_v11_0)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 2 <ih_v6_0_0> (ih_v6_0)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 3 <psp_v13_0_4> (psp)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 4 <smu_v13_0_0> (smu)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 5 <dce_v1_0_0> (dm)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 6 <gfx_v11_0_0> (gfx_v11_0)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 7 <sdma_v6_0_0> (sdma_v6_0)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 8 <vcn_v4_0_0> (vcn_v4_0)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 9 <jpeg_v4_0_0> (jpeg_v4_0)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: detected ip block number 10 <mes_v11_0_0> (mes_v11_0)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: Fetched VBIOS from VFCT
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] ATOM BIOS: 113-PHXGENERIC-001
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: vgaarb: deactivate vga console
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: Trusted Memory Zone (TMZ) feature enabled
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: vm size is 262144 GB, 4 levels, block size is 9-bit, fragment size is 9-bit
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: VRAM: 2048M 0x0000008000000000 - 0x000000807FFFFFFF (2048M used)
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: GART: 512M 0x00007FFF00000000 - 0x00007FFF1FFFFFFF
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] Detected VRAM RAM=2048M, BAR=2048M
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] RAM width 64bits DDR5
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0:  2048M of VRAM memory ready
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0:  6874M of GTT memory ready.
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] GART: num cpu pages 131072, num gpu pages 131072
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] PCIE GART of 512M enabled (table at 0x000000807FD00000).
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] Loading DMUB firmware via PSP: version=0x08005B00
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [VCN instance 0] Found VCN firmware Version ENC: 1.24 DEC: 9 VEP: 0 Revision: 34
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: MES: vmid_mask_mmhub 0x0000ff00, vmid_mask_gfxhub 0x0000ff00
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: MES: gfx_hqd_mask 0x00000002, compute_hqd_mask 0x0000000c, sdma_hqd_mask 0x000000fc
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: reserve 0x4000000 from 0x8078000000 for PSP TMR
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: RAS: optional ras ta ucode is not available
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: RAP: optional rap ta ucode is not available
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: SECUREDISPLAY: optional securedisplay ta ucode is not available
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: SMU is initialized successfully!
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] Display Core v3.2.369 initialized on DCN 3.1.4
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] DP-HDMI FRL PCON supported
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] DMUB hardware initialized: version=0x08005B00
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] DP-1: PSR support 0, DC PSR ver -1, sink PSR ver 0 DPCD caps 0x0 su_y_granularity 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] HDMI-A-1: PSR support 0, DC PSR ver -1, sink PSR ver 0 DPCD caps 0x0 su_y_granularity 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] DP-2: PSR support 0, DC PSR ver -1, sink PSR ver 0 DPCD caps 0x0 su_y_granularity 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] DP-3: PSR support 0, DC PSR ver -1, sink PSR ver 0 DPCD caps 0x0 su_y_granularity 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] DP-4: PSR support 0, DC PSR ver -1, sink PSR ver 0 DPCD caps 0x0 su_y_granularity 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] DP-5: PSR support 0, DC PSR ver -1, sink PSR ver 0 DPCD caps 0x0 su_y_granularity 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] DP-6: PSR support 0, DC PSR ver -1, sink PSR ver 0 DPCD caps 0x0 su_y_granularity 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] DP-7: PSR support 0, DC PSR ver -1, sink PSR ver 0 DPCD caps 0x0 su_y_granularity 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] DP-8: PSR support 0, DC PSR ver -1, sink PSR ver 0 DPCD caps 0x0 su_y_granularity 0
+Jul 05 01:09:28 archlinux kernel: amdgpu: Virtual CRAT table created for GPU
+Jul 05 01:09:28 archlinux kernel: amdgpu: Topology: Add GPU node [0x1002:0x15bf]
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: SE 1, SH per SE 2, CU per SH 6, active_cu_number 8
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring gfx_0.0.0 uses VM inv eng 0 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring comp_1.0.0 uses VM inv eng 1 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring comp_1.1.0 uses VM inv eng 4 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring comp_1.2.0 uses VM inv eng 6 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring comp_1.3.0 uses VM inv eng 7 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring comp_1.0.1 uses VM inv eng 8 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring comp_1.1.1 uses VM inv eng 9 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring comp_1.2.1 uses VM inv eng 10 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring comp_1.3.1 uses VM inv eng 11 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring sdma0 uses VM inv eng 12 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring vcn_unified_0 uses VM inv eng 0 on hub 8
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring jpeg_dec uses VM inv eng 1 on hub 8
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: ring mes_kiq_3.1.0 uses VM inv eng 13 on hub 0
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: Runtime PM not available
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] Registered 4 planes with drm panic
+Jul 05 01:09:28 archlinux kernel: [drm] Initialized amdgpu 3.64.0 for 0000:c4:00.0 on minor 1
+Jul 05 01:09:28 archlinux kernel: fbcon: amdgpudrmfb (fb0) is primary device
+Jul 05 01:09:28 archlinux kernel: [drm] pre_validate_dsc:1667 MST_DSC dsc precompute is not needed
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] REG_WAIT timeout 1us * 100000 tries - optc314_disable_crtc line:145
+Jul 05 01:09:28 archlinux kernel: amdgpu 0000:c4:00.0: [drm] fb0: amdgpudrmfb frame buffer device
+Jul 05 01:09:29 archlinux kernel: amdxdna 0000:c5:00.1: [drm] Load firmware amdnpu/1502_00/npu_7.sbin
+Jul 05 01:09:29 archlinux kernel: snd_hda_intel 0000:c4:00.1: bound 0000:c4:00.0 (ops amdgpu_dm_audio_component_bind_ops [amdgpu])
+Jul 05 01:09:29 archlinux kernel: [drm] Initialized amdxdna_accel_driver 0.6.0 for 0000:c5:00.1 on minor 0

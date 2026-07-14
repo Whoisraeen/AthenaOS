@@ -1,0 +1,45 @@
+diff --git a/drivers/gpu/drm/amd/pm/swsmu/smu_cmn.c b/drivers/gpu/drm/amd/pm/swsmu/smu_cmn.c
+index 6a9380d7e..2f4535b2d 100644
+--- a/drivers/gpu/drm/amd/pm/swsmu/smu_cmn.c
++++ b/drivers/gpu/drm/amd/pm/swsmu/smu_cmn.c
+@@ -35,6 +35,8 @@
+ #undef pr_info
+ #undef pr_debug
+ 
++extern void rae_diag_netlog_flush(void);
++
+ #define MP1_C2PMSG_90__CONTENT_MASK                                                                    0xFFFFFFFFL
+ 
+ const int link_speed[] = {25, 50, 80, 160, 320, 640};
+@@ -465,6 +467,16 @@ static int smu_msg_v1_send_msg(struct smu_msg_ctl *ctl,
+ 		}
+ 	}
+ 
++	dev_info(adev->dev,
++		 "RAE-SMU send name=%s abstract=%u map=0x%x cfg_msg=0x%x cfg_arg=0x%x cfg_resp=0x%x state=%u pre_msg=0x%x pre_arg=0x%x pre_resp=0x%x\n",
++		 smu_get_message_name(smu, args->msg), args->msg, index,
++		 ctl->config.msg_reg, ctl->config.arg_regs[0],
++		 ctl->config.resp_reg, smu->smc_fw_state,
++		 RREG32(ctl->config.msg_reg),
++		 RREG32(ctl->config.arg_regs[0]),
++		 RREG32(ctl->config.resp_reg));
++	rae_diag_netlog_flush();
++
+ 	/* Send message */
+ 	__smu_msg_v1_send(ctl, (u16)index, args);
+ 
+@@ -476,6 +488,14 @@ static int smu_msg_v1_send_msg(struct smu_msg_ctl *ctl,
+ 	reg = __smu_msg_v1_poll_stat(ctl, args->timeout);
+ 	ret = smu_msg_v1_decode_response(reg);
+ 
++	dev_info(adev->dev,
++		 "RAE-SMU complete name=%s map=0x%x ret=%d resp=0x%x post_msg=0x%x post_arg=0x%x post_resp=0x%x\n",
++		 smu_get_message_name(smu, args->msg), index, ret, reg,
++		 RREG32(ctl->config.msg_reg),
++		 RREG32(ctl->config.arg_regs[0]),
++		 RREG32(ctl->config.resp_reg));
++	rae_diag_netlog_flush();
++
+ 	/* FW state update on fatal error */
+ 	if (ret == -EREMOTEIO) {
+ 		smu->smc_fw_state = SMU_FW_HANG;

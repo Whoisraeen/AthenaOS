@@ -1,0 +1,12 @@
+--- a/drivers/gpu/drm/amd/amdgpu/mes_v11_0.c
++++ b/drivers/gpu/drm/amd/amdgpu/mes_v11_0.c
+@@ -79,6 +79,9 @@ static void mes_v11_0_ring_set_wptr(struct amdgpu_ring *ring)
+ 	if (ring->use_doorbell) {
+ 		atomic64_set((atomic64_t *)ring->wptr_cpu_addr,
+ 			     ring->wptr);
++		/* The MES firmware polls this GPU-visible writeback slot. */
++		rae_cpu_cache_flush(ring->wptr_cpu_addr, sizeof(u64));
++		mb();
+ 		WDOORBELL64(ring->doorbell_index, ring->wptr);
+ 	} else {
+ 		BUG();

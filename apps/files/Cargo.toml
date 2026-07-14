@@ -1,0 +1,66 @@
+[package]
+name = "files"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# Library target: the app's state + draw path (incl. the syscall-free
+# `render_preview` / `preview_state_demo`) so the host screenshot harness can
+# link and render the LIVE Files draw path with no kernel.
+[lib]
+name = "files"
+path = "src/lib.rs"
+
+# Binary target: the freestanding userspace ELF (`_start` -> `files::run()`).
+# `exec_path = "files"` in the start-menu manifest resolves to this.
+[[bin]]
+name = "files"
+path = "src/main.rs"
+# The bin is a freestanding `#![no_main]` ELF shim — it has no libtest entry
+# point, so exclude it from `cargo test` (otherwise the host test build tries to
+# link it as a test exe and fails LNK1561 "entry point must be defined"). The
+# host KAT lives entirely in the LIBRARY target.
+test = false
+
+[features]
+# Forwards to `raekit/host`: lets the std `tools/ui_screenshot` harness link
+# `files` (-> `raekit`) to render the LIVE Files surface via the syscall-free
+# `files::render_preview` seam, without raekit's bare-ELF lang items colliding
+# with std (E0152 duplicate panic_impl). The normal
+# `cargo build -p files --target x86_64-unknown-none` ELF leaves this off and is
+# unchanged.
+host = ["raekit/host"]
+
+[dependencies]
+raegfx = { path = "../../components/raegfx" }
+raekit = { path = "../../components/raekit" }
+rae_tokens = { path = "../../components/rae_tokens" }
+rae_files = { path = "../../components/rae_files" }
+rae_diff = { path = "../../components/rae_diff" }
+rae_zip = { path = "../../components/rae_zip" }
+rae_tar = { path = "../../components/rae_tar" }
+rae_deflate = { path = "../../components/rae_deflate" }
+raemedia = { path = "../../components/raemedia" }
+rae_gif = { path = "../../components/rae_gif" }
+rae_csv = { path = "../../components/rae_csv" }
+rae_hash = { path = "../../components/rae_hash" }
+rae_mime = { path = "../../components/rae_mime" }
+rae_toml = { path = "../../components/rae_toml" }
+# Magic-byte content sniffer (never trust the extension) — the dispatch entry for
+# the document/preview open path.
+rae_formats = { path = "../../components/rae_formats" }
+# Document/preview engines: open PDFs (text extraction), DOCX (paragraphs/
+# headings/tables), XLSX (CSV grid), and the unified image decoder
+# (PNG/JPEG/BMP/GIF/WebP -> ARGB8888) used for image preview.
+rae_pdf = { path = "../../components/rae_pdf" }
+rae_docx = { path = "../../components/rae_docx" }
+rae_xlsx = { path = "../../components/rae_xlsx" }
+rae_image = { path = "../../components/rae_image" }
+# RaeBridge handoff codec — the proven per-process Windows-app launch channel
+# (components/raebridge/src/handoff.rs). Files double-clicking a `.exe` writes the
+# launch target to `handoff::HANDOFF_PATH` then spawns `raebridge_run`, which
+# loads that PE as its OWN RaeenOS process (commit d5db628). We CONSUME the
+# handoff codec here (rule 7: reuse, never twin) — no parallel encoder.
+raebridge = { path = "../../components/raebridge" }

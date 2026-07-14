@@ -1,0 +1,36 @@
+[package]
+name = "raeaudio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaeAudio — low-latency audio engine. Sub-3ms round-trip on certified hardware."
+
+[dependencies]
+# Symphonia: pure-Rust audio decoder (WAV/FLAC/OGG/MP3). MPL-2.0.
+# Userspace daemon only — not kernel. Decodes -> f32 PCM -> kernel DMA ring via IPC.
+# MasterChecklist OSS references: Phase 7.2 routing, Phase 7.1 HDA PCM playback.
+symphonia = { version = "0.5", optional = true, features = ["wav", "flac", "ogg", "mp3", "isomp4"] }
+
+# dasp_sample — pure-Rust no_std audio sample-format conversion (the dasp piece
+# that fits the no_std RaeenOS target cleanly; the umbrella's signal/window
+# feature graph drags in std-leaning bits). Mixing + linear resample are small
+# enough to keep hand-rolled and no_std-pure on top of it.
+dasp_sample = { version = "0.11", default-features = false, optional = true }
+
+# rubato — high-quality sinc resampler. std-only (rustfft), so it is HOST/OFFLINE
+# tooling only (e.g. asset pre-conditioning), NOT the no_std on-device path; the
+# live daemon resamples with dasp above. Gated so it never enters a no_std build.
+rubato = { version = "0.15", optional = true }
+
+[dev-dependencies]
+rand = "0.8"
+
+[features]
+default = []
+# Enable audio decoding in the userspace RaeAudio daemon
+decode = ["symphonia"]
+# no_std DSP mix-graph primitives: dasp_sample conversion + mixing + linear resample.
+dsp = ["dasp_sample"]
+# Host-only high-quality sinc resampling (rubato, std). Offline asset tooling.
+hq_resample = ["rubato"]

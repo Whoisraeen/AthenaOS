@@ -1,0 +1,26 @@
+[target.x86_64-unknown-none]
+# Keep frame pointers so the panic handler can emit a real RBP-chain backtrace
+# (see panic.rs). Invaluable for diagnosing kernel panics in a pre-1.0 OS; the
+# runtime cost is negligible. Drop this once the kernel is stable if desired.
+# poly1305_force_soft: the poly1305 v0.8.0 AVX2 backend (__m256i / _mm256_* intrinsics,
+# pulled in transitively via chacha20poly1305 -> raenet) cannot be lowered by LLVM for
+# this soft-float / no-SSE target ("Do not know how to split the result of this operator!"),
+# the same SIMD-codegen class as the sha2 force-soft fix. poly1305 0.8 has no Cargo
+# `force-soft` feature, only this build cfg — so the scalar `soft` backend is forced here.
+# Harmless on a no-SSE target anyway: autodetect would never pick AVX2 at runtime.
+rustflags = ["-C", "force-frame-pointers=yes", "--cfg", "curve25519_dalek_backend=\"fiat\"", "--cfg", "poly1305_force_soft"]
+
+[target.aarch64-unknown-none-softfloat]
+# Multi-arch Slice A2 (docs/research/aarch64-bringup-spec.md, ADR 0009): the
+# aarch64 (ARM64) kernel build target. `aarch64-unknown-none-softfloat` mirrors
+# the x86_64 soft-float / no-SSE model (CLAUDE.md memory `kernel-soft-float-no-
+# fpu-save`) — the kernel does its f32/f64 math in GPRs, so FP/SIMD context save
+# is a later refinement, not a boot blocker. Frame pointers are kept for the same
+# panic-backtrace reason as x86. The same crypto SIMD-soft cfgs apply (the AVX2
+# poly1305 backend is x86-only; on aarch64 autodetect never picks it either, so
+# the scalar soft backend is forced for parity / to keep the build deterministic).
+# A2 EXPECTS this build to FAIL on the kernel's remaining x86-isms (MSRs, the
+# x86_64 crate, bootloader_api, port-IO) — that compile-error inventory is the
+# A3-A9 to-do list; the rustflags here are correct so the failure is a real
+# kernel-source gap, not a flag misconfiguration.
+rustflags = ["-C", "force-frame-pointers=yes", "--cfg", "curve25519_dalek_backend=\"fiat\"", "--cfg", "poly1305_force_soft"]

@@ -1,0 +1,17 @@
+[package]
+name = "raeupdate"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaeUpdate — system update manager for RaeenOS"
+
+[dependencies]
+spin = "0.9"
+# Delta-update + integrity + signature primitives. All three are zero-dep,
+# #![no_std]+alloc, host-KAT-able leaf crates — consumed read-only here to make
+# an OS update atomic, verified, and rollback-able (RaeenOS_Concept.md
+# §"atomic CoW updates + one-click rollback; the user owns the machine").
+rae_diff = { path = "../rae_diff" }
+rae_hash = { path = "../rae_hash" }
+rae_crypto = { path = "../rae_crypto" }

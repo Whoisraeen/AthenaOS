@@ -1,0 +1,72 @@
+--- a/drivers/gpu/drm/amd/amdgpu/mes_v11_0.c
++++ b/drivers/gpu/drm/amd/amdgpu/mes_v11_0.c
+@@ -33,6 +33,8 @@
+ #include "v11_structs.h"
+ #include "mes_v11_api_def.h"
+ 
++extern void rae_netlog_flush_sync(void);
++
+ MODULE_FIRMWARE("amdgpu/gc_11_0_0_mes.bin");
+ MODULE_FIRMWARE("amdgpu/gc_11_0_0_mes_2.bin");
+ MODULE_FIRMWARE("amdgpu/gc_11_0_0_mes1.bin");
+@@ -923,27 +925,48 @@
+ static void mes_v11_0_get_fw_version(struct amdgpu_device *adev)
+ {
+ 	int pipe;
++	unsigned int i;
+ 
+ 	/* return early if we have already fetched these */
+ 	if (adev->mes.sched_version && adev->mes.kiq_version)
+ 		return;
+ 
+-	/* get MES scheduler/KIQ versions */
+-	mutex_lock(&adev->srbm_mutex);
++	/*
++	 * Linux usually observes both firmware heartbeats after the fixed 500 us
++	 * enable delay. RaeenOS MMIO runs from a userspace driver and Athena can
++	 * take longer to leave reset. A one-shot zero read incorrectly selects the
++	 * pre-MES legacy KCQ path, which wedges pipe1 in MAP_QUEUES. Poll the same
++	 * version registers to the driver's bounded hardware timeout instead.
++	 */
++	for (i = 0; i < adev->usec_timeout; i++) {
++		mutex_lock(&adev->srbm_mutex);
++
++		for (pipe = 0; pipe < AMDGPU_MAX_MES_PIPES; pipe++) {
++			soc21_grbm_select(adev, 3, pipe, 0, 0);
++
++			if (pipe == AMDGPU_MES_SCHED_PIPE)
++				adev->mes.sched_version =
++					RREG32_SOC15(GC, 0, regCP_MES_GP3_LO);
++			else if (pipe == AMDGPU_MES_KIQ_PIPE && adev->enable_mes_kiq)
++				adev->mes.kiq_version =
++					RREG32_SOC15(GC, 0, regCP_MES_GP3_LO);
++		}
+ 
+-	for (pipe = 0; pipe < AMDGPU_MAX_MES_PIPES; pipe++) {
+-		soc21_grbm_select(adev, 3, pipe, 0, 0);
++		soc21_grbm_select(adev, 0, 0, 0, 0);
++		mutex_unlock(&adev->srbm_mutex);
+ 
+-		if (pipe == AMDGPU_MES_SCHED_PIPE)
+-			adev->mes.sched_version =
+-				RREG32_SOC15(GC, 0, regCP_MES_GP3_LO);
+-		else if (pipe == AMDGPU_MES_KIQ_PIPE && adev->enable_mes_kiq)
+-			adev->mes.kiq_version =
+-				RREG32_SOC15(GC, 0, regCP_MES_GP3_LO);
++		if (adev->mes.sched_version &&
++		    (!adev->enable_mes_kiq || adev->mes.kiq_version))
++			break;
++		udelay(1);
+ 	}
+ 
+-	soc21_grbm_select(adev, 0, 0, 0, 0);
+-	mutex_unlock(&adev->srbm_mutex);
++	dev_info(adev->dev,
++		 "RAE-MES versions sched=0x%08x kiq=0x%08x polls=%u ready=%u\n",
++		 adev->mes.sched_version, adev->mes.kiq_version, i,
++		 !!(adev->mes.sched_version &&
++		    (!adev->enable_mes_kiq || adev->mes.kiq_version)));
++	rae_netlog_flush_sync();
+ }
+ 
+ static void mes_v11_0_enable(struct amdgpu_device *adev, bool enable)

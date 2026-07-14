@@ -1,0 +1,41 @@
+=== RESULT at ~72s ===
+1708:[linuxkpi] [amdgpu] reg probe (BAR5): GRBM_STATUS=0x00000000 gui_active=false CP_RB0_CNTL=0x00000000 CP_RB0_BASE=0x00000004:0x00000000 RPTR=0x1 WPTR=0x3ffa208 CP_ME_CNTL=
+1711:[linuxkpi] [amdgpu] reg-addr-test CP_RB0_BASE: byte[0x3040]=0x00000000  dword[0xc100]=0x00000000
+1712:[linuxkpi] [amdgpu] reg-addr-test CP_RB0_CNTL: byte[0x3041]=0x00000000  dword[0xc104]=0x00000000
+1713:[linuxkpi] [amdgpu] reg-addr-test CP_RB0_WPTR: byte[0x3048]=0x03ffa208  dword[0xc120]=0x00000000
+1741:[linuxkpi] [amdgpu] CKPT 4: init_smu survived (SMU mailbox OK) — NEXT init_rings (RLC/CP/SDMA writes)
+1865:[linuxkpi] [amdgpu] PSP autoload COMPLETE — RLC_BOOTLOAD_STATUS=0xc000001f: GFX is UP (first light)
+1866:[linuxkpi] [amdgpu] FIRST-LIGHT verdict: RLC_BOOTLOAD_STATUS=0xc000001f complete=true GFX_IMU_GFX_RESET_CTRL=0x0000001f reset_done=true -> first_light=true
+1876:[linuxkpi] [amdgpu] PAGE-FLIP: filling 256 KiB scratch with magenta (kept small so init_rings runs)...
+1878:[linuxkpi] [amdgpu] dropped to Normal priority before init_rings (live-GFX wedge guard)
+1879:[linuxkpi] [amdgpu] stage 6 GFX pipe idle (GRBM_STATUS.GUI_ACTIVE clear)
+1906:[linuxkpi] [amdgpu] stage 6 GFX/SDMA microcode loaded (incl. IMU)
+1907:[linuxkpi] [amdgpu] stage 6 backdoor IMU bring-up SKIPPED — PSP autoload already at first light (RLC_BOOTLOAD_STATUS=0xc000001f, GFX_IMU_GFX_RESET_CTRL=0x0000001f); amd
+1923:[linuxkpi] [amdgpu] stage 6 MES ucode direct-loaded: ucode=127040 B @ 0x3d97c0000, data=131072 B @ 0x3d97e0000
+1954:[linuxkpi] [amdgpu] stage 6 MES KIQ ucode direct-loaded: ucode=104016 B @ 0x3d88c0000, data=131072 B @ 0x3d88e0000
+1964:[linuxkpi] [amdgpu] stage 6 SDMA ring: 9 dwords (CONSTANT_FILL 0xA5A5A5A5 + FENCE)
+1965:[linuxkpi] [amdgpu] stage 6 SMU DisallowGfxOff acked
+1967:[linuxkpi] [amdgpu] stage 6 SMU metrics table @ 0x3d8910000: SetDramAddrHi->Some(1) Lo->Some(1) TransferSmu2Dram->Some(1) (the pre-MES SMU step RaeenOS skipped)
+1968:[linuxkpi] [amdgpu] stage 6 RLC safe mode entered — GFX held writable for CP programming
+1973:[linuxkpi] [amdgpu] stage 6 config_gfx_rs64 SKIPPED — CP is F32 (v1 ucode) on this ASIC, RS64 N/A; or offsets unresolved (QEMU). Phoenix=F32: PSP loads ucode, CP enable
+1974:[linuxkpi] [amdgpu] stage 6 CP regs: SOC15 (discovery-resolved gfx11 offsets)
+1975:[linuxkpi] [amdgpu] stage 6 GFX-up probe: RLC_BOOTLOAD_STATUS=0x00000000 (autoload_complete=false); GFX_IMU_GFX_RESET_CTRL=0x00000010 (&0x1f reset_done=false)
+1976:[linuxkpi] [amdgpu] stage 6 IMU CORE_STATUS=0x00000000 (CBUSY=false = IMU not running) — the reliable alive signal vs the gated reset/bootload regs above
+1977:[linuxkpi] [amdgpu] stage 6 VERDICT: GFX is DOWN (PSP did NOT bring GFX up) — attempting the IMU-core wake (imu_v11_0_start: release GFX_IMU_CORE_CTRL.CRESET)
+1978:[linuxkpi] [amdgpu] stage 6 cold GFX power-up: SMU EnableGfxImu(0x16) arg=1 ASYNC (the IMU-start trigger; the SYNC response-poll wedges, so we never read the response)
+2028:[linuxkpi] [amdgpu] stage 6 SMU DisallowGfxOff re-sent ASYNC post-EnableGfxImu (hold GFX awake)
+2228:[linuxkpi] [amdgpu] stage 6 post-EnableGfxImu IMU CORE_STATUS=0x00000000 (CBUSY=false = IMU STILL not executing)
+2229:[linuxkpi] [amdgpu] stage 6 post-EnableGfxImu re-probe (did the GFX domain come alive?):
+2240:[linuxkpi] [amdgpu] stage 6 post-power-up RLC autoload re-poll: RLC_BOOTLOAD_STATUS=0x00000000 complete=false (still gated — power-up ack did not bring GFX up)
+2265:[linuxkpi] [amdgpu] stage 6 autoload: all 8 fw blobs present, building buffer...
+2266:[linuxkpi] [amdgpu] stage 6 autoload: buffer built (6680576 B), allocating BO...
+2268:[linuxkpi] [amdgpu] stage 6 autoload: BO @ 0x3d8000000 (8388608 B), DMA-writing...
+2269:[linuxkpi] [amdgpu] stage 6 autoload: DMA write done, opening GMC aperture
+2270:[linuxkpi] [amdgpu] stage 6 GMC aperture opened: AGP/SYS cover [0..0x3d8800000] so the IMU can read the autoload buffer
+2271:[linuxkpi] [amdgpu] stage 6 RLC autoload buffer: 6680576 bytes @ bus 0x3d8000000; RLC_G @ 0x3d8000000 size 24576 -> bootloader regs
+2275:[linuxkpi] [amdgpu] stage 6 IMU ucode loaded into SRAM: I-RAM 16512 dwords + D-RAM 16512 dwords (fw_version=0xb012d00)
+2276:[linuxkpi] [amdgpu] stage 6 IMU I-RAM readback: expect=[7295230d, 2d242180, 2c1bf9bc, fa6dc2fa] got=[ffffffff, ffffffff, ffffffff, ffffffff] -> ALL-ONES (register apertur
+2277:[linuxkpi] [amdgpu] stage 6 setup_imu done (IMU debug access + clock features configured)
+3280:[linuxkpi] [amdgpu] stage 6 GFX_IMU_CORE_CTRL: before=0x00000009 after-clear=0x00000009 (creset_cleared=false)
+3281:[linuxkpi] [amdgpu] stage 6 IMU-core wake TIMEOUT — GFX still in reset (GFX_IMU_GFX_RESET_CTRL=0x00000010 &0x1f != 0x1f); see I-RAM readback + CORE_CTRL above to locali
+3282:[linuxkpi] [amdgpu] stage 6 RLC_PG_CNTL: 0x00000000 -> 0x00000000 (SET bit23 SMU_HANDSHAKE_DISABLE => GFXOFF off, GFX stays clocked; prior 0-write left the handshake ON =

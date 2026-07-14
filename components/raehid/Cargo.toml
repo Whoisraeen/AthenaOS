@@ -1,0 +1,23 @@
+[package]
+name = "raehid"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS HID report-descriptor layer. Wraps the `hidreport` crate (MIT) — the
+# SAME parser Redox OS uses for keyboard/mouse: Redox's `usbhidd` depends on
+# `rehid`, which in turn depends on `hidreport` for the actual report-descriptor
+# parse + field extraction. We harvest the parser (not Redox's userspace
+# scheme glue) so RaeenOS's in-kernel xHCI HID path can decode NON-boot-protocol
+# devices (gaming mice/keyboards that report via report descriptors, not the
+# fixed boot layout). See docs/REDOX_EXTRACTION_MAP.md.
+#
+# `#![no_std]` + alloc so the kernel can depend on it later; host KATs run with
+# `cargo test -p raehid` (the test harness links std, which provides alloc).
+
+[dependencies]
+# hidreport is #![no_std]; disable its default `std`/`hut` features. `hut`
+# only supplies human-readable usage NAMES — we match raw u16 usage codes.
+hidreport = { version = "0.6", default-features = false }

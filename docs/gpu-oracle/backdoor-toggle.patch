@@ -1,0 +1,39 @@
+diff --git a/amdgpud/src/main.rs b/amdgpud/src/main.rs
+index 0ed118e..3d1ecdc 100644
+--- a/amdgpud/src/main.rs
++++ b/amdgpud/src/main.rs
+@@ -79,6 +79,17 @@ fn klog(msg: &str) {
+ /// preflight and the stage code can never drift apart.
+ const AMDGPU_FW_PHOENIX: &[&str] = raeen_amdgpu::bringup::FW_PHOENIX;
+ 
++/// Firmware-load path selector (option C). The PSP path (`false`) PSP-loads RLC/CP
++/// and lights GFX, but this Phoenix PSP REFUSES SDMA via LOAD_IP_FW (TH0 0xffff0010
++/// / TH1 0x11 even byte-exact), so SDMA never gets firmware. amdgpu delivers SDMA on
++/// this APU only through the **RLC-backdoor autoload** (AMDGPU_FW_LOAD_RLC_BACKDOOR_AUTO):
++/// the driver builds ONE buffer (RLC+CP+SDMA+MES at TOC slots), loads the IMU ucode
++/// itself, and starts the IMU, which reads the buffer and brings every engine —
++/// INCLUDING SDMA — out of reset. When `true`, skip the PSP LOAD_IP_FW handshake so
++/// `init_rings` takes its IMU/RLC-backdoor branch (load_rlc_autoload_buffer +
++/// load_imu_microcode + try_imu_core_start). The buffer already carries SDMA TH0/TH1.
++const FW_LOAD_RLC_BACKDOOR: bool = true;
++
+ /// Load one firmware blob through the LinuxKPI host (`request_firmware` → 142).
+ /// Returns true if present and mapped.
+ fn load_fw(name: &str) -> bool {
+@@ -908,7 +919,15 @@ pub extern "C" fn _start() -> ! {
+         // (cmd-buf -> ring frame -> C2PMSG_67 wptr -> fence -> resp) end-to-end against
+         // the live PSP and that LOAD_TOC returns a real TMR size. Returns false ("no
+         // RLC_G") by design — watch the LOAD_TOC/SETUP_TMR result lines for the proof.
+-        if pass {
++        if pass && FW_LOAD_RLC_BACKDOOR {
++            // OPTION C: skip the PSP LOAD_IP_FW handshake entirely. RLC_BOOTLOAD stays
++            // incomplete, so init_rings takes its IMU/RLC-backdoor branch and the IMU
++            // loads RLC+CP+SDMA+MES (incl. SDMA TH0/TH1) from the autoload buffer — the
++            // ONLY path that delivers SDMA on this Phoenix (the PSP refuses it).
++            checkpoint(
++                "[amdgpu] PSP LOAD_IP_FW SKIPPED — RLC-backdoor autoload path (option C); init_rings' IMU loads all engines + SDMA from the autoload buffer",
++            );
++        } else if pass {
+             if let Some(psp) = raeen_amdgpu::bringup::GpuOps::psp_regs(&mut ops) {
+                 // 3b: the full firmware-load handshake — LOAD_TOC -> SETUP_TMR ->
+                 // per-blob LOAD_IP_FW (IMU first) -> AUTOLOAD_RLC after RLC_G. This is

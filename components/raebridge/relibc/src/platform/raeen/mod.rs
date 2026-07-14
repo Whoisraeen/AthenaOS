@@ -1,0 +1,504 @@
+use crate::{
+    c_str::CStr,
+    error::{Errno, Result},
+    header::{
+        errno::ENOSYS,
+        sys_resource::{rlimit, rusage},
+        sys_select::timeval,
+        sys_stat::stat,
+        sys_statvfs::statvfs,
+        sys_time::timezone,
+        sys_utsname::utsname,
+        time::{itimerspec, timespec},
+    },
+    ld_so::tcb::OsSpecific,
+    out::Out,
+    platform::{Pal, types::*},
+    pthread,
+};
+
+pub mod syscalls;
+
+pub struct Sys;
+
+impl Pal for Sys {
+    fn faccessat(_fd: c_int, _path: CStr, _amode: c_int, _flags: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn brk(_addr: *mut c_void) -> Result<*mut c_void> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn chdir(_path: CStr) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn clock_getres(_clk_id: clockid_t, _tp: Option<Out<timespec>>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn clock_gettime(clk_id: clockid_t, mut tp: Out<timespec>) -> Result<()> {
+        use crate::header::time::CLOCK_MONOTONIC;
+        let ns = if clk_id == CLOCK_MONOTONIC {
+            syscalls::sys_time()?
+        } else {
+            syscalls::sys_wall_clock()?
+        };
+        tp.write(timespec {
+            tv_sec: (ns / 1_000_000_000) as i64,
+            tv_nsec: (ns % 1_000_000_000) as i64,
+        });
+        Ok(())
+    }
+
+    unsafe fn clock_settime(_clk_id: clockid_t, _tp: *const timespec) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn close(fildes: c_int) -> Result<()> {
+        syscalls::sys_close(fildes as usize)?;
+        Ok(())
+    }
+
+    fn dup2(_fildes: c_int, _fildes2: c_int) -> Result<c_int> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn execve(_path: CStr, _argv: *const *mut c_char, _envp: *const *mut c_char) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn fexecve(_fildes: c_int, _argv: *const *mut c_char, _envp: *const *mut c_char) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn exit(status: c_int) -> ! {
+        syscalls::sys_exit(status as usize);
+        loop {}
+    }
+
+    unsafe fn exit_thread(_stack_base: *mut (), _stack_size: usize) -> ! {
+        syscalls::sys_exit(0);
+        loop {}
+    }
+
+    fn fchdir(_fildes: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn fchmodat(_dirfd: c_int, _path: Option<CStr>, _mode: mode_t, _flags: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn fchownat(_fildes: c_int, _path: CStr, _owner: uid_t, _group: gid_t, _flags: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn fdatasync(_fildes: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn flock(_fd: c_int, _operation: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn fstatat(_fildes: c_int, _path: Option<CStr>, _buf: Out<stat>, _flags: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn fstatvfs(_fildes: c_int, _buf: Out<statvfs>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn fcntl(_fildes: c_int, _cmd: c_int, _arg: c_ulonglong) -> Result<c_int> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn fork() -> Result<pid_t> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn fpath(_fildes: c_int, _out: &mut [u8]) -> Result<usize> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn fsync(_fildes: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn ftruncate(_fildes: c_int, _length: off_t) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn futex_wait(addr: *mut u32, val: u32, _deadline: Option<&timespec>) -> Result<()> {
+        // Native futex (SYS_FUTEX). Deadline not yet honored — the kernel
+        // futex is cooperative (yield-and-recheck) and relibc treats EAGAIN as
+        // "stale, retry", so a missed deadline degrades to a spin, not a hang.
+        unsafe { crate::raeenOS_syscall::sys_futex_wait(addr, val) }
+    }
+
+    unsafe fn futex_wake(addr: *mut u32, num: u32) -> Result<u32> {
+        unsafe { crate::raeenOS_syscall::sys_futex_wake(addr, num) }
+    }
+
+    unsafe fn utimensat(_dirfd: c_int, _path: CStr, _times: *const timespec, _flag: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getcwd(_buf: Out<[u8]>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getdents(_fd: c_int, _buf: &mut [u8], _opaque_offset: u64) -> Result<usize> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn dir_seek(_fd: c_int, _opaque_offset: u64) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn dent_reclen_offset(_this_dent: &[u8], _offset: usize) -> Option<(u16, u64)> {
+        None
+    }
+
+    fn getegid() -> gid_t { 0 }
+    fn geteuid() -> uid_t { 0 }
+    fn getgid() -> gid_t { 0 }
+
+    fn getgroups(_list: Out<[gid_t]>) -> Result<c_int> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getpagesize() -> usize { 4096 }
+
+    fn getpgid(_pid: pid_t) -> Result<pid_t> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getpid() -> pid_t {
+        syscalls::sys_getpid().unwrap_or(1) as pid_t
+    }
+    fn getppid() -> pid_t { 0 }
+
+    fn getpriority(_which: c_int, _who: id_t) -> Result<c_int> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getrandom(_buf: &mut [u8], _flags: c_uint) -> Result<usize> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getresgid(_rgid: Option<Out<gid_t>>, _egid: Option<Out<gid_t>>, _sgid: Option<Out<gid_t>>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getresuid(_ruid: Option<Out<uid_t>>, _euid: Option<Out<uid_t>>, _suid: Option<Out<uid_t>>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getrlimit(_resource: c_int, _rlim: Out<rlimit>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn setrlimit(_resource: c_int, _rlim: *const rlimit) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getrusage(_who: c_int, _r_usage: Out<rusage>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getsid(_pid: pid_t) -> Result<pid_t> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn gettid() -> pid_t { 1 }
+
+    fn gettimeofday(_tp: Out<timeval>, _tzp: Option<Out<timezone>>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn getuid() -> uid_t { 0 }
+
+    fn linkat(_fd1: c_int, _oldpath: CStr, _fd2: c_int, _newpath: CStr, _flags: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn lseek(fildes: c_int, offset: off_t, whence: c_int) -> Result<off_t> {
+        use crate::header::unistd::{SEEK_END, SEEK_SET};
+        let fd = fildes as usize;
+        let abs = match whence {
+            SEEK_SET => offset,
+            SEEK_END => {
+                let size = syscalls::sys_stat(fd)? as off_t;
+                size + offset
+            }
+            _ => return Err(Errno(ENOSYS)),
+        };
+        let pos = syscalls::sys_seek(fd, abs as i64, 0)?;
+        Ok(pos as off_t)
+    }
+
+    fn mkdirat(_fildes: c_int, _path: CStr, _mode: mode_t) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn mkfifoat(_dir_fd: c_int, _path: CStr, _mode: mode_t) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn mknodat(_fildes: c_int, _path: CStr, _mode: mode_t, _dev: dev_t) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn mlock(_addr: *const c_void, _len: usize) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn mlockall(_flags: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn mmap(addr: *mut c_void, len: usize, _prot: c_int, _flags: c_int, _fildes: c_int, _off: off_t) -> Result<*mut c_void> {
+        let ret = crate::raeenOS_syscall::sys_mmap(addr as usize, len)?;
+        Ok(ret as *mut c_void)
+    }
+
+    unsafe fn mremap(_addr: *mut c_void, _len: usize, _new_len: usize, _flags: c_int, _args: *mut c_void) -> Result<*mut c_void> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn mprotect(_addr: *mut c_void, _len: usize, _prot: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn msync(_addr: *mut c_void, _len: usize, _flags: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn munlock(_addr: *const c_void, _len: usize) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn madvise(_addr: *mut c_void, _len: usize, _flags: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn munlockall() -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn munmap(_addr: *mut c_void, _len: usize) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn nanosleep(_rqtp: *const timespec, _rmtp: *mut timespec) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn openat(dirfd: c_int, path: CStr, oflag: c_int, mode: mode_t) -> Result<c_int> {
+        // RaeenOS sys_open expects a pointer to a C-string (null-terminated)
+        let path_ptr = path.as_ptr() as *const u8;
+        let fd = syscalls::sys_open(path_ptr, oflag as u32, mode as u32)?;
+        Ok(fd as c_int)
+    }
+
+    fn pipe2(_fildes: Out<[c_int; 2]>, _flags: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn posix_fallocate(_fd: c_int, _offset: u64, _length: core::num::NonZeroU64) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn posix_getdents(_fildes: c_int, _buf: &mut [u8]) -> Result<usize> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn rlct_clone(_stack: *mut usize, _os_specific: &mut OsSpecific) -> Result<pthread::OsTid, Errno> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn rlct_kill(_os_tid: pthread::OsTid, _signal: usize) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn current_os_tid() -> pthread::OsTid {
+        pthread::OsTid { thread_id: 1 }
+    }
+
+    fn read(fildes: c_int, buf: &mut [u8]) -> Result<usize> {
+        let bytes = syscalls::sys_read(fildes as usize, buf.as_mut_ptr(), buf.len())?;
+        Ok(bytes)
+    }
+
+    fn pread(_fildes: c_int, _buf: &mut [u8], _offset: off_t) -> Result<usize> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn readlinkat(_dirfd: c_int, _pathname: CStr, _out: &mut [u8]) -> Result<usize> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn renameat2(_old_dir: c_int, _old_path: CStr, _new_dir: c_int, _new_path: CStr, _flags: c_uint) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn sched_yield() -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    unsafe fn setgroups(_size: size_t, _list: *const gid_t) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn setpgid(_pid: pid_t, _pgid: pid_t) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn setpriority(_which: c_int, _who: id_t, _prio: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn setresgid(_rgid: gid_t, _egid: gid_t, _sgid: gid_t) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn setresuid(_ruid: uid_t, _euid: uid_t, _suid: uid_t) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn setsid() -> Result<c_int> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn symlinkat(_path1: CStr, _fd: c_int, _path2: CStr) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn sync() -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn timer_create(_clock_id: clockid_t, _evp: &crate::header::signal::sigevent, _timerid: Out<timer_t>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn timer_delete(_timerid: timer_t) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn timer_gettime(_timerid: timer_t, _value: Out<itimerspec>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn timer_settime(_timerid: timer_t, _flags: c_int, _value: &itimerspec, _ovalue: Option<Out<itimerspec>>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn umask(_mask: mode_t) -> mode_t { 0 }
+
+    fn uname(_utsname: Out<utsname>) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn unlinkat(_fd: c_int, _path: CStr, _flags: c_int) -> Result<()> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn waitpid(_pid: pid_t, _stat_loc: Option<Out<c_int>>, _options: c_int) -> Result<pid_t> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn write(fildes: c_int, buf: &[u8]) -> Result<usize> {
+        if fildes == 1 || fildes == 2 {
+            // STDOUT/STDERR mapping to SYS_DEBUG_PRINT for now
+            let _ = syscalls::sys_debug_print(buf.as_ptr(), buf.len());
+            return Ok(buf.len());
+        }
+        let bytes = syscalls::sys_write(fildes as usize, buf.as_ptr(), buf.len())?;
+        Ok(bytes)
+    }
+
+    fn pwrite(_fildes: c_int, _buf: &[u8], _offset: off_t) -> Result<usize> {
+        Err(Errno(ENOSYS))
+    }
+
+    fn verify() -> bool {
+        true
+    }
+}
+
+pub unsafe fn init(_auxvs: alloc::boxed::Box<[[usize; 2]]>) {}
+
+// Fallbacks for the C code in src/c/stdlib.c that we skipped building.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn strtold(_nptr: *const c_char, _endptr: *mut *mut c_char) -> c_double {
+    0.0
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn relibc_ldtod(val: *const c_longdouble) -> c_double {
+    0.0 // Stub since we don't have long double in no_std easily without compiler-builtins
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn relibc_dtold(_val: c_double, out: *mut c_longdouble) {
+    // Stub
+}
+
+use crate::header::sys_socket::{msghdr, sockaddr, socklen_t};
+use crate::platform::{PalSocket, PalSignal, PalEpoll};
+#[allow(deprecated)]
+use crate::header::sys_time::itimerval;
+use crate::header::bits_sigset_t::sigset_t;
+use crate::header::signal::{sigaction, siginfo_t, sigval, stack_t};
+use crate::header::sys_epoll::epoll_event;
+
+impl PalSocket for Sys {
+    unsafe fn accept(_socket: c_int, _address: *mut sockaddr, _address_len: *mut socklen_t) -> Result<c_int> { Err(Errno(ENOSYS)) }
+    unsafe fn bind(_socket: c_int, _address: *const sockaddr, _address_len: socklen_t) -> Result<()> { Err(Errno(ENOSYS)) }
+    unsafe fn connect(_socket: c_int, _address: *const sockaddr, _address_len: socklen_t) -> Result<c_int> { Err(Errno(ENOSYS)) }
+    unsafe fn getpeername(_socket: c_int, _address: *mut sockaddr, _address_len: *mut socklen_t) -> Result<()> { Err(Errno(ENOSYS)) }
+    unsafe fn getsockname(_socket: c_int, _address: *mut sockaddr, _address_len: *mut socklen_t) -> Result<()> { Err(Errno(ENOSYS)) }
+    unsafe fn getsockopt(_socket: c_int, _level: c_int, _option_name: c_int, _option_value: *mut c_void, _option_len: *mut socklen_t) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn listen(_socket: c_int, _backlog: c_int) -> Result<()> { Err(Errno(ENOSYS)) }
+    unsafe fn recvfrom(_socket: c_int, _buf: *mut c_void, _len: size_t, _flags: c_int, _address: *mut sockaddr, _address_len: *mut socklen_t) -> Result<usize> { Err(Errno(ENOSYS)) }
+    unsafe fn recvmsg(_socket: c_int, _msg: *mut msghdr, _flags: c_int) -> Result<usize> { Err(Errno(ENOSYS)) }
+    unsafe fn sendmsg(_socket: c_int, _msg: *const msghdr, _flags: c_int) -> Result<usize> { Err(Errno(ENOSYS)) }
+    unsafe fn sendto(_socket: c_int, _buf: *const c_void, _len: size_t, _flags: c_int, _dest_addr: *const sockaddr, _dest_len: socklen_t) -> Result<usize> { Err(Errno(ENOSYS)) }
+    unsafe fn setsockopt(_socket: c_int, _level: c_int, _option_name: c_int, _option_value: *const c_void, _option_len: socklen_t) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn shutdown(_socket: c_int, _how: c_int) -> Result<()> { Err(Errno(ENOSYS)) }
+    unsafe fn socket(_domain: c_int, _kind: c_int, _protocol: c_int) -> Result<c_int> { Err(Errno(ENOSYS)) }
+    fn socketpair(_domain: c_int, _kind: c_int, _protocol: c_int, _sv: &mut [c_int; 2]) -> Result<()> { Err(Errno(ENOSYS)) }
+}
+
+#[allow(deprecated)]
+impl PalSignal for Sys {
+    fn getitimer(_which: c_int, _out: &mut itimerval) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn kill(_pid: pid_t, _sig: c_int) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn sigqueue(_pid: pid_t, _sig: c_int, _val: sigval) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn killpg(_pgrp: pid_t, _sig: c_int) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn raise(_sig: c_int) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn setitimer(_which: c_int, _new: &itimerval, _old: Option<&mut itimerval>) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn sigaction(_sig: c_int, _act: Option<&sigaction>, _oact: Option<&mut sigaction>) -> Result<()> { Err(Errno(ENOSYS)) }
+    unsafe fn sigaltstack(_ss: Option<&stack_t>, _old_ss: Option<&mut stack_t>) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn sigpending(_set: &mut sigset_t) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn sigprocmask(_how: c_int, _set: Option<&sigset_t>, _oset: Option<&mut sigset_t>) -> Result<()> { Err(Errno(ENOSYS)) }
+    fn sigsuspend(_mask: &sigset_t) -> Errno { Errno(ENOSYS) }
+    fn sigtimedwait(_set: &sigset_t, _sig: Option<&mut siginfo_t>, _tp: Option<&crate::header::time::timespec>) -> Result<c_int> { Err(Errno(ENOSYS)) }
+}
+
+impl PalEpoll for Sys {
+    fn epoll_create1(_flags: c_int) -> Result<c_int> { Err(Errno(ENOSYS)) }
+    unsafe fn epoll_ctl(_epfd: c_int, _op: c_int, _fd: c_int, _event: *mut epoll_event) -> Result<()> { Err(Errno(ENOSYS)) }
+    unsafe fn epoll_pwait(_epfd: c_int, _events: *mut epoll_event, _maxevents: c_int, _timeout: c_int, _sigmask: *const sigset_t) -> Result<usize> { Err(Errno(ENOSYS)) }
+}
+
+
+use crate::platform::PalPtrace;
+impl PalPtrace for Sys {
+    unsafe fn ptrace(_request: c_int, _pid: pid_t, _addr: *mut c_void, _data: *mut c_void) -> Result<c_int> { Err(Errno(ENOSYS)) }
+}
+

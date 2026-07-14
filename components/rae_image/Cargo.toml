@@ -1,0 +1,33 @@
+[package]
+name = "rae_image"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS unified image-decode dispatcher — the COHESION SEAM (RaeenOS_Concept.md
+# criterion #5) that turns the five separate still-image decoders (rae_png,
+# rae_jpeg, rae_bmp, rae_gif, rae_webp) into ONE "open any image" call. Photos,
+# raeplay, and raegfx call `rae_image::decode(bytes)` and get back a single
+# unified ARGB8888 `Image` regardless of format — the format is chosen by MAGIC
+# BYTES via rae_formats::detect (NEVER by extension, criterion #6 security).
+#
+# This crate is deliberately a THIN dispatcher: it owns no decode logic. Every
+# decoder already emits the same ARGB8888 `Vec<u32>` model, so dispatch is a sniff
+# + a field move + error mapping. The value is the single entry point + the
+# detection wiring + the one unified type, NOT new decoding.
+#
+# `#![cfg_attr(not(test), no_std)]` (the rae_png / rae_formats pattern): `no_std` +
+# `alloc` in every shipped build, `std` only under `cfg(test)` for the host KAT
+# harness. `#![forbid(unsafe_code)]`, never-panic (it maps the underlying decoders'
+# `Err`s, never unwraps). Run the FAIL-able proof with `cargo test -p rae_image` —
+# no QEMU, no image build.
+
+[dependencies]
+rae_formats = { path = "../rae_formats" }
+rae_png = { path = "../rae_png" }
+rae_jpeg = { path = "../rae_jpeg" }
+rae_bmp = { path = "../rae_bmp" }
+rae_gif = { path = "../rae_gif" }
+rae_webp = { path = "../rae_webp" }

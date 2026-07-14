@@ -1,0 +1,18 @@
+amdgpu: set BO type before computing placement (linuxkpi-drm bring-up)
+
+amdgpu_bo_do_create() calls amdgpu_bo_placement_from_domain() before
+ttm_bo_init_reserved() sets bo->tbo.type. placement_from_domain() gates the
+VRAM TTM_PL_FLAG_CONTIGUOUS on tbo.type == ttm_bo_type_kernel, so a kernel BO
+is created WITHOUT contiguous while amdgpu_bo_pin() re-adds it -> the pin
+placement is incompatible -> a VRAM relocation the DMA copy engine (disabled
+during sw_init) cannot service on a constrained visible-VRAM aperture (the PSP
+TMR failed -ENODEV). Set the type up front so create and pin placements match.
+
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_object.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_object.c
+@@ -687,6 +687,7 @@ static int amdgpu_bo_do_create(struct amdgpu_device *adev,
+ 	bo->tbo.bdev = &adev->mman.bdev;
++	bo->tbo.type = bp->type;	/* rae(linuxkpi-drm): set before placement_from_domain (gates VRAM_CONTIGUOUS on ttm_bo_type_kernel) so create matches pin -> no doomed relocation */
+ 	if (bp->domain & (AMDGPU_GEM_DOMAIN_GWS | AMDGPU_GEM_DOMAIN_OA |
+ 			  AMDGPU_GEM_DOMAIN_GDS))
+ 		amdgpu_bo_placement_from_domain(bo, AMDGPU_GEM_DOMAIN_CPU);

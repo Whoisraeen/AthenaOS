@@ -1,0 +1,38 @@
+Subject: [PATCH] amdgpu/psp: flush HDP in the fence-wait loop + raise psp_timeout
+
+RaeenOS runs amdgpu as a userspace daemon and CPU-maps the APU VRAM carveout
+UNCACHED-direct (via SYS_LINUXKPI_MAP_PHYS), not through the GPU BAR + HDP the
+way an in-kernel driver does. The PSP writes its completion fence to that
+carveout DRAM; without draining the GPU HDP write path the fence becomes
+CPU-visible only ~18 s later (LOAD_TOC completed using 18750 of the 20000
+timeout iterations; SETUP_TMR then just exceeded it and psp_load_fw failed
+-EINVAL, blocking all of PSP hw_init).
+
+Add an explicit amdgpu_device_flush_hdp() alongside the existing invalidate in
+psp_cmd_submit_buf's poll loop so the fence lands immediately, and raise
+psp_timeout as a safety margin. On real hardware flush_hdp is a cheap register
+write (hdp_v6_0 amdgpu_hdp_generic_flush) and a no-op on the coherent side, so
+this is safe for the in-kernel path too.
+
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_psp.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_psp.c
+@@ -276,7 +276,7 @@ static int psp_early_init(struct amdgpu_ip_block *ip_block)
+
+ 	psp->adev = adev;
+
+-	adev->psp_timeout = 20000;
++	adev->psp_timeout = 60000;
+
+ 	psp_check_pmfw_centralized_cstate_management(psp);
+
+@@ -736,6 +736,10 @@ psp_cmd_submit_buf(struct psp_context *psp,
+ 		if (ras_intr)
+ 			break;
+ 		usleep_range(60, 100);
++		/* RaeenOS: drain the GPU HDP write path so the PSP's fence write
++		 * to (uncached-mapped) carveout DRAM is visible now, not ~18s
++		 * later. Cheap register write on hw; no-op on the coherent side. */
++		amdgpu_device_flush_hdp(psp->adev, NULL);
+ 		amdgpu_device_invalidate_hdp(psp->adev, NULL);
+ 	}
+

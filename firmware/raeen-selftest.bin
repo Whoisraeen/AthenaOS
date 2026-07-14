@@ -1,0 +1,5 @@
+RAEEN-LINUXKPI-FIRMWARE-SELFTEST-BLOB-v1
+This blob exists only to exercise request_firmware (syscall 142) end-to-end in
+QEMU: the kernel loads firmware/<name> from the initramfs and maps it into the
+calling driver daemon. Real driver microcode (amdgpu gc_*.bin, iwlwifi *.ucode)
+is dropped into this firmware/ directory the same way.

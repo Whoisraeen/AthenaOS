@@ -1,0 +1,47 @@
+[package]
+name = "photos"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# Library target: the app's state + draw path + the syscall-free decode-dispatch
+# (`decode_oriented`) so a host KAT can link the LIVE image decoders (rae_image +
+# rae_gif) with no kernel. This is the structure `apps/files` / `apps/passwords`
+# use.
+[lib]
+name = "photos"
+path = "src/lib.rs"
+
+# Binary target: the freestanding userspace ELF (`_start` -> `photos::run()`).
+# `exec_path = "photos"` in the start-menu manifest resolves to this.
+[[bin]]
+name = "photos"
+path = "src/main.rs"
+# The bin is a freestanding `#![no_main]` ELF shim — it has no libtest entry
+# point, so exclude it from `cargo test` (otherwise the host test build tries to
+# link it as a test exe and fails). The host KAT lives in the LIBRARY target.
+test = false
+
+[features]
+# Forwards to `raekit/host`: lets the std `cargo test` harness link `photos`
+# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# duplicate panic_impl). The normal `cargo build -p photos --target
+# x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
+# with `cargo test -p photos --features host`.
+host = ["raekit/host"]
+
+[dependencies]
+raegfx = { path = "../../components/raegfx" }
+raekit = { path = "../../components/raekit" }
+rae_tokens = { path = "../../components/rae_tokens" }
+raemedia = { path = "../../components/raemedia" }
+rae_gif = { path = "../../components/rae_gif" }
+rae_toml = { path = "../../components/rae_toml" }
+# Magic-byte content sniffer + unified still-image decoder
+# (PNG/JPEG/BMP/GIF/WebP -> ARGB8888). The single still-image "open any image"
+# front door now shared with the Files app: Photos sniffs by magic bytes and
+# dispatches through one path (BMP + WebP join the existing PNG/JPEG). Animated
+# GIFs still route to `rae_gif` directly for the multi-frame animation loop.
+rae_image = { path = "../../components/rae_image" }

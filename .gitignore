@@ -1,0 +1,68 @@
+# Rust / Cargo
+/target/
+# nested per-crate target dirs (e.g. i915d/target when a crate is built standalone)
+**/target/
+**/*.rs.bk
+Cargo.lock
+
+# OS images & build artifacts
+*.iso
+*.img
+*.bin
+*.elf
+*.o
+*.a
+# Compiled binaries / debug symbols never belong in the tree (a 1.4 MB
+# scratch_elf.pdb was tracked — see the scratch section below).
+*.exe
+*.pdb
+# Generated build artifacts embedded into the kernel via include_bytes! — xtask
+# regenerates BOTH every build, BEFORE the kernel compiles, so they're outputs
+# not source (tracking initramfs.tar churned a 4 MB binary diff per build).
+# boot_manifest.bin is already covered by *.bin above.
+kernel/src/initramfs.tar
+# ...but vendored firmware/microcode + captured hardware dumps ARE source
+# (xtask bundles firmware/ into the initramfs; a clone without them regresses
+# the amdgpud preflight and the request_firmware selftest):
+!firmware/**/*.bin
+
+# QEMU / emulator logs & debug output
+*.log
+*.log.*
+qemu_output*.txt
+dump.txt
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.claude/
+# .cursor/ and .gemini/ are NO LONGER ignored: the three-agent guardrail rules
+# (.cursor/rules/*.mdc, .gemini/GEMINI.md) MUST be version-controlled to be
+# load-bearing across agents. Only the volatile hook *state* stays ignored.
+.cursor/hooks/state/
+
+# OS-specific junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+._*
+
+# Environment & secrets
+.env
+.env.*
+
+# Generated root artifacts (disassembly, nm, error logs, scratch)
+/kernel*.asm
+/kernel*.nm*
+/user_init.asm
+/relibc_errors*.json
+/test_cr4.rs
+/scratch_elf.*
+/verify-serial-*.log
+
+# Third-party references
+redox_reference/
+redox_reference_upstream/

@@ -1,0 +1,16 @@
+# sys/time.h brings in sys/select.h which brings in bits/timeval.h
+sys_includes = ["sys/time.h"]
+after_includes = """
+#include <bits/id-t.h> // for id_t from sys/types.h
+"""
+include_guard = "_RELIBC_SYS_RESOURCE_H"
+language = "C"
+style = "Tag"
+no_includes = true
+cpp_compat = true
+
+[enum]
+prefix_with_name = true
+
+[export.rename]
+"timeval" = "struct timeval"

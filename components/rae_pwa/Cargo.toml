@@ -1,0 +1,25 @@
+[package]
+name = "rae_pwa"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS Web App Manifest parser (W3C `manifest.json`) — the data model behind
+# PWA "install to desktop" (RaeenOS_Concept.md §"web apps via PWA support that
+# actually feels native"). A PWA ships a JSON manifest; this crate turns those
+# untrusted bytes into a typed `WebAppManifest` (name/icons/display/colors) that
+# the OS's install-to-desktop path consumes — so a web app gets a real desktop
+# icon, a standalone window, and a theme color, "actually feeling native".
+#
+# Built on `rae_json` (the never-panic RFC 8259 core, path dep) and nothing else.
+# `#![cfg_attr(not(test), no_std)]` (the rae_json / rae_calc / rae_tokens pattern)
+# so the lib is `no_std` + `alloc` in every shipped build and toggles to `std`
+# only under `cfg(test)` for the host KAT harness. Run the FAIL-able proof with
+# `cargo test -p rae_pwa` — no QEMU, no image build. Every byte is treated as
+# hostile (manifests are untrusted web content): every error path returns `Err`,
+# and no `unwrap`/`expect`/raw-index panic is reachable from `parse_manifest`.
+
+[dependencies]
+rae_json = { path = "../rae_json" }

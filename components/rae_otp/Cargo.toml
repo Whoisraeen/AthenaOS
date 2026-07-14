@@ -1,0 +1,28 @@
+[package]
+name = "rae_otp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS one-time-password engine — HOTP (RFC 4226) + TOTP (RFC 6238), the
+# "my authenticator-app codes" primitive. Daily-driver table stakes and the
+# software-token half of RaeenOS's 2FA story: it pairs with raeid's passkeys
+# (RaeenOS_Concept.md §Compatibility Strategy criterion #5, "import & keep my
+# stuff" — a switcher's existing Google Authenticator / Authy / 1Password TOTP
+# secrets must keep producing the same six digits here).
+#
+# Reuses rae_crypto for ALL hashing/MAC (HMAC-SHA-1 / HMAC-SHA-256) — no
+# reimplemented hash lives here; this crate is purely the OTP layer on top
+# (dynamic truncation, the time-step counter, base32 secret decode, otpauth://
+# import, skew-tolerant verify).
+#
+# `#![cfg_attr(not(test), no_std)]` + alloc (the rae_kv / rae_pim pattern):
+# no_std in every shipped build, std only under cfg(test) for the host KATs.
+# `#![forbid(unsafe_code)]`, never-panic on any input (bad base32, out-of-range
+# digit count, huge counter). The FAIL-able proof is the RFC test vectors —
+# `cargo test -p rae_otp`, no QEMU, no image.
+
+[dependencies]
+rae_crypto = { path = "../rae_crypto" }

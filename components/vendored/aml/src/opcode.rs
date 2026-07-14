@@ -1,0 +1,197 @@
+use crate::{parser::*, AmlContext, AmlError};
+
+pub const NULL_NAME: u8 = 0x00;
+pub const DUAL_NAME_PREFIX: u8 = 0x2E;
+pub const MULTI_NAME_PREFIX: u8 = 0x2F;
+pub const ROOT_CHAR: u8 = b'\\';
+pub const PREFIX_CHAR: u8 = b'^';
+
+pub const RESERVED_FIELD: u8 = 0x00;
+pub const ACCESS_FIELD: u8 = 0x01;
+pub const CONNECT_FIELD: u8 = 0x02;
+pub const EXTENDED_ACCESS_FIELD: u8 = 0x03;
+
+pub const ZERO_OP: u8 = 0x00;
+pub const ONE_OP: u8 = 0x01;
+pub const ONES_OP: u8 = 0xff;
+pub const BYTE_CONST: u8 = 0x0a;
+pub const WORD_CONST: u8 = 0x0b;
+pub const DWORD_CONST: u8 = 0x0c;
+pub const STRING_PREFIX: u8 = 0x0d;
+pub const QWORD_CONST: u8 = 0x0e;
+
+pub const DEF_ALIAS_OP: u8 = 0x06;
+pub const DEF_NAME_OP: u8 = 0x08;
+pub const DEF_SCOPE_OP: u8 = 0x10;
+pub const DEF_BUFFER_OP: u8 = 0x11;
+pub const DEF_PACKAGE_OP: u8 = 0x12;
+pub const DEF_METHOD_OP: u8 = 0x14;
+pub const DEF_EXTERNAL_OP: u8 = 0x15;
+pub const DEF_CREATE_DWORD_FIELD_OP: u8 = 0x8a;
+pub const DEF_CREATE_WORD_FIELD_OP: u8 = 0x8b;
+pub const DEF_CREATE_BYTE_FIELD_OP: u8 = 0x8c;
+pub const DEF_CREATE_BIT_FIELD_OP: u8 = 0x8d;
+pub const DEF_CREATE_QWORD_FIELD_OP: u8 = 0x8f;
+pub const EXT_DEF_MUTEX_OP: u8 = 0x01;
+pub const EXT_DEF_COND_REF_OF_OP: u8 = 0x12;
+// RaeenOS additions (Phase 1.4): method-runtime opcodes real firmware uses
+// (Athena: Acquire×21, Release×33, Sleep×43, Stall×37, Wait×3 — \_PIC died
+// on the first Acquire).
+pub const EXT_DEF_STALL_OP: u8 = 0x21;
+pub const EXT_DEF_SLEEP_OP: u8 = 0x22;
+pub const EXT_DEF_ACQUIRE_OP: u8 = 0x23;
+pub const EXT_DEF_WAIT_OP: u8 = 0x25;
+pub const EXT_DEF_RELEASE_OP: u8 = 0x27;
+pub const EXT_DEF_CREATE_FIELD_OP: u8 = 0x13;
+pub const EXT_REVISION_OP: u8 = 0x30;
+pub const EXT_DEF_FATAL_OP: u8 = 0x32;
+pub const EXT_DEF_OP_REGION_OP: u8 = 0x80;
+pub const EXT_DEF_FIELD_OP: u8 = 0x81;
+pub const EXT_DEF_DEVICE_OP: u8 = 0x82;
+pub const EXT_DEF_PROCESSOR_OP: u8 = 0x83;
+pub const EXT_DEF_POWER_RES_OP: u8 = 0x84;
+pub const EXT_DEF_THERMAL_ZONE_OP: u8 = 0x85;
+// RaeenOS addition (MasterChecklist Phase 1.4): IndexField/BankField are
+// table-level NamedObj constructs used by real AMI/AMD firmware (Athena DSDT:
+// 4× IndexField; SSDTs: 42× BankField). An unparsed one aborts the whole
+// table's TermList → empty namespace → no _PRT/EC/battery on iron.
+pub const EXT_DEF_INDEX_FIELD_OP: u8 = 0x86;
+pub const EXT_DEF_BANK_FIELD_OP: u8 = 0x87;
+
+/*
+ * Type 1 opcodes
+ */
+pub const DEF_CONTINUE_OP: u8 = 0x9f;
+pub const DEF_IF_ELSE_OP: u8 = 0xa0;
+pub const DEF_ELSE_OP: u8 = 0xa1;
+pub const DEF_WHILE_OP: u8 = 0xa2;
+pub const DEF_NOOP_OP: u8 = 0xa3;
+pub const DEF_RETURN_OP: u8 = 0xa4;
+pub const DEF_BREAK_OP: u8 = 0xa5;
+pub const DEF_BREAKPOINT_OP: u8 = 0xcc;
+
+/*
+ * Type 2 opcodes
+ */
+pub const DEF_STORE_OP: u8 = 0x70;
+pub const DEF_ADD_OP: u8 = 0x72;
+pub const DEF_CONCAT_OP: u8 = 0x73;
+// RaeenOS additions (Phase 1.4): integer/object expression opcodes used at
+// load time by real AMD firmware (region offsets computed via
+// Add/Or/ShiftLeft/DerefOf/Index over a data package).
+pub const DEF_SUBTRACT_OP: u8 = 0x74;
+pub const DEF_INCREMENT_OP: u8 = 0x75;
+pub const DEF_DECREMENT_OP: u8 = 0x76;
+pub const DEF_MULTIPLY_OP: u8 = 0x77;
+pub const DEF_SHIFT_LEFT: u8 = 0x79;
+pub const DEF_SHIFT_RIGHT: u8 = 0x7a;
+pub const DEF_AND_OP: u8 = 0x7b;
+pub const DEF_NAND_OP: u8 = 0x7c;
+pub const DEF_OR_OP: u8 = 0x7d;
+pub const DEF_NOR_OP: u8 = 0x7e;
+pub const DEF_XOR_OP: u8 = 0x7f;
+pub const DEF_NOT_OP: u8 = 0x80;
+pub const DEF_DEREF_OF_OP: u8 = 0x83;
+pub const DEF_CONCAT_RES_OP: u8 = 0x84;
+pub const DEF_MOD_OP: u8 = 0x85;
+pub const DEF_SIZE_OF_OP: u8 = 0x87;
+pub const DEF_INDEX_OP: u8 = 0x88;
+pub const DEF_OBJECT_TYPE_OP: u8 = 0x8e;
+pub const DEF_L_AND_OP: u8 = 0x90;
+pub const DEF_L_OR_OP: u8 = 0x91;
+pub const DEF_L_NOT_OP: u8 = 0x92;
+pub const DEF_L_EQUAL_OP: u8 = 0x93;
+pub const DEF_L_GREATER_OP: u8 = 0x94;
+pub const DEF_L_LESS_OP: u8 = 0x95;
+pub const DEF_TO_INTEGER_OP: u8 = 0x99;
+pub const DEF_MID_OP: u8 = 0x9e;
+
+/*
+ * Miscellaneous objects
+ */
+pub const EXT_DEBUG_OP: u8 = 0x31;
+pub const LOCAL0_OP: u8 = 0x60;
+pub const LOCAL1_OP: u8 = 0x61;
+pub const LOCAL2_OP: u8 = 0x62;
+pub const LOCAL3_OP: u8 = 0x63;
+pub const LOCAL4_OP: u8 = 0x64;
+pub const LOCAL5_OP: u8 = 0x65;
+pub const LOCAL6_OP: u8 = 0x66;
+pub const LOCAL7_OP: u8 = 0x67;
+pub const ARG0_OP: u8 = 0x68;
+pub const ARG1_OP: u8 = 0x69;
+pub const ARG2_OP: u8 = 0x6a;
+pub const ARG3_OP: u8 = 0x6b;
+pub const ARG4_OP: u8 = 0x6c;
+pub const ARG5_OP: u8 = 0x6d;
+pub const ARG6_OP: u8 = 0x6e;
+
+pub const EXT_OPCODE_PREFIX: u8 = 0x5b;
+
+pub(crate) fn opcode<'a, 'c>(opcode: u8) -> impl Parser<'a, 'c, ()>
+where
+    'c: 'a,
+{
+    move |input: &'a [u8], context: &'c mut AmlContext| match input.first() {
+        // RaeenOS fix (Phase 1.4): empty input must be a SOFT failure
+        // (`WrongParser`) so `choice!` can try its other alternatives. With
+        // the old hard `UnexpectedEndOfStream`, an else-less `If` as the LAST
+        // construct of a term-list slice aborted the whole table: DefIfElse
+        // probes for an optional `DefElse` opcode after the then-branch, and
+        // at end-of-slice that probe must fall through to the no-else path
+        // (real firmware: Athena's `If(_OSI("Windows 2015"))` at the tail of
+        // `If(CondRefOf(\_OSI))` killed the entire DSDT namespace).
+        None => Err((input, context, Propagate::Err(AmlError::WrongParser))),
+        Some(&byte) if byte == opcode => Ok((&input[1..], context, ())),
+        Some(_) => Err((input, context, Propagate::Err(AmlError::WrongParser))),
+    }
+}
+
+pub(crate) fn ext_opcode<'a, 'c>(ext_opcode: u8) -> impl Parser<'a, 'c, ()>
+where
+    'c: 'a,
+{
+    opcode(EXT_OPCODE_PREFIX).then(opcode(ext_opcode)).discard_result()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{test_utils::*, AmlError};
+
+    #[test]
+    fn empty() {
+        let mut context = crate::test_utils::make_test_context();
+        // RaeenOS fix (Phase 1.4): empty input is a SOFT failure (WrongParser)
+        // so optional-opcode probes (DefIfElse's else-peek) fall through in
+        // choice! instead of aborting the table at end-of-slice.
+        check_err!(opcode(NULL_NAME).parse(&[], &mut context), AmlError::WrongParser, &[]);
+        check_err!(ext_opcode(EXT_DEF_FIELD_OP).parse(&[], &mut context), AmlError::WrongParser, &[]);
+    }
+
+    #[test]
+    fn simple_opcodes() {
+        let mut context = crate::test_utils::make_test_context();
+        check_ok!(opcode(DEF_SCOPE_OP).parse(&[DEF_SCOPE_OP], &mut context), (), &[]);
+        check_ok!(
+            opcode(DEF_NAME_OP).parse(&[DEF_NAME_OP, 0x31, 0x55, 0xf3], &mut context),
+            (),
+            &[0x31, 0x55, 0xf3]
+        );
+    }
+
+    #[test]
+    fn extended_opcodes() {
+        let mut context = crate::test_utils::make_test_context();
+        check_err!(
+            ext_opcode(EXT_DEF_FIELD_OP).parse(&[EXT_DEF_FIELD_OP, EXT_DEF_FIELD_OP], &mut context),
+            AmlError::WrongParser,
+            &[EXT_DEF_FIELD_OP, EXT_DEF_FIELD_OP]
+        );
+        check_ok!(
+            ext_opcode(EXT_DEF_FIELD_OP).parse(&[EXT_OPCODE_PREFIX, EXT_DEF_FIELD_OP], &mut context),
+            (),
+            &[]
+        );
+    }
+}

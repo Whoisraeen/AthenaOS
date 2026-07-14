@@ -1,0 +1,13 @@
+# features included for deprecated annotations
+sys_includes = ["features.h"]
+after_includes = """
+#include <bits/time-t.h> // for time_t from sys/types.h
+"""
+include_guard = "_RELIBC_UTIME_H"
+language = "C"
+style = "Tag"
+no_includes = true
+cpp_compat = true
+
+[enum]
+prefix_with_name = true

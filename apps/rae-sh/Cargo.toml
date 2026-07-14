@@ -1,0 +1,10 @@
+[package]
+name = "rae-sh"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+raekit = { path = "../../components/raekit" }

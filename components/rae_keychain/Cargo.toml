@@ -1,0 +1,36 @@
+[package]
+name = "rae_keychain"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS secure credential store / keychain — the encrypted-at-rest password,
+# token, and key vault every desktop OS ships (macOS Keychain, Windows
+# Credential Manager, freedesktop Secret Service). Daily-driver table stakes
+# and the storage half of RaeenOS's auth story: it pairs with raeid's passkeys
+# and rae_otp's TOTP secrets so apps can persist passwords/tokens/keys behind a
+# passphrase (RaeenOS_Concept.md §Compatibility Strategy criterion #5 — "import
+# & keep my stuff"). A switcher arrives with a browser full of saved logins;
+# this is where they live, encrypted.
+#
+# Reuses rae_crypto for ALL cryptography — Argon2id (RFC 9106) for the
+# passphrase->master-key KDF, ChaCha20-Poly1305 (RFC 8439) AEAD for the
+# encrypted-at-rest blob. No crypto is reimplemented here; this crate is purely
+# the credential model + the versioned, AEAD-authenticated on-disk container on
+# top, with AAD binding the format header / KDF params / salt so they cannot be
+# swapped. rae_kv supplies the bounds-checked length-prefixed serialize *model*
+# (we mirror its hostile-input posture; the plaintext entry table is our own
+# tiny format because the keychain entries are encrypted as one opaque payload).
+#
+# `#![cfg_attr(not(test), no_std)]` + alloc (the rae_otp / rae_kv pattern):
+# no_std in every shipped build, std only under cfg(test) for the host KATs.
+# `#![forbid(unsafe_code)]`, never-panic + never-OOM on any input (hostile blob,
+# empty passphrase, absurd entry count), fail-closed on a wrong passphrase (the
+# AEAD tag won't verify -> Err, no padding/length oracle). The FAIL-able proof
+# is the round-trip + wrong-passphrase + tamper KATs — `cargo test -p
+# rae_keychain`, no QEMU, no image.
+
+[dependencies]
+rae_crypto = { path = "../rae_crypto" }

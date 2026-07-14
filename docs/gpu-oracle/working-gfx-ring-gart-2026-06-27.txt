@@ -1,0 +1,30 @@
+# working-driver gfx-ring + GART reference (umr, gfxoff disabled) 2026-06-27
+## extra GART-aperture regs
+gfx1101.regGCVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_LO32 => 0x5fd00001
+gfx1101.regGCVM_CONTEXT0_PAGE_TABLE_BASE_ADDR_HI32 => 0x00000004
+gfx1101.regGCMC_VM_MX_L1_TLB_CNTL => 0x00001859
+gfx1101.regGCMC_VM_AGP_BASE => 0x00000000
+gfx1101.regGCMC_VM_AGP_BOT => 0x00ffffff
+gfx1101.regGCMC_VM_AGP_TOP => 0x00000000
+gfx1101.regGCMC_VM_SYSTEM_APERTURE_LOW_ADDR => 0x00200000
+gfx1101.regGCMC_VM_SYSTEM_APERTURE_HIGH_ADDR => 0x00201fff
+gfx1101.regGCMC_VM_SYSTEM_APERTURE_DEFAULT_ADDR_LSB => 0x003e01e7
+gfx1101.regGCMC_VM_SYSTEM_APERTURE_DEFAULT_ADDR_MSB => 0x00000000
+## CP_RB doorbell range + wptr poll
+gfx1101.regCP_RB_DOORBELL_RANGE_LOWER => 0x00000458
+gfx1101.regCP_RB_DOORBELL_RANGE_UPPER => 0x000007f8
+gfx1101.regCP_RB_WPTR_POLL_ADDR_LO => 0x00401060
+gfx1101.regCP_RB_WPTR_POLL_ADDR_HI => 0x00007fff
+gfx1101.regCP_RB0_RPTR_ADDR => 0x00401040
+gfx1101.regCP_RB0_RPTR_ADDR_HI => 0x00007fff
+
+## clock/gating/engine state (umr -go 0, working amdgpu, 2026-06-27 pass 2)
+GFXCLK pp_dpm_sclk: 0:800MHz* 1:1100 2:2599   (engine IS clocked)
+RLC_CGCG_CGLS_CTRL=0x0000363f (clock gating ENABLED on working driver — CG-disable is NOT the missing step)
+RLC_PG_CNTL=0x00000001
+GRBM_STATUS=0x0000302c  GRBM_STATUS2=0x0000000c
+CP_STAT=0x80038400 active = CP_BUSY(31)+ME_BUSY(17)+MEQ_BUSY(16)+PFP_BUSY(15)+ROQ(10) -> the ME is ENGAGED
+GFX_IMU_CORE_CTRL=0x00000008
+# OURS: CP_STAT=0x80808000 = CP_BUSY(31)+RCIU_BUSY(23)+PFP_BUSY(15), NO ME_BUSY ->
+# the F32 PFP is executing (busy, doing register accesses) but stuck in its boot/init,
+# never feeds the ME, never services the ring. Gate = the PFP execution env, not config.

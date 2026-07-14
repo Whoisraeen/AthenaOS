@@ -1,0 +1,12 @@
+[package]
+name = "linux_hello"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "linux_hello — Linux x86_64 ABI conformance fixture. Raw Linux syscalls only (write/sched_yield/arch_prctl/exit_group); stamped ELFOSABI_LINUX by xtask (config/base.toml abi = \"linux\") so SYS_SPAWN routes it through linux_exec."
+
+[[bin]]
+name = "linux_hello"
+path = "src/main.rs"

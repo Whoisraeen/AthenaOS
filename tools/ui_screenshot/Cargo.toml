@@ -1,0 +1,45 @@
+# ui_screenshot — HOST-render UI screenshot harness (ADR 0004, host-render path).
+#
+# The missing proof path for the UI marquee (Goal #1: UI "proven by
+# raeen-visual-qa screenshots"). The live desktop is unreachable in headless CI
+# and the QEMU screendump->PPM pipeline stripes (project memory: "headless QEMU
+# screendump stripes — capture artifact, NOT the render; iron + HOST-RENDER
+# clean"). This harness renders representative UI surfaces on a host-backed
+# `raegfx::Canvas` (the SAME software rasterizer the kernel composites with) and
+# encodes real PNGs via raemedia's from-scratch encoder — no QEMU, no PPM.
+#
+# Standalone `[workspace]` (own Cargo.lock/target) so it does NOT edit the root
+# workspace member list — keeps the harness out of the way of concurrent agents
+# and out of the kernel/default build. Run from this directory:
+#     cargo run --release
+[package]
+name = "ui_screenshot"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "ui_screenshot"
+path = "src/main.rs"
+
+[dependencies]
+# The Canvas software rasterizer + raefont AA-text path (the design atoms).
+raegfx = { path = "../../components/raegfx" }
+# The shipped chrome surfaces with host-callable `render(&mut Canvas)` fns
+# (Control Center, Files, notifications, command palette, taskbar tray).
+raeshell = { path = "../../components/raeshell" }
+# The LIVE apps/files render path (host-renderable via the `host` feature that
+# gates raekit's lang items) — so surface-files.png shows the real Files window,
+# not the quarantined dead twin.
+files = { path = "../../apps/files", features = ["host"] }
+# The single focus-ring renderer every chrome surface calls (normal + HC).
+raeui = { path = "../../components/raeui" }
+# Design tokens — palette/accent/type ramp + the live high-contrast toggle so
+# we can capture both the normal and forced-colors focus ring. READ-ONLY use.
+rae_tokens = { path = "../../components/rae_tokens" }
+# From-scratch PNG encoder (spec-valid .png, round-trips through png.rs decode).
+raemedia = { path = "../../components/raemedia" }
+
+# Standalone workspace: this tool is intentionally NOT a member of the root
+# RaeenOS workspace (it pulls std + path-deps the kernel never links).
+[workspace]

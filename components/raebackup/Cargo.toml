@@ -1,0 +1,12 @@
+[package]
+name = "raebackup"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaeBackup — backup and restore system for RaeenOS"
+
+[dependencies]
+# Real Argon2id (password KDF), SHA-256 (content hashes), and HMAC-SHA256
+# (auth tags) for backup integrity — replaces the former homebrew LCG/FNV stubs.
+rae_crypto = { path = "../rae_crypto" }

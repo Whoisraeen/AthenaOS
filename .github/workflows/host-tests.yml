@@ -1,0 +1,29 @@
+name: host-tests
+
+# Host KAT gate: pure-logic tests for the testable component crates (no QEMU,
+# no bare-metal kernel target). Locks in the ~35 host KATs so untested code
+# can't silently drift (e.g. pe_loader::test_dll_registry had been failing
+# unrun). Full boot verification stays on the iron/QEMU loop, not CI.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  host-kats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust (stable)
+        run: rustup toolchain install stable --profile minimal
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: host-kats-${{ hashFiles('**/Cargo.toml') }}
+      - name: Run host KAT gate
+        run: bash scripts/host-tests.sh

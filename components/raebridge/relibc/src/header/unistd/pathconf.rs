@@ -1,0 +1,80 @@
+use crate::{
+    header::{
+        errno,
+        limits::{
+            FILESIZEBITS, LINK_MAX, MAX_CANON, MAX_INPUT, NAME_MAX, PATH_MAX, PIPE_BUF,
+            POSIX_ALLOC_SIZE_MIN, SYMLINK_MAX,
+        },
+        termios::_POSIX_VDISABLE,
+    },
+    platform::{
+        self,
+        types::{c_char, c_int, c_long},
+    },
+};
+
+pub const _PC_LINK_MAX: c_int = 0;
+pub const _PC_MAX_CANON: c_int = 1;
+pub const _PC_MAX_INPUT: c_int = 2;
+pub const _PC_NAME_MAX: c_int = 3;
+pub const _PC_PATH_MAX: c_int = 4;
+pub const _PC_PIPE_BUF: c_int = 5;
+pub const _PC_CHOWN_RESTRICTED: c_int = 6;
+pub const _PC_NO_TRUNC: c_int = 7;
+/// Check if file (terminal) supports disabling control chars (CC)
+pub const _PC_VDISABLE: c_int = 8;
+pub const _PC_SYNC_IO: c_int = 9;
+pub const _PC_ASYNC_IO: c_int = 10;
+pub const _PC_PRIO_IO: c_int = 11;
+pub const _PC_SOCK_MAXBUF: c_int = 12;
+pub const _PC_FILESIZEBITS: c_int = 13;
+pub const _PC_REC_INCR_XFER_SIZE: c_int = 14;
+pub const _PC_REC_MAX_XFER_SIZE: c_int = 15;
+pub const _PC_REC_MIN_XFER_SIZE: c_int = 16;
+pub const _PC_REC_XFER_ALIGN: c_int = 17;
+pub const _PC_ALLOC_SIZE_MIN: c_int = 18;
+pub const _PC_SYMLINK_MAX: c_int = 19;
+pub const _PC_2_SYMLINKS: c_int = 20;
+
+fn pc(name: c_int) -> c_long {
+    // Settings from musl, some adjusted
+    match name {
+        _PC_LINK_MAX => LINK_MAX,
+        _PC_MAX_CANON => MAX_CANON,
+        _PC_MAX_INPUT => MAX_INPUT,
+        _PC_NAME_MAX => NAME_MAX.try_into().unwrap_or(-1),
+        _PC_PATH_MAX => PATH_MAX.try_into().unwrap_or(-1),
+        _PC_PIPE_BUF => PIPE_BUF,
+        _PC_CHOWN_RESTRICTED => 1,
+        _PC_NO_TRUNC => 1,
+        _PC_VDISABLE => _POSIX_VDISABLE.into(),
+        _PC_SYNC_IO => 1,
+        _PC_ASYNC_IO => -1,
+        _PC_PRIO_IO => -1,
+        _PC_SOCK_MAXBUF => -1,
+        _PC_FILESIZEBITS => FILESIZEBITS,
+        _PC_REC_INCR_XFER_SIZE => -1,
+        _PC_REC_MAX_XFER_SIZE => -1,
+        _PC_REC_MIN_XFER_SIZE => 4096,
+        _PC_REC_XFER_ALIGN => 4096,
+        _PC_ALLOC_SIZE_MIN => POSIX_ALLOC_SIZE_MIN,
+        _PC_SYMLINK_MAX => SYMLINK_MAX,
+        _PC_2_SYMLINKS => 1,
+        _ => {
+            platform::ERRNO.set(errno::EINVAL);
+            -1
+        }
+    }
+}
+
+/// See <https://pubs.opengroup.org/onlinepubs/9799919799/functions/fpathconf.html>.
+#[unsafe(no_mangle)]
+pub extern "C" fn fpathconf(_fildes: c_int, name: c_int) -> c_long {
+    pc(name)
+}
+
+/// See <https://pubs.opengroup.org/onlinepubs/9799919799/functions/fpathconf.html>.
+#[unsafe(no_mangle)]
+pub extern "C" fn pathconf(_path: *const c_char, name: c_int) -> c_long {
+    pc(name)
+}

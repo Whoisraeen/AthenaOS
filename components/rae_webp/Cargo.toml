@@ -1,0 +1,29 @@
+[package]
+name = "rae_webp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS WebP decoder — "show my photos" / web images (RaeenOS_Concept.md
+# §creators / media: criterion #5). WebP is the dominant MODERN web image format,
+# served everywhere; this completes the still-image decode stack
+# (BMP/GIF/PNG/JPEG + WebP). A from-scratch, zero-dependency VP8L (lossless)
+# decoder that outputs ready-to-blit ARGB8888 full-canvas pixels, matching the
+# rae_png / rae_bmp / rae_gif `Vec<u32>` (0xAARRGGBB) convention so Photos /
+# raeplay consume every format through one uniform pixel model. VP8L is its own
+# self-contained format (a custom LZ77 + canonical Huffman + a color cache + four
+# reversible transforms) — NO rae_deflate dependency.
+#
+# `#![cfg_attr(not(test), no_std)]` (the rae_png / rae_gif pattern) so the lib is
+# `no_std` + `alloc` in every shipped build and toggles to `std` only under
+# `cfg(test)` for the host KAT harness. Run the FAIL-able proof with
+# `cargo test -p rae_webp` — no QEMU, no image build. Treats every byte as hostile
+# (WebP/VP8L decoders are a known RCE/fuzz surface): no `unwrap`/`expect`/
+# raw-index-panic is reachable from `decode_webp`, dimensions / pixel budget /
+# Huffman code lengths / LZ77 back-references / color-cache size / total output
+# are all bounded, and a malformed/truncated/hostile WebP returns Err — never a
+# panic, OOM, or infinite loop.
+
+[dependencies]

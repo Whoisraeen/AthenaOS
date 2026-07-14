@@ -1,0 +1,724 @@
+# tracer: function_graph
+#
+# CPU  DURATION                  FUNCTION CALLS
+# |     |   |                     |   |   |   |
+  4)               |  mes_v11_0_enable [amdgpu]() {
+  4)               |    amdgpu_device_rreg [amdgpu]() {
+  4)   0.241 us    |      amdgpu_device_rreg.part.0 [amdgpu]();
+  4)   1.322 us    |    }
+  4)               |    amdgpu_device_wreg [amdgpu]() {
+  4)   0.130 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  4)   0.751 us    |    }
+  4)   3.657 us    |  }
+  3)               |  mes_v11_0_kiq_hw_init [amdgpu]() {
+  3)               |    mes_v11_0_enable [amdgpu]() {
+  3)               |      amdgpu_device_rreg [amdgpu]() {
+  3)   0.170 us    |        amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   1.102 us    |      }
+  3)               |      amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |        amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |      }
+  3)   0.131 us    |      mutex_lock();
+  3)               |      soc21_grbm_select [amdgpu]() {
+  3)               |        amdgpu_device_wreg [amdgpu]() {
+  3)   0.250 us    |          amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.762 us    |        }
+  3)   1.052 us    |      }
+  3)               |      amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |        amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |      }
+  3)               |      amdgpu_device_wreg [amdgpu]() {
+  3)   0.121 us    |        amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |      }
+  3)               |      soc21_grbm_select [amdgpu]() {
+  3)               |        amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |          amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.641 us    |        }
+  3)   0.931 us    |      }
+  3)               |      amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |        amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |      }
+  3)               |      amdgpu_device_wreg [amdgpu]() {
+  3)   0.131 us    |        amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |      }
+  3)               |      soc21_grbm_select [amdgpu]() {
+  3)               |        amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |          amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |        }
+  3)   0.921 us    |      }
+  3)   0.130 us    |      mutex_unlock();
+  3)               |      amdgpu_device_wreg [amdgpu]() {
+  3)   0.131 us    |        amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |      }
+  3)               |      __const_udelay() {
+  3)               |        delay_halt() {
+  3) ! 501.080 us  |          delay_halt_mwaitx();
+  3) ! 501.641 us  |        }
+  3) ! 501.921 us  |      }
+  3) ! 512.602 us  |    }
+  3)               |    amdgpu_device_rreg [amdgpu]() {
+  3)   0.131 us    |      amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   5.561 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.131 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.661 us    |    }
+  3)   0.330 us    |    amdgpu_device_ip_get_ip_block [amdgpu]();
+  3)               |    mes_v11_0_mqd_init.isra.0 [amdgpu]() {
+  3)   0.130 us    |      amdgpu_device_flush_hdp [amdgpu]();
+  3)   0.441 us    |    }
+  3)   0.141 us    |    mutex_lock();
+  3)               |    soc21_grbm_select [amdgpu]() {
+  3)               |      amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |        amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.641 us    |      }
+  3)   0.932 us    |    }
+  3)               |    amdgpu_device_rreg [amdgpu]() {
+  3)   0.131 us    |      amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.131 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.812 us    |    }
+  3)               |    amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |      amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.131 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.561 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   1.102 us    |    }
+  3)               |    amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |      amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.120 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.661 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.120 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.662 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.662 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.131 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.661 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.120 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.661 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.662 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.120 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.662 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.131 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.661 us    |    }
+  3)               |    amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |      amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.661 us    |    }
+  3)               |    soc21_grbm_select [amdgpu]() {
+  3)               |      amdgpu_device_wreg [amdgpu]() {
+  3)   0.130 us    |        amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.652 us    |      }
+  3)   0.932 us    |    }
+  3)   0.130 us    |    mutex_unlock();
+  3)               |    mes_v11_0_hw_init [amdgpu]() {
+  3)   0.141 us    |      amdgpu_in_reset [amdgpu]();
+  3)               |      mes_v11_0_mqd_init.isra.0 [amdgpu]() {
+  3)   0.150 us    |        amdgpu_device_flush_hdp [amdgpu]();
+  3)   0.612 us    |      }
+  3)   0.150 us    |      amdgpu_ring_alloc [amdgpu]();
+  3)               |      gfx11_kiq_map_queues [amdgpu]() {
+  3)               |        amdgpu_bo_gpu_offset [amdgpu]() {
+  3)   0.130 us    |          mutex_is_locked();
+  3)               |          amdgpu_bo_gpu_offset_no_check [amdgpu]() {
+  3)   0.130 us    |            amdgpu_ttm_domain_start [amdgpu]();
+  3)   0.421 us    |          }
+  3)   1.462 us    |        }
+  3)   2.284 us    |      }
+  3)               |      amdgpu_ring_test_helper [amdgpu]() {
+  3)               |        gfx_v11_0_ring_test_ring [amdgpu]() {
+  3)               |          amdgpu_device_wreg [amdgpu]() {
+  3)   0.131 us    |            amdgpu_device_wreg.part.0 [amdgpu]();
+  3)   0.651 us    |          }
+  3)   0.130 us    |          amdgpu_ring_alloc [amdgpu]();
+  3)   0.140 us    |          gfx_v11_0_ring_emit_wreg [amdgpu]();
+  3)               |          amdgpu_ring_commit [amdgpu]() {
+  3)   0.291 us    |            amdgpu_ring_insert_nop [amdgpu]();
+  3)               |            gfx_v11_0_ring_set_wptr_compute [amdgpu]() {
+  3)               |              amdgpu_mm_wdoorbell64 [amdgpu]() {
+  3)   0.131 us    |                amdgpu_device_skip_hw_access [amdgpu]();
+  3)   0.621 us    |              }
+  3)   5.840 us    |            }
+  3)   6.753 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.131 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.623 us    |              delay_halt_mwaitx();
+  3)   2.124 us    |            }
+  3)   2.575 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.623 us    |              delay_halt_mwaitx();
+  3)   1.923 us    |            }
+  3)   2.215 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.693 us    |              delay_halt_mwaitx();
+  3)   1.994 us    |            }
+  3)   2.274 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.961 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.693 us    |              delay_halt_mwaitx();
+  3)   1.994 us    |            }
+  3)   2.284 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.131 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.613 us    |              delay_halt_mwaitx();
+  3)   1.913 us    |            }
+  3)   2.204 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.961 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.643 us    |              delay_halt_mwaitx();
+  3)   1.934 us    |            }
+  3)   2.224 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.131 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.703 us    |              delay_halt_mwaitx();
+  3)   2.003 us    |            }
+  3)   2.295 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.693 us    |              delay_halt_mwaitx();
+  3)   2.004 us    |            }
+  3)   2.284 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.961 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.603 us    |              delay_halt_mwaitx();
+  3)   1.914 us    |            }
+  3)   2.194 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.131 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.613 us    |              delay_halt_mwaitx();
+  3)   1.904 us    |            }
+  3)   2.194 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.961 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.824 us    |              delay_halt_mwaitx();
+  3)   2.124 us    |            }
+  3)   2.414 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.140 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.972 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.633 us    |              delay_halt_mwaitx();
+  3)   1.934 us    |            }
+  3)   2.224 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.131 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   1.052 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.723 us    |              delay_halt_mwaitx();
+  3)   2.023 us    |            }
+  3)   2.315 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   1.042 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.663 us    |              delay_halt_mwaitx();
+  3)   1.964 us    |            }
+  3)   2.254 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.961 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.623 us    |              delay_halt_mwaitx();
+  3)   1.924 us    |            }
+  3)   2.214 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.131 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |          }
+  3)               |          __const_udelay() {
+  3)               |            delay_halt() {
+  3)   1.633 us    |              delay_halt_mwaitx();
+  3)   1.933 us    |            }
+  3)   2.224 us    |          }
+  3)               |          amdgpu_device_rreg [amdgpu]() {
+  3)   0.130 us    |            amdgpu_device_rreg.part.0 [amdgpu]();
+  3)   0.962 us    |          }
+  3) + 66.615 us   |        }
+  3)   0.251 us    |        __drm_dev_dbg();
+  3) + 67.667 us   |      }
+  3)               |      mes_v11_0_set_hw_resources [amdgpu]() {
+  3)               |        mes_v11_0_submit_pkt_and_poll_completion.constprop.0 [amdgpu]() {
+  3)               |          amdgpu_device_wb_get [amdgpu]() {
+  3)   0.150 us    |            _raw_spin_lock_irqsave();
+  3)   0.141 us    |            _raw_spin_unlock_irqrestore();
+  3)   0.781 us    |          }
+  3)   0.131 us    |          _raw_spin_lock_irqsave();
+  3)   0.140 us    |          amdgpu_ring_alloc [amdgpu]();
+  3)   0.151 us    |          amdgpu_fence_wait_polling [amdgpu]();
+  3)               |          amdgpu_ring_commit [amdgpu]() {
+  3)               |            mes_v11_0_ring_set_wptr [amdgpu]() {
+  3)               |              amdgpu_mm_wdoorbell64 [amdgpu]() {
+  3)   0.130 us    |                amdgpu_device_skip_hw_access [amdgpu]();
+  3)   0.411 us    |              }
+  3)   1.082 us    |            }
+  3)   1.423 us    |          }
+  3)   0.140 us    |          _raw_spin_unlock_irqrestore();
+  3)               |          amdgpu_fence_wait_polling [amdgpu]() {
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.915 us    |                delay_halt_mwaitx();
+  3)   3.216 us    |              }
+  3)   3.497 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.625 us    |                delay_halt_mwaitx();
+  3)   2.926 us    |              }
+  3)   3.216 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   3.116 us    |              }
+  3)   3.407 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   2.946 us    |              }
+  3)   3.236 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.625 us    |                delay_halt_mwaitx();
+  3)   2.926 us    |              }
+  3)   3.216 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.645 us    |                delay_halt_mwaitx();
+  3)   2.945 us    |              }
+  3)   3.237 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.766 us    |                delay_halt_mwaitx();
+  3)   3.076 us    |              }
+  3)   3.356 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   3.356 us    |                delay_halt_mwaitx();
+  3)   3.657 us    |              }
+  3)   3.948 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   3.206 us    |                delay_halt_mwaitx();
+  3)   3.507 us    |              }
+  3)   3.787 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.615 us    |                delay_halt_mwaitx();
+  3)   2.915 us    |              }
+  3)   3.217 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.726 us    |                delay_halt_mwaitx();
+  3)   3.016 us    |              }
+  3)   3.316 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   2.945 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.615 us    |                delay_halt_mwaitx();
+  3)   2.905 us    |              }
+  3)   3.206 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.634 us    |                delay_halt_mwaitx();
+  3)   2.946 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.755 us    |                delay_halt_mwaitx();
+  3)   3.055 us    |              }
+  3)   3.337 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.645 us    |                delay_halt_mwaitx();
+  3)   2.936 us    |              }
+  3)   3.216 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.625 us    |                delay_halt_mwaitx();
+  3)   2.926 us    |              }
+  3)   3.216 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.625 us    |                delay_halt_mwaitx();
+  3)   2.925 us    |              }
+  3)   3.216 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.685 us    |                delay_halt_mwaitx();
+  3)   2.996 us    |              }
+  3)   3.276 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   3.135 us    |              }
+  3)   3.417 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.634 us    |                delay_halt_mwaitx();
+  3)   2.936 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3) + 13.525 us   |                delay_halt_mwaitx();
+  3) + 13.886 us   |              }
+  3) + 14.187 us   |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.615 us    |                delay_halt_mwaitx();
+  3)   2.915 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.625 us    |                delay_halt_mwaitx();
+  3)   2.915 us    |              }
+  3)   3.206 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.605 us    |                delay_halt_mwaitx();
+  3)   2.916 us    |              }
+  3)   3.196 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.625 us    |                delay_halt_mwaitx();
+  3)   2.916 us    |              }
+  3)   3.216 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.605 us    |                delay_halt_mwaitx();
+  3)   2.915 us    |              }
+  3)   3.196 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.625 us    |                delay_halt_mwaitx();
+  3)   2.916 us    |              }
+  3)   3.206 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.605 us    |                delay_halt_mwaitx();
+  3)   2.916 us    |              }
+  3)   3.196 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.625 us    |                delay_halt_mwaitx();
+  3)   2.925 us    |              }
+  3)   3.216 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.605 us    |                delay_halt_mwaitx();
+  3)   2.905 us    |              }
+  3)   3.196 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.735 us    |                delay_halt_mwaitx();
+  3)   3.046 us    |              }
+  3)   3.326 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.625 us    |                delay_halt_mwaitx();
+  3)   2.925 us    |              }
+  3)   3.216 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.605 us    |                delay_halt_mwaitx();
+  3)   2.916 us    |              }
+  3)   3.196 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.625 us    |                delay_halt_mwaitx();
+  3)   2.926 us    |              }
+  3)   3.206 us    |            }
+  3) ! 131.697 us  |          }
+  3)               |          amdgpu_device_wb_free [amdgpu]() {
+  3)   0.140 us    |            _raw_spin_lock_irqsave();
+  3)   0.140 us    |            _raw_spin_unlock_irqrestore();
+  3)   0.702 us    |          }
+  3) ! 136.867 us  |        }
+  3) ! 137.558 us  |      }
+  3)               |      mes_v11_0_set_hw_resources_1 [amdgpu]() {
+  3)               |        mes_v11_0_submit_pkt_and_poll_completion.constprop.0 [amdgpu]() {
+  3)               |          amdgpu_device_wb_get [amdgpu]() {
+  3)   0.140 us    |            _raw_spin_lock_irqsave();
+  3)   0.130 us    |            _raw_spin_unlock_irqrestore();
+  3)   0.721 us    |          }
+  3)   0.141 us    |          _raw_spin_lock_irqsave();
+  3)   0.140 us    |          amdgpu_ring_alloc [amdgpu]();
+  3)   0.140 us    |          amdgpu_fence_wait_polling [amdgpu]();
+  3)               |          amdgpu_ring_commit [amdgpu]() {
+  3)               |            mes_v11_0_ring_set_wptr [amdgpu]() {
+  3)               |              amdgpu_mm_wdoorbell64 [amdgpu]() {
+  3)   0.130 us    |                amdgpu_device_skip_hw_access [amdgpu]();
+  3)   0.411 us    |              }
+  3) + 10.389 us   |            }
+  3) + 10.770 us   |          }
+  3)   0.130 us    |          _raw_spin_unlock_irqrestore();
+  3)               |          amdgpu_fence_wait_polling [amdgpu]() {
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.745 us    |                delay_halt_mwaitx();
+  3)   3.046 us    |              }
+  3)   3.336 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.815 us    |                delay_halt_mwaitx();
+  3)   3.116 us    |              }
+  3)   3.406 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.605 us    |                delay_halt_mwaitx();
+  3)   2.915 us    |              }
+  3)   3.196 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.614 us    |                delay_halt_mwaitx();
+  3)   2.916 us    |              }
+  3)   3.206 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.685 us    |                delay_halt_mwaitx();
+  3)   2.975 us    |              }
+  3)   3.266 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.615 us    |                delay_halt_mwaitx();
+  3)   2.915 us    |              }
+  3)   3.196 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.614 us    |                delay_halt_mwaitx();
+  3)   2.906 us    |              }
+  3)   3.196 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   2.935 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.725 us    |                delay_halt_mwaitx();
+  3)   3.026 us    |              }
+  3)   3.316 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   2.946 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.705 us    |                delay_halt_mwaitx();
+  3)   2.995 us    |              }
+  3)   3.287 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.645 us    |                delay_halt_mwaitx();
+  3)   2.936 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.785 us    |                delay_halt_mwaitx();
+  3)   3.286 us    |              }
+  3)   3.567 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   2.935 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   2.935 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.634 us    |                delay_halt_mwaitx();
+  3)   2.936 us    |              }
+  3)   3.226 us    |            }
+  3) + 55.084 us   |          }
+  3)               |          amdgpu_device_wb_free [amdgpu]() {
+  3)   0.140 us    |            _raw_spin_lock_irqsave();
+  3)   0.140 us    |            _raw_spin_unlock_irqrestore();
+  3)   0.701 us    |          }
+  3) + 69.249 us   |        }
+  3) + 69.571 us   |      }
+  3)               |      mes_v11_0_query_sched_status [amdgpu]() {
+  3)               |        mes_v11_0_submit_pkt_and_poll_completion.constprop.0 [amdgpu]() {
+  3)               |          amdgpu_device_wb_get [amdgpu]() {
+  3)   0.141 us    |            _raw_spin_lock_irqsave();
+  3)   0.130 us    |            _raw_spin_unlock_irqrestore();
+  3)   0.711 us    |          }
+  3)   0.140 us    |          _raw_spin_lock_irqsave();
+  3)   0.130 us    |          amdgpu_ring_alloc [amdgpu]();
+  3)   0.140 us    |          amdgpu_fence_wait_polling [amdgpu]();
+  3)               |          amdgpu_ring_commit [amdgpu]() {
+  3)               |            mes_v11_0_ring_set_wptr [amdgpu]() {
+  3)               |              amdgpu_mm_wdoorbell64 [amdgpu]() {
+  3)   0.140 us    |                amdgpu_device_skip_hw_access [amdgpu]();
+  3)   0.411 us    |              }
+  3) + 23.153 us   |            }
+  3) + 23.464 us   |          }
+  3)   0.130 us    |          _raw_spin_unlock_irqrestore();
+  3)               |          amdgpu_fence_wait_polling [amdgpu]() {
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3) + 10.790 us   |                delay_halt_mwaitx();
+  3) + 11.080 us   |              }
+  3) + 11.372 us   |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   2.946 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   2.935 us    |              }
+  3)   3.216 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.635 us    |                delay_halt_mwaitx();
+  3)   2.935 us    |              }
+  3)   3.226 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.815 us    |                delay_halt_mwaitx();
+  3)   3.106 us    |              }
+  3)   3.386 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.826 us    |                delay_halt_mwaitx();
+  3)   3.116 us    |              }
+  3)   3.396 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.605 us    |                delay_halt_mwaitx();
+  3)   2.915 us    |              }
+  3)   3.196 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.645 us    |                delay_halt_mwaitx();
+  3)   2.935 us    |              }
+  3)   3.336 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.605 us    |                delay_halt_mwaitx();
+  3)   2.916 us    |              }
+  3)   3.206 us    |            }
+  3)               |            __const_udelay() {
+  3)               |              delay_halt() {
+  3)   2.605 us    |                delay_halt_mwaitx();
+  3)   2.905 us    |              }
+  3)   3.196 us    |            }
+  3) + 42.550 us   |          }
+  3)               |          amdgpu_device_wb_free [amdgpu]() {
+  3)   0.130 us    |            _raw_spin_lock_irqsave();
+  3)   0.140 us    |            _raw_spin_unlock_irqrestore();
+  3)   0.692 us    |          }
+  3) + 69.420 us   |        }
+  3) + 69.741 us   |      }
+  3)               |      amdgpu_mes_update_enforce_isolation [amdgpu]() {
+  3)   0.130 us    |        mutex_lock();
+  3)               |        amdgpu_mes_set_enforce_isolation.isra.0 [amdgpu]() {
+  3)   0.130 us    |          mutex_lock();
+  3)               |          mes_v11_0_misc_op [amdgpu]() {
+  3)               |            mes_v11_0_submit_pkt_and_poll_completion.constprop.0 [amdgpu]() {
+  3)               |              amdgpu_device_wb_get [amdgpu]() {
+  3)   0.131 us    |                _raw_spin_lock_irqsave();
+  3)   0.130 us    |                _raw_spin_unlock_irqrestore();
+  3)   0.712 us    |              }
+  3)   0.140 us    |              _raw_spin_lock_irqsave();
+  3)   0.131 us    |              amdgpu_ring_alloc [amdgpu]();
+  3)   0.140 us    |              amdgpu_fence_wait_polling [amdgpu]();
+  3)               |              amdgpu_ring_commit [amdgpu]() {
+  3)   0.230 us    |                mes_v11_0_ring_set_wptr [amdgpu]();
+  3)   5.401 us    |              }
+  3)   0.130 us    |              _raw_spin_unlock_irqrestore();
+  3)               |              amdgpu_fence_wait_polling [amdgpu]() {
+  3)   2.765 us    |                __const_udelay();
+  3)   2.755 us    |                __const_udelay();
+  3)   2.725 us    |                __const_udelay();
+  3)   2.755 us    |                __const_udelay();
+  3)   2.755 us    |                __const_udelay();
+  3)   2.765 us    |                __const_udelay();
+  3)   2.766 us    |                __const_udelay();
+  3)   2.755 us    |                __const_udelay();
+  3)   2.756 us    |                __const_udelay();
+  3)   2.755 us    |                __const_udelay();
+  3)   2.735 us    |                __const_udelay();
+  3)   2.755 us    |                __const_udelay();
+  3)   2.755 us    |                __const_udelay();
+  3)   2.735 us    |                __const_udelay();
+  3)   2.765 us    |                __const_udelay();
+  3)   2.735 us    |                __const_udelay();
+  3) + 46.738 us   |              }
+  3)               |              amdgpu_device_wb_free [amdgpu]() {
+  3)   0.130 us    |                _raw_spin_lock_irqsave();
+  3)   0.141 us    |                _raw_spin_unlock_irqrestore();
+  3)   0.691 us    |              }
+  3) + 55.594 us   |            }
+  3) + 55.924 us   |          }
+  3)   0.140 us    |          mutex_unlock();
+  3) + 56.786 us   |        }
+  3)   0.130 us    |        mutex_unlock();
+  3) + 57.758 us   |      }
+  3) ! 411.692 us  |    }
+  3) ! 955.012 us  |  }

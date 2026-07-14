@@ -1,0 +1,17 @@
+# raeen_nvidia — pure, dependency-free NVIDIA GPU bring-up logic for the
+# userspace `nvidiad` driver daemon. The chip-identification decode
+# (NV_PMC_BOOT_0 -> architecture / revision / firmware tier), the BAR/register
+# map, and (as it grows) the command-stream builders. Kept free of the
+# syscall/LinuxKPI shim so it builds on the host and every decode is validated
+# with `cargo test -p raeen_nvidia` (the host-KAT pattern), not only on real
+# NVIDIA silicon — which RaeenOS does not yet have in the lab.
+[package]
+name = "raeen_nvidia"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "NVIDIA GPU chip-id decode + BAR/register map (host-testable, no_std)."
+
+[dependencies]

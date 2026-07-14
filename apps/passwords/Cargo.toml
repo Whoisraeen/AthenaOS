@@ -1,0 +1,40 @@
+[package]
+name = "passwords"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# Library target: the app's state + draw path + the syscall-free vault MODEL
+# (`VaultModel`) so a host KAT can link the LIVE engines (rae_keychain +
+# rae_otp) with no kernel. This is the structure `apps/files` uses.
+[lib]
+name = "passwords"
+path = "src/lib.rs"
+
+# Binary target: the freestanding userspace ELF (`_start` -> `passwords::run()`).
+# `exec_path = "passwords"` in the start-menu manifest resolves to this.
+[[bin]]
+name = "passwords"
+path = "src/main.rs"
+# The bin is a freestanding `#![no_main]` ELF shim — it has no libtest entry
+# point, so exclude it from `cargo test` (otherwise the host test build tries to
+# link it as a test exe and fails LNK1561 "entry point must be defined"). The
+# host KAT lives entirely in the LIBRARY target.
+test = false
+
+[features]
+# Forwards to `raekit/host`: lets the std `cargo test` harness link `passwords`
+# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# duplicate panic_impl). The normal `cargo build -p passwords --target
+# x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
+# with `cargo test -p passwords --features host`.
+host = ["raekit/host"]
+
+[dependencies]
+raegfx = { path = "../../components/raegfx" }
+raekit = { path = "../../components/raekit" }
+rae_tokens = { path = "../../components/rae_tokens" }
+rae_keychain = { path = "../../components/rae_keychain" }
+rae_otp = { path = "../../components/rae_otp" }

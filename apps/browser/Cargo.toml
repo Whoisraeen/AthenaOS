@@ -1,0 +1,48 @@
+[package]
+name = "browser"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lib]
+name = "browser"
+path = "src/lib.rs"
+
+# Binary target: the freestanding userspace ELF (`_start` -> `browser::run()`).
+# `exec_path = "browser"` in the start-menu manifest resolves to this.
+[[bin]]
+name = "browser"
+path = "src/main.rs"
+# The bin is a freestanding `#![no_main]` ELF shim with no libtest entry point, so
+# exclude it from `cargo test` (otherwise the host test build tries to link it as a
+# test exe and fails LNK1561 "entry point must be defined"). The host KAT lives in
+# the LIBRARY target.
+test = false
+
+[features]
+# Forwards to `raekit/host`: lets the std `cargo test` harness link `browser`
+# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# duplicate panic_impl). The normal `cargo build -p browser --target
+# x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
+# with `cargo test -p browser --features host`.
+host = ["raekit/host"]
+
+[dependencies]
+raegfx = { path = "../../components/raegfx" }
+raekit = { path = "../../components/raekit" }
+rae_tokens = { path = "../../components/rae_tokens" }
+# The HTML/CSS engine: tokenizer -> parser -> DOM -> CSS cascade -> layout -> paint.
+# RenderPipeline::render_to_layout gives the laid-out box tree; backend::
+# paint_displaylist_to_canvas blits a DisplayList to a raegfx Canvas.
+raeweb = { path = "../../components/raeweb" }
+# The ECMAScript interpreter: Interpreter::eval_str runs an inline <script> for its
+# evaluation + console side effects; take_console_output captures the observable.
+rae_js = { path = "../../components/rae_js" }
+# The HTTP/1.1 client + transport seam: http1::HttpTransport is the injectable
+# byte transport the address-bar fetch rides on. The live ELF wraps a real socket
+# in RaeSocketTransport; the host KAT drives http1::MockTransport with a canned
+# response. (raeweb's loader already consumes this; the app needs it directly to
+# name the trait + construct the transports.)
+raenet = { path = "../../components/raenet" }

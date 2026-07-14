@@ -1,0 +1,12 @@
+//! This is a fork intended for use by the [kanata keyboard remapper software](https://github.com/jtroo/kanata).
+//! Please make contributions to the original project.
+
+#![no_std]
+extern crate alloc;
+
+pub mod action;
+pub mod chord;
+pub mod key_code;
+pub mod layout;
+mod multikey_buffer;
+pub mod tap_hold_tracker;

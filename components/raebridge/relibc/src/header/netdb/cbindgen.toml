@@ -1,0 +1,22 @@
+# netinet/in.h brings in sys/socket.h
+sys_includes = ["inttypes.h", "netinet/in.h", "features.h"]
+include_guard = "_RELIBC_NETDB_H"
+trailer = """
+#ifndef _RELIBC_BITS_NETDB_H
+#define _RELIBC_BITS_NETDB_H
+
+#define h_errno (*__h_errno_location())
+#define h_addr  h_addr_list[0] /* Address, for backward compatibility.*/
+
+#endif // _RELIBC_BITS_NETDB_H
+"""
+language = "C"
+style = "Tag"
+no_includes = true
+cpp_compat = true
+
+[export.rename]
+"sockaddr" = "struct sockaddr"
+
+[enum]
+prefix_with_name = true

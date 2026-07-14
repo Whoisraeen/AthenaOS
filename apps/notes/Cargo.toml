@@ -1,0 +1,15 @@
+[package]
+name = "notes"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+raegfx = { path = "../../components/raegfx" }
+raekit = { path = "../../components/raekit" }
+rae_tokens = { path = "../../components/rae_tokens" }
+rae_markdown = { path = "../../components/rae_markdown" }
+rae_regex = { path = "../../components/rae_regex" }
+rae_toml = { path = "../../components/rae_toml" }

@@ -1,0 +1,12 @@
+# RaeManifest.toml — RaeenOS app permission manifest (Phase 9.2)
+# Parsed at launch by kernel/src/rae_manifest.rs; declares the sandbox level
+# and the gated-syscall permission grants for this app bundle.
+
+name = "calculator"
+version = "1.0.0"
+sandbox = "app" # trusted | app | strict
+
+[permissions]
+network = true  # demonstration grant: socket syscalls (121/122) allowed
+devices = false # raw device claim / DMA stays denied
+install = false # disk install stays denied

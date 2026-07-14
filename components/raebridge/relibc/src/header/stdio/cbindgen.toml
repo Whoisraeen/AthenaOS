@@ -1,0 +1,37 @@
+# stddef.h brings in size_t
+sys_includes = ["stdarg.h", "stddef.h", "stdint.h", "features.h"]
+after_includes = """
+#include <bits/off-t.h>   // for off_t from sys/types.h
+#include <bits/ssize-t.h> // for ssize_t from sys/types.h
+"""
+include_guard = "_RELIBC_STDIO_H"
+trailer = """
+#ifndef _RELIBC_BITS_STDIO_H
+#define _RELIBC_BITS_STDIO_H
+
+// XXX: this is only here because cbindgen can't handle string constants
+#define P_tmpdir "/tmp"
+
+// TODO: figure out why this duplicate is needed to compile libiconv
+typedef struct FILE FILE;
+
+// A typedef doesn't suffice, because libgmp uses this definition to check if
+// STDIO was loaded.
+#define FILE FILE
+// Likewise, stdin, stdout, and stderr are expected to be macros.
+#define stdin stdin
+#define stdout stdout
+#define stderr stderr
+
+#endif // _RELIBC_BITS_STDIO_H
+"""
+language = "C"
+style = "Type"
+no_includes = true
+cpp_compat = true
+
+[enum]
+prefix_with_name = true
+
+[export.rename]
+"AtomicBool" = "volatile char"

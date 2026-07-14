@@ -1,0 +1,20 @@
+# Off-target verifier for a captured amdgpu IP-discovery blob. Runs the kernel's
+# EXACT parser (raeen_amdgpu::discovery) + SOC15 offset resolvers on the host, so
+# a real firmware/amdgpu/ip_discovery.bin is validated on the dev box before any
+# Athena flash (the same "parse real firmware off-target" discipline as
+# tools/aml_probe). Run:
+#   cargo run --manifest-path tools/discovery_probe/Cargo.toml -- firmware/amdgpu/ip_discovery.bin
+[package]
+name = "discovery_probe"
+version = "0.0.1"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "discovery_probe"
+path = "main.rs"
+
+[dependencies]
+raeen_amdgpu = { path = "../../components/raeen_amdgpu" }
+
+[workspace]

@@ -1,0 +1,65 @@
+--- a/drivers/gpu/drm/amd/amdgpu/mes_v11_0.c
++++ b/drivers/gpu/drm/amd/amdgpu/mes_v11_0.c
+@@ -34,6 +34,7 @@
+ #include "mes_v11_api_def.h"
+ 
+ extern void rae_netlog_flush_sync(void);
++extern void rae_cpu_cache_flush(const void *ptr, unsigned long len);
+ 
+ MODULE_FIRMWARE("amdgpu/gc_11_0_0_mes.bin");
+ MODULE_FIRMWARE("amdgpu/gc_11_0_0_mes_2.bin");
+@@ -1230,6 +1231,8 @@
+ 	mqd->cp_hqd_iq_timer = regCP_HQD_IQ_TIMER_DEFAULT;
+ 	mqd->cp_hqd_quantum = regCP_HQD_QUANTUM_DEFAULT;
+ 
++	/* Publish the CPU-built MQD before KIQ/MES consumes it through GPU memory. */
++	rae_cpu_cache_flush(mqd, sizeof(*mqd));
+ 	amdgpu_device_flush_hdp(ring->adev, NULL);
+ 	return 0;
+ }
+@@ -1300,6 +1303,9 @@
+ {
+ 	struct amdgpu_kiq *kiq = &adev->gfx.kiq[0];
+ 	struct amdgpu_ring *kiq_ring = &adev->gfx.kiq[0].ring;
++	struct amdgpu_ring *sched_ring = &adev->mes.ring[0];
++	struct v11_compute_mqd *mqd = sched_ring->mqd_ptr;
++	u64 start;
+ 	int r;
+ 
+ 	if (!kiq->pmf || !kiq->pmf->kiq_map_queues)
+@@ -1311,7 +1317,34 @@
+ 		return r;
+ 	}
+ 
+-	kiq->pmf->kiq_map_queues(kiq_ring, &adev->mes.ring[0]);
++	kiq->pmf->kiq_map_queues(kiq_ring, sched_ring);
++	start = kiq_ring->wptr_old & kiq_ring->buf_mask;
++	dev_info(adev->dev,
++		 "RAE-MES map sched ring=0x%llx mqd=0x%llx cpu=%p wptr=0x%llx db=0x%x size=0x%x\n",
++		 (unsigned long long)sched_ring->gpu_addr,
++		 (unsigned long long)sched_ring->mqd_gpu_addr, sched_ring->mqd_ptr,
++		 (unsigned long long)sched_ring->wptr_gpu_addr,
++		 sched_ring->doorbell_index, sched_ring->ring_size);
++	dev_info(adev->dev,
++		 "RAE-MES map pkt %08x %08x %08x %08x %08x %08x %08x\n",
++		 kiq_ring->ring[(start + 0) & kiq_ring->buf_mask],
++		 kiq_ring->ring[(start + 1) & kiq_ring->buf_mask],
++		 kiq_ring->ring[(start + 2) & kiq_ring->buf_mask],
++		 kiq_ring->ring[(start + 3) & kiq_ring->buf_mask],
++		 kiq_ring->ring[(start + 4) & kiq_ring->buf_mask],
++		 kiq_ring->ring[(start + 5) & kiq_ring->buf_mask],
++		 kiq_ring->ring[(start + 6) & kiq_ring->buf_mask]);
++	dev_info(adev->dev,
++		 "RAE-MES mqd base=%08x:%08x pq=%08x:%08x ctl=%08x db=%08x report=%08x:%08x poll=%08x:%08x active=%08x persistent=%08x\n",
++		 mqd->cp_mqd_base_addr_hi, mqd->cp_mqd_base_addr_lo,
++		 mqd->cp_hqd_pq_base_hi, mqd->cp_hqd_pq_base_lo,
++		 mqd->cp_hqd_pq_control, mqd->cp_hqd_pq_doorbell_control,
++		 mqd->cp_hqd_pq_rptr_report_addr_hi,
++		 mqd->cp_hqd_pq_rptr_report_addr_lo,
++		 mqd->cp_hqd_pq_wptr_poll_addr_hi,
++		 mqd->cp_hqd_pq_wptr_poll_addr_lo,
++		 mqd->cp_hqd_active, mqd->cp_hqd_persistent_state);
++	rae_netlog_flush_sync();
+ 
+ 	return amdgpu_ring_test_helper(kiq_ring);
+ }

@@ -1,0 +1,25 @@
+[package]
+name = "rae_png"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeenOS PNG decoder — "show my photos" (RaeenOS_Concept.md §creators / media).
+# PNG is the dominant lossless image format: photos, app icons, and web images all
+# ship as PNG. This is the from-scratch decoder Photos / raeplay sit on, matching
+# the rae_bmp / rae_gif ARGB8888 `Vec<u32>` pixel convention so all three decoders
+# can be consumed uniformly. PNG's IDAT is zlib-wrapped DEFLATE, so this crate
+# REUSES `rae_deflate::zlib_decompress` rather than reimplementing inflate.
+#
+# `#![cfg_attr(not(test), no_std)]` (the rae_gif / rae_bmp pattern): the lib is
+# `no_std` + `alloc` in every shipped build and toggles to `std` only under
+# `cfg(test)` for the host KAT harness. Run the FAIL-able proof with
+# `cargo test -p rae_png` — no QEMU, no image build. Treats every byte as hostile
+# (decoders are the #1 RCE surface): no `unwrap`/`expect`/raw-index-panic is
+# reachable from `decode_png`, CRC-32 is verified per chunk, and dimensions /
+# pixel budget are bounded before any allocation.
+
+[dependencies]
+rae_deflate = { path = "../rae_deflate" }

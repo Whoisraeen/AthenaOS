@@ -1,0 +1,17 @@
+[package]
+name = "i915d"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "i915d — RaeenOS userspace Intel GPU driver daemon (Path C). Runs the i915 bring-up pipeline (PCI → VBT → GGTT → rings → modeset) on the LinuxKPI host."
+
+[dependencies]
+rae_abi = { path = "../components/rae_abi" }
+raeen_linuxkpi = { path = "../components/raeen_linuxkpi" }
+raeen_drm = { path = "../components/raeen_drm" }
+
+[[bin]]
+name = "i915d"
+path = "src/main.rs"

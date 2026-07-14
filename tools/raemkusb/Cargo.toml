@@ -1,0 +1,31 @@
+# raemkusb — build a RaeenOS install-media image.
+#
+# Two modes:
+#   * inject (default): copy the real bootable UEFI image (kernel.uefi.img,
+#     built by xtask) and inject the `INSTALL.NOW` marker into its ESP root.
+#     The result is firmware-bootable (proven boot tree: EFI/BOOT/BOOTX64.EFI +
+#     kernel-x86_64) AND fires the marker-gated installer, which then sources
+#     the REAL BOOTX64.EFI + kernel-x86_64 from this stick onto the target disk.
+#     Uses `fatfs` to open the existing ESP FAT (auto-detects FAT16/32, LFN).
+#   * --scratch: a minimal hand-rolled GPT + FAT32 ESP carrying only INSTALL.NOW
+#     (no real boot tree). Byte-compatible with the kernel's parse_gpt/parse_vbr;
+#     used to fire the marker-gated installer in QEMU without rebuilding the
+#     bootloader (VVFAT can't — it only presents raw FAT32 the parser rejects).
+#
+#   cargo run --manifest-path tools/raemkusb/Cargo.toml -- --out target/install-usb.img
+[package]
+name = "raemkusb"
+version = "0.0.2"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "raemkusb"
+path = "main.rs"
+
+[dependencies]
+# Pure host FAT12/16/32 reader+writer (LFN + subdirs). Same versions xtask uses.
+fatfs = "0.3"
+fscommon = "0.1"
+
+[workspace]

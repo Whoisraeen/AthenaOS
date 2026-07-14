@@ -1,0 +1,12 @@
+[package]
+name = "raepackage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaePackage — system package manager for RaeenOS"
+
+[dependencies]
+# Real hashes (SHA-256/512, BLAKE2b) + Ed25519 signature verification for
+# package integrity/authenticity — replaces the former homebrew stubs.
+rae_crypto = { path = "../rae_crypto" }
