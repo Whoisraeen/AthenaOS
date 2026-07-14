@@ -26,12 +26,12 @@ extern crate alloc;
 
 use alloc::string::String;
 use alloc::vec::Vec;
-use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use ath_tokens::{derive_accent, AccentRamp, Palette, DARK, RADIUS_SM, TYPE_BODY};
 use athgfx::text::FontFamily;
 use athgfx::Canvas;
 use athweb::loader::{self, Mime};
 use athweb::{build_display_list, count_dom_nodes, parse_html, DomNode, LayoutBox, RenderPipeline};
+use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use spin::Mutex;
 
 /// Active palette — the browser chrome is dark glass like the rest of the shell.

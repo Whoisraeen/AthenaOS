@@ -8,8 +8,8 @@
 use alloc::collections::{BTreeMap, VecDeque};
 use alloc::sync::Arc;
 use alloc::vec::Vec;
-use core::sync::atomic::{AtomicU64, Ordering};
 use ath_abi::drm_service as wire;
+use core::sync::atomic::{AtomicU64, Ordering};
 use spin::Mutex;
 
 const ENODEV: i64 = -19;

@@ -13,8 +13,8 @@
 //! shared [`ath_crypto::pcr`] core (host-KAT'd), so this matches a hardware TPM for the
 //! same events; the hardware TPM chip + key sealing remain the iron-gated half.
 
-use core::sync::atomic::{AtomicU32, Ordering};
 use ath_crypto::pcr::PcrBank;
+use core::sync::atomic::{AtomicU32, Ordering};
 use spin::Mutex;
 
 /// PCR index for the kernel/boot-manager stage — the signed boot manifest, which

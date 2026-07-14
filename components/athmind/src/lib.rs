@@ -92,10 +92,7 @@ impl AthMind {
         };
         let batch = BodyCommandBatch::default();
         let _ = self.body.submit(&batch);
-        TickResult {
-            body: batch,
-            note,
-        }
+        TickResult { body: batch, note }
     }
 }
 
@@ -120,9 +117,16 @@ mod tests {
             magnitude: 1.0,
             source: AffectSource::Guard,
         });
-        assert_eq!(m.affect().get(Channel::Shame), 0.0, "queued, not yet applied");
+        assert_eq!(
+            m.affect().get(Channel::Shame),
+            0.0,
+            "queued, not yet applied"
+        );
         m.tick();
-        assert!(m.affect().get(Channel::Shame) > 0.2, "applied during update-self");
+        assert!(
+            m.affect().get(Channel::Shame) > 0.2,
+            "applied during update-self"
+        );
     }
 
     #[test]

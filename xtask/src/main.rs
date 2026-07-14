@@ -1320,7 +1320,10 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
         .ok()
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "2".to_string());
-    eprintln!("[xtask] SMP: {} vCPU(s) (set ATHENA_SMP=<n> to change)", smp);
+    eprintln!(
+        "[xtask] SMP: {} vCPU(s) (set ATHENA_SMP=<n> to change)",
+        smp
+    );
     cmd.args([
         "-no-reboot",
         "-no-shutdown",

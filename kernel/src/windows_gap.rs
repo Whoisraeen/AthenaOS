@@ -153,7 +153,9 @@ pub fn init() {
 
 pub fn dump_text() -> String {
     let mut out = String::from("# AthenaOS Windows pain-point kernel map\n");
-    out.push_str("# Source: LEGACY_GAMING_CONCEPT.md §Windows Pain Points → AthenaOS Solutions\n\n");
+    out.push_str(
+        "# Source: LEGACY_GAMING_CONCEPT.md §Windows Pain Points → AthenaOS Solutions\n\n",
+    );
     for (i, r) in rows().iter().enumerate() {
         out.push_str(&alloc::format!(
             "[{:02}] status={:<10} kernel={}\n     windows: {}\n     athena:   {}\n",

@@ -40,12 +40,12 @@ extern crate alloc;
 
 use alloc::string::String;
 use alloc::vec::Vec;
-use core::sync::atomic::{AtomicU64, AtomicU8, Ordering};
 use ath_tokens::{
     AccentRamp, Palette, DARK, GLASS_PANEL_DARK, RADIUS_LG, RADIUS_MD, RADIUS_SM, RADIUS_XL,
     TYPE_BODY, TYPE_CAPTION, TYPE_LABEL, TYPE_SUBTITLE, TYPE_TITLE,
 };
 use athgfx::text::FontFamily;
+use core::sync::atomic::{AtomicU64, AtomicU8, Ordering};
 
 use crate::installer::LayoutPlan;
 

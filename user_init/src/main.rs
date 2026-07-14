@@ -3,11 +3,11 @@
 
 extern crate alloc;
 use alloc::boxed::Box;
-use core::panic::PanicInfo;
 use athgfx::Canvas;
 #[allow(unused_imports)]
 use athkit;
 use athui::{Button, Label, Widget};
+use core::panic::PanicInfo;
 
 // ── Syscall numbers ───────────────────
 const SYS_PRINT: u64 = 1;

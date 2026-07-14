@@ -329,7 +329,11 @@ pub fn init() {
     // at this point in boot, we record placeholder measurements that
     // the bootloader should have already extended into real hardware PCRs.
     sb.measure_stage(BootStage::Firmware, tpm::sha256(b"uefi-firmware"), 0);
-    sb.measure_stage(BootStage::Bootloader, tpm::sha256(b"athenaos-bootloader"), 0);
+    sb.measure_stage(
+        BootStage::Bootloader,
+        tpm::sha256(b"athenaos-bootloader"),
+        0,
+    );
     sb.measure_stage(
         BootStage::SecureBootPolicy,
         tpm::sha256(b"secure-boot-policy"),

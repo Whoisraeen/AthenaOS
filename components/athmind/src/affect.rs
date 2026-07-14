@@ -253,7 +253,11 @@ mod tests {
         a.tick(&[ev(AffectEventKind::GuardNearDeny, 1.0)]);
         assert!(a.get(Channel::Shame) > 0.2);
         assert!(a.get(Channel::Stress) > 0.1);
-        assert_eq!(a.get(Channel::Curiosity), 0.0, "unrelated channel untouched");
+        assert_eq!(
+            a.get(Channel::Curiosity),
+            0.0,
+            "unrelated channel untouched"
+        );
     }
 
     #[test]

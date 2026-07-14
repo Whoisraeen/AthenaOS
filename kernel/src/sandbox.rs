@@ -25,12 +25,12 @@ extern crate alloc;
 
 use alloc::collections::BTreeMap;
 use alloc::string::String;
-use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use ath_abi::syscall as abi;
 use athshield::{
     Capability, DeviceKind, Direction, PolicyEnforcer, SandboxPolicy, SandboxProfile,
     SecurityDecision, SyscallRequest, ViolationAction,
 };
+use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use spin::Mutex;
 
 /// Enforcement strength applied to a task. Maps to a AthGuard profile.

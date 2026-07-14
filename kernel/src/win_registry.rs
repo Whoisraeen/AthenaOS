@@ -205,10 +205,11 @@ pub fn run_boot_smoketest() {
 
     // 2. The mirror landed in versioned config (handle paths resolve to the
     // hive's short root prefixes, so the key starts with HKCU).
-    let mirrored =
-        crate::config_registry::get_text("/bridge/registry/HKCU/Software/AthenaSelftest/InstallDir")
-            .as_deref()
-            == Some("1:C:\\Games\\Rae");
+    let mirrored = crate::config_registry::get_text(
+        "/bridge/registry/HKCU/Software/AthenaSelftest/InstallDir",
+    )
+    .as_deref()
+        == Some("1:C:\\Games\\Rae");
 
     // 3. Cold restart: a brand-new hive replays the value from config.
     *HIVE.lock() = None;

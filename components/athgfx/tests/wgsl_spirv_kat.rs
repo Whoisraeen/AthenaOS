@@ -50,7 +50,10 @@ fn try_spirv_val(spirv: &[u8], label: &str) {
 
     let mut tmp = std::env::temp_dir();
     // Per-process unique name so concurrent test binaries never race on one .spv.
-    tmp.push(format!("athena_wgsl_kat_{label}_{}.spv", std::process::id()));
+    tmp.push(format!(
+        "athena_wgsl_kat_{label}_{}.spv",
+        std::process::id()
+    ));
     {
         let mut f = match std::fs::File::create(&tmp) {
             Ok(f) => f,
@@ -313,7 +316,10 @@ fn corrupted_spirv_is_rejected_by_oracle() {
     bytes[off + 1] ^= 0xFF;
 
     let mut tmp = std::env::temp_dir();
-    tmp.push(format!("athena_wgsl_kat_corrupt_{}.spv", std::process::id()));
+    tmp.push(format!(
+        "athena_wgsl_kat_corrupt_{}.spv",
+        std::process::id()
+    ));
     std::fs::write(&tmp, &bytes).unwrap();
     let out = Command::new(&tool).arg(&tmp).output().unwrap();
     let _ = std::fs::remove_file(&tmp);

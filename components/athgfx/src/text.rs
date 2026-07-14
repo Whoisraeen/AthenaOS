@@ -18,8 +18,8 @@ extern crate alloc;
 
 use crate::Canvas;
 use alloc::vec::Vec;
-use core::sync::atomic::{AtomicBool, Ordering};
 use athfont::{FontHandle, RasterizedGlyph};
+use core::sync::atomic::{AtomicBool, Ordering};
 
 /// The two shipped system families (`docs/design/design-language.md` §6).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

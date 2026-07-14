@@ -2666,7 +2666,10 @@ impl SysFs {
                     SysEntry::Value("athenaos".to_string()),
                 );
                 kernel.insert("version".to_string(), SysEntry::Value("0.0.1".to_string()));
-                kernel.insert("ostype".to_string(), SysEntry::Value("AthenaOS".to_string()));
+                kernel.insert(
+                    "ostype".to_string(),
+                    SysEntry::Value("AthenaOS".to_string()),
+                );
                 kernel.insert(
                     "osrelease".to_string(),
                     SysEntry::Value("0.0.1-rae".to_string()),

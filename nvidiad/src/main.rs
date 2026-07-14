@@ -22,10 +22,10 @@
 
 extern crate alloc;
 
-use core::panic::PanicInfo;
 use ath_abi::syscall as abi;
 use ath_nvidia::chip::{self, GpuOps};
 use ath_nvidia::regs;
+use core::panic::PanicInfo;
 
 const _: () = assert!(ath_abi::ABI_VERSION == 4);
 

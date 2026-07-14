@@ -10,9 +10,9 @@
 #![no_std]
 #![no_main]
 
-use core::panic::PanicInfo;
 use ath_abi::cap;
 use ath_abi::syscall as abi;
+use core::panic::PanicInfo;
 
 const SYS_CAP_QUERY: u64 = 6;
 const SYS_MMIO_MAP: u64 = 7;

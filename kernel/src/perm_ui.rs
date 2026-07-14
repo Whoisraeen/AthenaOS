@@ -22,8 +22,8 @@
 extern crate alloc;
 
 use alloc::string::String;
-use core::sync::atomic::{AtomicU64, Ordering};
 use ath_tokens::{AccentRamp, DARK};
+use core::sync::atomic::{AtomicU64, Ordering};
 use spin::Mutex;
 
 use crate::perm_prompt::{PermRequest, Verdict};
