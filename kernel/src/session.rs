@@ -67,7 +67,7 @@ fn fresh_token(st: &mut SessionState) -> SessionToken {
     let now = now_secs();
     bytes[0..8].copy_from_slice(&t.to_le_bytes());
     bytes[8..16].copy_from_slice(&now.to_le_bytes());
-    bytes[16..24].copy_from_slice(b"AthenaOS-");
+    bytes[16..24].copy_from_slice(b"AthenaOS");
     SessionToken(bytes)
 }
 
@@ -267,7 +267,7 @@ pub fn load_persisted_accounts() {
 pub fn run_persistence_smoketest() {
     let params = athid::PasswordParams {
         algorithm: athid::PasswordAlgorithm::Argon2id,
-        salt: *b"athena-persist-ck",
+        salt: *b"athena-persistck",
         iterations: 1,
         memory_cost_kb: 64,
         parallelism: 1,

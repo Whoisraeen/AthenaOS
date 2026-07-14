@@ -78,7 +78,7 @@ pub fn log_if_present(edid: &[u8]) {
 pub fn synthesize_from_gop(width: u32, height: u32) -> [u8; 128] {
     let mut block = [0u8; 128];
     block[0..8].copy_from_slice(&[0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00]);
-    block[8..18].copy_from_slice(b"ATHENAOS   ");
+    block[8..18].copy_from_slice(b"ATHENAOS  ");
     block[18..22].copy_from_slice(b"GOP ");
     // Detailed timing descriptor in the real VESA E-EDID layout so it decodes
     // back through parse_base correctly (active fields are 12-bit: low 8 in one

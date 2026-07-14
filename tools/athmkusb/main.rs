@@ -200,7 +200,7 @@ fn build_inject(boot_image: &str, out: &str) {
             slice,
             fatfs::FormatVolumeOptions::new()
                 .fat_type(fatfs::FatType::Fat32)
-                .volume_label(*b"ATHENAOS USB"),
+                .volume_label(*b"ATHENA USB "),
         )
         .unwrap_or_else(|e| {
             eprintln!("athmkusb: format dest FAT32 failed: {e}");
@@ -375,7 +375,7 @@ fn write_gpt(img: &mut [u8], total_sectors: u64, esp_start: u64, esp_end: u64) {
         h[32..40].copy_from_slice(&alt_lba.to_le_bytes());
         h[40..48].copy_from_slice(&first_usable.to_le_bytes());
         h[48..56].copy_from_slice(&last_usable.to_le_bytes());
-        h[56..72].copy_from_slice(b"ATHENAOS-USBGUID!");
+        h[56..72].copy_from_slice(b"ATHENAOS-USBGUID");
         h[72..80].copy_from_slice(&entries_lba.to_le_bytes());
         h[80..84].copy_from_slice(&128u32.to_le_bytes());
         h[84..88].copy_from_slice(&128u32.to_le_bytes());
@@ -468,7 +468,7 @@ fn fat32_format(img: &mut [u8], esp_start_lba: u64, esp_sectors: u32) -> Fat {
     vbr[64] = 0x80;
     vbr[66] = 0x29;
     vbr[67..71].copy_from_slice(&0x5241_4545u32.to_le_bytes());
-    vbr[71..82].copy_from_slice(b"ATHENAOS ESP");
+    vbr[71..82].copy_from_slice(b"ATHENA ESP ");
     vbr[82..90].copy_from_slice(b"FAT32   ");
     vbr[510] = 0x55;
     vbr[511] = 0xAA;

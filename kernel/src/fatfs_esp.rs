@@ -1691,7 +1691,7 @@ pub fn fat32_format(
     vbr[64] = 0x80;
     vbr[66] = 0x29;
     vbr[67..71].copy_from_slice(&0x5241_4545u32.to_le_bytes());
-    vbr[71..82].copy_from_slice(b"ATHENAOS ESP");
+    vbr[71..82].copy_from_slice(b"ATHENA ESP ");
     vbr[82..90].copy_from_slice(b"FAT32   ");
     vbr[510] = 0x55;
     vbr[511] = 0xAA;
