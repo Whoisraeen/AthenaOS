@@ -5,17 +5,17 @@
 //! This is the kernel-side trust anchor: an embedded Ed25519 public key against
 //! which signed payloads (atomic update packages, app bundles, a next-stage
 //! payload) are verified. It carries NO private key — signing happens OFFLINE
-//! with `tools/raesign` against the matching dev key, so a compromise of the
+//! with `tools/athsign` against the matching dev key, so a compromise of the
 //! running system cannot mint trusted signatures.
 //!
 //! [`verify_against_anchor`] is the reusable verification primitive that
-//! raeupdate / AthGuard bundle-install call. The boot smoketest proves the
-//! anchor verifies an EXTERNALLY-produced signature (made by `raesign`, never
+//! athupdate / AthGuard bundle-install call. The boot smoketest proves the
+//! anchor verifies an EXTERNALLY-produced signature (made by `athsign`, never
 //! by this kernel) with public-key-only material, and rejects tampered
 //! signatures fail-closed — distinct from `crypto.rs`'s self-contained Ed25519
 //! KAT, which has the private seed.
 //!
-//! Surface: `/proc/raeen/secure_boot` ([`dump_text`]).
+//! Surface: `/proc/athena/secure_boot` ([`dump_text`]).
 //!
 //! Boot-manifest chain (Phase 3.7, landed 2026-06-12): xtask signs a manifest
 //! of `sha256(initramfs.tar)` with the dev key every build, embedded as
@@ -51,7 +51,7 @@ const BM_TOTAL_LEN: usize = BM_MANIFEST_LEN + 64;
 static MANIFEST_STATUS: AtomicU8 = AtomicU8::new(0);
 
 /// Trust-anchor Ed25519 public key. The matching private key is the OFFLINE dev
-/// key (`raesign keygen "athenaos-secureboot-dev-v1"`) and is never present in
+/// key (`athsign keygen "athenaos-secureboot-dev-v1"`) and is never present in
 /// the kernel. Rotating the anchor = replace these 32 bytes and re-sign.
 const ANCHOR_PUBKEY: [u8; 32] = [
     0xbe, 0xf1, 0xf9, 0x6d, 0x8a, 0xe4, 0x97, 0xb0, 0x13, 0x7b, 0xe4, 0x9c, 0xac, 0x46, 0x92, 0xda,
@@ -59,7 +59,7 @@ const ANCHOR_PUBKEY: [u8; 32] = [
 ];
 
 /// Boot-smoketest vector: a fixed message and a detached Ed25519 signature over
-/// it, both produced offline by `raesign` with the dev key. Verified here with
+/// it, both produced offline by `athsign` with the dev key. Verified here with
 /// `ANCHOR_PUBKEY` alone — proof the kernel verifies signatures it did not make.
 const ANCHOR_MESSAGE: &[u8] = b"AthenaOS secure-boot trust anchor v1";
 const ANCHOR_SIG: [u8; 64] = [
@@ -149,7 +149,7 @@ pub fn verify_boot_manifest() -> (bool, bool, bool) {
     let mut sig = [0u8; 64];
     sig.copy_from_slice(&BOOT_MANIFEST[BM_MANIFEST_LEN..]);
 
-    let sig_ok = rae_crypto::ed25519::verify(&DEV_SIGNING_PUBKEY, manifest, &sig);
+    let sig_ok = ath_crypto::ed25519::verify(&DEV_SIGNING_PUBKEY, manifest, &sig);
     let magic_ok = &manifest[0..8] == BM_MAGIC;
 
     let claimed_len = u64::from_le_bytes([
@@ -163,7 +163,7 @@ pub fn verify_boot_manifest() -> (bool, bool, bool) {
         manifest[15],
     ]);
     let claimed_hash = &manifest[16..48];
-    let actual = rae_crypto::sha256::sha256(crate::INITRAMFS);
+    let actual = ath_crypto::sha256::sha256(crate::INITRAMFS);
     let hash_match = claimed_len as usize == crate::INITRAMFS.len() && claimed_hash == actual;
 
     (sig_ok, magic_ok, hash_match)
@@ -182,7 +182,7 @@ pub fn run_manifest_smoketest() {
         m[16] ^= 0x01; // flip a hash byte
         let mut sig = [0u8; 64];
         sig.copy_from_slice(&BOOT_MANIFEST[BM_MANIFEST_LEN..]);
-        !rae_crypto::ed25519::verify(&DEV_SIGNING_PUBKEY, &m, &sig)
+        !ath_crypto::ed25519::verify(&DEV_SIGNING_PUBKEY, &m, &sig)
     } else {
         false
     };
@@ -199,7 +199,7 @@ pub fn run_manifest_smoketest() {
     );
 }
 
-/// `/proc/raeen/secure_boot` contents.
+/// `/proc/athena/secure_boot` contents.
 pub fn dump_text() -> alloc::string::String {
     use alloc::format;
     let status = match SECBOOT_STATUS.load(Ordering::Relaxed) {

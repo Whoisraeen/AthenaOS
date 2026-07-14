@@ -504,110 +504,110 @@ pub fn proc_loadavg() -> String {
 
 /// /proc/version
 pub fn proc_version() -> String {
-    String::from("AthenaOS version 0.0.1 (raeen@athenaos) (rustc 1.80.0) #1 SMP AthenaOS 0.0.1 (Linux compat)\n")
+    String::from("AthenaOS version 0.0.1 (athena@athenaos) (rustc 1.80.0) #1 SMP AthenaOS 0.0.1 (Linux compat)\n")
 }
 
-/// /proc/raeen/caps — capability audit log (kernelchecklist.md §5.9).
-pub fn proc_raeen_acpi() -> String {
+/// /proc/athena/caps — capability audit log (kernelchecklist.md §5.9).
+pub fn proc_athena_acpi() -> String {
     crate::acpi_full::dump_text()
 }
 
-pub fn proc_raeen_acpi_quirks() -> String {
+pub fn proc_athena_acpi_quirks() -> String {
     crate::acpi_quirks::dump_text()
 }
 
-pub fn proc_raeen_edid() -> String {
+pub fn proc_athena_edid() -> String {
     crate::edid::dump_text()
 }
 
-pub fn proc_raeen_gpe() -> String {
+pub fn proc_athena_gpe() -> String {
     crate::gpe::dump_text()
 }
 
-pub fn proc_raeen_caps() -> String {
+pub fn proc_athena_caps() -> String {
     crate::cap_audit::dump_text()
 }
 
-/// /proc/raeen/cpu — CPU feature detection (kernelchecklist.md §M-A).
-pub fn proc_raeen_cpu() -> String {
+/// /proc/athena/cpu — CPU feature detection (kernelchecklist.md §M-A).
+pub fn proc_athena_cpu() -> String {
     crate::cpu_features::dump_text()
 }
 
-/// /proc/raeen/msr_amd — AMD CPPC / SVM / SMCA MSR detection (MasterChecklist Phase 1.3).
-pub fn proc_raeen_msr_amd() -> String {
+/// /proc/athena/msr_amd — AMD CPPC / SVM / SMCA MSR detection (MasterChecklist Phase 1.3).
+pub fn proc_athena_msr_amd() -> String {
     crate::msr_amd::dump_text()
 }
 
-/// /proc/raeen/msr — CPU vendor + fault-tolerant MSR access status.
-pub fn proc_raeen_msr() -> String {
+/// /proc/athena/msr — CPU vendor + fault-tolerant MSR access status.
+pub fn proc_athena_msr() -> String {
     crate::msr::dump_text()
 }
 
-/// /proc/raeen/hardware — SMBIOS DMI + matched hardware profile.
+/// /proc/athena/hardware — SMBIOS DMI + matched hardware profile.
 /// Required for M-A "Boots on Athena" — boot log must say which board
 /// we matched and which quirks we applied.
-pub fn proc_raeen_hardware() -> String {
+pub fn proc_athena_hardware() -> String {
     crate::hardware_profile::dump_text()
 }
 
-pub fn proc_raeen_numa() -> String {
+pub fn proc_athena_numa() -> String {
     crate::numa::dump_text()
 }
 
-/// /proc/raeen/msr_intel — Intel-specific MSR feature state (HWP/ITD/CET).
-pub fn proc_raeen_msr_intel() -> String {
+/// /proc/athena/msr_intel — Intel-specific MSR feature state (HWP/ITD/CET).
+pub fn proc_athena_msr_intel() -> String {
     crate::msr_intel::dump_text()
 }
 
-/// /proc/raeen/drivers — registered userspace drivers + claims + DMA status.
+/// /proc/athena/drivers — registered userspace drivers + claims + DMA status.
 /// Concept §Architecture path-C surface.
-pub fn proc_raeen_drivers() -> String {
+pub fn proc_athena_drivers() -> String {
     crate::userspace_driver::dump_text()
 }
 
-/// /proc/raeen/tls — TLS 1.3 manager + per-connection state.
-pub fn proc_raeen_tls() -> String {
+/// /proc/athena/tls — TLS 1.3 manager + per-connection state.
+pub fn proc_athena_tls() -> String {
     crate::tls::dump_text()
 }
 
-/// /proc/raeen/rtc — wall clock (CMOS RTC at boot + TSC delta now).
-pub fn proc_raeen_rtc() -> String {
+/// /proc/athena/rtc — wall clock (CMOS RTC at boot + TSC delta now).
+pub fn proc_athena_rtc() -> String {
     crate::rtc::dump_text()
 }
 
-/// /proc/raeen/dhcp — DHCP client state + lease.
-pub fn proc_raeen_dhcp() -> String {
+/// /proc/athena/dhcp — DHCP client state + lease.
+pub fn proc_athena_dhcp() -> String {
     crate::dhcp::dump_text()
 }
 
-/// /proc/raeen/pci_irq — PCI legacy IRQ routing table.
-pub fn proc_raeen_pci_irq() -> String {
+/// /proc/athena/pci_irq — PCI legacy IRQ routing table.
+pub fn proc_athena_pci_irq() -> String {
     crate::pci_irq::dump_text()
 }
 
-/// /proc/raeen/pcie — PCIe ECAM discovery status.
-pub fn proc_raeen_pcie() -> String {
+/// /proc/athena/pcie — PCIe ECAM discovery status.
+pub fn proc_athena_pcie() -> String {
     crate::pcie::dump_text()
 }
 
-/// /proc/raeen/pcie_aer — PCIe Advanced Error Reporting capability map.
-pub fn proc_raeen_pcie_aer() -> String {
+/// /proc/athena/pcie_aer — PCIe Advanced Error Reporting capability map.
+pub fn proc_athena_pcie_aer() -> String {
     crate::pcie_aer::dump_text()
 }
 
-/// /proc/raeen/selftest — consolidated boot self-test health summary.
-pub fn proc_raeen_selftest() -> String {
+/// /proc/athena/selftest — consolidated boot self-test health summary.
+pub fn proc_athena_selftest() -> String {
     crate::selftest::dump_text()
 }
 
-/// /proc/raeen/apic — APIC mode and frequency info.
-pub fn proc_raeen_apic() -> String {
+/// /proc/athena/apic — APIC mode and frequency info.
+pub fn proc_athena_apic() -> String {
     crate::apic::dump_text()
 }
 
-/// /proc/raeen/smp — per-CPU timer-tick heartbeat. A CPU with 0 ticks
+/// /proc/athena/smp — per-CPU timer-tick heartbeat. A CPU with 0 ticks
 /// is either offline or wedged in a non-interruptible region.
-pub fn proc_raeen_smp() -> String {
+pub fn proc_athena_smp() -> String {
     let mut out = String::new();
     out.push_str("# AthenaOS SMP heartbeat (per-CPU timer IRQ counters)\n");
     let n = crate::gdt::MAX_CPUS;
@@ -642,9 +642,9 @@ pub fn proc_raeen_smp() -> String {
     out
 }
 
-/// /proc/raeen/buddy — buddy allocator stats + per-order free-list cardinality.
+/// /proc/athena/buddy — buddy allocator stats + per-order free-list cardinality.
 /// Concept §Memory: "needs buddy upgrade (10 MiB allocs in < 50 µs)".
-pub fn proc_raeen_buddy() -> String {
+pub fn proc_athena_buddy() -> String {
     let g = crate::memory::BUDDY_ALLOCATORS.lock();
     let mut out = String::new();
     if g.is_empty() {
@@ -677,14 +677,14 @@ pub fn proc_raeen_buddy() -> String {
     out
 }
 
-/// /proc/raeen/heap_guard — kernel-heap freelist-integrity guard status.
+/// /proc/athena/heap_guard — kernel-heap freelist-integrity guard status.
 /// Concept §Kernel Architecture: "a bad GPU driver crashes a service, not the
 /// kernel"; §Principles: "Security by default, not by friction." Always-on in
 /// the default build: the intrusive `Hole.next` link is stored XOR-obfuscated +
 /// location-tied and validated (alignment + heap-range) on every deref, so a
 /// DMA/wild write into a freed chunk is caught (fail-closed panic) before the
 /// next allocation follows the stomped pointer. Never prints the cookie value.
-pub fn proc_raeen_heap_guard() -> String {
+pub fn proc_athena_heap_guard() -> String {
     let s = crate::memory::allocator::freelist_guard_stats();
     let mut out = String::new();
     out.push_str(&alloc::format!(
@@ -701,18 +701,18 @@ pub fn proc_raeen_heap_guard() -> String {
     out
 }
 
-/// /proc/raeen/hardening — kernel hardening status (KASLR, SMEP, SMAP, CFI, etc.).
-pub fn proc_raeen_hardening() -> String {
+/// /proc/athena/hardening — kernel hardening status (KASLR, SMEP, SMAP, CFI, etc.).
+pub fn proc_athena_hardening() -> String {
     crate::hardening::dump_text()
 }
 
-/// /proc/raeen/uaccess — the validated user-memory copy chokepoint status.
-pub fn proc_raeen_uaccess() -> String {
+/// /proc/athena/uaccess — the validated user-memory copy chokepoint status.
+pub fn proc_athena_uaccess() -> String {
     crate::uaccess::procfs_status()
 }
 
-/// /proc/raeen/hardening_truth — IOMMU/AER/MCE/OOM runtime counters.
-pub fn proc_raeen_hardening_truth() -> String {
+/// /proc/athena/hardening_truth — IOMMU/AER/MCE/OOM runtime counters.
+pub fn proc_athena_hardening_truth() -> String {
     let mut out = String::new();
     out.push_str("# hardening truth\n");
     out.push_str(&crate::iommu::dump_text());
@@ -724,42 +724,42 @@ pub fn proc_raeen_hardening_truth() -> String {
     out
 }
 
-/// /proc/raeen/raefs — AthFS mount + journal + snapshot entry listing.
-pub fn proc_raeen_raefs() -> String {
-    crate::raefs::proc_dump_text()
+/// /proc/athena/athfs — AthFS mount + journal + snapshot entry listing.
+pub fn proc_athena_athfs() -> String {
+    crate::athfs::proc_dump_text()
 }
 
-/// /proc/raeen/network — smoltcp + DHCP + AthGuard summary.
-pub fn proc_raeen_network() -> String {
+/// /proc/athena/network — smoltcp + DHCP + AthGuard summary.
+pub fn proc_athena_network() -> String {
     crate::net::dump_text()
 }
 
-pub fn proc_raeen_ssh() -> String {
+pub fn proc_athena_ssh() -> String {
     crate::ssh::dump_text()
 }
 
-/// /proc/raeen/power — periodic battery/AC telemetry and power profile state.
-pub fn proc_raeen_power() -> String {
+/// /proc/athena/power — periodic battery/AC telemetry and power profile state.
+pub fn proc_athena_power() -> String {
     crate::power::dump_text()
 }
 
-/// /proc/raeen/thermal — Phase 4.7 thermal zones, trips, and throttle state.
-pub fn proc_raeen_thermal() -> String {
+/// /proc/athena/thermal — Phase 4.7 thermal zones, trips, and throttle state.
+pub fn proc_athena_thermal() -> String {
     crate::thermal::dump_text()
 }
 
-/// /proc/raeen/audio — AthAudio kernel-side state.
-pub fn proc_raeen_audio() -> String {
+/// /proc/athena/audio — AthAudio kernel-side state.
+pub fn proc_athena_audio() -> String {
     crate::audio::dump_text()
 }
 
-/// /proc/raeen/usb_audio — USB Audio Class driver state.
-pub fn proc_raeen_usb_audio() -> String {
+/// /proc/athena/usb_audio — USB Audio Class driver state.
+pub fn proc_athena_usb_audio() -> String {
     crate::usb_audio::dump_text()
 }
 
-/// /proc/raeen/syscalls — runtime mirror of docs/SYSCALL_TABLE.md.
-pub fn proc_raeen_syscalls() -> String {
+/// /proc/athena/syscalls — runtime mirror of docs/SYSCALL_TABLE.md.
+pub fn proc_athena_syscalls() -> String {
     let mut out = String::new();
     out.push_str("# AthenaOS syscall table (98 live syscalls across 18+ blocks)\n");
     out.push_str("# Full layout with rdi/rsi/rdx/r10: see docs/SYSCALL_TABLE.md\n\n");
@@ -784,13 +784,13 @@ pub fn proc_raeen_syscalls() -> String {
     out
 }
 
-/// /proc/raeen/memory — kernel memory subsystem snapshot.
+/// /proc/athena/memory — kernel memory subsystem snapshot.
 ///
 /// Concept §"The user owns the machine": the OS is honest about the machine's
 /// resources — `physical_total_bytes` exposes the installed RAM the kernel
 /// manages (from the UEFI/e820 map) so the Settings → About panel can show the
 /// real hardware total, not a fabricated number.
-pub fn proc_raeen_memory() -> String {
+pub fn proc_athena_memory() -> String {
     let pinned = crate::memory::pinned_page_count();
     let mut out = String::new();
     out.push_str("# AthenaOS memory subsystem\n");
@@ -828,11 +828,11 @@ pub fn proc_raeen_memory() -> String {
         }
         None => out.push_str("physical_free_bytes: (unavailable)\n"),
     }
-    out.push_str("# detailed buddy stats: see /proc/raeen/buddy (per-order free-list)\n");
+    out.push_str("# detailed buddy stats: see /proc/athena/buddy (per-order free-list)\n");
     out
 }
 
-/// /proc/raeen/storage — aggregated AthFS capacity for the Settings → Storage
+/// /proc/athena/storage — aggregated AthFS capacity for the Settings → Storage
 /// panel.
 ///
 /// Concept §"The user owns the machine": transparency about the machine's
@@ -840,10 +840,10 @@ pub fn proc_raeen_memory() -> String {
 /// (total/free/used bytes, block size) so userspace can render a real capacity
 /// bar without minting a syscall. Read-only; reads the mounted superblock via a
 /// non-blocking accessor so the dump can never deadlock the AthFS lock.
-pub fn proc_raeen_storage() -> String {
+pub fn proc_athena_storage() -> String {
     let mut out = String::new();
     out.push_str("# AthenaOS storage capacity (AthFS, aggregated)\n");
-    match crate::raefs::capacity_bytes() {
+    match crate::athfs::capacity_bytes() {
         Some((total, free, block_size)) => {
             let used = total.saturating_sub(free);
             out.push_str("mounted: 1\n");
@@ -853,7 +853,7 @@ pub fn proc_raeen_storage() -> String {
             out.push_str(&format!("block_size:  {}\n", block_size));
             // By-category hint: at this layer only the system bucket (the whole
             // volume) is cheaply available without walking inodes; userspace
-            // refines per-app buckets from /proc/raeen/raefs.
+            // refines per-app buckets from /proc/athena/athfs.
             out.push_str(&format!("category_system_bytes: {}\n", used));
         }
         None => {
@@ -868,13 +868,13 @@ pub fn proc_raeen_storage() -> String {
 
 /// Boot smoketest: prove the two new Settings-facing surfaces render real data.
 ///
-/// Prints PASS only when `/proc/raeen/storage` renders non-empty AND
-/// `/proc/raeen/memory` carries a `physical_total_bytes` > 0. Either failing
+/// Prints PASS only when `/proc/athena/storage` renders non-empty AND
+/// `/proc/athena/memory` carries a `physical_total_bytes` > 0. Either failing
 /// prints FAIL — this test can fail (it is not a false green): if the buddy
 /// allocator reported 0 frames, or the storage arm produced an empty body, the
 /// line below reads FAIL and the boot log records it.
 pub fn run_boot_smoketest() {
-    let storage = proc_raeen_storage();
+    let storage = proc_athena_storage();
     let phys = crate::memory::physical_total_bytes().unwrap_or(0);
     let storage_ok = !storage.trim().is_empty() && storage.contains("total_bytes:");
     let phys_ok = phys > 0;
@@ -894,8 +894,8 @@ pub fn run_boot_smoketest() {
     }
 }
 
-/// /proc/raeen/sched_stats — scheduler counters.
-pub fn proc_raeen_sched_stats() -> String {
+/// /proc/athena/sched_stats — scheduler counters.
+pub fn proc_athena_sched_stats() -> String {
     let ds = crate::scheduler::deadline_stats();
     let mut out = String::new();
     out.push_str("# AthenaOS scheduler counters\n");
@@ -948,8 +948,8 @@ pub fn proc_raeen_sched_stats() -> String {
     out
 }
 
-/// /proc/raeen/compositor — compositor surface + present counters.
-pub fn proc_raeen_compositor() -> String {
+/// /proc/athena/compositor — compositor surface + present counters.
+pub fn proc_athena_compositor() -> String {
     let mut out = String::new();
     out.push_str("# AthenaOS compositor\n");
     if let Some((w, h)) = crate::compositor::screen_dimensions() {
@@ -1016,116 +1016,116 @@ pub fn proc_raeen_compositor() -> String {
     out
 }
 
-/// /proc/raeen/index — every AthenaOS-native introspection endpoint.
-/// Discoverability: `cat /proc/raeen/index` enumerates all the others.
+/// /proc/athena/index — every AthenaOS-native introspection endpoint.
+/// Discoverability: `cat /proc/athena/index` enumerates all the others.
 /// Per `kernelchecklist.md` R3 (every module gets a procfs entry).
-pub fn proc_raeen_index() -> String {
+pub fn proc_athena_index() -> String {
     let mut out = String::new();
     out.push_str("# AthenaOS introspection endpoints (cat any of these)\n");
-    out.push_str("/proc/raeen/index           — this file\n");
-    out.push_str("/proc/raeen/boot            — boot benchmark vs concept-doc targets\n");
-    out.push_str("/proc/raeen/gaming          — game-mode / NULL_LATENCY / deadline stats\n");
-    out.push_str("/proc/raeen/config          — versioned config registry dump\n");
-    out.push_str("/proc/raeen/search          — local search index latency stats\n");
-    out.push_str("/proc/raeen/games           — per-game profiles\n");
-    out.push_str("/proc/raeen/rgb             — unified RGB device + zone state\n");
-    out.push_str("/proc/raeen/bundles         — installed components + verify stats\n");
-    out.push_str("/proc/raeen/perm            — permission-prompt queue summary\n");
-    out.push_str("/proc/raeen/themes          — theme engine + current theme\n");
-    out.push_str("/proc/raeen/scripts         — Rae scripting lifecycle\n");
-    out.push_str("/proc/raeen/arch            — architecture HAL identity + status\n");
-    out.push_str("/proc/raeen/apic            — APIC mode and frequency info\n");
-    out.push_str("/proc/raeen/pcie            — PCIe ECAM discovery and status\n");
-    out.push_str("/proc/raeen/pcie_aer        — PCIe Advanced Error Reporting map\n");
-    out.push_str("/proc/raeen/pci_irq         — PCI legacy IRQ routing table\n");
-    out.push_str("/proc/raeen/acpi            — ACPI tables and AML status\n");
-    out.push_str("/proc/raeen/gpe             — General Purpose Event (GPE) counts\n");
-    out.push_str("/proc/raeen/session         — AthID login/session state\n");
-    out.push_str("/proc/raeen/wireguard       — WireGuard tunnel registry\n");
-    out.push_str("/proc/raeen/wallpaper       — live wallpaper + occlusion stats\n");
-    out.push_str("/proc/raeen/caps            — capability audit log\n");
-    out.push_str("/proc/raeen/memory          — memory subsystem snapshot\n");
-    out.push_str("/proc/raeen/sched_stats     — scheduler counters\n");
-    out.push_str("/proc/raeen/compositor      — compositor state\n");
-    out.push_str("/proc/raeen/web             — RaeWeb browser surface (URL + DOM/paint stats)\n");
-    out.push_str("/proc/raeen/cpu             — CPU vendor + features + Zen 4 detection\n");
-    out.push_str("/proc/raeen/msr_amd         — AMD CPPC / SVM / SMCA MSR detection\n");
-    out.push_str("/proc/raeen/hardening       — KASLR/SMEP/SMAP/CFI/W^X/Spectre status\n");
-    out.push_str("/proc/raeen/heap_guard      — kernel-heap freelist integrity guard\n");
-    out.push_str("/proc/raeen/hardening_truth — IOMMU/AER/MCE/OOM runtime counters\n");
-    out.push_str("/proc/raeen/raefs           — AthFS mount + journal + snapshot entries\n");
-    out.push_str("/proc/raeen/network         — net stack + firewall summary\n");
-    out.push_str("/proc/raeen/power           — battery/AC periodic telemetry\n");
-    out.push_str("/proc/raeen/audio           — AthAudio kernel-side state\n");
-    out.push_str("/proc/raeen/syscalls        — runtime syscall table mirror\n");
-    out.push_str("/proc/raeen/windows_gap     — Concept-doc Windows pain-point kernel map\n");
-    out.push_str("/proc/raeen/clipboard       — session text clipboard stats\n");
-    out.push_str("/proc/raeen/clipboard-panel — clipboard-history flyout (Super+C) state\n");
-    out.push_str("/proc/raeen/capture         — compositor screen-capture sessions\n");
-    out.push_str("/proc/raeen/storage_irq     — NVMe/AHCI MSI-X vs INTx fallback\n");
-    out.push_str("/proc/raeen/storage         — AthFS aggregated capacity (total/free/used)\n");
-    out.push_str("/proc/raeen/ahci           — AHCI controllers and SATA ports\n");
-    out.push_str("/proc/raeen/nvme           — NVMe controllers and namespaces\n");
-    out.push_str("/proc/raeen/syscall_guard   — syscall hardening counters + limits\n");
-    out.push_str("/proc/raeen/linux_kabi     — Linux kABI symbol registry (scaffold)\n");
-    out.push_str("/proc/raeen/linux_compat   — Linux driver API shim (DMA/IRQ/kmalloc)\n");
-    out.push_str("/proc/raeen/linuxkpi       — LinuxKPI host (jiffies/msleep/printk ABI)\n");
-    out.push_str("/proc/raeen/linux_syscall  — Linux ABI translation counters\n");
-    out.push_str("/proc/raeen/vfs            — Virtual Filesystem hierarchy status\n");
-    out.push_str("/proc/raeen/msr_intel      — Intel HWP/Thread-Director/CET MSR state\n");
+    out.push_str("/proc/athena/index           — this file\n");
+    out.push_str("/proc/athena/boot            — boot benchmark vs concept-doc targets\n");
+    out.push_str("/proc/athena/gaming          — game-mode / NULL_LATENCY / deadline stats\n");
+    out.push_str("/proc/athena/config          — versioned config registry dump\n");
+    out.push_str("/proc/athena/search          — local search index latency stats\n");
+    out.push_str("/proc/athena/games           — per-game profiles\n");
+    out.push_str("/proc/athena/rgb             — unified RGB device + zone state\n");
+    out.push_str("/proc/athena/bundles         — installed components + verify stats\n");
+    out.push_str("/proc/athena/perm            — permission-prompt queue summary\n");
+    out.push_str("/proc/athena/themes          — theme engine + current theme\n");
+    out.push_str("/proc/athena/scripts         — Rae scripting lifecycle\n");
+    out.push_str("/proc/athena/arch            — architecture HAL identity + status\n");
+    out.push_str("/proc/athena/apic            — APIC mode and frequency info\n");
+    out.push_str("/proc/athena/pcie            — PCIe ECAM discovery and status\n");
+    out.push_str("/proc/athena/pcie_aer        — PCIe Advanced Error Reporting map\n");
+    out.push_str("/proc/athena/pci_irq         — PCI legacy IRQ routing table\n");
+    out.push_str("/proc/athena/acpi            — ACPI tables and AML status\n");
+    out.push_str("/proc/athena/gpe             — General Purpose Event (GPE) counts\n");
+    out.push_str("/proc/athena/session         — AthID login/session state\n");
+    out.push_str("/proc/athena/wireguard       — WireGuard tunnel registry\n");
+    out.push_str("/proc/athena/wallpaper       — live wallpaper + occlusion stats\n");
+    out.push_str("/proc/athena/caps            — capability audit log\n");
+    out.push_str("/proc/athena/memory          — memory subsystem snapshot\n");
+    out.push_str("/proc/athena/sched_stats     — scheduler counters\n");
+    out.push_str("/proc/athena/compositor      — compositor state\n");
+    out.push_str("/proc/athena/web             — RaeWeb browser surface (URL + DOM/paint stats)\n");
+    out.push_str("/proc/athena/cpu             — CPU vendor + features + Zen 4 detection\n");
+    out.push_str("/proc/athena/msr_amd         — AMD CPPC / SVM / SMCA MSR detection\n");
+    out.push_str("/proc/athena/hardening       — KASLR/SMEP/SMAP/CFI/W^X/Spectre status\n");
+    out.push_str("/proc/athena/heap_guard      — kernel-heap freelist integrity guard\n");
+    out.push_str("/proc/athena/hardening_truth — IOMMU/AER/MCE/OOM runtime counters\n");
+    out.push_str("/proc/athena/athfs           — AthFS mount + journal + snapshot entries\n");
+    out.push_str("/proc/athena/network         — net stack + firewall summary\n");
+    out.push_str("/proc/athena/power           — battery/AC periodic telemetry\n");
+    out.push_str("/proc/athena/audio           — AthAudio kernel-side state\n");
+    out.push_str("/proc/athena/syscalls        — runtime syscall table mirror\n");
+    out.push_str("/proc/athena/windows_gap     — Concept-doc Windows pain-point kernel map\n");
+    out.push_str("/proc/athena/clipboard       — session text clipboard stats\n");
+    out.push_str("/proc/athena/clipboard-panel — clipboard-history flyout (Super+C) state\n");
+    out.push_str("/proc/athena/capture         — compositor screen-capture sessions\n");
+    out.push_str("/proc/athena/storage_irq     — NVMe/AHCI MSI-X vs INTx fallback\n");
+    out.push_str("/proc/athena/storage         — AthFS aggregated capacity (total/free/used)\n");
+    out.push_str("/proc/athena/ahci           — AHCI controllers and SATA ports\n");
+    out.push_str("/proc/athena/nvme           — NVMe controllers and namespaces\n");
+    out.push_str("/proc/athena/syscall_guard   — syscall hardening counters + limits\n");
+    out.push_str("/proc/athena/linux_kabi     — Linux kABI symbol registry (scaffold)\n");
+    out.push_str("/proc/athena/linux_compat   — Linux driver API shim (DMA/IRQ/kmalloc)\n");
+    out.push_str("/proc/athena/linuxkpi       — LinuxKPI host (jiffies/msleep/printk ABI)\n");
+    out.push_str("/proc/athena/linux_syscall  — Linux ABI translation counters\n");
+    out.push_str("/proc/athena/vfs            — Virtual Filesystem hierarchy status\n");
+    out.push_str("/proc/athena/msr_intel      — Intel HWP/Thread-Director/CET MSR state\n");
     out
 }
 
-/// /proc/raeen/linux_kabi — Linux kernel module symbol name registry (scaffold).
-pub fn proc_raeen_linux_kabi() -> String {
+/// /proc/athena/linux_kabi — Linux kernel module symbol name registry (scaffold).
+pub fn proc_athena_linux_kabi() -> String {
     crate::linux_kabi::dump_text()
 }
 
-/// /proc/raeen/linux_compat — Linux driver compat shim status.
-pub fn proc_raeen_linux_compat() -> String {
+/// /proc/athena/linux_compat — Linux driver compat shim status.
+pub fn proc_athena_linux_compat() -> String {
     crate::linux_compat::dump_text()
 }
 
-/// /proc/raeen/linuxkpi — LinuxKPI host ABI status (userspace driver daemons).
-pub fn proc_raeen_linuxkpi() -> String {
+/// /proc/athena/linuxkpi — LinuxKPI host ABI status (userspace driver daemons).
+pub fn proc_ath_linuxkpi() -> String {
     crate::linuxkpi_host::proc_dump_text()
 }
 
-/// /proc/raeen/linux_syscall — Linux ABI translation stats.
-pub fn proc_raeen_linux_syscall() -> String {
+/// /proc/athena/linux_syscall — Linux ABI translation stats.
+pub fn proc_athena_linux_syscall() -> String {
     crate::linux_syscall::dump_text()
 }
 
-/// /proc/raeen/session — AthID login/session status.
-pub fn proc_raeen_session() -> String {
+/// /proc/athena/session — AthID login/session status.
+pub fn proc_athena_session() -> String {
     crate::session::dump_text()
 }
 
-fn resolve_raeen_subpath(sub: &str) -> Option<String> {
+fn resolve_athena_subpath(sub: &str) -> Option<String> {
     Some(match sub {
-        "index" => proc_raeen_index(),
-        "boot" => proc_raeen_boot(),
-        "gaming" => proc_raeen_gaming(),
-        "config" => proc_raeen_config(),
-        "search" => proc_raeen_search(),
-        "games" => proc_raeen_games(),
-        "rgb" => proc_raeen_rgb(),
-        "bundles" => proc_raeen_bundles(),
-        "perm" => proc_raeen_perm(),
-        "themes" => proc_raeen_themes(),
-        "scripts" => proc_raeen_scripts(),
-        "session" => proc_raeen_session(),
+        "index" => proc_athena_index(),
+        "boot" => proc_athena_boot(),
+        "gaming" => proc_athena_gaming(),
+        "config" => proc_athena_config(),
+        "search" => proc_athena_search(),
+        "games" => proc_athena_games(),
+        "rgb" => proc_athena_rgb(),
+        "bundles" => proc_athena_bundles(),
+        "perm" => proc_athena_perm(),
+        "themes" => proc_athena_themes(),
+        "scripts" => proc_athena_scripts(),
+        "session" => proc_athena_session(),
         "arch" => crate::arch::dump_text(),
-        "apic" => proc_raeen_apic(),
-        "pcie" => proc_raeen_pcie(),
-        "pcie_aer" => proc_raeen_pcie_aer(),
-        "selftest" => proc_raeen_selftest(),
-        "pci_irq" => proc_raeen_pci_irq(),
-        "acpi" => proc_raeen_acpi(),
-        "acpi_quirks" => proc_raeen_acpi_quirks(),
-        "edid" => proc_raeen_edid(),
-        "gpe" => proc_raeen_gpe(),
-        "wireguard" => proc_raeen_wireguard(),
+        "apic" => proc_athena_apic(),
+        "pcie" => proc_athena_pcie(),
+        "pcie_aer" => proc_athena_pcie_aer(),
+        "selftest" => proc_athena_selftest(),
+        "pci_irq" => proc_athena_pci_irq(),
+        "acpi" => proc_athena_acpi(),
+        "acpi_quirks" => proc_athena_acpi_quirks(),
+        "edid" => proc_athena_edid(),
+        "gpe" => proc_athena_gpe(),
+        "wireguard" => proc_athena_wireguard(),
         "firewall" => crate::firewall::dump_text(),
         "dns" => crate::dns::dump_text(),
         "dot" => crate::dot::dump_text(),
@@ -1145,10 +1145,10 @@ fn resolve_raeen_subpath(sub: &str) -> Option<String> {
         "notify" => crate::notify::dump_text(),
         "prefetch" => crate::prefetch::dump_text(),
         "winreg" => crate::win_registry::dump_text(),
-        "raebridge_seh" => crate::raebridge_boot::seh_dump_text(),
-        "raebridge_sync" => crate::raebridge_boot::sync_dump_text(),
-        "raebridge_registry" => crate::raebridge_boot::registry_dump_text(),
-        "raebridge_syncbroker" => crate::raebridge_boot::sync_broker_dump_text(),
+        "athbridge_seh" => crate::athbridge_boot::seh_dump_text(),
+        "athbridge_sync" => crate::athbridge_boot::sync_dump_text(),
+        "athbridge_registry" => crate::athbridge_boot::registry_dump_text(),
+        "athbridge_syncbroker" => crate::athbridge_boot::sync_broker_dump_text(),
         "futex" => crate::sync::dump_text(),
         "widgets" => crate::widgets::dump_text(),
         "pci_pm" => crate::pci_pm::dump_text(),
@@ -1156,37 +1156,37 @@ fn resolve_raeen_subpath(sub: &str) -> Option<String> {
         "compress" => crate::compress::dump_text(),
         "perf" => crate::perf::dump_text(),
         "sched_proof" => crate::sched_proof::dump_text(),
-        "wallpaper" => proc_raeen_wallpaper(),
-        "caps" => proc_raeen_caps(),
-        "memory" => proc_raeen_memory(),
-        "sched_stats" => proc_raeen_sched_stats(),
-        "compositor" => proc_raeen_compositor(),
+        "wallpaper" => proc_athena_wallpaper(),
+        "caps" => proc_athena_caps(),
+        "memory" => proc_athena_memory(),
+        "sched_stats" => proc_athena_sched_stats(),
+        "compositor" => proc_athena_compositor(),
         "a11y" => crate::a11y::dump_text(),
         "web" => crate::webview::dump_text(),
-        "cpu" => proc_raeen_cpu(),
-        "msr_amd" => proc_raeen_msr_amd(),
-        "hardening" => proc_raeen_hardening(),
+        "cpu" => proc_athena_cpu(),
+        "msr_amd" => proc_athena_msr_amd(),
+        "hardening" => proc_athena_hardening(),
         "vulnerabilities" => crate::cpu_features::vulnerabilities_dump_text(),
         "tpm" => crate::tpm::tpm_dump_text(),
-        "heap_guard" => proc_raeen_heap_guard(),
-        "hardening_truth" => proc_raeen_hardening_truth(),
-        "uaccess" => proc_raeen_uaccess(),
-        "windows_gap" => proc_raeen_windows_gap(),
-        "clipboard" => proc_raeen_clipboard(),
+        "heap_guard" => proc_athena_heap_guard(),
+        "hardening_truth" => proc_athena_hardening_truth(),
+        "uaccess" => proc_athena_uaccess(),
+        "windows_gap" => proc_athena_windows_gap(),
+        "clipboard" => proc_athena_clipboard(),
         "clipboard-panel" => crate::shell_runner::clipboard_panel_dump_text(),
         "capture" => crate::compositor::capture_dump_text(),
-        "storage_irq" => proc_raeen_storage_irq(),
-        "storage" => proc_raeen_storage(),
-        "ahci" => proc_raeen_ahci(),
-        "nvme" => proc_raeen_nvme(),
-        "usb_hid" => proc_raeen_usb_hid(),
-        "oom" => proc_raeen_oom(),
+        "storage_irq" => proc_athena_storage_irq(),
+        "storage" => proc_athena_storage(),
+        "ahci" => proc_athena_ahci(),
+        "nvme" => proc_athena_nvme(),
+        "usb_hid" => proc_athena_usb_hid(),
+        "oom" => proc_athena_oom(),
         "soak" => crate::soak::dump_text(),
         "memlimits" => crate::process::dump_memlimits(),
         "drivers" => crate::driver_manifest::dump_text(),
         "virtio_gpu" => crate::virtio_gpu::dump_text(),
-        "crash" => proc_raeen_crash(),
-        "fatfs_esp" => proc_raeen_fatfs_esp(),
+        "crash" => proc_athena_crash(),
+        "fatfs_esp" => proc_athena_fatfs_esp(),
         "installer" => crate::installer::dump_text(),
         "installer_ui" => crate::installer_ui::dump_text(),
         "secure_boot" => crate::secure_boot::dump_text(),
@@ -1194,13 +1194,13 @@ fn resolve_raeen_subpath(sub: &str) -> Option<String> {
         "sandbox" => crate::sandbox::dump_text(),
         "manifests" => crate::rae_manifest::dump_text(),
         "anticheat" => crate::anticheat::dump_text(),
-        "syscall_guard" => proc_raeen_syscall_guard(),
-        "linux_kabi" => proc_raeen_linux_kabi(),
-        "linux_compat" => proc_raeen_linux_compat(),
-        "linuxkpi" => proc_raeen_linuxkpi(),
-        "linux_syscall" => proc_raeen_linux_syscall(),
-        "power" => proc_raeen_power(),
-        "thermal" => proc_raeen_thermal(),
+        "syscall_guard" => proc_athena_syscall_guard(),
+        "linux_kabi" => proc_athena_linux_kabi(),
+        "linux_compat" => proc_athena_linux_compat(),
+        "linuxkpi" => proc_ath_linuxkpi(),
+        "linux_syscall" => proc_athena_linux_syscall(),
+        "power" => proc_athena_power(),
+        "thermal" => proc_athena_thermal(),
         "vfs" => crate::vfs::proc_dump_text(),
         "palette" => crate::shell_runner::palette_dump_text(),
         "keyboard" => crate::shell_runner::keyboard_dump_text(),
@@ -1209,68 +1209,68 @@ fn resolve_raeen_subpath(sub: &str) -> Option<String> {
     })
 }
 
-/// /proc/raeen/windows_gap — Concept §Windows Pain Points kernel map.
-pub fn proc_raeen_windows_gap() -> String {
+/// /proc/athena/windows_gap — Concept §Windows Pain Points kernel map.
+pub fn proc_athena_windows_gap() -> String {
     crate::windows_gap::dump_text()
 }
 
-/// /proc/raeen/clipboard — session clipboard stats.
-pub fn proc_raeen_clipboard() -> String {
+/// /proc/athena/clipboard — session clipboard stats.
+pub fn proc_athena_clipboard() -> String {
     crate::clipboard::dump_text()
 }
 
-/// /proc/raeen/storage_irq — storage controller IRQ modes.
-pub fn proc_raeen_storage_irq() -> String {
+/// /proc/athena/storage_irq — storage controller IRQ modes.
+pub fn proc_athena_storage_irq() -> String {
     crate::storage_irq::dump_text()
 }
 
-/// /proc/raeen/ahci — AHCI HBA and port state. REDOX_EXTRACTION_MAP R06.
-pub fn proc_raeen_ahci() -> String {
+/// /proc/athena/ahci — AHCI HBA and port state. REDOX_EXTRACTION_MAP R06.
+pub fn proc_athena_ahci() -> String {
     crate::ahci::dump_text()
 }
 
-/// /proc/raeen/nvme — NVMe controller/namespace state. REDOX_EXTRACTION_MAP R07.
-pub fn proc_raeen_nvme() -> String {
+/// /proc/athena/nvme — NVMe controller/namespace state. REDOX_EXTRACTION_MAP R07.
+pub fn proc_athena_nvme() -> String {
     crate::nvme::dump_text()
 }
 
-/// /proc/raeen/usb_hid — boot-keyboard parser counters
+/// /proc/athena/usb_hid — boot-keyboard parser counters
 /// (MasterChecklist Phase 2.1 / REDOX_EXTRACTION_MAP R05).
-pub fn proc_raeen_usb_hid() -> String {
+pub fn proc_athena_usb_hid() -> String {
     crate::usb_hid::dump_text()
 }
 
-/// /proc/raeen/oom — OOM policy counters + current largest-victim candidate
+/// /proc/athena/oom — OOM policy counters + current largest-victim candidate
 /// (MasterChecklist Phase 4.1).
-pub fn proc_raeen_oom() -> String {
+pub fn proc_athena_oom() -> String {
     crate::oom::dump_text()
 }
 
-/// /proc/raeen/crash — reserved crash-dump region + prior-crash tombstone
+/// /proc/athena/crash — reserved crash-dump region + prior-crash tombstone
 /// (MasterChecklist Phase 4.5).
-pub fn proc_raeen_crash() -> String {
+pub fn proc_athena_crash() -> String {
     crate::crash_dump::dump_text()
 }
 
-/// /proc/raeen/fatfs_esp — FAT32 BPB + root-dir snapshot from sector 0
+/// /proc/athena/fatfs_esp — FAT32 BPB + root-dir snapshot from sector 0
 /// of the active block device. REDOX_EXTRACTION_MAP R09 / Phase 3.3.
-pub fn proc_raeen_fatfs_esp() -> String {
+pub fn proc_athena_fatfs_esp() -> String {
     crate::fatfs_esp::dump_text()
 }
 
-/// /proc/raeen/syscall_guard — syscall hardening counters and active limits.
-pub fn proc_raeen_syscall_guard() -> String {
+/// /proc/athena/syscall_guard — syscall hardening counters and active limits.
+pub fn proc_athena_syscall_guard() -> String {
     crate::syscall::dump_guard_text()
 }
 
-/// /proc/raeen/gaming
+/// /proc/athena/gaming
 ///
 /// Concept-doc-aligned introspection: how often has the user been in game
 /// mode, how often has the scheduler been in NULL_LATENCY, and how many
 /// SCHED_BODY deadlines have we hit vs. missed since boot. Userspace tools
 /// (AthPlay overlay, Game Bar, the Settings → Performance pane) read this
 /// to render a "your system has missed N frames out of M" indicator.
-pub fn proc_raeen_gaming() -> String {
+pub fn proc_athena_gaming() -> String {
     let s = crate::game_session::stats();
     let game_mode_active = crate::scheduler::game_mode_active();
     let null_latency_active = crate::scheduler::null_latency_active();
@@ -1305,8 +1305,8 @@ pub fn proc_raeen_gaming() -> String {
     // Vibe accent. `couch_accent` MUST equal `couch_seed`-derived base for the
     // re-skin to be coherent with the desktop — the cohesion invariant the
     // `[gameos] couch smoketest` line proves at boot.
-    let couch_seed = raeshell::gameos::couch_active_seed();
-    let couch_accent = raeshell::gameos::couch_active_accent();
+    let couch_seed = athshell::gameos::couch_active_seed();
+    let couch_accent = athshell::gameos::couch_active_accent();
     out.push_str(&format!("couch_seed: {:#010X}\n", couch_seed));
     out.push_str(&format!("couch_accent: {:#010X}\n", couch_accent));
     out.push_str(&format!(
@@ -1315,38 +1315,38 @@ pub fn proc_raeen_gaming() -> String {
     ));
     out.push_str(&format!(
         "couch_hit_target_px: {}\n",
-        raeshell::gameos::couch_hit_target()
+        athshell::gameos::couch_hit_target()
     ));
     // GameOS controller glyphs (Phase 2): the active button-glyph skin the
     // context hint bar renders, and how many chips the default grid context
     // shows. Phase 3 binds the real pad's VID/PID to override the default skin.
     out.push_str(&format!(
         "couch_glyph_set: {}\n",
-        raeshell::gameos::default_glyph_set_tag()
+        athshell::gameos::default_glyph_set_tag()
     ));
     out.push_str(&format!(
         "couch_hint_chips: {}\n",
-        raeshell::gameos::default_context_chip_count()
+        athshell::gameos::default_context_chip_count()
     ));
     // GameOS live controller bind (Phase 3): when a pad binds on xHCI, its USB
     // VID/PID auto-selects the glyph set (Sony→ps, Microsoft→xbox, Nintendo→
     // nintendo, else generic) and `hid_gamepad::PadInput` drives couch focus.
     // The padbind smoketest closes the loop end-to-end (decode → route → assert).
-    let pb = raeshell::gameos::run_padbind_smoketest();
+    let pb = athshell::gameos::run_padbind_smoketest();
     out.push_str(&format!(
         "couch_pad_vid_sony: {:#06X} -> {}\n",
-        raeshell::gameos::VID_SONY,
-        raeshell::gameos::glyph_set_tag_for_vidpid(raeshell::gameos::VID_SONY, 0)
+        athshell::gameos::VID_SONY,
+        athshell::gameos::glyph_set_tag_for_vidpid(athshell::gameos::VID_SONY, 0)
     ));
     out.push_str(&format!(
         "couch_pad_vid_microsoft: {:#06X} -> {}\n",
-        raeshell::gameos::VID_MICROSOFT,
-        raeshell::gameos::glyph_set_tag_for_vidpid(raeshell::gameos::VID_MICROSOFT, 0)
+        athshell::gameos::VID_MICROSOFT,
+        athshell::gameos::glyph_set_tag_for_vidpid(athshell::gameos::VID_MICROSOFT, 0)
     ));
     out.push_str(&format!(
         "couch_pad_vid_nintendo: {:#06X} -> {}\n",
-        raeshell::gameos::VID_NINTENDO,
-        raeshell::gameos::glyph_set_tag_for_vidpid(raeshell::gameos::VID_NINTENDO, 0)
+        athshell::gameos::VID_NINTENDO,
+        athshell::gameos::glyph_set_tag_for_vidpid(athshell::gameos::VID_NINTENDO, 0)
     ));
     out.push_str(&format!(
         "couch_padbind_dpad_right_moves_focus: {}\n",
@@ -1388,9 +1388,9 @@ pub fn proc_raeen_gaming() -> String {
     // ingests a synthetic 60fps frame, and reports the live panel count + ring
     // fill — proving the overlay state machine is wired without the boot log.
     {
-        let mut bar = raeshell::game_bar::GameBar::new(1, 1);
+        let mut bar = athshell::game_bar::GameBar::new(1, 1);
         let invoked = bar.invoke();
-        bar.ingest_perf(&raeshell::game_bar::PerfFeed {
+        bar.ingest_perf(&athshell::game_bar::PerfFeed {
             fps: None,
             frametime_ms: Some(16.6),
             cpu_temp_c: gb_cpu.map(|c| c as f32),
@@ -1407,7 +1407,7 @@ pub fn proc_raeen_gaming() -> String {
     // the OSK key count, the cross-fade duration, and a self-contained Phase-6
     // smoketest result so the OSK/transition state is introspectable without the
     // boot log.
-    let osk = raeshell::gameos::run_osk_smoketest();
+    let osk = athshell::gameos::run_osk_smoketest();
     out.push_str(&format!("couch_osk_keys: {}\n", osk.keys));
     out.push_str(&format!("couch_osk_typed: {}\n", osk.typed));
     out.push_str(&format!(
@@ -1416,7 +1416,7 @@ pub fn proc_raeen_gaming() -> String {
     ));
     out.push_str(&format!(
         "couch_crossfade_ms: {}\n",
-        raeshell::gameos::CROSSFADE_MS
+        athshell::gameos::CROSSFADE_MS
     ));
     out.push_str(&format!(
         "couch_crossfade_ramp_ok: {}\n",
@@ -1431,7 +1431,7 @@ pub fn proc_raeen_gaming() -> String {
     out
 }
 
-/// /proc/raeen/boot — captured wall-time from BSP T0 to "System booted".
+/// /proc/athena/boot — captured wall-time from BSP T0 to "System booted".
 /// Populated by `procfs::record_boot_time_ms` from kernel_main.
 static BOOT_TIME_MS: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
 
@@ -1439,56 +1439,56 @@ pub fn record_boot_time_ms(ms: u64) {
     BOOT_TIME_MS.store(ms, core::sync::atomic::Ordering::Relaxed);
 }
 
-/// /proc/raeen/perm — permission-prompt queue overview.
-pub fn proc_raeen_perm() -> String {
+/// /proc/athena/perm — permission-prompt queue overview.
+pub fn proc_athena_perm() -> String {
     crate::perm_syscalls::dump_text()
 }
 
-/// /proc/raeen/themes — registered themes + current selection.
-pub fn proc_raeen_themes() -> String {
+/// /proc/athena/themes — registered themes + current selection.
+pub fn proc_athena_themes() -> String {
     crate::theme_engine::dump_text()
 }
 
-/// /proc/raeen/scripts — Rae scripting lifecycle state.
-pub fn proc_raeen_scripts() -> String {
+/// /proc/athena/scripts — Rae scripting lifecycle state.
+pub fn proc_athena_scripts() -> String {
     crate::scripting::dump_text()
 }
 
-/// /proc/raeen/wireguard — WireGuard tunnel registry.
-pub fn proc_raeen_wireguard() -> String {
+/// /proc/athena/wireguard — WireGuard tunnel registry.
+pub fn proc_athena_wireguard() -> String {
     crate::wireguard::dump_text()
 }
 
-/// /proc/raeen/wallpaper — live wallpaper engine state and skip stats, prefixed
+/// /proc/athena/wallpaper — live wallpaper engine state and skip stats, prefixed
 /// with the Aurora Mesh default-backdrop identity line (IDENTITY §3).
-pub fn proc_raeen_wallpaper() -> String {
+pub fn proc_athena_wallpaper() -> String {
     let mut out = crate::aurora::dump_text();
     out.push_str(&crate::live_wallpaper::dump_text());
     out
 }
 
-/// /proc/raeen/rgb — every RGB device + zone color tracked by the kernel.
+/// /proc/athena/rgb — every RGB device + zone color tracked by the kernel.
 /// Concept §Customization Engine: "RGB unified — one API, one config."
-pub fn proc_raeen_rgb() -> String {
+pub fn proc_athena_rgb() -> String {
     crate::rgb::dump_text()
 }
 
-/// /proc/raeen/bundles — installed components and dep-verification stats.
+/// /proc/athena/bundles — installed components and dep-verification stats.
 /// Concept §Windows pain points: "App bundles with explicit, hashed
 /// dependencies."
-pub fn proc_raeen_bundles() -> String {
+pub fn proc_athena_bundles() -> String {
     crate::app_bundle::dump_text()
 }
 
-/// /proc/raeen/games — full dump of stored per-game profiles.
+/// /proc/athena/games — full dump of stored per-game profiles.
 /// Concept §Gaming Features: "Per-game profiles… all configured per game
 /// and auto-applied."
-pub fn proc_raeen_games() -> String {
+pub fn proc_athena_games() -> String {
     crate::game_profile::dump_text()
 }
 
-/// /proc/raeen/search — query latency stats for the local search index.
-pub fn proc_raeen_search() -> String {
+/// /proc/athena/search — query latency stats for the local search index.
+pub fn proc_athena_search() -> String {
     let s = crate::search_index::stats();
     let mut out = String::new();
     out.push_str("# AthenaOS local search index\n");
@@ -1503,13 +1503,13 @@ pub fn proc_raeen_search() -> String {
     out
 }
 
-/// /proc/raeen/config — full deterministic dump of the config registry.
+/// /proc/athena/config — full deterministic dump of the config registry.
 /// Concept-doc-aligned: "human-readable config with snapshots".
-pub fn proc_raeen_config() -> String {
+pub fn proc_athena_config() -> String {
     crate::config_registry::dump_text()
 }
 
-pub fn proc_raeen_boot() -> String {
+pub fn proc_athena_boot() -> String {
     let ms = BOOT_TIME_MS.load(core::sync::atomic::Ordering::Relaxed);
     format!(
         "boot_ms: {}\nconcept_target_ms: 6000\nconcept_stretch_ms: 3000\nstatus: {}\n\
@@ -1535,7 +1535,7 @@ pub fn proc_raeen_boot() -> String {
     )
 }
 
-/// Emit every `/proc/raeen/*` endpoint to serial as a fenced block.
+/// Emit every `/proc/athena/*` endpoint to serial as a fenced block.
 ///
 /// Called at the very end of `kernel_main` so the boot log captures a
 /// **complete observable kernel snapshot** every run. An external AI dev
@@ -1543,60 +1543,60 @@ pub fn proc_raeen_boot() -> String {
 /// having to run the kernel and query each endpoint individually — the
 /// log replaces interactive introspection until SSH-equivalent exists.
 ///
-/// Format: each endpoint wrapped in `<<<<<<<< raeen:/proc/raeen/NAME >>>>>>>>`
+/// Format: each endpoint wrapped in `<<<<<<<< athena:/proc/athena/NAME >>>>>>>>`
 /// fences. Easy to parse with `grep -A 999` or `awk`.
-pub fn dump_all_raeen_endpoints_to_serial() {
+pub fn dump_all_athena_endpoints_to_serial() {
     // The endpoint table lives in .rodata via `static` so cross-CPU
-    // memory pressure during long try_lock spins (e.g. raefs::proc_dump_text
+    // memory pressure during long try_lock spins (e.g. athfs::proc_dump_text
     // when a busy lock falls back) can't zero out the `&'static str`
     // pointers — moving this off the BSP stack closed an observable
     // null-byte corruption window seen at `linux_kabi` and later
     // endpoints.
     static ENTRIES: &[(&str, fn() -> String)] = &[
-        ("index", proc_raeen_index),
-        ("boot", proc_raeen_boot),
-        ("cpu", proc_raeen_cpu),
-        ("msr_amd", proc_raeen_msr_amd),
-        ("numa", proc_raeen_numa),
-        ("msr_intel", proc_raeen_msr_intel),
-        ("hardware", proc_raeen_hardware),
-        ("drivers", proc_raeen_drivers),
-        ("buddy", proc_raeen_buddy),
-        ("heap_guard", proc_raeen_heap_guard),
+        ("index", proc_athena_index),
+        ("boot", proc_athena_boot),
+        ("cpu", proc_athena_cpu),
+        ("msr_amd", proc_athena_msr_amd),
+        ("numa", proc_athena_numa),
+        ("msr_intel", proc_athena_msr_intel),
+        ("hardware", proc_athena_hardware),
+        ("drivers", proc_athena_drivers),
+        ("buddy", proc_athena_buddy),
+        ("heap_guard", proc_athena_heap_guard),
         (
             "vulnerabilities",
             crate::cpu_features::vulnerabilities_dump_text,
         ),
         ("tpm", crate::tpm::tpm_dump_text),
-        ("tls", proc_raeen_tls),
-        ("rtc", proc_raeen_rtc),
-        ("dhcp", proc_raeen_dhcp),
-        ("pcie", proc_raeen_pcie),
-        ("pcie_aer", proc_raeen_pcie_aer),
-        ("selftest", proc_raeen_selftest),
-        ("pci_irq", proc_raeen_pci_irq),
-        ("apic", proc_raeen_apic),
-        ("acpi", proc_raeen_acpi),
-        ("gpe", proc_raeen_gpe),
-        ("smp", proc_raeen_smp),
-        ("hardening", proc_raeen_hardening),
-        ("hardening_truth", proc_raeen_hardening_truth),
-        ("uaccess", proc_raeen_uaccess),
-        ("raefs", proc_raeen_raefs),
-        ("memory", proc_raeen_memory),
-        ("sched_stats", proc_raeen_sched_stats),
-        ("compositor", proc_raeen_compositor),
+        ("tls", proc_athena_tls),
+        ("rtc", proc_athena_rtc),
+        ("dhcp", proc_athena_dhcp),
+        ("pcie", proc_athena_pcie),
+        ("pcie_aer", proc_athena_pcie_aer),
+        ("selftest", proc_athena_selftest),
+        ("pci_irq", proc_athena_pci_irq),
+        ("apic", proc_athena_apic),
+        ("acpi", proc_athena_acpi),
+        ("gpe", proc_athena_gpe),
+        ("smp", proc_athena_smp),
+        ("hardening", proc_athena_hardening),
+        ("hardening_truth", proc_athena_hardening_truth),
+        ("uaccess", proc_athena_uaccess),
+        ("athfs", proc_athena_athfs),
+        ("memory", proc_athena_memory),
+        ("sched_stats", proc_athena_sched_stats),
+        ("compositor", proc_athena_compositor),
         ("a11y", crate::a11y::dump_text),
         ("web", crate::webview::dump_text),
-        ("caps", proc_raeen_caps),
-        ("gaming", proc_raeen_gaming),
-        ("games", proc_raeen_games),
-        ("config", proc_raeen_config),
-        ("search", proc_raeen_search),
-        ("themes", proc_raeen_themes),
-        ("scripts", proc_raeen_scripts),
-        ("session", proc_raeen_session),
-        ("wireguard", proc_raeen_wireguard),
+        ("caps", proc_athena_caps),
+        ("gaming", proc_athena_gaming),
+        ("games", proc_athena_games),
+        ("config", proc_athena_config),
+        ("search", proc_athena_search),
+        ("themes", proc_athena_themes),
+        ("scripts", proc_athena_scripts),
+        ("session", proc_athena_session),
+        ("wireguard", proc_athena_wireguard),
         ("firewall", crate::firewall::dump_text),
         ("dns", crate::dns::dump_text),
         ("dot", crate::dot::dump_text),
@@ -1616,15 +1616,15 @@ pub fn dump_all_raeen_endpoints_to_serial() {
         ("notify", crate::notify::dump_text),
         ("prefetch", crate::prefetch::dump_text),
         ("winreg", crate::win_registry::dump_text),
-        ("raebridge_seh", crate::raebridge_boot::seh_dump_text),
-        ("raebridge_sync", crate::raebridge_boot::sync_dump_text),
+        ("athbridge_seh", crate::athbridge_boot::seh_dump_text),
+        ("athbridge_sync", crate::athbridge_boot::sync_dump_text),
         (
-            "raebridge_registry",
-            crate::raebridge_boot::registry_dump_text,
+            "athbridge_registry",
+            crate::athbridge_boot::registry_dump_text,
         ),
         (
-            "raebridge_syncbroker",
-            crate::raebridge_boot::sync_broker_dump_text,
+            "athbridge_syncbroker",
+            crate::athbridge_boot::sync_broker_dump_text,
         ),
         ("widgets", crate::widgets::dump_text),
         ("palette", crate::shell_runner::palette_dump_text),
@@ -1636,46 +1636,46 @@ pub fn dump_all_raeen_endpoints_to_serial() {
         ("pci_pm", crate::pci_pm::dump_text),
         ("swap", crate::swap::dump_text),
         ("sched_proof", crate::sched_proof::dump_text),
-        ("wallpaper", proc_raeen_wallpaper),
-        ("rgb", proc_raeen_rgb),
-        ("bundles", proc_raeen_bundles),
-        ("perm", proc_raeen_perm),
-        ("network", proc_raeen_network),
-        ("ssh", proc_raeen_ssh),
-        ("power", proc_raeen_power),
-        ("thermal", proc_raeen_thermal),
-        ("audio", proc_raeen_audio),
-        ("usb_audio", proc_raeen_usb_audio),
-        ("syscalls", proc_raeen_syscalls),
-        ("linux_kabi", proc_raeen_linux_kabi),
-        ("linux_compat", proc_raeen_linux_compat),
-        ("linuxkpi", proc_raeen_linuxkpi),
-        ("linux_syscall", proc_raeen_linux_syscall),
-        ("windows_gap", proc_raeen_windows_gap),
-        ("clipboard", proc_raeen_clipboard),
+        ("wallpaper", proc_athena_wallpaper),
+        ("rgb", proc_athena_rgb),
+        ("bundles", proc_athena_bundles),
+        ("perm", proc_athena_perm),
+        ("network", proc_athena_network),
+        ("ssh", proc_athena_ssh),
+        ("power", proc_athena_power),
+        ("thermal", proc_athena_thermal),
+        ("audio", proc_athena_audio),
+        ("usb_audio", proc_athena_usb_audio),
+        ("syscalls", proc_athena_syscalls),
+        ("linux_kabi", proc_athena_linux_kabi),
+        ("linux_compat", proc_athena_linux_compat),
+        ("linuxkpi", proc_ath_linuxkpi),
+        ("linux_syscall", proc_athena_linux_syscall),
+        ("windows_gap", proc_athena_windows_gap),
+        ("clipboard", proc_athena_clipboard),
         (
             "clipboard-panel",
             crate::shell_runner::clipboard_panel_dump_text,
         ),
         ("capture", crate::compositor::capture_dump_text),
-        ("storage_irq", proc_raeen_storage_irq),
-        ("storage", proc_raeen_storage),
-        ("ahci", proc_raeen_ahci),
-        ("nvme", proc_raeen_nvme),
-        ("usb_hid", proc_raeen_usb_hid),
-        ("oom", proc_raeen_oom),
+        ("storage_irq", proc_athena_storage_irq),
+        ("storage", proc_athena_storage),
+        ("ahci", proc_athena_ahci),
+        ("nvme", proc_athena_nvme),
+        ("usb_hid", proc_athena_usb_hid),
+        ("oom", proc_athena_oom),
         ("soak", crate::soak::dump_text),
         ("memlimits", crate::process::dump_memlimits),
         ("drivers", crate::driver_manifest::dump_text),
         ("virtio_gpu", crate::virtio_gpu::dump_text),
-        ("fatfs_esp", proc_raeen_fatfs_esp),
+        ("fatfs_esp", proc_athena_fatfs_esp),
         ("installer", crate::installer::dump_text),
         ("installer_ui", crate::installer_ui::dump_text),
         ("suspend", crate::suspend::dump_text),
         ("sandbox", crate::sandbox::dump_text),
         ("manifests", crate::rae_manifest::dump_text),
         ("anticheat", crate::anticheat::dump_text),
-        ("syscall_guard", proc_raeen_syscall_guard),
+        ("syscall_guard", proc_athena_syscall_guard),
         ("extable", crate::extable::dump_text),
         ("bootlog", crate::bootlog::dump_text),
         ("bootlog_persist", crate::bootlog_persist::dump_text),
@@ -1688,12 +1688,12 @@ pub fn dump_all_raeen_endpoints_to_serial() {
     // ring, evicting the actual boot transcript right before the end-of-boot
     // BOOTLOG.TXT flush — the on-stick log then showed procfs noise instead
     // of the tier lines needed to debug bare metal — and (b) recursively
-    // append /proc/raeen/bootlog (the ring dump) INTO the ring. On-screen it
+    // append /proc/athena/bootlog (the ring dump) INTO the ring. On-screen it
     // was unreadable scroll; QEMU parsing is unaffected since COM1 output is
     // identical.
     crate::serial_only_println!();
     crate::serial_only_println!(
-        "<<<<<<<< raeen:snapshot:begin {} endpoints >>>>>>>>",
+        "<<<<<<<< athena:snapshot:begin {} endpoints >>>>>>>>",
         entries.len()
     );
 
@@ -1746,7 +1746,7 @@ pub fn dump_all_raeen_endpoints_to_serial() {
             if dt > wedge_budget_cycles {
                 wedged = true;
             }
-            crate::serial_only_println!("<<<<<<<< raeen:/proc/raeen/{} >>>>>>>>", name);
+            crate::serial_only_println!("<<<<<<<< athena:/proc/athena/{} >>>>>>>>", name);
             // Print without prefix so a parser sees pure endpoint output.
             // Trim trailing newline since serial_only_println already adds one.
             let trimmed = body.trim_end_matches('\n');
@@ -1755,7 +1755,7 @@ pub fn dump_all_raeen_endpoints_to_serial() {
             }
             emitted += 1;
         }
-        crate::serial_only_println!("<<<<<<<< raeen:snapshot:end >>>>>>>>");
+        crate::serial_only_println!("<<<<<<<< athena:snapshot:end >>>>>>>>");
         let complete = emitted == entries.len() && !wedged;
         // serial_println (not _only_): this verdict is boot-health signal, so
         // it belongs in the bootlog ring / netlog too, unlike the bulk dump.
@@ -1785,7 +1785,7 @@ pub fn proc_filesystems() -> String {
     out.push_str("nodev\tcgroup2\n");
     out.push_str("nodev\tpstore\n");
     out.push_str("nodev\tbpf\n");
-    out.push_str("\traefs\n");
+    out.push_str("\tathfs\n");
     out.push_str("\text4\n");
     out.push_str("\tvfat\n");
     out.push_str("\tntfs\n");
@@ -1795,7 +1795,7 @@ pub fn proc_filesystems() -> String {
 /// /proc/mounts — mounted filesystems
 pub fn proc_mounts() -> String {
     let mut out = String::new();
-    out.push_str("raefs / raefs rw,relatime 0 0\n");
+    out.push_str("athfs / athfs rw,relatime 0 0\n");
     out.push_str("proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0\n");
     out.push_str("sysfs /sys sysfs rw,nosuid,nodev,noexec,relatime 0 0\n");
     out.push_str("tmpfs /tmp tmpfs rw,nosuid,nodev,relatime,size=131072k 0 0\n");
@@ -1940,8 +1940,8 @@ pub fn resolve_proc_path(path: &str) -> Option<String> {
         _ => {}
     }
 
-    if let Some(sub) = path.strip_prefix("raeen/") {
-        return resolve_raeen_subpath(sub);
+    if let Some(sub) = path.strip_prefix("athena/") {
+        return resolve_athena_subpath(sub);
     }
 
     if let Some(sub) = path.strip_prefix("self/") {

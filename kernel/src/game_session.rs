@@ -70,7 +70,7 @@ const E_PIN_INSUFF_CAP: u64 = 0xFFFF_FFFF_FFFF_FE07;
 static GAME_MODE_ENTRIES: AtomicU64 = AtomicU64::new(0);
 static NULL_LATENCY_ENTRIES: AtomicU64 = AtomicU64::new(0);
 
-/// Snapshot for diagnostics / `/proc/raeen/gaming`.
+/// Snapshot for diagnostics / `/proc/athena/gaming`.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SessionStats {
     pub game_mode_entries: u64,

@@ -8,7 +8,7 @@
 > Explorer's ribbon clutter or Finder's hidden-by-default chrome.
 
 **All tokens below are defined in [`design-language.md`](./design-language.md)**
-and live in the `rae_tokens` crate (ADR 0003). This spec only assigns them; it
+and live in the `ath_tokens` crate (ADR 0003). This spec only assigns them; it
 introduces no new magic numbers.
 
 ---
@@ -30,22 +30,22 @@ introduces no new magic numbers.
 
 ## Already built (delta only — verify-before-spec)
 
-Grounded in `components/raeshell/src/file_manager.rs` (a large, already-rich
+Grounded in `components/athshell/src/file_manager.rs` (a large, already-rich
 data model). This spec is a **re-skin + state-completeness + AA-text + token
 consolidation** layer, NOT a rebuild.
 
 | Piece | Where | Today | This spec changes |
 |---|---|---|---|
 | File manager (data model) | `file_manager.rs` (icon/list/details/column/tree views, tabs, dual-pane, ops+progress, batch rename, search, preview, thumbnails, trash, bookmarks, shares) | full model exists | → re-skin render, AA text, token states |
-| Private palette | `file_manager.rs` `FM_BG/FM_SIDEBAR_BG/FM_ACCENT/FM_HOVER/FM_SELECTED/…` (l.21–41) | ~20 hardcoded `const FM_*` incl. `FM_ACCENT = 0xFF_4E_9C_FF` | → **delete**, consume `rae_tokens` (the cohesion fix) |
-| Block glyphs | `file_manager.rs` `GLYPH_W/GLYPH_H = 8` (l.42–43) | 8×8 bitmap font | → AA Inter via `Canvas::draw_text` (raefont path, already live for OOBE/chrome) |
+| Private palette | `file_manager.rs` `FM_BG/FM_SIDEBAR_BG/FM_ACCENT/FM_HOVER/FM_SELECTED/…` (l.21–41) | ~20 hardcoded `const FM_*` incl. `FM_ACCENT = 0xFF_4E_9C_FF` | → **delete**, consume `ath_tokens` (the cohesion fix) |
+| Block glyphs | `file_manager.rs` `GLYPH_W/GLYPH_H = 8` (l.42–43) | 8×8 bitmap font | → AA Inter via `Canvas::draw_text` (athfont path, already live for OOBE/chrome) |
 | File-type color/icon | `FileEntryType::color()` / `icon_char()` (l.67–102) | private type colors (`FM_DIR_FG` etc.) | → keep the *semantic* mapping; remap to a tokenized type-accent palette (§4) |
 | Views | icon / list / details / column / tree | all modeled | → spec spacing/row geometry + states per view (§2) |
 | Tabs + dual-pane | tab strip + split | modeled | → tab-strip chrome + split divider tokens (§3) |
 | Search | substring over entries | exists | → fuzzy ranking + glass results, Finder/Spotlight feel (§5) |
 
 The Files app is **not a rebuild** — it is the same `control_panel.rs` story:
-delete the private palette, render with `rae_tokens` + AA text, complete the
+delete the private palette, render with `ath_tokens` + AA text, complete the
 hover/active/focus/disabled/dark/light/reduced-motion state matrix.
 
 ---
@@ -83,7 +83,7 @@ sidebar section** (Snapshots / per-app Buckets) that is uniquely ours.
 
 ## AthenaOS design tokens this surface uses
 
-Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
+Pulled verbatim from `design-language.md` / `ath_tokens`. No new magic numbers.
 
 - **spacing:** `space.1` (icon-to-label), `space.2` (intra-row padding, tab gap),
   `space.3` (list-row inset, sidebar-row inset), `space.4` (pane padding, sidebar
@@ -99,7 +99,7 @@ Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 - **type:** `type.subtitle` (sidebar section headers), `type.body` (file names,
   breadcrumb segments), `type.label` (toolbar buttons, tab labels, column
   headers), `type.caption` (size/date/type metadata, status bar).
-- **accent model:** seed = `ThemeAbi.accent_argb`; `rae_tokens::derive_accent`
+- **accent model:** seed = `ThemeAbi.accent_argb`; `ath_tokens::derive_accent`
   yields `accent.base/hover/active/subtle/text/glow`. Files reads the **same
   ramp** as the shell — never a private `FM_ACCENT`. File-type colors are a
   separate fixed *semantic* palette (§4), deliberately NOT accent-derived
@@ -218,8 +218,8 @@ reusable (other apps show file chips) so they belong in the language, not inline
 
 **Decision flag:** collapsing image/video/audio into one `ftype.media` reduces
 the current rainbow (4 distinct hues) to a calmer palette — this is a *premium
-restraint* call; if raeen-visual-qa wants per-medium hues back, keep 3 media
-tokens. Default: collapse. **raeen-accessibility** verifies each `ftype.*` clears
+restraint* call; if athena-visual-qa wants per-medium hues back, keep 3 media
+tokens. Default: collapse. **athena-accessibility** verifies each `ftype.*` clears
 3:1 on `bg.raised` (icons are non-text but should still read).
 
 ---
@@ -227,7 +227,7 @@ tokens. Default: collapse. **raeen-accessibility** verifies each `ftype.*` clear
 ## 5. Search (fuzzy, Finder/Spotlight feel)
 
 - Trigger: toolbar search field or `Ctrl+F`. Scope toggle: "This folder" /
-  "Everywhere" (`raeshell::search_indexer` backs the recursive case).
+  "Everywhere" (`athshell::search_indexer` backs the recursive case).
 - **Delta over current substring search:** case-insensitive; rank exact-prefix >
   word-start > substring > fuzzy-subsequence; debounce 120ms.
 - **Results:** filter the current view live (icons/list/details), OR — for
@@ -252,7 +252,7 @@ Finder-style titled groups (`type.subtitle` `text.secondary` headers, collapsibl
    shows that snapshot's contents read-only in the content pane with a
    `state.warn` InfoBar "Viewing a snapshot — read only". **This is the surface
    no other OS has natively** (AthFS CoW snapshots are live per memory
-   `raefs-snapshot-cow`).
+   `athfs-snapshot-cow`).
 4. **App Buckets (AthFS)** — per-app data buckets (`AthFS` per-app buckets are a
    Concept pillar): each app's sandboxed data dir, shown so a user can see/clear
    what an app stores. Cross-links to Privacy & Security in Settings.
@@ -288,7 +288,7 @@ Files ships only when:
 4. **AA text everywhere:** no 8×8 block glyphs remain — file names, breadcrumb,
    metadata all render via `Canvas::draw_text` (the OOBE/chrome AA path).
 5. **Focus everywhere:** every row/cell/control has a focus state distinct from
-   hover (raeen-accessibility sign-off).
+   hover (athena-accessibility sign-off).
 6. **Dark + light parity:** both palettes render with passing contrast.
 
 ---
@@ -301,7 +301,7 @@ Files ships only when:
   so it belongs in the language. Update `DESIGN_LANGUAGE` before implementers
   consume it.
 - Surface-specific layout numbers (1040×680 default, 220px sidebar, 300px details
-  pane, 220px column width) are *local layout constants* for raeen-shell-apps,
+  pane, 220px column width) are *local layout constants* for athena-shell-apps,
   composed from `space.*`, deliberately NOT global tokens.
 
 ---
@@ -309,30 +309,30 @@ Files ships only when:
 ## Handoff
 
 ### Implementers
-- **raeen-ui (framework):** the **tab strip**, **breadcrumb-with-dropdown**,
+- **athena-ui (framework):** the **tab strip**, **breadcrumb-with-dropdown**,
   **split-pane divider**, **view-density segmented control**, and **titled-section
-  sidebar** are reusable widgets consuming `rae_tokens` — build them in the control
+  sidebar** are reusable widgets consuming `ath_tokens` — build them in the control
   kit (shared with `control_panel.rs`). High fan-out: the terminal/editor apps
   reuse tabs + split.
-- **raeen-shell-apps (the Files surface):** in `file_manager.rs` — (a) delete the
-  private `FM_*` palette + `GLYPH_*`, consume `rae_tokens`; (b) swap block glyphs
-  for `Canvas::draw_text` AA (raefont); (c) re-skin all five views to the token
+- **athena-shell-apps (the Files surface):** in `file_manager.rs` — (a) delete the
+  private `FM_*` palette + `GLYPH_*`, consume `ath_tokens`; (b) swap block glyphs
+  for `Canvas::draw_text` AA (athfont); (c) re-skin all five views to the token
   geometry + state matrix (§2); (d) build the breadcrumb dropdown, split-pane
   focus model, tab chrome (§1, §3); (e) wire the AthFS Snapshots + App Buckets
-  sidebar sections (§6) to the live `raefs` snapshot/bucket APIs; (f) build the
+  sidebar sections (§6) to the live `athfs` snapshot/bucket APIs; (f) build the
   fuzzy search + Quick Look overlay (§5, §7).
-- **raeen-gfx:** confirm `Canvas` rounded-rect per-corner masking for grid cells +
+- **athena-gfx:** confirm `Canvas` rounded-rect per-corner masking for grid cells +
   the Quick Look card; confirm `material.glass` popover blur is bounded (transient
   only); the soft-shadow fix (see `material-and-shadow.md`) must land first or
   Quick Look/context menus inherit the hard-block shadow defect.
 - **theme_engine (kernel):** honor `corner_radius`/`blur_radius` overrides so the
   Files window re-skins with the shell on a Vibe switch; expose the same
   `derive_accent` ramp Files reads for the §8 cohesion proof.
-- **raeen-accessibility (flagged):** the §4 `ftype.*` 3:1 audit; the focus-state
+- **athena-accessibility (flagged):** the §4 `ftype.*` 3:1 audit; the focus-state
   audit across all five views + sidebar; reduced-motion paths; 32px/48px hit
   targets; AA contrast on both palettes.
 
-### On-screen / boot-log evidence (raeen-visual-qa + smoketests)
+### On-screen / boot-log evidence (athena-visual-qa + smoketests)
 - **Window:** QEMU screenshot of Files open — mica toolbar with clickable
   breadcrumb, 220px mica sidebar with titled sections, content pane in List view,
   status bar. Log: `[files] open view=list sidebar=220 tabs=1 accent=0x..`.
@@ -347,7 +347,7 @@ Files ships only when:
   split-pane with a drop-target ghost mid-drag. Log: `[files] tabs=3 split=2
   active_tab_rule=accent`.
 - **AthFS sidebar:** screenshot of the Snapshots section listing ≥1 snapshot +
-  the read-only `state.warn` InfoBar when viewing one. Log: `[files] raefs:
+  the read-only `state.warn` InfoBar when viewing one. Log: `[files] athfs:
   snapshots=N buckets=M`.
 - **Quick Look:** screenshot of the spacebar overlay over an image, glass card +
   scrim. Log: `[files] quicklook: open kind=image`.

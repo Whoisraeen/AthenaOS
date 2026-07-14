@@ -1,7 +1,7 @@
 # Visual QA — Independent Acceptance Round 3 — Criterion #1 (2026-06-21)
 
 **Gate:** Goal criterion #1 — *"the UI is visually stunning and themeable, PROVEN by
-raeen-visual-qa screenshots judged against current macOS and Windows 11."*
+athena-visual-qa screenshots judged against current macOS and Windows 11."*
 
 **Method:** read-only independent pass over the **committed** artifacts on disk. The
 concurrent UI session has since **committed everything** — the working tree is now **clean
@@ -127,35 +127,35 @@ Ordered by leverage to close the 86→92+ gap. Each is surface + pixel issue + r
    the raised-card shadow+highlight (`072adb6`); `surface-control-center.png` tiles show only
    subtle lift. Apply the same `elev` soft shadow + top-highlight at CC-tile scale (and to
    taskbar pills). Target: CC tile face ≥ +8 L over gap with a visible penumbra, matching
-   Start. vs `reference/Liquid glass guide…jpg` raised pills. **→ raeen-gfx (render) +
-   raeen-shell-apps (call sites).**
+   Start. vs `reference/Liquid glass guide…jpg` raised pills. **→ athena-gfx (render) +
+   athena-shell-apps (call sites).**
 2. **Files content area is a dark flat list vs Win11's light raised Quick-Access cards +
    colorful icons.** `surface-files.png` rows are mono-blue folder icons on a dark list;
    `reference/download (1).jpg` groups files into raised cards with multi-hue app icons +
    a neutral-light content field. Add card-grouped content + colorful (not single-accent)
-   file-type icons. **→ raeen-shell-apps (+ raeen-gfx for the card render).**
+   file-type icons. **→ athena-shell-apps (+ athena-gfx for the card render).**
 3. **Lift frost one more step toward the milky reference** (CC L84.6 / popovers L95–102 vs
    the gold light-theme L188). Note the gold ref is *light* "Lumen" theme, so the dark-theme
    target is lower — but the dark interiors could still carry ~+8–10 L of frost without
-   breaking AA. **→ raeen-ui (token) + raeen-gfx + raeen-accessibility (re-confirm).**
+   breaking AA. **→ athena-ui (token) + athena-gfx + athena-accessibility (re-confirm).**
 
 ### P1 — finish polish
 4. **Danger/urgent red still slightly muted** (`surface-notifications.png` urgent title). Push
    `status.danger` toward a clean (255,69,58) that survives the legibility cap without
-   desaturating. **→ raeen-ui (token) + raeen-shell-apps.**
-5. **Taskbar app pills want a touch more lift** to match the Start tile depth. **→ raeen-gfx.**
+   desaturating. **→ athena-ui (token) + athena-shell-apps.**
+5. **Taskbar app pills want a touch more lift** to match the Start tile depth. **→ athena-gfx.**
 6. **Lock-screen composition gravity** — centered card vs macOS Tahoe's full-bleed,
-   top-anchored time. Composition question, not a defect. **→ raeen-shell-apps.**
+   top-anchored time. Composition question, not a defect. **→ athena-shell-apps.**
 
 ### P2 — kernel / first-run tail (not host-renderable as glass yet)
 7. **Login / OOBE** still predate the glass system (`login-card-preview.png`,
    `oobe-*-2026-06-17.png` are pre-identity, dated 06-17). These are the literal first
    impression. Re-compose over the aurora with `glass.panel` card + rim + the new depth;
    respect the `oobe-auto-advance-login-only` session-phase flow (kernel-side framebuffer
-   render). **→ raeen-shell-apps + raeen-gfx.**
+   render). **→ athena-shell-apps + athena-gfx.**
 8. **Generic app window chrome** (non-Files app: titlebar/controls/borders) only critiqued
    inline via Files. Shoot a standalone app window applying the Files chrome recipe.
-   **→ raeen-shell-apps + raeen-gfx.**
+   **→ athena-shell-apps + athena-gfx.**
 
 ---
 
@@ -212,7 +212,7 @@ the 82% checkpoint — the gate is no longer blocked on structural absences.
 
 ---
 
-### REPORT — raeen-visual-qa — 2026-06-21
+### REPORT — athena-visual-qa — 2026-06-21
 - Booted to: N/A (independent checkpoint of committed host-render PNGs regenerated 19:20,
   working tree now clean through `7218704`; no QEMU/iron per instructions). Screenshots
   judged: `docs/design/screenshots/{wallpaper-aurora-dark, surface-{settings,control-center,
@@ -232,10 +232,10 @@ the 82% checkpoint — the gate is no longer blocked on structural absences.
   (3.8→5.8:1) and chrome>panel separation (L77.3 vs L84.6). Gaps REMAINING: CC/taskbar tile
   depth flatter than Start; Files dark list vs Win11 raised colorful cards; frost one step
   below milky; danger red slightly muted; OOBE/login pre-identity. Regressions: none.
-- Top remaining gaps: (1) unify CC/taskbar tile depth to the Start recipe (raeen-gfx +
-  shell-apps), (2) Files content cards + colorful file-type icons vs Win11 (raeen-shell-apps),
-  (3) +1 frost step toward milky w/ a11y re-confirm (raeen-ui + gfx + a11y), (4) clean
-  danger red (raeen-ui token), (5) re-skin OOBE/login over the aurora (raeen-shell-apps + gfx).
+- Top remaining gaps: (1) unify CC/taskbar tile depth to the Start recipe (athena-gfx +
+  shell-apps), (2) Files content cards + colorful file-type icons vs Win11 (athena-shell-apps),
+  (3) +1 frost step toward milky w/ a11y re-confirm (athena-ui + gfx + a11y), (4) clean
+  danger red (athena-ui token), (5) re-skin OOBE/login over the aurora (athena-shell-apps + gfx).
 - Consistency issues: CC/taskbar tiles flatter than Start tiles; frost one step low uniformly;
   danger red slightly muted; only dark-theme surfaces captured (no light-theme proof shot).
 - Blocking (won't render): none — all surfaces render cleanly; no handoff to verifier/debugger.

@@ -16,15 +16,15 @@
 //! legible over the brightest region.
 //!
 //! ## Single source of truth (kill the double-maintenance)
-//! The ribbon-mesh math lives in `raegfx::glass::render_aurora_dark` — the
-//! finalized canonical render (raegfx commit `dcb4ee3`, host-KAT'd: anisotropic
+//! The ribbon-mesh math lives in `athgfx::glass::render_aurora_dark` — the
+//! finalized canonical render (athgfx commit `dcb4ee3`, host-KAT'd: anisotropic
 //! NW→SE shear ~2.5:1, blue core weight ~138 / peak luma ~169, violet upper-right,
-//! teal seam accent over the blue×violet seam). `raegfx` is `#![no_std]` and the
+//! teal seam accent over the blue×violet seam). `athgfx` is `#![no_std]` and the
 //! kernel already depends on it, and its `Canvas` is a `*mut u8` framebuffer
 //! wrapper — so this engine constructs a `Canvas` straight over the compositor's
 //! existing `comp_buf` (bpp=4, ARGB) with **no allocation** and CALLS the canonical
 //! function. There is no mirrored copy of the aurora math here anymore; any future
-//! polish to the ribbon mesh in raegfx flows to the live desktop automatically.
+//! polish to the ribbon mesh in athgfx flows to the live desktop automatically.
 //!
 //! ## Cost / hot-path discipline
 //! This is the existing `compositor::LiveWallpaper` per-frame path: frame-capped at
@@ -39,17 +39,17 @@
 extern crate alloc;
 
 use alloc::boxed::Box;
-use rae_tokens::{
+use ath_tokens::{
     AURORA_BLOB_BLUE, AURORA_BLOB_TEAL, AURORA_BLOB_VIOLET, WALLPAPER_AURORA_BASE_DARK,
 };
-use raegfx::Canvas;
+use athgfx::Canvas;
 
 /// Display name the live-wallpaper registry binds this engine under. The default
-/// selection (and the `/proc/raeen/wallpaper` reflection) keys off this name.
+/// selection (and the `/proc/athena/wallpaper` reflection) keys off this name.
 pub const AURORA_NAME: &str = "Aurora Mesh";
 
 /// Map a frame time (ms) to the canonical renderer's drift `phase` (period 1024,
-/// the angle units of `raegfx::glass`'s integer sine). A full drift cycle takes
+/// the angle units of `athgfx::glass`'s integer sine). A full drift cycle takes
 /// ~70 s (≈1024 phase units / (1000/64) per second), so motion is "alive, not
 /// busy". Wrapped to the 1024-unit period so the value never overflows the table.
 #[inline]
@@ -58,9 +58,9 @@ fn phase_for_time(time_ms: u64) -> u32 {
 }
 
 /// Render the aurora mesh into `buffer` (ARGB `0xFFRRGGBB`, row-major `w×h`) for a
-/// frame at `time_ms`. Allocation-free: wraps the caller's buffer in a `raegfx`
+/// frame at `time_ms`. Allocation-free: wraps the caller's buffer in a `athgfx`
 /// `Canvas` (zero-copy: the `Vec<u32>`'s bytes ARE the framebuffer) and calls the
-/// canonical `raegfx::glass::render_aurora_dark`. This is the shared core used by
+/// canonical `athgfx::glass::render_aurora_dark`. This is the shared core used by
 /// both [`AuroraWallpaper::render_frame`] (the compositor's live default) and the
 /// shell desktop fallback fill, so the live look is byte-identical to the
 /// host-render screenshot harness.
@@ -77,7 +77,7 @@ pub fn render_aurora(buffer: &mut [u32], w: u32, h: u32, time_ms: u64) {
     // bytes at bpp=4 addresses exactly the same `w*h` ARGB pixels and never reads
     // or writes past `buffer.len()`. The borrow lasts only for this call.
     let mut canvas = unsafe { Canvas::new(buffer.as_mut_ptr() as *mut u8, wu, hu, 4) };
-    raegfx::glass::render_aurora_dark(&mut canvas, 0, 0, wu, hu, phase_for_time(time_ms));
+    athgfx::glass::render_aurora_dark(&mut canvas, 0, 0, wu, hu, phase_for_time(time_ms));
 }
 
 // ── LiveWallpaper engine ─────────────────────────────────────────────────────
@@ -126,7 +126,7 @@ pub fn init() {
     crate::compositor::set_live_wallpaper(Box::new(AuroraWallpaper::new()));
     DEFAULT_WALLPAPER_NAME.store(true, core::sync::atomic::Ordering::Relaxed);
     crate::serial_println!(
-        "[ OK ] Aurora Mesh wallpaper: default backdrop set (base=#{:06x}, anisotropic ribbon mesh via raegfx::glass, vignette, no per-frame alloc)",
+        "[ OK ] Aurora Mesh wallpaper: default backdrop set (base=#{:06x}, anisotropic ribbon mesh via athgfx::glass, vignette, no per-frame alloc)",
         WALLPAPER_AURORA_BASE_DARK & 0x00FF_FFFF,
     );
 }
@@ -135,17 +135,17 @@ pub fn init() {
 static DEFAULT_WALLPAPER_NAME: core::sync::atomic::AtomicBool =
     core::sync::atomic::AtomicBool::new(false);
 
-/// Whether the aurora is the active default backdrop (for `/proc/raeen/wallpaper`).
+/// Whether the aurora is the active default backdrop (for `/proc/athena/wallpaper`).
 pub fn is_default() -> bool {
     DEFAULT_WALLPAPER_NAME.load(core::sync::atomic::Ordering::Relaxed)
 }
 
-/// `/proc/raeen/wallpaper` identity prefix — the Aurora Mesh default-backdrop
+/// `/proc/athena/wallpaper` identity prefix — the Aurora Mesh default-backdrop
 /// state (IDENTITY §3). Allocation is fine here (procfs read path, not hot).
 pub fn dump_text() -> alloc::string::String {
     alloc::format!(
         "# AthenaOS default backdrop = \"{}\" (Aurora Mesh, IDENTITY \u{a7}3)\n\
-         # default_active={} base=#{:06x} blobs=[blue #{:06x}, violet #{:06x}, teal #{:06x}] ribbon_mesh=raegfx::glass vignette=0.85 per_frame_alloc=none\n",
+         # default_active={} base=#{:06x} blobs=[blue #{:06x}, violet #{:06x}, teal #{:06x}] ribbon_mesh=athgfx::glass vignette=0.85 per_frame_alloc=none\n",
         AURORA_NAME,
         is_default(),
         WALLPAPER_AURORA_BASE_DARK & 0x00FF_FFFF,
@@ -157,7 +157,7 @@ pub fn dump_text() -> alloc::string::String {
 
 // ── Boot smoketest (FAIL-able) ───────────────────────────────────────────────
 
-/// Renders one aurora frame (via the canonical `raegfx::glass` ribbon-mesh path)
+/// Renders one aurora frame (via the canonical `athgfx::glass` ribbon-mesh path)
 /// into a small off-screen buffer and asserts the IDENTITY contract on the LIVE
 /// render: (1) the frame is not a flat void — there is a real luma spread across
 /// it (the ribbon mesh, not a banded gradient); (2) the brightest pixel reaches

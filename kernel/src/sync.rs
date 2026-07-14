@@ -148,7 +148,7 @@ pub fn phys_key(virt_addr: u64) -> Option<u64> {
     crate::memory::virt_to_phys(x86_64::VirtAddr::new(virt_addr)).map(|p| p.as_u64())
 }
 
-/// `/proc/raeen/futex` — live wait-queue occupancy.
+/// `/proc/athena/futex` — live wait-queue occupancy.
 pub fn dump_text() -> String {
     let g = FUTEX_MANAGER.lock();
     let mut out = String::new();

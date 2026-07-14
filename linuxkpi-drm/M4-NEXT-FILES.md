@@ -1,7 +1,7 @@
 # M4 — the amdgpu `.c` files to compile next (close the 259 internal-symbol gap)
 
 The `m4-link.sh` gauge splits its undefined-symbol gap into (B) the LinuxKPI gap
-(`raeen_linuxkpi` must export — **now closed**, see `SYMBOL-GAP.md`) and (A) the
+(`ath_linuxkpi` must export — **now closed**, see `SYMBOL-GAP.md`) and (A) the
 **amdgpu/drm-internal** symbols — functions defined in driver `.c` files **not yet in
 the gauge's `BRINGUP` list**. This maps those internal symbols to their defining file so
 they can be added in priority order instead of discovered one link-error at a time.

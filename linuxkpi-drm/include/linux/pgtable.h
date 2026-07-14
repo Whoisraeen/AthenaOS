@@ -4,7 +4,7 @@
  *
  * Page-protection / cache-attribute helpers. TTM tags BO mappings write-combine
  * vs uncached via pgprot_t. The cache mode genuinely matters for GPU correctness
- * (a framebuffer wants WC), but it is ENFORCED at map time by raeen_linuxkpi's
+ * (a framebuffer wants WC), but it is ENFORCED at map time by ath_linuxkpi's
  * ioremap_wc/ioremap_uc (M5), not by the pgprot value carried around in TTM
  * bookkeeping — so here the modifiers record the requested mode in spare bits and
  * pass through. This is the bookkeeping surface, not a claim that caching is

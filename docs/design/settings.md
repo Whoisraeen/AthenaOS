@@ -8,7 +8,7 @@
 > over-long macOS sidebar or Fluent's three-eras-of-controls inconsistency.
 
 **All tokens below are defined in [`design-language.md`](./design-language.md)**
-and live in the `rae_tokens` crate (ADR 0003). This spec only assigns them; it
+and live in the `ath_tokens` crate (ADR 0003). This spec only assigns them; it
 introduces no new magic numbers. Where a token is genuinely missing, it is
 flagged as a *proposed addition to `design-language.md`* (§ "Proposed tokens").
 
@@ -37,19 +37,19 @@ re-grouping** layer over it, NOT a rebuild.
 
 | Piece | Where | Today | This spec changes |
 |---|---|---|---|
-| Settings app (data model) | `components/raeshell/src/control_panel.rs` (`ControlPanel`, 2446 lines) | full page/category model, 11 categories, nav stack, search, profiles, MDM policy | → re-group IA (11 Windows-clone cats → 10 AthenaOS cats); re-skin render |
+| Settings app (data model) | `components/athshell/src/control_panel.rs` (`ControlPanel`, 2446 lines) | full page/category model, 11 categories, nav stack, search, profiles, MDM policy | → re-group IA (11 Windows-clone cats → 10 AthenaOS cats); re-skin render |
 | Two-pane render | `control_panel.rs::ControlPanel::render` (l.2236) | sidebar (180px) + content; flat `CP_*` palette; 8px block glyphs; 28px rows | → `material.glass`/`mica`, token spacing/radius, real control kit, states |
 | Control kit (enum) | `control_panel.rs::SettingControl` | Toggle / Slider / Dropdown / TextInput / ColorPicker / KeyBinding / RadioGroup / CheckboxGroup / Button / Link / InfoBar / ExpandableSection | → spec full visual states per control (high fan-out; reused by all apps) |
 | Search | `control_panel.rs::SearchState::search` | substring match over title/desc/keywords + per-setting | → fuzzy ranking + Spotlight-style results panel; case-insensitive |
 | Breadcrumb / nav | `control_panel.rs::NavigationState` (`breadcrumb`, back/forward/home) | LIVE | → render breadcrumb in content-pane header; tokenize |
-| Hardcoded palette | `control_panel.rs` `CP_BG/CP_ACCENT/CP_FG/CP_SIDEBAR_BG/CP_SELECTED/CP_TOGGLE_*` (l.2219–2227) | private `const CP_ACCENT = 0xFF_4E_9C_FF` etc. | → **delete**, consume `rae_tokens` (the cohesion fix) |
+| Hardcoded palette | `control_panel.rs` `CP_BG/CP_ACCENT/CP_FG/CP_SIDEBAR_BG/CP_SELECTED/CP_TOGGLE_*` (l.2219–2227) | private `const CP_ACCENT = 0xFF_4E_9C_FF` etc. | → **delete**, consume `ath_tokens` (the cohesion fix) |
 | Accent / theme carrier | `kernel/src/theme_engine.rs::ThemeAbi` (`accent_argb`, 8 builtins) | LIVE | accent picker writes the seed; `derive_accent` ramps it |
-| `derive_accent(seed, palette)` | `components/rae_tokens/src/lib.rs` | LIVE, host-KAT'd (RaeBlue ramp within ±2) | the accent picker calls this to preview the full ramp |
-| Vibe presets | `components/raeshell/src/vibe_mode.rs` (`ALL_PRESETS`, **12** presets) | LIVE data; `VibeEngine::apply_preset` w/ transition lerp | → preset grid on the Appearance page |
-| RGB engine | `kernel/src/rgb.rs` (9 effect modes) + `components/raeshell/src/rgb_api.rs` | LIVE (simulated devices) | → Power & Gaming page RGB sub-section |
+| `derive_accent(seed, palette)` | `components/ath_tokens/src/lib.rs` | LIVE, host-KAT'd (RaeBlue ramp within ±2) | the accent picker calls this to preview the full ramp |
+| Vibe presets | `components/athshell/src/vibe_mode.rs` (`ALL_PRESETS`, **12** presets) | LIVE data; `VibeEngine::apply_preset` w/ transition lerp | → preset grid on the Appearance page |
+| RGB engine | `kernel/src/rgb.rs` (9 effect modes) + `components/athshell/src/rgb_api.rs` | LIVE (simulated devices) | → Power & Gaming page RGB sub-section |
 | Per-game power / fan | Gaming page `game.gpu_power` slider + Phase 13.3 fan-curve | slider exists; fan-curve `[ ]` | → Power & Gaming page hosts these; surface only |
-| Accessibility settings | EaseOfAccess pages (text scale, cursor, narrator, high-contrast, animations) | LIVE data | → Accessibility category; coordinate toggles w/ raeen-accessibility |
-| Locale | `time.language` dropdown + `raelocale` | LIVE data | → System / Time & Language |
+| Accessibility settings | EaseOfAccess pages (text scale, cursor, narrator, high-contrast, animations) | LIVE data | → Accessibility category; coordinate toggles w/ athena-accessibility |
+| Locale | `time.language` dropdown + `athlocale` | LIVE data | → System / Time & Language |
 
 **Verify note:** project memory said "5 Vibe presets" — the code now ships **12**
 (`vibe_mode::ALL_PRESETS`). The grid sizes to the live count, not a hardcoded 5.
@@ -90,7 +90,7 @@ desktop is owned from one screen.
 
 ## AthenaOS design tokens this surface uses
 
-Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
+Pulled verbatim from `design-language.md` / `ath_tokens`. No new magic numbers.
 
 - **spacing:** `space.2` (control padding, intra-group), `space.3` (row inset,
   control vertical pad), `space.4` (panel padding, group gap), `space.5` (section
@@ -104,7 +104,7 @@ Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 - **type:** `type.title` (page title), `type.subtitle` (group header),
   `type.body` (row label + values), `type.label` (buttons, segmented),
   `type.caption` (row description, breadcrumb, hints).
-- **accent model:** the seed is `ThemeAbi.accent_argb`; `rae_tokens::derive_accent`
+- **accent model:** the seed is `ThemeAbi.accent_argb`; `ath_tokens::derive_accent`
   yields `accent.base/hover/active/subtle/text/glow`. Settings **reads the same
   ramp as the shell** — never a private `CP_ACCENT`.
 - **material:** `material.mica` (the Settings window backdrop + sidebar — large,
@@ -195,7 +195,7 @@ into clearer homes, and (c) name them the AthenaOS way.
 | 6 | **Power & Gaming** | controller | `sys.power`, `game.mode`, `game.bar`, `game.gpu_power`, RGB, fan-curve | AthenaOS-native merge: "gaming isn't a mode" — power + game tuning + RGB together |
 | 7 | **Accounts** | person | `acc.info`, `acc.signin` | As-is |
 | 8 | **Privacy & Security** | shield | `priv.*`, sign-in/biometric, AthGuard manifests | Merge Privacy + Update&Security security bits (AthGuard home) |
-| 9 | **Accessibility** | accessibility | `access.display`, `access.narrator`, `access.highcontrast`, cursor | Renamed from "Ease of Access"; raeen-accessibility owns the contents |
+| 9 | **Accessibility** | accessibility | `access.display`, `access.narrator`, `access.highcontrast`, cursor | Renamed from "Ease of Access"; athena-accessibility owns the contents |
 | 10 | **System & About** | info | `sys.storage`, `sys.notifications`, `time.*` (date/region/language), `apps.*`, `sys.about`, updates/recovery | Catch-all for time/language/storage/apps/about/update — the macOS "General" |
 
 **Implementer note:** this is an IA re-grouping of `SettingsCategory` + the
@@ -229,7 +229,7 @@ System & About; Privacy gains the security pages.
 ## 4. The control kit (high fan-out — reused by ALL apps)
 
 Each maps to an existing `SettingControl` variant. **These states are the
-canonical control states for the whole OS** (raeen-ui owns the widgets). Every
+canonical control states for the whole OS** (athena-ui owns the widgets). Every
 control: 32px pointer hit-target floor, 48px in couch mode, a focus state
 distinct from hover, and a defined reduced-motion path.
 
@@ -337,9 +337,9 @@ AthenaOS design language becomes user-owned. One screen drives the whole desktop
 - A row of **preset accent swatches** (RaeBlue + the Vibe primaries) for one-click
   seeds. Selecting commits the seed to `ThemeAbi`; the shell re-skins (the §6 test).
 - **Contrast guard:** if the chosen seed fails WCAG 4.5:1 as `accent.text` on the
-  active `bg.base` (computed by `rae_tokens::contrast_ratio`), show a `state.warn`
+  active `bg.base` (computed by `ath_tokens::contrast_ratio`), show a `state.warn`
   InfoBar "Low contrast — text will use the neutral color instead" (this is
-  exactly the `derive_accent` fallback rule). **Flag to raeen-accessibility.**
+  exactly the `derive_accent` fallback rule). **Flag to athena-accessibility.**
 
 ### 5.2 Theme preset grid (Vibe Mode)
 - A grid of preset tiles, one per `vibe_mode::ALL_PRESETS` (**12** today; grid
@@ -360,10 +360,10 @@ AthenaOS design language becomes user-owned. One screen drives the whole desktop
   shader / Slideshow), backed by `WallpaperConfig`; gradient/solid use the color
   picker; slideshow exposes the interval `Slider`.
 - **Reduced motion** — a `Toggle` that sets the system reduced-motion flag (every
-  surface's `motion.instant` path keys off this). **Owned with raeen-accessibility.**
+  surface's `motion.instant` path keys off this). **Owned with athena-accessibility.**
 - **High contrast** — a `Toggle` + theme `Dropdown` (the existing
   `access.hc_*` settings surface here too, cross-linked). **Owned with
-  raeen-accessibility** — high-contrast must override the accent ramp with a
+  athena-accessibility** — high-contrast must override the accent ramp with a
   guaranteed-AA palette.
 
 ---
@@ -382,7 +382,7 @@ Because incoherence is the top UI risk, Settings ships only when:
 3. **Concentric radii:** group-card children are never sharper than
    `concentric(radius.lg, space.4)`.
 4. **Focus everywhere:** every control in §4 has a focus state distinct from hover
-   (raeen-accessibility sign-off), and the accent picker's contrast guard fires
+   (athena-accessibility sign-off), and the accent picker's contrast guard fires
    on a failing seed.
 5. **Dark + light parity:** both palettes render with passing contrast.
 
@@ -390,9 +390,9 @@ Because incoherence is the top UI risk, Settings ships only when:
 
 ## Proposed tokens
 
-No new global tokens are required. All values compose from existing `rae_tokens`
+No new global tokens are required. All values compose from existing `ath_tokens`
 constants. Surface-specific layout numbers (sidebar 240px / icon-rail 56px /
-default window 920×640) are *local layout constants* for raeen-shell-apps, not
+default window 920×640) are *local layout constants* for athena-shell-apps, not
 design-language tokens — they are expressed as multiples of `space.*` in the
 layout code and deliberately NOT added to `design-language.md` (a one-off window
 size is not a reusable token).
@@ -402,14 +402,14 @@ size is not a reusable token).
 ## Handoff
 
 ### Implementers
-- **raeen-ui (framework):** own the **control kit** (§4) as reusable widgets
-  consuming `rae_tokens` — Toggle, Slider, Segmented, Dropdown, Stepper, Text
+- **athena-ui (framework):** own the **control kit** (§4) as reusable widgets
+  consuming `ath_tokens` — Toggle, Slider, Segmented, Dropdown, Stepper, Text
   field, Color/accent picker, Button/Link/InfoBar, each with the full state set.
   This is the highest-fan-out deliverable: every app reuses it. Expose the
   group-card container (titled `AdwPreferencesGroup`-equivalent) and the
   two-pane settings scaffold.
-- **raeen-shell-apps (the Settings surface):** in `control_panel.rs` —
-  (a) delete the private `CP_*` palette + `GLYPH_*`, consume `rae_tokens`;
+- **athena-shell-apps (the Settings surface):** in `control_panel.rs` —
+  (a) delete the private `CP_*` palette + `GLYPH_*`, consume `ath_tokens`;
   (b) re-group `SettingsCategory`/`populate_pages` to the 10-category IA (§2);
   (c) re-skin `ControlPanel::render` to the two-pane glass/mica layout with the
   control kit; (d) render the breadcrumb from `NavigationState`; (e) build the
@@ -417,18 +417,18 @@ size is not a reusable token).
   (f) build the Appearance & Vibe page (§5) including the preset grid over
   `vibe_mode::ALL_PRESETS`.
 - **theme_engine (kernel):** wire the accent picker → `ThemeAbi.accent_argb`;
-  expose the live ramp via `rae_tokens::derive_accent` for the §5.1 preview and
+  expose the live ramp via `ath_tokens::derive_accent` for the §5.1 preview and
   the §6 cohesion proof; honor `corner_radius`/`blur_radius` overrides so the
   Settings window re-skins with the shell on a Vibe switch.
-- **raeen-gfx:** confirm `Canvas` rounded-rect per-corner masking for group cards
+- **athena-gfx:** confirm `Canvas` rounded-rect per-corner masking for group cards
   + popovers; confirm `material.glass` popover blur is bounded (transient only).
-- **raeen-accessibility (flagged):** owns the **Accessibility** category contents;
+- **athena-accessibility (flagged):** owns the **Accessibility** category contents;
   signs off the §4 focus states; verifies the §5.3 reduced-motion + high-contrast
   toggles actually change compositor output (MasterChecklist 23.x line 1263);
   verifies the §5.1 contrast guard; audits 32px/48px hit targets and AA contrast
   on both palettes.
 
-### On-screen / boot-log evidence (raeen-visual-qa + smoketests)
+### On-screen / boot-log evidence (athena-visual-qa + smoketests)
 - **Two-pane window:** QEMU screenshot of Settings open — 240px mica sidebar with
   the 10-category list + icons, search field on top, content pane with a breadcrumb,
   page title, and ≥2 glass group cards. Log: `[settings] open panes=2 sidebar=240

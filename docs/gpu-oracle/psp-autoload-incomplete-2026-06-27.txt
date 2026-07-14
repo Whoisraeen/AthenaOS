@@ -5,7 +5,7 @@
 #  completes -> GFX stays gated -> all CP/SDMA ring writes read back 0.
 # -------------------------------------------------------------------------
 [linuxkpi] [amdgpu] amdgpud starting: amdgpu_device_init pipeline
-[linuxkpi] [amdgpu] firmware 'raeen-selftest.bin' loaded (334 bytes)
+[linuxkpi] [amdgpu] firmware 'athena-selftest.bin' loaded (334 bytes)
 [linuxkpi] [amdgpu] firmware 'amdgpu/psp_13_0_4_toc.bin' loaded (2560 bytes)
 [linuxkpi] [amdgpu] firmware 'amdgpu/psp_13_0_4_ta.bin' loaded (254976 bytes)
 [linuxkpi] [amdgpu] firmware 'amdgpu/gc_11_0_1_imu.bin' loaded (132352 bytes)

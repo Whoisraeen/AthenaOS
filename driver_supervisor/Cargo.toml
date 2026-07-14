@@ -8,4 +8,4 @@ repository.workspace = true
 description = "AthenaOS driver supervisor — userspace ELF that holds master device caps and (eventually) spawns child driver tasks."
 
 [dependencies]
-rae_abi = { path = "../components/rae_abi" }
+ath_abi = { path = "../components/ath_abi" }

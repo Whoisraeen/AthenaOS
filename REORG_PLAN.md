@@ -36,8 +36,8 @@ Create a `daemons/` directory in the root for user-space drivers:
 Create a `services/` directory in the root for top-level system services:
 - `conductor/` -> `services/conductor/`
 - `user_init/` -> `services/user_init/`
-- `raebridge_host/` -> `services/raebridge_host/`
-- `raeinstaller/` -> `services/raeinstaller/`
+- `athbridge_host/` -> `services/athbridge_host/`
+- `athinstaller/` -> `services/athinstaller/`
 
 ## 5. Update `Cargo.toml`
 After performing the file movements, the root `Cargo.toml` workspace `members` and `default-members` lists MUST be updated to reflect the new paths.
@@ -51,6 +51,6 @@ Changes to make in `Cargo.toml`:
 - `"hello_relibc"` -> `"examples/hello_relibc"`
 - `"hello_linuxkpi"` -> `"examples/hello_linuxkpi"`
 - `"linux_hello"` -> `"examples/linux_hello"`
-- `"raebridge_host"` -> `"services/raebridge_host"`
-- `"raeinstaller"` -> `"services/raeinstaller"`
+- `"athbridge_host"` -> `"services/athbridge_host"`
+- `"athinstaller"` -> `"services/athinstaller"`
 - Ensure `"conductor"` is properly listed if it is a Cargo package.

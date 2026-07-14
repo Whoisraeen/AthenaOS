@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** One `RAEEN_AMDGPU_REAL=1` iron boot on Athena that answers: does the REAL upstream amdgpu C (Strategy B), running under the LinuxKPI shim, clear the MES `set_hw_resources` wall (`0x7656` halt) that the native Rust reimplementation cannot?
+**Goal:** One `ATHENA_AMDGPU_REAL=1` iron boot on Athena that answers: does the REAL upstream amdgpu C (Strategy B), running under the LinuxKPI shim, clear the MES `set_hw_resources` wall (`0x7656` halt) that the native Rust reimplementation cannot?
 
-**Architecture:** The real amdgpu object set (`~/m4-obj/amdgpu-bringup.o`, 88 objects, built by `linuxkpi-drm/m4c-link.sh`) links into the `amdgpud` userspace daemon via the `real_amdgpu_init` feature. The daemon probes the GPU, wires BARs into `raeen_linuxkpi::device_map`, and calls `rae_amdgpu_device_init(...)` → `amdgpu_driver_load_kms` → `amdgpu_device_init` — the complete upstream init. Evidence comes back over the netlog UDP broadcast; Athena auto-returns to Arch via the ~480 s watchdog.
+**Architecture:** The real amdgpu object set (`~/m4-obj/amdgpu-bringup.o`, 88 objects, built by `linuxkpi-drm/m4c-link.sh`) links into the `amdgpud` userspace daemon via the `real_amdgpu_init` feature. The daemon probes the GPU, wires BARs into `ath_linuxkpi::device_map`, and calls `rae_amdgpu_device_init(...)` → `amdgpu_driver_load_kms` → `amdgpu_device_init` — the complete upstream init. Evidence comes back over the netlog UDP broadcast; Athena auto-returns to Arch via the ~480 s watchdog.
 
 **Tech Stack:** Rust (`x86_64-unknown-none`), vendored GPL amdgpu C via clang (WSL), xtask, QEMU/KVM, ssh/efibootmgr iron loop.
 
@@ -15,10 +15,10 @@
 - **Iron boots use the `--safe` image ONLY** (CLAUDE.md §9 — a non-safe image once wiped a Windows partition).
 - **Build tree for this plan is the WSL checkout `~/athenaos`** (clang + `~/m4-obj` + `/dev/kvm` live there; the Windows git-bash has no clang). Its `origin` is the Windows checkout (`file:///mnt/c/Users/woisr/Documents/Projects/AthenaOS`).
 - **Never discard the WSL tree's uncommitted WIP** — it is the 07-04 session's post-reloc-fix debug work (`rae_dbg_ptrs`, `kernel/src/linuxkpi_host.rs` +93 lines, new syscall plumbing). Commit it before anything else (multi-agent memory: commit slices immediately).
-- **Gates before every commit:** `export RAEEN_AGENT=opus && bash scripts/ownership-lock.sh && bash scripts/architecture-gate.sh`. If the staged diff touches `components/rae_abi/`, the commit subject MUST carry `[interface]`.
+- **Gates before every commit:** `export ATHENA_AGENT=opus && bash scripts/ownership-lock.sh && bash scripts/architecture-gate.sh`. If the staged diff touches `components/ath_abi/`, the commit subject MUST carry `[interface]`.
 - Stage **explicit paths** only — never `git add .` (OneDrive/multi-agent hazard).
 - Netlog listener runs on the **Windows** side (`scripts\netlog-listen.ps1`) — WSL2 NAT does not receive LAN UDP broadcasts.
-- Athena: `whoisraeen@192.168.1.244`, passwordless sudo, GPU `c4:00.0` (`1002:15bf` Phoenix1). AthenaOS boot entry = `Boot0003` "AthenaOS-test", fired only via `efibootmgr --bootnext 0003` (never in BootOrder).
+- Athena: `whoisathena@192.168.1.244`, passwordless sudo, GPU `c4:00.0` (`1002:15bf` Phoenix1). AthenaOS boot entry = `Boot0003` "AthenaOS-test", fired only via `efibootmgr --bootnext 0003` (never in BootOrder).
 - **NEVER live unbind/rebind the APU** on Athena (wedges the iGPU; recovery = physical power button).
 - Serial sentinels print as `[user-thread] msg: N` (9000 = amdgpud start, 9098 = real-init done, 9099 = no GPU/skip).
 
@@ -27,7 +27,7 @@
 ### Task 1: Reconcile and sync the WSL build tree
 
 **Files:**
-- Modify (commit, WSL tree): the 17 dirty files (`amdgpud/*`, `components/raeen_linuxkpi/*`, `components/rae_abi/src/lib.rs`, `kernel/src/linuxkpi_host.rs`, `kernel/src/syscall.rs`, `kernel/src/interrupts.rs`, `linuxkpi-drm/m4-link.sh`, `linuxkpi-drm/m4c-link.sh`, `xtask/src/main.rs`, + rest of `git status`)
+- Modify (commit, WSL tree): the 17 dirty files (`amdgpud/*`, `components/ath_linuxkpi/*`, `components/ath_abi/src/lib.rs`, `kernel/src/linuxkpi_host.rs`, `kernel/src/syscall.rs`, `kernel/src/interrupts.rs`, `linuxkpi-drm/m4-link.sh`, `linuxkpi-drm/m4c-link.sh`, `xtask/src/main.rs`, + rest of `git status`)
 
 **Interfaces:**
 - Produces: WSL `~/athenaos` at Windows-main HEAD (contains `c0e350d` reloc fix, `d4887f0` spec, `1453ee0` amendment) + the 07-04 debug WIP committed on top. All later tasks build from this tree.
@@ -38,10 +38,10 @@
 wsl -e bash -lc 'cd ~/athenaos && git status --short && git diff --stat | tail -3'
 ```
 
-Expected: ~17 modified files, ~481 insertions. Then commit it (subject carries `[interface]` because `components/rae_abi/src/lib.rs` is in the diff — verify with `git diff --stat components/rae_abi/` first; if rae_abi shows 0 lines changed, drop the tag):
+Expected: ~17 modified files, ~481 insertions. Then commit it (subject carries `[interface]` because `components/ath_abi/src/lib.rs` is in the diff — verify with `git diff --stat components/ath_abi/` first; if ath_abi shows 0 lines changed, drop the tag):
 
 ```bash
-wsl -e bash -lc 'cd ~/athenaos && export RAEEN_AGENT=opus && bash scripts/ownership-lock.sh && git add -u && bash scripts/architecture-gate.sh && git commit -m "[interface] amdgpu: 07-04 real-init debug WIP — rae_dbg_ptrs hook + linuxkpi_host C-debug syscalls
+wsl -e bash -lc 'cd ~/athenaos && export ATHENA_AGENT=opus && bash scripts/ownership-lock.sh && git add -u && bash scripts/architecture-gate.sh && git commit -m "[interface] amdgpu: 07-04 real-init debug WIP — rae_dbg_ptrs hook + linuxkpi_host C-debug syscalls
 
 Why:
 - MasterChecklist Phase 6.1 — real amdgpu M5 run: diagnostics for the soc21 nbio.funcs wall
@@ -49,7 +49,7 @@ Why:
 
 What changed:
 - amdgpud/src/main.rs: rae_dbg_ptrs debug hook (C vscnprintf faults on %lx)
-- kernel/src/linuxkpi_host.rs + syscall.rs + rae_abi: host debug plumbing
+- kernel/src/linuxkpi_host.rs + syscall.rs + ath_abi: host debug plumbing
 - linuxkpi-drm/m4-link.sh + m4c-link.sh: build tweaks from the 07-04 session
 
 Verify:
@@ -84,17 +84,17 @@ Expected: WIP commit on top, `1453ee0` in ancestry, 0 dirty files.
 - Create (build artifacts, WSL): `~/athenaos/target/kernel.uefi.img`, `~/athenaos/target/x86_64-unknown-none/release/amdgpud`
 
 **Interfaces:**
-- Consumes: Task 1's synced tree; `/home/raeen/m4-obj/` (m4c rebuilds it).
+- Consumes: Task 1's synced tree; `/home/athena/m4-obj/` (m4c rebuilds it).
 - Produces: `~/athenaos/target/kernel.uefi.img` — the ONLY image Task 5 deploys.
 
 - [ ] **Step 1: Full safe UEFI build with the real amdgpu set**
 
 ```bash
-wsl -e bash -lc 'cd ~/athenaos && RAEEN_AMDGPU_REAL=1 cargo run -p xtask --release -- build --release --safe --uefi 2>&1 | tail -30; echo EXIT=$?'
+wsl -e bash -lc 'cd ~/athenaos && ATHENA_AMDGPU_REAL=1 cargo run -p xtask --release -- build --release --safe --uefi 2>&1 | tail -30; echo EXIT=$?'
 ```
 
 Expected:
-- `[xtask] RAEEN_AMDGPU_REAL: building the real amdgpu object set (m4c-link.sh)...`
+- `[xtask] ATHENA_AMDGPU_REAL: building the real amdgpu object set (m4c-link.sh)...`
 - m4c output: `[m4c] real objects: 88   external symbols to stub: <N>` and a final zero-unresolved confirmation
 - `EXIT=0`
 
@@ -121,16 +121,16 @@ Expected: image exists, dated now. (The authoritative safe-mode proof is the boo
 ### Task 3: QEMU/KVM regression gate on the real image
 
 **Files:**
-- Read: `/tmp/raeen-serial.log` (WSL xtask writes the serial log to `$TMPDIR` or `/tmp` on Linux)
+- Read: `/tmp/athena-serial.log` (WSL xtask writes the serial log to `$TMPDIR` or `/tmp` on Linux)
 
 **Interfaces:**
-- Consumes: Task 2's build (xtask `run` reuses the same env: keep `RAEEN_AMDGPU_REAL=1` so it does not rebuild the default daemon over it).
+- Consumes: Task 2's build (xtask `run` reuses the same env: keep `ATHENA_AMDGPU_REAL=1` so it does not rebuild the default daemon over it).
 - Produces: a green CI verdict authorizing the iron deploy.
 
 - [ ] **Step 1: Boot the exact real-amdgpu image in QEMU CI mode**
 
 ```bash
-wsl -e bash -lc 'cd ~/athenaos && RAEEN_AMDGPU_REAL=1 cargo run -p xtask --release -- run --release --ci 2>&1 | tail -5; echo EXIT=$?'
+wsl -e bash -lc 'cd ~/athenaos && ATHENA_AMDGPU_REAL=1 cargo run -p xtask --release -- run --release --ci 2>&1 | tail -5; echo EXIT=$?'
 ```
 
 Expected: `EXIT=0` (booted). Runtime note: KVM in WSL makes this fast; if it runs under TCG expect minutes, not seconds.
@@ -138,7 +138,7 @@ Expected: `EXIT=0` (booted). Runtime note: KVM in WSL makes this fast; if it run
 - [ ] **Step 2: Verify the boot log — green + the daemon self-skips**
 
 ```bash
-wsl -e bash -lc 'L=$(ls -t /tmp/raeen-serial.log ${TMPDIR:-/tmp}/raeen-serial.log 2>/dev/null | head -1); grep -c "PANIC" "$L"; grep -m1 "System successfully booted" "$L"; grep -m1 "no AMD GPU found" "$L"; grep -m1 "msg: 9099" "$L"'
+wsl -e bash -lc 'L=$(ls -t /tmp/athena-serial.log ${TMPDIR:-/tmp}/athena-serial.log 2>/dev/null | head -1); grep -c "PANIC" "$L"; grep -m1 "System successfully booted" "$L"; grep -m1 "no AMD GPU found" "$L"; grep -m1 "msg: 9099" "$L"'
 ```
 
 Expected: `0` panics, `[ OS ] System successfully booted.`, `[amdgpu] no AMD GPU found — amdgpud exiting (expected on QEMU)`, sentinel `9099`. This proves shipping the real daemon does not regress the OS. If ANY line is missing: STOP, diagnose before iron (CLAUDE.md rule 21).
@@ -156,7 +156,7 @@ Expected: `0` panics, `[ OS ] System successfully booted.`, `[amdgpu] no AMD GPU
 - [ ] **Step 1: Athena reachability + boot entry + ESP health**
 
 ```powershell
-ssh whoisraeen@192.168.1.244 "sudo efibootmgr | grep -i 0003; mount | grep ' /boot '; ls -la /boot/kernel-x86_64 /boot/EFI/RAEEN/ 2>/dev/null"
+ssh whoisathena@192.168.1.244 "sudo efibootmgr | grep -i 0003; mount | grep ' /boot '; ls -la /boot/kernel-x86_64 /boot/EFI/RAEEN/ 2>/dev/null"
 ```
 
 Expected: `Boot0003* AthenaOS-test`, `/boot` mounted `rw` (NOT `ro` — `ro` means the FAT went errors=remount-ro: run `sudo umount /boot && sudo fsck.fat -a /dev/nvme0n1p1 && sudo mount /boot` first), and the existing deployed kernel files listed.
@@ -184,7 +184,7 @@ Expected: listener binds UDP 51514 and prints a waiting banner. Confirm the outp
 - [ ] **Step 1: Ship the image to Athena (from WSL — it built there)**
 
 ```bash
-wsl -e bash -lc 'scp ~/athenaos/target/kernel.uefi.img whoisraeen@192.168.1.244:/tmp/raeen-m1.img && ssh whoisraeen@192.168.1.244 "ls -la /tmp/raeen-m1.img"'
+wsl -e bash -lc 'scp ~/athenaos/target/kernel.uefi.img whoisathena@192.168.1.244:/tmp/athena-m1.img && ssh whoisathena@192.168.1.244 "ls -la /tmp/athena-m1.img"'
 ```
 
 Expected: file lands, size matches the local image.
@@ -192,7 +192,7 @@ Expected: file lands, size matches the local image.
 - [ ] **Step 2: Extract the kernel from the image onto the ESP (loop-mount, both paths)**
 
 ```bash
-wsl -e bash -lc 'ssh whoisraeen@192.168.1.244 "LOOP=\$(sudo losetup -fP --show /tmp/raeen-m1.img) && sudo mount \${LOOP}p1 /mnt && sudo cp /mnt/kernel-x86_64 /boot/kernel-x86_64 && sudo cp /mnt/kernel-x86_64 /boot/EFI/RAEEN/kernel-x86_64 && sudo umount /mnt && sudo losetup -d \$LOOP && sync && ls -la /boot/kernel-x86_64"'
+wsl -e bash -lc 'ssh whoisathena@192.168.1.244 "LOOP=\$(sudo losetup -fP --show /tmp/athena-m1.img) && sudo mount \${LOOP}p1 /mnt && sudo cp /mnt/kernel-x86_64 /boot/kernel-x86_64 && sudo cp /mnt/kernel-x86_64 /boot/EFI/RAEEN/kernel-x86_64 && sudo umount /mnt && sudo losetup -d \$LOOP && sync && ls -la /boot/kernel-x86_64"'
 ```
 
 Expected: new timestamp/size on `/boot/kernel-x86_64` (ESP ROOT — the bootloader loads from root, NOT only `/boot/EFI/RAEEN/`).
@@ -200,7 +200,7 @@ Expected: new timestamp/size on `/boot/kernel-x86_64` (ESP ROOT — the bootload
 - [ ] **Step 3: Fire the one-shot boot**
 
 ```bash
-wsl -e bash -lc 'ssh whoisraeen@192.168.1.244 "sudo efibootmgr --bootnext 0003 && sudo reboot" || true'
+wsl -e bash -lc 'ssh whoisathena@192.168.1.244 "sudo efibootmgr --bootnext 0003 && sudo reboot" || true'
 ```
 
 Expected: ssh drops as the box reboots. `BootNext: 0003` printed before the drop.
@@ -212,7 +212,7 @@ Watch the Windows netlog terminal. Timeline: firmware+AthenaOS boot ~30 s → am
 - [ ] **Step 5: Confirm Athena returned to Arch + post-run ESP health check**
 
 ```bash
-wsl -e bash -lc 'ssh -o ConnectTimeout=10 whoisraeen@192.168.1.244 "uptime && sudo fsck.fat -n /dev/nvme0n1p1 2>&1 | tail -3"'
+wsl -e bash -lc 'ssh -o ConnectTimeout=10 whoisathena@192.168.1.244 "uptime && sudo fsck.fat -n /dev/nvme0n1p1 2>&1 | tail -3"'
 ```
 
 Expected: fresh uptime (minutes); fsck read-only check reports clean (the shared-ESP corruption class from memory — if dirty: `sudo umount /boot && sudo fsck.fat -a /dev/nvme0n1p1 && sudo mount /boot`, then flag it in the run report).
@@ -244,7 +244,7 @@ Expected ladder (happy path): `9000` → `CKPT 0` → `CKPT 1: probe OK + DISCOV
 | **A. M1 PASS** | `RETURNED 0` (or the log shows MES `set_hw_resources` acked / MES hw_init passed even if a later IP block fails) | The wall is DOWN. Update MasterChecklist 6.1 real-amdgpu row to `[~]→` iron-noted; write the M2 plan (DRM seam). |
 | **B. Reloc regression** | `RELOC-CHK slot35=0x77` or garbage | The loader/link fix didn't hold on iron: re-verify `-Bsymbolic` made it into THIS image (Task 2 Step 2 output), check `kernel/src/elf.rs` R_X86_64_RELATIVE handling; fix, rebuild, redeploy (repeat Tasks 2–6). NOT a §8 fix-arc (it's pre-MES plumbing). |
 | **C. MES halt, same signature** | init reaches gfx/mes hw_init then silence/halt; any `HALT-DUMP` shows `INSTR frozen 0x7656` | **§8 fix-arc counter = 1.** Diff the captured init stream against `docs/gpu-oracle/stock-init-20260706.txt` + the mmiotrace oracle; fix the shim behavior gap; ONE more arc allowed before the Route-B pivot. |
-| **D. New pre-MES wall** | init fails/hangs in an earlier facade (TTM page/pfn is the predicted next per `linuxkpi-drm/M5-ONPATH-AUDIT.md`) | Fix the named facade in `raeen_linuxkpi` (host-KAT first per rule 15), rebuild, redeploy. Not a §8 arc — the run hasn't reached MES yet. |
+| **D. New pre-MES wall** | init fails/hangs in an earlier facade (TTM page/pfn is the predicted next per `linuxkpi-drm/M5-ONPATH-AUDIT.md`) | Fix the named facade in `ath_linuxkpi` (host-KAT first per rule 15), rebuild, redeploy. Not a §8 arc — the run hasn't reached MES yet. |
 
 - [ ] **Step 3: Land the evidence**
 
@@ -256,7 +256,7 @@ Then update `MasterChecklist.md`'s Phase 6.1 AMDGPU row with the verdict (honest
 
 ```powershell
 cd C:\Users\woisr\Documents\Projects\AthenaOS
-$env:RAEEN_AGENT="opus"; bash scripts/ownership-lock.sh; bash scripts/architecture-gate.sh
+$env:ATHENA_AGENT="opus"; bash scripts/ownership-lock.sh; bash scripts/architecture-gate.sh
 git add docs/gpu-oracle/netlog-M1-REAL-AMDGPU-20260706.txt MasterChecklist.md
 git commit -m "gpu: M1 real-amdgpu iron run — <VERDICT BRANCH + one-line evidence>"
 ```

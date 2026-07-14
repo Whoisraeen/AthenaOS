@@ -1,0 +1,22 @@
+[package]
+name = "ath_crypto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "RaeCrypto — shared #![no_std] cryptographic primitives (BLAKE2b, Argon2id RFC 9106). One source of truth used by both the kernel (FDE key derivation) and athid (account password hashing) so neither rolls its own."
+
+# Mostly pure core + alloc. The external dependencies are the vetted RustCrypto
+# P-256 / P-384 stacks, used ONLY for ECDSA verification (ES256 / ES384 /
+# WebAuthn / DNSSEC algs 13 & 14) — we do not hand-roll short-Weierstrass field
+# arithmetic. `default-features = false` keeps this `#![no_std]` (no `std`, no
+# RNG): the `ecdsa` feature is verify-capable on its own. `sha2` (also no-RNG /
+# no-std at default-features = false) supplies the SHA-384 prehash for ES384;
+# same versions as athnet's TLS path. Validated by the in-crate KATs and the
+# host KAT in tools/argon2_kat.
+[dependencies]
+ecdsa = { version = "0.16", default-features = false }
+p256 = { version = "0.13", default-features = false, features = ["ecdsa", "alloc"] }
+p384 = { version = "0.13", default-features = false, features = ["ecdsa", "alloc"] }
+sha2 = { version = "0.10", default-features = false }

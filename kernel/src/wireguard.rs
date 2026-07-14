@@ -857,7 +857,7 @@ pub fn sys_stats(
     WG_STATS_ABI as u64
 }
 
-// ── /proc/raeen/wireguard ──────────────────────────────────────────────
+// ── /proc/athena/wireguard ──────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let g = REG.lock();
@@ -891,7 +891,7 @@ pub fn dump_text() -> String {
 pub fn run_boot_smoketest() {
     // Register a placeholder tunnel so the Settings → Network → VPN panel
     // shows something the moment a user opens it. Real entries replace
-    // this once the userspace `raevpn` daemon connects.
+    // this once the userspace `athvpn` daemon connects.
     let pk = [0xC0u8; 32];
     let id = add_tunnel("example-vpn-tokyo", 0x52_54_00_02_0001_5800, pk);
     crate::serial_println!(
@@ -1011,7 +1011,7 @@ fn handshake_loopback_selftest() -> (bool, bool, bool) {
 
 // ── Peer keepalive + rekeying timers ─────────────────────────────────────────
 // MasterChecklist Phase 10: "Real X25519 so WireGuard handshake is cryptographically valid."
-// MasterChecklist Phase 10: "Built-in WireGuard `raevpn` userspace daemon."
+// MasterChecklist Phase 10: "Built-in WireGuard `athvpn` userspace daemon."
 //
 // WireGuard protocol (per whitepaper §6.5):
 //   - Rekey interval:      REKEY_AFTER_TIME = 180s (initiate new handshake)
@@ -1045,7 +1045,7 @@ pub fn on_timer_tick(now_secs: u64) {
         if age % KEEPALIVE_SECS == 0 && age > 0 {
             crate::serial_println!("[wireguard] tunnel #{} keepalive at {}s", tunnel.id, age);
             // TODO: actually send empty transport packet via the UDP/net path.
-            // MasterChecklist Phase 10: raevpn daemon wraps this.
+            // MasterChecklist Phase 10: athvpn daemon wraps this.
         }
 
         // Rekey: initiate new handshake before the session expires.

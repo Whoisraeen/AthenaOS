@@ -10,7 +10,7 @@
 > menu-bar overcrowding.
 
 **All tokens below are defined in [`design-language.md`](./design-language.md)**
-and live in the `rae_tokens` crate (ADR 0003). This spec only assigns them; it
+and live in the `ath_tokens` crate (ADR 0003). This spec only assigns them; it
 introduces no new magic numbers.
 
 This spec **owns the tray as a surface** and supersedes the one-bullet sketch in
@@ -47,13 +47,13 @@ flyouts are owned by [`control-center.md`](./control-center.md) and
 
 ## Already built (delta only — verify-before-spec)
 
-Grounded in `components/raeshell/src/lib.rs` + `system_tray_daemon` (read, not
+Grounded in `components/athshell/src/lib.rs` + `system_tray_daemon` (read, not
 assumed).
 
 | Piece | Where | Today | This spec adds |
 |---|---|---|---|
-| `SystemTray` / `TrayIcon` | `raeshell::SystemTray` (`lib.rs:477+`), `add_icon`/`remove_icon`/`set_clock`/`total_width`/`render` | LIVE: a flat `Vec<TrayIcon>` of glyphs + tooltip + `active` flag, `TRAY_ICON_SIZE=32`, `space.1` gaps, clock right-aligned (`type.caption`, AA RaeSans) | hover/active/focus **state threading**, click model, overflow flyout, per-icon popover/context menu, two-line clock |
-| Tray daemon | `raeshell::system_tray_daemon` | module exists | binds **live** status (net/volume/battery) to icon glyphs + state |
+| `SystemTray` / `TrayIcon` | `athshell::SystemTray` (`lib.rs:477+`), `add_icon`/`remove_icon`/`set_clock`/`total_width`/`render` | LIVE: a flat `Vec<TrayIcon>` of glyphs + tooltip + `active` flag, `TRAY_ICON_SIZE=32`, `space.1` gaps, clock right-aligned (`type.caption`, AA RaeSans) | hover/active/focus **state threading**, click model, overflow flyout, per-icon popover/context menu, two-line clock |
+| Tray daemon | `athshell::system_tray_daemon` | module exists | binds **live** status (net/volume/battery) to icon glyphs + state |
 | Clock | `set_clock` + `tray_clock_string` | single time line, `text.primary` | two-line time/date (`desktop-shell.md` §1), click → calendar/Notification-Center |
 | Status sources | kernel net (`rtl8125`/DHCP), audio (HDA master), battery (`battery`/EDID power), capture (`capture.rs` `state.danger` dot) | LIVE subsystems | the **icon-state mapping** (signal bars, mute slash, charge %, recording dot) |
 | Control Center / Notification Center triggers | `control-center.md` §1 (`Super+A`), `notifications.md` §3 (clock click) | flyouts spec'd | the tray is the *pointer* trigger for both |
@@ -105,7 +105,7 @@ button**, on the shell's `material.glass` popovers with one shared accent.
 
 ## AthenaOS design tokens this surface uses
 
-Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
+Pulled verbatim from `design-language.md` / `ath_tokens`. No new magic numbers.
 
 - **spacing:** `space.1` (intra-icon gap — already used), `space.2` (cluster edge
   inset, popover padding), `space.3` (status-group internal gap, clock inset),
@@ -119,7 +119,7 @@ Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 - **type:** `type.caption` (clock, tooltip, icon popover labels — already used for
   clock), `type.label` (popover headers, context-menu items), `type.body`
   (popover list rows e.g. Wi-Fi network).
-- **accent model:** seed = `ThemeAbi.accent_argb`; `rae_tokens::derive_accent`.
+- **accent model:** seed = `ThemeAbi.accent_argb`; `ath_tokens::derive_accent`.
   Active/connected icon (e.g. Wi-Fi connected, recording) tints `accent.text` or
   `state.*`; hover/focus = `bg.elevated` chip + `accent.base` ring + `accent.glow`.
   Resting glyph = `text.secondary` (already), full `text.primary` on hover. **No
@@ -283,14 +283,14 @@ Right-click any tray icon → a `material.glass` `radius.md` `elev.2` context me
 
 | Concern | Rule | Owner |
 |---|---|---|
-| Contrast | resting glyph `text.secondary` ≥4.5:1 on mica; state glyphs (`state.*`) ≥3:1; clock `type.caption` ≥4.5:1 | raeen-accessibility |
-| Focus visibility | every icon/popover/menu item is **never color-only**: `accent.base` ring + `elev.focus` glow | raeen-accessibility |
-| Tooltips | every icon has a tooltip + a non-pointer label (no mystery glyphs) | raeen-accessibility |
-| Reduced-motion | no chip fades, no signal-bar/recording-dot animation; instant popovers | raeen-accessibility |
-| Hit targets | 32px pointer (already `TRAY_ICON_SIZE`) / 48px couch | raeen-visual-qa |
-| Keyboard-complete | reach + open every icon's popover and context menu with no pointer | raeen-accessibility |
+| Contrast | resting glyph `text.secondary` ≥4.5:1 on mica; state glyphs (`state.*`) ≥3:1; clock `type.caption` ≥4.5:1 | athena-accessibility |
+| Focus visibility | every icon/popover/menu item is **never color-only**: `accent.base` ring + `elev.focus` glow | athena-accessibility |
+| Tooltips | every icon has a tooltip + a non-pointer label (no mystery glyphs) | athena-accessibility |
+| Reduced-motion | no chip fades, no signal-bar/recording-dot animation; instant popovers | athena-accessibility |
+| Hit targets | 32px pointer (already `TRAY_ICON_SIZE`) / 48px couch | athena-visual-qa |
+| Keyboard-complete | reach + open every icon's popover and context menu with no pointer | athena-accessibility |
 
-Flag to **raeen-accessibility:** confirm the network signal-bar and battery-level
+Flag to **athena-accessibility:** confirm the network signal-bar and battery-level
 glyphs are distinguishable without color (shape/fill, not hue alone) for
 color-vision-deficient users; confirm the recording dot is announced, not only
 shown.
@@ -316,7 +316,7 @@ Ships only when:
 ## Handoff
 
 ### Implementer
-- **raeen-shell-apps — primary owner.** `raeshell::SystemTray` (`lib.rs`) +
+- **athena-shell-apps — primary owner.** `athshell::SystemTray` (`lib.rs`) +
   `system_tray_daemon`: thread hover/active/focus state into `render` (the comment
   flags this as the missing piece), add the two-line clock, the click model (§3
   group-vs-icon), the overflow flyout (§4), per-icon popovers (subsets of Control
@@ -324,18 +324,18 @@ Ships only when:
   net/volume/battery/capture/DND state to glyph + tone (§2), repainting only on
   state change (compositor-latency doctrine). Wire the status-group click →
   `control-center` and the clock click → `notify::toggle_center`.
-- **raeen-ui** — reuse the Control Center control-kit widgets (Slider, list rows)
+- **athena-ui** — reuse the Control Center control-kit widgets (Slider, list rows)
   for the icon popovers; expose the **anchored-popover** + **overflow-flyout** +
-  **context-menu** as reusable `rae_tokens`-consuming containers (shared with
+  **context-menu** as reusable `ath_tokens`-consuming containers (shared with
   other shell surfaces).
 - **kernel (status sources)** — expose the live status the daemon reads: net link/
   signal/lease, HDA master level + mute, battery %/charging, capture-active, DND.
   Most exist; confirm a poll/notify path the daemon can read without per-frame cost.
-- **raeen-accessibility (flagged)** — color-independent network/battery glyphs;
+- **athena-accessibility (flagged)** — color-independent network/battery glyphs;
   recording-dot announcement; keyboard-complete popover/menu reach; reduced-motion.
 
 ### FAIL-able boot-log proof lines
-A `system_tray` (or `raeshell`) `run_boot_smoketest` driving synthetic status:
+A `system_tray` (or `athshell`) `run_boot_smoketest` driving synthetic status:
 
 ```
 [tray] state smoketest: net=connected(bars=3) vol=muted batt=charging(82%) -> glyphs OK -> PASS
@@ -349,7 +349,7 @@ A `system_tray` (or `raeshell`) `run_boot_smoketest` driving synthetic status:
 not open Control Center, if overflow miscounts, if a no-capability app action still
 renders, or if the active-icon tint diverges from the live accent.)
 
-### Visual-QA verification list (raeen-visual-qa)
+### Visual-QA verification list (athena-visual-qa)
 Verify on iron / host-render / QEMU window (headless screendump striping is a
 capture artifact — memory `ui-glass-design-system`):
 - Screenshot: the full cluster — network/volume/battery glyphs, dynamic icons,

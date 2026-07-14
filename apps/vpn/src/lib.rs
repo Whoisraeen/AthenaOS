@@ -1,4 +1,4 @@
-//! AthenaOS VPN — a first-class, friendly WireGuard client over the LIVE `raevpn`
+//! AthenaOS VPN — a first-class, friendly WireGuard client over the LIVE `athvpn`
 //! Noise_IKpsk2 engine.
 //!
 //! The Concept names "built-in WireGuard" as a pillar (§Networking / §Privacy):
@@ -9,13 +9,13 @@
 //!
 //! ## Shape (mirrors apps/mail, apps/browser, apps/calendar)
 //! - The syscall-free heart is [`VpnModel`]: it holds a [`PeerConfig`] and drives
-//!   the REAL [`raevpn::NoiseHandshake`] to completion over an INJECTABLE
-//!   [`VpnTransport`]. No `raevpn` internals are reached for — only its public
+//!   the REAL [`athvpn::NoiseHandshake`] to completion over an INJECTABLE
+//!   [`VpnTransport`]. No `athvpn` internals are reached for — only its public
 //!   API (`NoiseHandshake::{new, create_initiation, consume_response}`,
 //!   `HandshakeState`, `TransportSession`, `Key`).
 //! - The host KAT (`cargo test -p vpn --features host`) links the live engine and
 //!   runs the handshake against a MOCK peer (a real responder built from the SAME
-//!   `raevpn` API) that completes a valid Noise_IKpsk2 exchange — proving the app
+//!   `athvpn` API) that completes a valid Noise_IKpsk2 exchange — proving the app
 //!   reaches `Connected` with a real session, and reaches `Failed` (fail-closed,
 //!   NEVER a fake `Connected`) against a tampered/forged response.
 //! - The live UDP datapath (kernel net syscalls) is a `cfg(not(test))` wrapper.
@@ -36,18 +36,18 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use raevpn::{HandshakeState, Key, NoiseHandshake, TransportSession};
+use athvpn::{HandshakeState, Key, NoiseHandshake, TransportSession};
 
 // The render/run path is live-ELF only; under `cargo test` only the VpnModel
-// (over raevpn) is exercised, so the graphics/syscall imports are gated out to
+// (over athvpn) is exercised, so the graphics/syscall imports are gated out to
 // keep the host test warning-clean.
 #[cfg(not(test))]
-use rae_tokens::DARK;
+use ath_tokens::DARK;
 #[cfg(not(test))]
-use raegfx::Canvas;
+use athgfx::Canvas;
 #[cfg(not(test))]
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 // ===========================================================================
 // Injectable transport — the seam the host KAT mocks.
@@ -55,7 +55,7 @@ use raekit;
 
 /// The byte-pipe the handshake rides on. The app drives the handshake by sending
 /// the initiation and reading the peer's response through this trait; the host
-/// KAT supplies a MOCK peer (a real `raevpn` responder), and the live ELF would
+/// KAT supplies a MOCK peer (a real `athvpn` responder), and the live ELF would
 /// supply a kernel-socket wrapper.
 ///
 /// This is the SINGLE point of injection: swapping the transport swaps the whole
@@ -311,7 +311,7 @@ impl VpnConn {
     ///
     /// - `local_eph`: the initiator ephemeral PRIVATE key. The kernel path
     ///   supplies CSPRNG bytes; the host KAT injects a fixed value for
-    ///   determinism (exactly the seam `raevpn::create_initiation` documents).
+    ///   determinism (exactly the seam `athvpn::create_initiation` documents).
     /// - `sender_index`: our 32-bit handshake index.
     /// - `now_ns`: monotonic clock for the last-handshake timestamp.
     /// - `recv_budget`: how many `transport.recv()` polls to attempt before
@@ -664,7 +664,7 @@ fn state_color(s: ConnState) -> u32 {
 /// peer's config summary, the big connect button, and the live status detail.
 #[cfg(not(test))]
 fn render(model: &VpnModel, canvas: &mut Canvas) {
-    use rae_tokens::{RADIUS_LG, RADIUS_MD, SPACE_3, SPACE_4};
+    use ath_tokens::{RADIUS_LG, RADIUS_MD, SPACE_3, SPACE_4};
 
     // Liquid-Glass background: deep base, a raised glass card on top.
     canvas.clear(DARK.bg_base);
@@ -806,7 +806,7 @@ enum Hit {
 
 #[cfg(not(test))]
 fn hit_test(model: &VpnModel, lx: i32, ly: i32) -> Hit {
-    use rae_tokens::SPACE_4;
+    use ath_tokens::SPACE_4;
     let x = SPACE_4 as usize + 8;
     let list_top = TITLE_H + SPACE_4 as usize + 8;
 
@@ -835,9 +835,9 @@ fn hit_test(model: &VpnModel, lx: i32, ly: i32) -> Hit {
 /// the kernel-socket `VpnTransport` lands.)
 #[cfg(not(test))]
 pub fn run() -> ! {
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
@@ -851,7 +851,7 @@ pub fn run() -> ! {
     model.add(example);
 
     render(&model, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     let mut left_was_down = false;
     loop {
@@ -860,7 +860,7 @@ pub fn run() -> ! {
         // Mouse: detect a left-button press edge.
         let mut edge = false;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -871,9 +871,9 @@ pub fn run() -> ! {
             left_was_down = now_down;
         }
         if edge {
-            let (cx, cy, _btn) = raekit::sys::cursor_pos();
+            let (cx, cy, _btn) = athkit::sys::cursor_pos();
             let (ox, oy) =
-                raekit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
+                athkit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
             let lx = (cx as i32).saturating_sub(ox as i32);
             let ly = (cy as i32).saturating_sub(oy as i32);
             match hit_test(&model, lx, ly) {
@@ -899,12 +899,12 @@ pub fn run() -> ! {
                         if !c.config.is_connectable() {
                             // Mark Failed/NotConnectable via the real path.
                             let mut dead = NullTransport;
-                            c.connect(&mut dead, Key::zero(), 1, raekit::sys::time_ns(), 1);
+                            c.connect(&mut dead, Key::zero(), 1, athkit::sys::time_ns(), 1);
                         } else {
                             // Connectable but no transport wired -> Handshaking
                             // that times out honestly (never a fake Connected).
                             let mut dead = NullTransport;
-                            c.connect(&mut dead, Key::zero(), 1, raekit::sys::time_ns(), 1);
+                            c.connect(&mut dead, Key::zero(), 1, athkit::sys::time_ns(), 1);
                         }
                     }
                     dirty = true;
@@ -914,20 +914,20 @@ pub fn run() -> ! {
         }
 
         // Keyboard: Esc closes.
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key != 0 {
             let code = (key & 0xFF) as u8;
             let pressed = (key & 0x8000_0000) == 0;
             if pressed && code == 0x01 {
-                raekit::sys::exit(0);
+                athkit::sys::exit(0);
             }
         }
 
         if dirty {
             render(&model, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
-        raekit::sys::yield_now();
+        athkit::sys::yield_now();
     }
 }
 
@@ -948,17 +948,17 @@ impl VpnTransport for NullTransport {
 }
 
 // ===========================================================================
-// Host KAT — links the LIVE raevpn Noise_IKpsk2 engine, no kernel, no network.
+// Host KAT — links the LIVE athvpn Noise_IKpsk2 engine, no kernel, no network.
 // ===========================================================================
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use raevpn::Key;
+    use athvpn::Key;
     use x25519_dalek::{PublicKey, StaticSecret};
 
     /// Derive an x25519 PUBLIC key from a 32-byte private key, using the SAME
-    /// crate raevpn uses internally (raevpn does not expose this and is
+    /// crate athvpn uses internally (athvpn does not expose this and is
     /// read-only, so the test does it). Lets the mock peer hand the app a peer
     /// public key that genuinely corresponds to its private key.
     fn public_of(private: &[u8; 32]) -> Key {
@@ -967,7 +967,7 @@ mod tests {
         Key::from_bytes(public.as_bytes())
     }
 
-    /// A scripted WireGuard RESPONDER built from the real `raevpn` API. It holds
+    /// A scripted WireGuard RESPONDER built from the real `athvpn` API. It holds
     /// its own static private key + the shared PSK, consumes whatever initiation
     /// the app sends, and produces a valid Noise_IKpsk2 response — OR, if asked,
     /// tampers with the response so the app must reject it.

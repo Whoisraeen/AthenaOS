@@ -1,0 +1,25 @@
+[package]
+name = "ath_png"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS PNG decoder — "show my photos" (LEGACY_GAMING_CONCEPT.md §creators / media).
+# PNG is the dominant lossless image format: photos, app icons, and web images all
+# ship as PNG. This is the from-scratch decoder Photos / athplay sit on, matching
+# the ath_bmp / ath_gif ARGB8888 `Vec<u32>` pixel convention so all three decoders
+# can be consumed uniformly. PNG's IDAT is zlib-wrapped DEFLATE, so this crate
+# REUSES `ath_deflate::zlib_decompress` rather than reimplementing inflate.
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_gif / ath_bmp pattern): the lib is
+# `no_std` + `alloc` in every shipped build and toggles to `std` only under
+# `cfg(test)` for the host KAT harness. Run the FAIL-able proof with
+# `cargo test -p ath_png` — no QEMU, no image build. Treats every byte as hostile
+# (decoders are the #1 RCE surface): no `unwrap`/`expect`/raw-index-panic is
+# reachable from `decode_png`, CRC-32 is verified per chunk, and dimensions /
+# pixel budget are bounded before any allocation.
+
+[dependencies]
+ath_deflate = { path = "../ath_deflate" }

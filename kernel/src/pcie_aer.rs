@@ -29,7 +29,7 @@
 //! ## R10 contract
 //!   * `init()` — scan extended-cap chains, build the AER device map.
 //!   * `run_boot_smoketest()` — report AER-capable device count + status.
-//!   * `dump_text()` — `/proc/raeen/pcie_aer`.
+//!   * `dump_text()` — `/proc/athena/pcie_aer`.
 //!   * this docstring — the Concept tie-in.
 
 extern crate alloc;
@@ -576,7 +576,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/pcie_aer` body.
+/// `/proc/athena/pcie_aer` body.
 pub fn dump_text() -> String {
     let devs = AER_DEVICES.lock();
     let mut s = String::new();

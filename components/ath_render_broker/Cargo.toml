@@ -1,0 +1,12 @@
+[package]
+name = "ath_render_broker"
+version = "0.0.1"
+edition = "2021"
+description = "Kernel-side /dev/dri/renderD128 broker policy (pure logic, host-testable)"
+
+[lib]
+# `#![no_std]` pure-logic crate: the kernel broker links it, and `cargo test`
+# runs its KATs on the host (the test harness supplies std under cfg(test)).
+# No hardware, no allocation — DRM ioctl decode + the fail-closed allowlist.
+
+[dependencies]

@@ -10,7 +10,7 @@
 //! see what's enforced. This module is the lens.
 //!
 //! Every `grant` / `revoke` / `query` against the capability subsystem
-//! records a small fixed-size event in a ring buffer. `cat /proc/raeen/caps`
+//! records a small fixed-size event in a ring buffer. `cat /proc/athena/caps`
 //! prints the last N events plus running totals. Untrusted code can't
 //! delete or alter the log — there's no userspace API to it.
 //!
@@ -18,7 +18,7 @@
 //! always shows at least one example.
 //!
 //! Per `kernelchecklist.md` §5.9 acceptance criterion #2:
-//! "Capability revocation is observable in /proc/raeen/caps".
+//! "Capability revocation is observable in /proc/athena/caps".
 
 #![allow(dead_code)]
 
@@ -167,7 +167,7 @@ fn record(kind: EventKind, actor: u64, target: u64, flavor: u32, rights: u32, ha
     };
     RING.lock().push(ev);
 
-    // Update counters last so the ring is stable when /proc/raeen/caps
+    // Update counters last so the ring is stable when /proc/athena/caps
     // reads while a recording is in flight.
     match kind {
         EventKind::Grant => {
@@ -235,7 +235,7 @@ pub fn totals() -> AuditTotals {
     }
 }
 
-// ── /proc/raeen/caps dump ──────────────────────────────────────────────
+// ── /proc/athena/caps dump ──────────────────────────────────────────────
 
 fn flavor_label(flavor: u32) -> &'static str {
     match flavor {
@@ -336,7 +336,7 @@ pub fn init() {
 }
 
 pub fn run_boot_smoketest() {
-    // Synthesize a small audit trace so /proc/raeen/caps is never empty
+    // Synthesize a small audit trace so /proc/athena/caps is never empty
     // on a freshly-booted system. Real apps will dwarf these once they
     // start grabbing IRQ/MMIO/IPC caps.
     record_grant(0, 1, /*Channel*/ 0, /*r|w|W|g*/ 0b0110011, 0x1001);

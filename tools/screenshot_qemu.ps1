@@ -16,7 +16,7 @@ param(
 $ErrorActionPreference = "Stop"
 $qemu = $env:RAEEN_QEMU
 if (-not $qemu) { $qemu = "C:\Program Files\qemu\qemu-system-x86_64.exe" }
-$serial = Join-Path $env:TEMP "raeen-screenshot-serial.log"
+$serial = Join-Path $env:TEMP "athena-screenshot-serial.log"
 if (Test-Path $serial) { Remove-Item $serial -Force }
 $outAbs = [System.IO.Path]::GetFullPath($Out)
 

@@ -9,7 +9,7 @@
 //! accessibility is a SHIP GATE (parity §J), not a bolt-on.
 //!
 //! This module is the **interface backing** for the AT API: the cap-gated
-//! snapshot serializer, the action entry point, the `/proc/raeen/a11y` renderer,
+//! snapshot serializer, the action entry point, the `/proc/athena/a11y` renderer,
 //! and a FAIL-able boot smoketest that round-trips a synthetic tree through the
 //! wire repr and proves the cap gate refuses an un-capped client. The full
 //! window-tier tree walk over the live compositor surface list (the
@@ -24,8 +24,8 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
-use rae_abi::syscall as abi;
-use rae_abi::A11yNode as WireNode;
+use ath_abi::syscall as abi;
+use ath_abi::A11yNode as WireNode;
 use spin::Mutex;
 
 /// Set once `init()` has registered the procfs entry + logged the init line.
@@ -37,7 +37,7 @@ static A11Y_ENABLED: AtomicBool = AtomicBool::new(false);
 /// `AccessNode` shape, parented under the window id. `build_tree()` calls it per
 /// window and appends the result. `None` => window-tier only (no widgets known
 /// for any window yet). This is the kernel↔AthUI meeting point: AthUI walks its
-/// live widget tree (`raeui::accessibility::provider_nodes_for_window`) and the
+/// live widget tree (`athui::accessibility::provider_nodes_for_window`) and the
 /// publisher feeds the result here; the kernel never holds a shadow copy.
 type WidgetProvider = fn(window_id: u64) -> Vec<AccessNode>;
 static WIDGET_PROVIDER: Mutex<Option<WidgetProvider>> = Mutex::new(None);
@@ -70,12 +70,12 @@ pub fn publish_window_widgets(window_id: u64, widgets: Vec<AccessNode>) {
 /// Hard cap on the number of widget nodes published per window. A window's
 /// chrome (Control Center, dialogs, app toolbars) has a bounded set of named
 /// controls; this guards the tree (and the wire snapshot) against a runaway
-/// provider so `build_tree()` / `/proc/raeen/a11y` can never balloon. Nodes
+/// provider so `build_tree()` / `/proc/athena/a11y` can never balloon. Nodes
 /// beyond the cap are dropped (the most-significant — earliest in tree order —
 /// are kept). 64 covers every real chrome surface with headroom.
 pub const MAX_WIDGETS_PER_WINDOW: usize = 64;
 
-/// Bridge: convert AthUI's wire-shaped [`raeui::accessibility::ProviderNode`]s
+/// Bridge: convert AthUI's wire-shaped [`athui::accessibility::ProviderNode`]s
 /// (produced by `provider_nodes_for_window` from a live `AccessibilityTree`) into
 /// kernel [`AccessNode`]s and publish them under `window_id`. This is the
 /// kernel↔AthUI meeting point (foundation §6): AthUI does the role/label
@@ -91,7 +91,7 @@ pub const MAX_WIDGETS_PER_WINDOW: usize = 64;
 /// caller does this on teardown / when the window has no controls) to clear.
 pub fn publish_window_widgets_from_provider(
     window_id: u64,
-    nodes: Vec<raeui::accessibility::ProviderNode>,
+    nodes: Vec<athui::accessibility::ProviderNode>,
     focused_widget_id: Option<u64>,
 ) {
     let mut out: Vec<AccessNode> = Vec::with_capacity(nodes.len().min(MAX_WIDGETS_PER_WINDOW));
@@ -150,7 +150,7 @@ pub enum A11yError {
 }
 
 /// One accessibility node, kernel-side. Mirrors AccessKit's `Node` shape and the
-/// `rae_abi::A11yNode` wire repr; the role/state/action tags are the
+/// `ath_abi::A11yNode` wire repr; the role/state/action tags are the
 /// `A11Y_ROLE_*` / `A11Y_STATE_*` / `A11Y_ACTIONBIT_*` constants so a serialize
 /// is a field copy, not a remap. `id`/`parent` are arena ids (0 = root desktop).
 #[derive(Debug, Clone)]
@@ -168,7 +168,7 @@ pub struct AccessNode {
 }
 
 impl AccessNode {
-    /// Serialize into the fixed-size `rae_abi::A11yNode` wire record.
+    /// Serialize into the fixed-size `ath_abi::A11yNode` wire record.
     fn to_wire(&self) -> WireNode {
         let bytes = self.name.as_bytes();
         let n = bytes.len().min(abi::A11Y_NAME_LEN);
@@ -284,8 +284,8 @@ pub fn focused_node_id() -> u64 {
 // Concept §"Built for people who care about how things feel": accessibility is
 // a SHIP GATE — a built engine nobody can turn on is not shipped. Each toggle
 // drives the REAL engine (compositor magnifier / scanout color filter /
-// rae_tokens forced-colors flag / config-registry reduced-motion), never a
-// shadow flag — so `/proc/raeen/a11y` and the chrome reflect the same state.
+// ath_tokens forced-colors flag / config-registry reduced-motion), never a
+// shadow flag — so `/proc/athena/a11y` and the chrome reflect the same state.
 // ===========================================================================
 
 /// Magnifier zoom step in 1/256 fixed-point (0.5x per press). 256 == 1.0x.
@@ -364,28 +364,28 @@ pub fn color_filter_mode() -> u32 {
 }
 
 /// Toggle the live forced-colors (high-contrast) mode. Drives the shared
-/// `rae_tokens` HC flag so every surface that reads `rae_tokens::active_palette()`
+/// `ath_tokens` HC flag so every surface that reads `ath_tokens::active_palette()`
 /// repaints in the HighContrast palette on its next frame (audit P0 #3). Also
 /// requests a compositor repaint so the swap lands without waiting on idle.
 /// Returns the new state.
 pub fn toggle_high_contrast() -> bool {
-    let on = !rae_tokens::high_contrast();
+    let on = !ath_tokens::high_contrast();
     set_high_contrast(on);
     on
 }
 
 /// Set the forced-colors (high-contrast) mode explicitly. The single writer of
-/// the `rae_tokens` HC flag — the hotkey, the Control Center tile, and any
+/// the `ath_tokens` HC flag — the hotkey, the Control Center tile, and any
 /// future Settings switch all route here so the state has one home.
 pub fn set_high_contrast(on: bool) {
-    rae_tokens::set_high_contrast(on);
+    ath_tokens::set_high_contrast(on);
     crate::compositor::mark_dirty();
     crate::serial_println!("[a11y] high-contrast forced-colors -> {}", on);
 }
 
 /// Whether forced-colors high-contrast mode is active (Control Center / procfs).
 pub fn high_contrast_on() -> bool {
-    rae_tokens::high_contrast()
+    ath_tokens::high_contrast()
 }
 
 /// Toggle the reduced-motion accessibility flag (config-registry mirror that the
@@ -427,7 +427,7 @@ pub fn reduced_motion_on() -> bool {
 /// a single relaxed load to learn "has focus moved?" without re-snapshotting the
 /// whole tree on every frame — the stable, cheap polling interface the speech
 /// client uses. (No new syscall this slice; if a userspace AT reader needs to
-/// poll this, that is a NEEDS-INTERFACE follow-up — `rae_abi` is frozen.)
+/// poll this, that is a NEEDS-INTERFACE follow-up — `ath_abi` is frozen.)
 static FOCUS_GENERATION: AtomicU64 = AtomicU64::new(0);
 
 /// The focused node id observed at the last generation bump. `u64::MAX` is the
@@ -930,7 +930,7 @@ fn clamp_cursor(cursor: Option<usize>, len: usize) -> Option<usize> {
 }
 
 /// The live desktop focus order, owned by the kernel a11y module so both the
-/// shell key handler and `/proc/raeen/a11y` read the same state. The shell
+/// shell key handler and `/proc/athena/a11y` read the same state. The shell
 /// publishes the chrome order + opens/closes modals through the helpers below.
 static FOCUS_ORDER: Mutex<FocusOrder> = Mutex::new(FocusOrder::new());
 
@@ -987,7 +987,7 @@ pub fn focus_current() -> Option<FocusItem> {
     FOCUS_ORDER.lock().focused_item().cloned()
 }
 
-/// `/proc/raeen/a11y` line describing the live focus order (item count, modal
+/// `/proc/athena/a11y` line describing the live focus order (item count, modal
 /// state, focused item).
 fn focus_order_summary() -> String {
     let order = FOCUS_ORDER.lock();
@@ -1017,11 +1017,11 @@ pub fn snapshot_for_client(cap_ok: bool) -> Result<Vec<AccessNode>, A11yError> {
 /// `A11ySnapshotHeader` followed by one `A11yNode` (96 bytes) per node, all
 /// little-endian. The caller `copy_to_user`s the returned bytes (validated).
 pub fn serialize_snapshot(nodes: &[AccessNode], focused_id: u64) -> Vec<u8> {
-    let total = rae_abi::A11ySnapshotHeader::SIZE + nodes.len() * WireNode::SIZE;
+    let total = ath_abi::A11ySnapshotHeader::SIZE + nodes.len() * WireNode::SIZE;
     let mut buf = Vec::with_capacity(total);
 
     // Header: version(u32) node_count(u32) focused_id(u64).
-    buf.extend_from_slice(&rae_abi::A11ySnapshotHeader::VERSION.to_le_bytes());
+    buf.extend_from_slice(&ath_abi::A11ySnapshotHeader::VERSION.to_le_bytes());
     buf.extend_from_slice(&(nodes.len() as u32).to_le_bytes());
     buf.extend_from_slice(&focused_id.to_le_bytes());
 
@@ -1132,7 +1132,7 @@ pub fn pending_widget_action_count() -> usize {
     WIDGET_ACTION_QUEUE.lock().len()
 }
 
-/// `/proc/raeen/a11y` renderer. Header (nodes / focused / enabled) + one line
+/// `/proc/athena/a11y` renderer. Header (nodes / focused / enabled) + one line
 /// per node.
 pub fn dump_text() -> String {
     let nodes = build_tree();
@@ -1224,7 +1224,7 @@ fn role_name(role: u32) -> &'static str {
     }
 }
 
-/// Register `/proc/raeen/a11y` (done in procfs.rs) + log the init line. Called
+/// Register `/proc/athena/a11y` (done in procfs.rs) + log the init line. Called
 /// from `kernel_main` after `compositor::init` so the surface list exists.
 pub fn init() {
     A11Y_ENABLED.store(true, Ordering::Relaxed);
@@ -1250,7 +1250,7 @@ pub fn init() {
 /// client (`snapshot_for_client(false)` is `Err`) while ALLOWING a capped one.
 /// Any false -> FAIL. Synthetic (not compositor-driven) so it is deterministic
 /// in headless CI with no surfaces; the live window-tier walk is proven by
-/// `/proc/raeen/a11y` once the desktop is up.
+/// `/proc/athena/a11y` once the desktop is up.
 pub fn run_boot_smoketest() {
     // 1. Build a known synthetic tree.
     let synth = alloc::vec![
@@ -1295,7 +1295,7 @@ pub fn run_boot_smoketest() {
     let buf = serialize_snapshot(&synth, 17);
 
     // 2. Parse the header back.
-    let count_ok = buf.len() >= rae_abi::A11ySnapshotHeader::SIZE && {
+    let count_ok = buf.len() >= ath_abi::A11ySnapshotHeader::SIZE && {
         let node_count = u32::from_le_bytes([buf[4], buf[5], buf[6], buf[7]]);
         let focused = u64::from_le_bytes([
             buf[8], buf[9], buf[10], buf[11], buf[12], buf[13], buf[14], buf[15],
@@ -1304,7 +1304,7 @@ pub fn run_boot_smoketest() {
     };
 
     // 3. Parse the window node (record index 1) back from the wire bytes.
-    let hdr = rae_abi::A11ySnapshotHeader::SIZE;
+    let hdr = ath_abi::A11ySnapshotHeader::SIZE;
     let stride = WireNode::SIZE;
     let off = hdr + stride; // node[1] = the window
     let read_u32 = |o: usize| u32::from_le_bytes([buf[o], buf[o + 1], buf[o + 2], buf[o + 3]]);
@@ -1574,10 +1574,10 @@ pub fn run_focus_order_smoketest() {
 /// FAIL-able AthUI widget-provider bridge smoketest (Phase 19 audit P0 #1 — the
 /// #1 leverage gap: apps name their controls). This proves the END-TO-END seam
 /// the live shell now drives, not a hand-built shadow:
-///  1. Build a real `raeui::accessibility::AccessibilityTree` with two NAMED
+///  1. Build a real `athui::accessibility::AccessibilityTree` with two NAMED
 ///     controls — a Button "OK" and a TextField "Search" — exactly as the shell
 ///     render path does (AthUI does the role/label inference).
-///  2. Run `raeui::accessibility::provider_nodes_for_window` (the userspace half
+///  2. Run `athui::accessibility::provider_nodes_for_window` (the userspace half
 ///     of the seam) to get the wire-shaped nodes.
 ///  3. Publish them via `publish_window_widgets_from_provider` (the kernel half),
 ///     focusing the Button — the SAME bridge `shell_runner` calls.
@@ -1588,7 +1588,7 @@ pub fn run_focus_order_smoketest() {
 /// An empty/anonymous tree, a wrong role/label, or focus naming the window =>
 /// FAIL. Clears the synthetic window afterward so the boot tree stays clean.
 pub fn run_widget_provider_smoketest() {
-    use raeui::accessibility::{
+    use athui::accessibility::{
         provider_nodes_for_window, AccessibilityNode, AccessibilityRole, AccessibilityTree, Rect,
     };
 
@@ -1713,7 +1713,7 @@ pub fn run_widget_provider_smoketest() {
 /// unchanged => FAIL):
 ///  1. `toggle_magnifier` flips `magnifier_on()` and applies a visible zoom;
 ///     `magnifier_zoom_in`/`out` step it; zooming out to 1.0x turns it off.
-///  2. `toggle_high_contrast` makes `rae_tokens::active_palette() == HIGH_CONTRAST`
+///  2. `toggle_high_contrast` makes `ath_tokens::active_palette() == HIGH_CONTRAST`
 ///     (the live forced-colors palette swap) and flips back.
 ///  3. `cycle_color_filter` advances the scanout filter mode None->Invert and
 ///     sets `color_filter_mode()` to a non-None value.
@@ -1724,7 +1724,7 @@ pub fn run_onswitch_smoketest() {
     // Snapshot to restore (boot stays normal regardless of entry state).
     let saved_mag = crate::compositor::magnifier_enabled();
     let saved_zoom = crate::compositor::magnifier_zoom_x256();
-    let saved_hc = rae_tokens::high_contrast();
+    let saved_hc = ath_tokens::high_contrast();
     let saved_filter = crate::compositor::a11y_filter_mode();
     let saved_rm = reduced_motion_on();
 
@@ -1754,10 +1754,10 @@ pub fn run_onswitch_smoketest() {
     // 2. High-contrast toggle -> active_palette() == HIGH_CONTRAST.
     let hc_on = toggle_high_contrast();
     let hc_palette_swapped =
-        hc_on && high_contrast_on() && *rae_tokens::active_palette() == rae_tokens::HIGH_CONTRAST;
+        hc_on && high_contrast_on() && *ath_tokens::active_palette() == ath_tokens::HIGH_CONTRAST;
     let hc_off = !toggle_high_contrast();
     let hc_reverts =
-        hc_off && !high_contrast_on() && *rae_tokens::active_palette() == rae_tokens::DARK;
+        hc_off && !high_contrast_on() && *ath_tokens::active_palette() == ath_tokens::DARK;
 
     // 3. Color filter cycle -> non-None.
     let filt = cycle_color_filter();

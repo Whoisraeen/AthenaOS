@@ -9,7 +9,7 @@
  * BLOCKING side (complete/wait_for_completion) must actually block-and-wake — a
  * no-op wait that returned immediately would be a silent-success fake breaking
  * every handshake (SCOPE.md rule 9) — so it is declaration-only, backed by
- * raeen_linuxkpi's wait facade at M4. amdgpu touches the struct only through this
+ * ath_linuxkpi's wait facade at M4. amdgpu touches the struct only through this
  * API, so the internals are opaque. License boundary (../../README.md): surface.
  */
 #ifndef _LINUXKPI_LINUX_COMPLETION_H
@@ -35,7 +35,7 @@ struct completion {
 static inline void init_completion(struct completion *x)   { x->done = 0; spin_lock_init(&x->wait_lock); }
 static inline void reinit_completion(struct completion *x) { x->done = 0; }
 
-/* blocking side — real block/wake, backed by raeen_linuxkpi (M4) */
+/* blocking side — real block/wake, backed by ath_linuxkpi (M4) */
 void complete(struct completion *x);
 void complete_all(struct completion *x);
 void wait_for_completion(struct completion *x);

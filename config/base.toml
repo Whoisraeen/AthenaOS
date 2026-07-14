@@ -7,7 +7,7 @@ driver_supervisor = {}
 hello_window = {}
 terminal = {}
 calculator = {}
-rae-sh = {}
+ath-sh = {}
 files = {}
 photos = {}
 music = {}
@@ -31,15 +31,15 @@ hello_linuxkpi = {}
 # Linux x86_64 ABI conformance fixture — raw Linux syscalls; the abi key makes
 # xtask stamp ELFOSABI_LINUX so SYS_SPAWN routes it through linux_exec.
 linux_hello = { abi = "linux" }
-raebridge_host = {}
+athbridge_host = {}
 # Per-process AthBridge launcher: one Windows .exe = one AthenaOS process. The
 # parent writes a launch target to a well-known VFS path, spawns this, and reaps
-# its exit code (docs/components/raebridge-process-model.md option (b)).
-raebridge_run = {}
+# its exit code (docs/components/athbridge-process-model.md option (b)).
+athbridge_run = {}
 amdgpud = {}
 i915d = {}
 nvidiad = {}
-# Rae-script interpreter daemon: drains queued >64 KiB scripts
+# Ath-script interpreter daemon: drains queued >64 KiB scripts
 # (SCRIPT_FETCH/COMPLETE); persistent, spawned without wait.
-raelangd = {}
-raeinstaller = {}
+athlangd = {}
+athinstaller = {}

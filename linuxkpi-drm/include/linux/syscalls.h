@@ -4,7 +4,7 @@
  *
  * amdgpu_ras.c includes this for the ksys_sync_helper() prototype it calls on the
  * RAS error/reset path; it does NOT define any syscalls of its own. The helper is
- * backed by raeen_linuxkpi (a no-op on the bring-up daemon — see drm_bringup.rs).
+ * backed by ath_linuxkpi (a no-op on the bring-up daemon — see drm_bringup.rs).
  * License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_SYSCALLS_H

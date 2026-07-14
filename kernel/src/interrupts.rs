@@ -1370,7 +1370,7 @@ extern "C" fn keyboard_inner() {
         arg3: 0,
     };
 
-    // Telemetry: input event + TSC stamp for /proc/raeen/perf (latency proxy).
+    // Telemetry: input event + TSC stamp for /proc/athena/perf (latency proxy).
     crate::perf::record_input_event();
 
     // Use try_lock() to avoid deadlock if IPC is already held.

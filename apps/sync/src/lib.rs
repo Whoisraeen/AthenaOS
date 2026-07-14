@@ -1,5 +1,5 @@
 //! AthenaOS Sync — a clickable, switcher-friendly front end for the LIVE
-//! zero-knowledge `raesync` cross-device sync engine.
+//! zero-knowledge `athsync` cross-device sync engine.
 //!
 //! The Concept names "AthSync: end-to-end-encrypted cross-device sync" as a
 //! proprietary-stack pillar, sitting under the user-ownership promise ("The user
@@ -10,9 +10,9 @@
 //!
 //! ## Shape (mirrors apps/vpn, apps/mail, apps/browser, apps/calendar)
 //! - The syscall-free heart is [`SyncApp`]: it owns the LIVE
-//!   [`raesync::SyncState`] (the LWW-register CRDT + enrolled-device roster + the
+//!   [`athsync::SyncState`] (the LWW-register CRDT + enrolled-device roster + the
 //!   group key + this device's keys) and drives pair / encrypt / merge over an
-//!   INJECTABLE [`SyncTransport`]. No `raesync` internals are reached for — only
+//!   INJECTABLE [`SyncTransport`]. No `athsync` internals are reached for — only
 //!   its public API (`DeviceKeys`, `GroupKey`, `wrap_group_key_for`,
 //!   `unwrap_group_key`, `SyncState::{new, enroll_device, local_set,
 //!   apply_remote, get, ...}`, `SyncBlob`).
@@ -39,21 +39,21 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use raesync::{
+use athsync::{
     unwrap_group_key, wrap_group_key_for, DeviceId, DeviceIdentity, DeviceKeys, E2eError, GroupKey,
     SyncBlob, SyncState, WrappedGroupKey,
 };
 
 // The render/run path is live-ELF only; under `cargo test` only the SyncApp
-// (over raesync) is exercised, so the graphics/syscall imports are gated out to
+// (over athsync) is exercised, so the graphics/syscall imports are gated out to
 // keep the host test warning-clean.
 #[cfg(not(test))]
-use rae_tokens::DARK;
+use ath_tokens::DARK;
 #[cfg(not(test))]
-use raegfx::Canvas;
+use athgfx::Canvas;
 #[cfg(not(test))]
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 // ===========================================================================
 // Injectable transport — the seam the host KAT mocks with a zero-knowledge relay.
@@ -99,7 +99,7 @@ pub struct PairingRequest {
 // ===========================================================================
 
 /// A device this account has paired with, as shown in the device list. The
-/// authoritative trust state lives in [`raesync::SyncState`]'s enrolled roster;
+/// authoritative trust state lives in [`athsync::SyncState`]'s enrolled roster;
 /// this is the display/metadata mirror the UI renders.
 #[derive(Clone, Debug)]
 pub struct PairedDevice {
@@ -387,7 +387,7 @@ impl SyncApp {
 
 // ===========================================================================
 // Live ELF: window geometry, draw path, event loop. (cfg(not(test)) only — the
-// host KAT exercises only the SyncApp over raesync, so none of this links into
+// host KAT exercises only the SyncApp over athsync, so none of this links into
 // the test.)
 // ===========================================================================
 
@@ -446,7 +446,7 @@ fn push_hex_byte(out: &mut String, b: u8) {
 /// device list, the synced-record list (converged CRDT state), and the actions.
 #[cfg(not(test))]
 fn render(app: &SyncApp, canvas: &mut Canvas) {
-    use rae_tokens::{RADIUS_LG, RADIUS_MD, SPACE_3, SPACE_4};
+    use ath_tokens::{RADIUS_LG, RADIUS_MD, SPACE_3, SPACE_4};
 
     // Liquid-Glass background: deep base, a raised glass card on top.
     canvas.clear(DARK.bg_base);
@@ -595,7 +595,7 @@ enum Hit {
 
 #[cfg(not(test))]
 fn hit_test(lx: i32, ly: i32) -> Hit {
-    use rae_tokens::SPACE_4;
+    use ath_tokens::SPACE_4;
     let x = (SPACE_4 as usize + 8) as i32;
     let by = (WIN_H - 56) as i32;
     if ly >= by && ly < by + 36 {
@@ -633,9 +633,9 @@ impl SyncTransport for NullTransport {
 /// `SyncTransport` lands.
 #[cfg(not(test))]
 pub fn run() -> ! {
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
@@ -644,7 +644,7 @@ pub fn run() -> ! {
     // local seeds from the boot time so the first-run window is populated and the
     // identity is stable for the session. Real secret provisioning is a keychain
     // integration follow-up (labeled, not faked: the crypto is real either way).
-    let t = raekit::sys::time_ns();
+    let t = athkit::sys::time_ns();
     let mut id = [0u8; 16];
     id[..8].copy_from_slice(&t.to_le_bytes());
     id[8] = 0xD1; // device tag
@@ -665,7 +665,7 @@ pub fn run() -> ! {
     let _ = app.set_record("settings/wallpaper", b"aurora", nonce_from(t, 2));
 
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     let mut left_was_down = false;
     loop {
@@ -673,7 +673,7 @@ pub fn run() -> ! {
 
         let mut edge = false;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -684,9 +684,9 @@ pub fn run() -> ! {
             left_was_down = now_down;
         }
         if edge {
-            let (cx, cy, _btn) = raekit::sys::cursor_pos();
+            let (cx, cy, _btn) = athkit::sys::cursor_pos();
             let (ox, oy) =
-                raekit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
+                athkit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
             let lx = (cx as i32).saturating_sub(ox as i32);
             let ly = (cy as i32).saturating_sub(oy as i32);
             match hit_test(lx, ly) {
@@ -696,7 +696,7 @@ pub fn run() -> ! {
                     // honestly empty. We mark the detail so the UI says so — we do
                     // NOT synthesize a merged remote record.
                     let mut t = NullTransport;
-                    app.sync_now(&mut t, &[], raekit::sys::time_ns());
+                    app.sync_now(&mut t, &[], athkit::sys::time_ns());
                     app.last_detail = SyncDetail::TransportNotWired;
                     dirty = true;
                 }
@@ -711,20 +711,20 @@ pub fn run() -> ! {
             }
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key != 0 {
             let code = (key & 0xFF) as u8;
             let pressed = (key & 0x8000_0000) == 0;
             if pressed && code == 0x01 {
-                raekit::sys::exit(0);
+                athkit::sys::exit(0);
             }
         }
 
         if dirty {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
-        raekit::sys::yield_now();
+        athkit::sys::yield_now();
     }
 }
 
@@ -752,7 +752,7 @@ fn nonce_from(t: u64, ctr: u8) -> [u8; 12] {
 }
 
 // ===========================================================================
-// Host KAT — links the LIVE raesync zero-knowledge engine, no kernel, no network.
+// Host KAT — links the LIVE athsync zero-knowledge engine, no kernel, no network.
 // ===========================================================================
 
 #[cfg(test)]
@@ -947,7 +947,7 @@ mod tests {
 
         // A blob from an UNENROLLED device is also rejected.
         let stranger = keys(9);
-        let forged = raesync::encrypt_record("k", b"v", 1, &stranger, &gk, nonce(4));
+        let forged = athsync::encrypt_record("k", b"v", 1, &stranger, &gk, nonce(4));
         assert_eq!(b.apply_remote(&forged), Err(E2eError::UnknownDevice));
 
         // A forged signature on an enrolled author is rejected too.

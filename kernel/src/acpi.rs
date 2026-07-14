@@ -7,9 +7,9 @@ use acpi::{AcpiHandler, AcpiTables, PhysicalMapping};
 use core::ptr::NonNull;
 
 #[derive(Clone)]
-pub struct RaeenAcpiHandler;
+pub struct AthenaAcpiHandler;
 
-impl AcpiHandler for RaeenAcpiHandler {
+impl AcpiHandler for AthenaAcpiHandler {
     unsafe fn map_physical_region<T>(
         &self,
         physical_address: usize,
@@ -38,7 +38,7 @@ impl AcpiHandler for RaeenAcpiHandler {
 /// start. Returns an empty vec on uniprocessor systems or any parse failure.
 pub fn init(rsdp_addr: u64) -> alloc::vec::Vec<u8> {
     use alloc::vec::Vec;
-    let handler = RaeenAcpiHandler;
+    let handler = AthenaAcpiHandler;
     crate::serial_println!("[acpi] Initializing ACPI from RSDP @ {:#x}", rsdp_addr);
 
     let tables = match unsafe { AcpiTables::from_rsdp(handler, rsdp_addr as usize) } {

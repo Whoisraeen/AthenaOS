@@ -59,7 +59,7 @@
 //! forward compatibility; malformed lines fail the whole parse (fail-close to
 //! the allowlist fallback).
 //!
-//! R10: `init()` + `run_boot_smoketest()` + `/proc/raeen/manifests` + this
+//! R10: `init()` + `run_boot_smoketest()` + `/proc/athena/manifests` + this
 //! docstring.
 
 extern crate alloc;
@@ -462,7 +462,7 @@ pub fn run_boot_smoketest() {
     let (level, from_manifest) = assign_for_spawn("calculator", probe_pid);
     let net_allowed = crate::sandbox::check_syscall(probe_pid, 121);
     let dev_denied =
-        !crate::sandbox::check_syscall(probe_pid, rae_abi::syscall::SYS_DRIVER_CLAIM_DEVICE);
+        !crate::sandbox::check_syscall(probe_pid, ath_abi::syscall::SYS_DRIVER_CLAIM_DEVICE);
     let assign = from_manifest && level == SandboxLevel::AppSandbox && net_allowed && dev_denied;
     crate::sandbox::forget_task(probe_pid);
 

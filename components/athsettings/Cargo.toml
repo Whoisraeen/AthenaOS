@@ -1,0 +1,10 @@
+[package]
+name = "athsettings"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaeSettings — system settings manager for AthenaOS"
+
+[dependencies]
+spin = "0.9"

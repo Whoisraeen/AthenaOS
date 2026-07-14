@@ -58,7 +58,7 @@ There is **no `arch::` boundary today.** The kernel is monolithically x86_64. Su
 
 - **Shared, already arch-clean (no change needed):** scheduler logic (`scheduler.rs` — only the
   `switch_context` call + per-CPU access are arch), IPC (`ipc.rs`), VFS (`vfs.rs`), AthFS
-  (`raefs.rs`), capability (`capability.rs`), all of `components/*` (the Rae* userspace), the
+  (`athfs.rs`), capability (`capability.rs`), all of `components/*` (the Rae* userspace), the
   net stack above the NIC drivers, crypto. These are pure `no_std`+`alloc` logic.
 
 **Delta to design:** everything. There is no abstraction to extend — this spec defines a new
@@ -128,7 +128,7 @@ to the hot context-switch path, which violates "hot path is allocation/indirecti
 - The **contract** is expressed as a documented set of required `pub fn` signatures +
   associated types that every `arch/<name>/` module MUST provide (enforced at compile time:
   the shared kernel calls `arch::foo()` and won't link if an arch omits it). This is the
-  `NEEDS-INTERFACE` artifact `raeen-architect` owns as a written internal contract.
+  `NEEDS-INTERFACE` artifact `athena-architect` owns as a written internal contract.
 - Where a trait *is* warranted (e.g. an `AddressSpace` handle, a `Frame`/`Page` type), it's a
   **type-parameter / associated-type** resolved at compile time per arch — zero runtime cost.
 
@@ -204,12 +204,12 @@ the existing x86_64 seam code behind `kernel/src/arch/x86_64/` and re-export it 
 
 Two sub-slices (commit boundary between them):
 
-- **Slice 0a (interface-only, `raeen-architect`):** create `kernel/src/arch/mod.rs` with the
+- **Slice 0a (interface-only, `athena-architect`):** create `kernel/src/arch/mod.rs` with the
   `#[cfg]` re-export skeleton and the **written seam contract** (the function-signature list
   above, as rustdoc the implementer must satisfy). Add the `arch::run_boot_smoketest()` slot.
   No moves yet — `arch::mod.rs` just `pub use`s the existing modules (`pub use crate::apic`,
   etc.) so nothing breaks. This is the `[interface]`-tagged commit.
-- **Slice 0b (mechanical move, `raeen-kernel`):** physically relocate
+- **Slice 0b (mechanical move, `athena-kernel`):** physically relocate
   `context.rs`/`gdt.rs`/`apic.rs`/`smp.rs`/the paging half of `memory.rs`/etc. into
   `arch/x86_64/` and update `arch::mod.rs` to re-export from the new paths. **No logic edits.**
   Callers that did `crate::apic::x` keep working via `pub use`. The hardest part is
@@ -225,7 +225,7 @@ cargo run -p xtask --release -- run --release --ci   # exit 0
 ```
 log MUST still show `System successfully booted.` AND `boot health: 6/6 critical PASS ->
 HEALTHY` AND no `[PANIC]` AND `[BOOT-BENCH]` not regressed. Because it's an SMP path,
-**≥5 boots at `RAEEN_SMP=1` and `=2`** (CLAUDE.md §17). This is pure-refactor risk only —
+**≥5 boots at `ATHENA_SMP=1` and `=2`** (CLAUDE.md §17). This is pure-refactor risk only —
 the safest possible first step, and it's the precondition for *any* second arch.
 
 **Slice 1 (still x86_64-only):** introduce arch-neutral `arch::mmu::{PhysAddr, VirtAddr, Frame,
@@ -239,8 +239,8 @@ float`, then bring up boot→UART→MMU→GIC→timer→PSCI→smoketest in QEMU
 
 ## Interface needs (NEEDS-INTERFACE)
 
-For `raeen-architect` (these are the contract, owned as an internal `arch::` seam doc, not
-`rae_abi` — this is *intra-kernel*, no syscall/ABI bump):
+For `athena-architect` (these are the contract, owned as an internal `arch::` seam doc, not
+`ath_abi` — this is *intra-kernel*, no syscall/ABI bump):
 
 - The seam function-signature set in the table above (boot/cpu/mmu/irq/time/smp/context/
   syscall/percpu/io/firmware), expressed as the required `pub fn`/associated-type surface of
@@ -249,7 +249,7 @@ For `raeen-architect` (these are the contract, owned as an internal `arch::` sea
   cmdline) that `arch::boot` produces and shared `kernel_main` consumes — replacing the direct
   `bootloader_api::BootInfo` dependency in `kernel_main`'s signature.
 - `arch::run_boot_smoketest()` R10 slot.
-- **No `rae_abi`/`rae_driver_api` change** (the user-facing ABI is arch-neutral by design; only
+- **No `ath_abi`/`ath_driver_api` change** (the user-facing ABI is arch-neutral by design; only
   syscall *entry mechanism* differs, and that's internal). Confirm: `ABI_VERSION` unchanged.
 
 ## File-by-file plan
@@ -274,7 +274,7 @@ For `raeen-architect` (these are the contract, owned as an internal `arch::` sea
 
 - **Slice 0/1 (x86_64 unchanged):** boot log MUST still show `[ OS ] System successfully
   booted.` AND `boot health: 6/6 critical PASS -> HEALTHY`; `[BOOT-BENCH]` not regressed; no
-  `[PANIC]`; ≥5 boots at `RAEEN_SMP=1` and `=2`. Docstring of `arch/mod.rs` MUST quote the
+  `[PANIC]`; ≥5 boots at `ATHENA_SMP=1` and `=2`. Docstring of `arch/mod.rs` MUST quote the
   Manifesto "locked behind ... Apple silicon" line above.
 - **aarch64:** boot log MUST show `[arch] aarch64 ... EL1 -> PASS`, `[mmu] TTBR1_EL1 ...`,
   `[gic] GICv2 ... online`, `[timer] CNTP ...`, `[smp] PSCI CPU_ON: N/N`, `[arch-smoke]
@@ -282,18 +282,18 @@ For `raeen-architect` (these are the contract, owned as an internal `arch::` sea
 - **i686:** boot log MUST show `[arch] i686 PAE ...`, `[mmu] PAE 3-level ...`, `[smp] SIPI:
   N/N`, `[arch-smoke] i686 -> PASS`, then `System successfully booted.` under
   `qemu-system-i386`.
-- `/proc/raeen/arch` MUST report: active arch, CPU count online, page-table levels, IRQ
+- `/proc/athena/arch` MUST report: active arch, CPU count online, page-table levels, IRQ
   controller name, timer name, syscall-entry mechanism.
 - Each `arch::run_boot_smoketest()` MUST be able to print FAIL (MMU map mismatch, IPI not acked,
   clock not advancing, or context-switch reg corruption).
 
 ## Handoff
 
-- **raeen-architect:** owns the `arch::` seam contract (Slice 0a, `[interface]`-style internal
+- **athena-architect:** owns the `arch::` seam contract (Slice 0a, `[interface]`-style internal
   contract; confirm `ABI_VERSION` unchanged). Produces the seam doc + `BootContext` shape.
-- **raeen-kernel:** Slice 0b (mechanical move) + Slice 1 (de-x86_64-type the MM) + xtask
+- **athena-kernel:** Slice 0b (mechanical move) + Slice 1 (de-x86_64-type the MM) + xtask
   multi-target plumbing.
-- **future raeen-arch (or raeen-kernel):** per-arch impls — aarch64 first (boot/UART/MMU/GIC/
+- **future athena-arch (or athena-kernel):** per-arch impls — aarch64 first (boot/UART/MMU/GIC/
   timer/PSCI/context/svc-entry), then i686.
 - **Unblocks:** owner goal criterion #3 (multi-arch boot/run/install). No MasterChecklist line
   exists yet — **recommend the lead add a Phase for "Multi-architecture support"** with the

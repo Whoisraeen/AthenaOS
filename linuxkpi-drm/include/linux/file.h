@@ -4,7 +4,7 @@
  *
  * File-descriptor table helpers. amdgpu_cs uses these to hand sync-file / syncobj
  * fds across the command-submission boundary. The fd table is owned by the guest
- * process; the daemon-side calls are backed by raeen_linuxkpi at M4 (mapped onto
+ * process; the daemon-side calls are backed by ath_linuxkpi at M4 (mapped onto
  * the AthenaOS handle/IPC surface). License boundary (../../README.md): API.
  */
 #ifndef _LINUXKPI_LINUX_FILE_H
@@ -23,7 +23,7 @@ struct fd {
 	unsigned int flags;
 };
 
-/* fd <-> struct file — backed by raeen_linuxkpi (M4) */
+/* fd <-> struct file — backed by ath_linuxkpi (M4) */
 struct file *fget(unsigned int fd);
 void         fput(struct file *file);
 int          get_unused_fd_flags(unsigned int flags);

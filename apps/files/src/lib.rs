@@ -9,8 +9,8 @@
 //! `SYS_RENAME`/`SYS_UNLINK`).
 //!
 //! All decision logic (tab/history model, trash-path arithmetic, batch-rename
-//! pattern expansion) lives in the host-KAT'd `rae_files` crate
-//! (`cargo test -p rae_files`); this bin is the thin syscall + render shell.
+//! pattern expansion) lives in the host-KAT'd `ath_files` crate
+//! (`cargo test -p ath_files`); this bin is the thin syscall + render shell.
 //!
 //! `/system/apps` and `/bundled` and the session home list real files via
 //! `SYS_READDIR_AT`. Other paths use a lightweight virtual tree until the
@@ -28,36 +28,36 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use rae_diff::unified_diff;
+use ath_diff::unified_diff;
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
-use rae_files::{batch_rename_target, restore_target, trash_dir_for_home, trash_target, TabSet};
-// File-association resolver (rae_mime, committed cf80811) + its persistence
-// format (rae_toml). This is the wiring of the "what is this file / what opens
+use ath_files::{batch_rename_target, restore_target, trash_dir_for_home, trash_target, TabSet};
+// File-association resolver (ath_mime, committed cf80811) + its persistence
+// format (ath_toml). This is the wiring of the "what is this file / what opens
 // it" infra into the live Files app — LEGACY_GAMING_CONCEPT.md §Windows Pain Points
 // "the modern file manager" / the #1 daily-driver parity gap: double-clicking a
 // file opens it in the right app, with an "Open With" submenu and a persistent
 // "Set as default" override. `resolve` ties content-sniff + extension + the
 // `Registry` together; overrides round-trip to `<home>/.config/file_assoc.toml`.
-use rae_mime::{resolve, MimeType, Registry, Resolution};
-use rae_tokens::{DARK, RAEBLUE};
-use rae_zip::{is_safe_path, Archive};
+use ath_mime::{resolve, MimeType, Registry, Resolution};
+use ath_tokens::{DARK, RAEBLUE};
+use ath_zip::{is_safe_path, Archive};
 // TAR / gzip extraction (.tar / .tar.gz / .tgz) — the POSIX-world counterpart to
-// the rae_zip path. `rae_tar::is_safe_path` is the tar-side zip-slip gate (kept
-// fully-qualified to avoid clashing with the rae_zip `is_safe_path` imported
+// the ath_zip path. `ath_tar::is_safe_path` is the tar-side zip-slip gate (kept
+// fully-qualified to avoid clashing with the ath_zip `is_safe_path` imported
 // above); `TarKind` classifies each entry so symlinks/hardlinks are skipped.
-use rae_tar::{read_tar, read_tar_gz, TarKind};
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
-use raemedia::png::{decode_png, DecodedImage};
+use ath_tar::{read_tar, read_tar_gz, TarKind};
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
+use athmedia::png::{decode_png, DecodedImage};
 // JPEG decode + EXIF-orientation path (the same Concept §creators/media "show my
 // photos" surface as PNG). `decode_jpeg_oriented` returns `jpeg::DecodedImage`,
 // a structurally-identical sibling of `png::DecodedImage`; `jpeg_to_canvas_image`
 // below bridges it so the EXISTING `blit_image_fit` scale/letterbox/blit path is
 // reused unchanged for both formats.
-use raemedia::exif::decode_jpeg_oriented;
+use athmedia::exif::decode_jpeg_oriented;
 // Animated-GIF decode (Concept §creators/media: "show my photos" extends to the
 // animated images that fill the web/messaging). Quick Look shows a STATIC
 // first-frame preview — `decode_gif` returns a fully-composited ARGB8888 buffer
@@ -65,25 +65,25 @@ use raemedia::exif::decode_jpeg_oriented;
 // the EXACT `blit_image_fit` scale/letterbox/blit path. `decode_gif` is
 // hostile-input safe (returns `Err`, never panics); on failure Quick Look falls
 // back to the existing dims/hex summary.
-use rae_gif::decode_gif;
+use ath_gif::decode_gif;
 // Document/preview open path (the WS4 "open documents" deliverable —
 // LEGACY_GAMING_CONCEPT.md §Windows Pain Points "the modern file manager"). Dispatch is
-// by MAGIC BYTES via `rae_formats::detect` (never the extension): a PDF renders
+// by MAGIC BYTES via `ath_formats::detect` (never the extension): a PDF renders
 // its extracted text paginated, a DOCX its paragraphs/headings/tables as text, an
 // XLSX as a CSV-style grid (reusing the existing CSV table view), and any image
-// (PNG/JPEG/BMP/GIF/WebP) through the unified `rae_image` decoder into the same
+// (PNG/JPEG/BMP/GIF/WebP) through the unified `ath_image` decoder into the same
 // ARGB8888 `blit_image_fit` path photos already use. Every engine is
 // hostile-input safe (returns `Err`, never panics) — on any failure the open
 // dispatch yields `DocPreview::None` and Quick Look falls back to the existing
 // text/hex summary.
-use rae_formats::{detect, FileKind};
+use ath_formats::{detect, FileKind};
 // Windows-app double-click launch (LEGACY_GAMING_CONCEPT.md §Compatibility Strategy:
 // "AthBridge runs Windows apps on day one… apps run naturally"). Activating a
 // `.exe` in Files writes its VFS path to the proven AthBridge handoff channel and
-// spawns `raebridge_run`, which loads the PE as its OWN AthenaOS process (the
+// spawns `athbridge_run`, which loads the PE as its OWN AthenaOS process (the
 // per-process isolation proven in commit d5db628). We consume the handoff codec
 // directly — `Target::Pe { path }` + `encode_record` — rather than replicating it.
-use raebridge::handoff::{self, Target};
+use athbridge::handoff::{self, Target};
 
 // ── Window geometry ─────────────────────────────────────────────────────
 
@@ -349,18 +349,18 @@ fn geom_row(vis: usize) -> Rect {
     }
 }
 
-// ── Palette (rae_tokens, docs/design/design-language.md) ──────────────────
+// ── Palette (ath_tokens, docs/design/design-language.md) ──────────────────
 //
 // Generic chrome (bg / text / accent / selection / strokes) is pulled onto the
-// shared `rae_tokens::DARK` palette + the RaeBlue accent ramp so File Manager
-// matches the desktop default 1:1 (whole-OS cohesion, the rae_tokens raison
+// shared `ath_tokens::DARK` palette + the RaeBlue accent ramp so File Manager
+// matches the desktop default 1:1 (whole-OS cohesion, the ath_tokens raison
 // d'être). The accent ramp is derived (not const), so accent fills are computed
 // in helpers below. File-TYPE icon tints are NOT chrome — they come from the
-// fixed `rae_tokens::FTYPE_*` semantic palette (design-language.md §4.4), defined
+// fixed `ath_tokens::FTYPE_*` semantic palette (design-language.md §4.4), defined
 // in the file-type section further down (replacing the old private folder-yellow).
 //
 // Live Vibe-Mode tracking: `theme_seed()` reads the desktop's *active* accent
-// via `SYS_THEME_GET` (raekit::sys::theme_accent) at launch.
+// via `SYS_THEME_GET` (athkit::sys::theme_accent) at launch.
 
 // ── Liquid Glass window chrome (IDENTITY.md §7 — Files = glass.panel) ────────
 //
@@ -376,18 +376,18 @@ fn geom_row(vis: usize) -> Rect {
 // the AthenaOS fingerprint). The chrome composites the SAME tint→frost order the
 // Control Center uses, so over the aurora the chrome lands at/above the backdrop
 // luminance instead of punching a dark hole. No new tokens — every value is a
-// `rae_tokens::GLASS_*` tier or palette entry.
+// `ath_tokens::GLASS_*` tier or palette entry.
 
 /// Window corner radius (radius.lg) — rounds the outer window so the rim + frost
 /// read as a floating glass sheet, matching the CC panel.
-const WIN_RADIUS: usize = rae_tokens::RADIUS_LG as usize;
+const WIN_RADIUS: usize = ath_tokens::RADIUS_LG as usize;
 
 /// `glass.chrome` tier — titlebar + toolbar (the most see-through tier; the aurora
 /// floats through always-on chrome, IDENTITY §2.1).
-const CHROME_TIER: rae_tokens::GlassTier = rae_tokens::GLASS_CHROME_DARK;
+const CHROME_TIER: ath_tokens::GlassTier = ath_tokens::GLASS_CHROME_DARK;
 /// `glass.panel` tier — the sidebar (the classic Finder/Explorer translucent rail;
 /// backdrop bleeds through, IDENTITY §7).
-const PANEL_TIER: rae_tokens::GlassTier = rae_tokens::GLASS_PANEL_DARK;
+const PANEL_TIER: ath_tokens::GlassTier = ath_tokens::GLASS_PANEL_DARK;
 
 /// Solid, DE-TINTED content field. The old `bg.raised` (#121624, L≈22, strongly
 /// BLUE) read as "2015 dark mode" near-black navy; this is a lifted NEUTRAL slate
@@ -435,7 +435,7 @@ const OVERLAY_SCRIM: u32 = 0xCC_0A_0B_10; // Quick Look / dialog dimming scrim
 const ROW_HOVER: u32 = 0x0C_FF_FF_FF;
 
 fn theme_seed() -> u32 {
-    raekit::sys::theme_accent()
+    athkit::sys::theme_accent()
 }
 
 /// Accent base, derived through the shared ramp from the live theme seed.
@@ -453,18 +453,18 @@ fn row_sel() -> u32 {
 /// draw so the same render is reproducible host-side from a [`FilesViewState`]
 /// with no syscall. `accent()` == `accent_s(theme_seed())` by construction.
 fn accent_s(seed: u32) -> u32 {
-    rae_tokens::derive_accent(seed, &DARK).base
+    ath_tokens::derive_accent(seed, &DARK).base
 }
 
 /// Opaque selection fill for an EXPLICIT seed — pure counterpart of [`row_sel`].
 fn row_sel_s(seed: u32) -> u32 {
-    rae_tokens::derive_accent(seed, &DARK).active
+    ath_tokens::derive_accent(seed, &DARK).active
 }
 
 // ── File-type semantic tint (design-language.md §4.4 `ftype.*`) ───────────
 //
 // File-type icon color is a FIXED semantic palette (a directory must look like a
-// directory in any Vibe preset), so it is sourced from `rae_tokens::FTYPE_*`,
+// directory in any Vibe preset), so it is sourced from `ath_tokens::FTYPE_*`,
 // NOT a private `FOLDER_FG`/`FILE_FG`. Two types intentionally TRACK the accent
 // (`dir`/`code` read as "primary") via `ftype_dir`/`ftype_code` — that is the one
 // way these tints re-skin with Vibe Mode. The classifier maps an entry to a §4.4
@@ -576,9 +576,9 @@ fn classify_name(name: &str) -> FType {
 
 /// The bundled launcher ELF that loads a PE as its own AthenaOS process. Spawned
 /// via the SAME app-launch syscall the start menu / other apps use
-/// (`raekit::sys::spawn`); it reads [`handoff::HANDOFF_PATH`] at startup to learn
+/// (`athkit::sys::spawn`); it reads [`handoff::HANDOFF_PATH`] at startup to learn
 /// which PE to load. Lives in `/bundled` like the other bundled app crates.
-const RAEBRIDGE_RUN: &str = "raebridge_run";
+const RAEBRIDGE_RUN: &str = "athbridge_run";
 
 /// The fully-decided launch for activating a `.exe`: the exact handoff record the
 /// parent must write to [`handoff::HANDOFF_PATH`] and the launcher app-id to spawn
@@ -612,7 +612,7 @@ fn exe_launch_plan(path: &str) -> Option<ExeLaunch> {
     })
 }
 
-/// Resolve a §4.4 file-type class to a live ARGB tint from `rae_tokens`. `Dir`
+/// Resolve a §4.4 file-type class to a live ARGB tint from `ath_tokens`. `Dir`
 /// and `Code` track the live theme seed (Vibe Mode re-skin); the rest are the
 /// fixed semantic hues.
 fn ftype_color(ft: FType) -> u32 {
@@ -625,24 +625,24 @@ fn ftype_color(ft: FType) -> u32 {
 /// `ftype_color(ft)` == `ftype_color_s(ft, theme_seed())` by construction.
 fn ftype_color_s(ft: FType, seed: u32) -> u32 {
     match ft {
-        FType::Dir => rae_tokens::ftype_dir(seed, &DARK),
-        FType::Code => rae_tokens::ftype_code(seed, &DARK),
-        FType::Exec => rae_tokens::FTYPE_EXEC,
-        FType::Media => rae_tokens::FTYPE_MEDIA,
-        FType::Doc => rae_tokens::FTYPE_DOC,
-        FType::Archive => rae_tokens::FTYPE_ARCHIVE,
-        FType::Neutral => rae_tokens::ftype_neutral(&DARK),
+        FType::Dir => ath_tokens::ftype_dir(seed, &DARK),
+        FType::Code => ath_tokens::ftype_code(seed, &DARK),
+        FType::Exec => ath_tokens::FTYPE_EXEC,
+        FType::Media => ath_tokens::FTYPE_MEDIA,
+        FType::Doc => ath_tokens::FTYPE_DOC,
+        FType::Archive => ath_tokens::FTYPE_ARCHIVE,
+        FType::Neutral => ath_tokens::ftype_neutral(&DARK),
     }
 }
 
-/// The real line-icon for a §4.4 file-type class (`raegfx::icon`). Replaces the
+/// The real line-icon for a §4.4 file-type class (`athgfx::icon`). Replaces the
 /// old letter/block `ftype_glyph` placeholders the visual-QA Round-2 critique
 /// flagged as the worst shipped surface: folder→Folder, code→Code, exec→Exec,
 /// media (image/video/audio)→Media, doc/pdf→Doc, archive→Archive, and the
 /// generic/unknown leaf→File. Drawn tinted by `ftype_color` so the icon carries
 /// the §4.4 palette (dir/code track the live accent). PURE.
-fn ftype_icon(ft: FType) -> raegfx::icon::Icon {
-    use raegfx::icon::Icon;
+fn ftype_icon(ft: FType) -> athgfx::icon::Icon {
+    use athgfx::icon::Icon;
     match ft {
         // SOLID blue folder (IDENTITY-OBSIDIAN.md §4 — the macOS content
         // register; the stroked Folder stays for chrome affordances).
@@ -942,11 +942,11 @@ enum Overlay {
     Compare,
     /// Compute a file's SHA-256/SHA-1/MD5/CRC32 + verify against a pasted hash.
     Checksum,
-    /// "Open With" — pick which app id opens the selected file (rae_mime
+    /// "Open With" — pick which app id opens the selected file (ath_mime
     /// candidate list, default bolded/first), and optionally set it as default.
     OpenWith,
     /// Global indexed search — type a query, Enter queries the kernel index via
-    /// `raekit::search::query`, and the panel shows the per-kind hit tally.
+    /// `athkit::search::query`, and the panel shows the per-kind hit tally.
     Search,
 }
 
@@ -962,7 +962,7 @@ const PREVIEW_CAP: usize = 4096;
 // and a host tool can build one with `preview_state_demo()` and call
 // `render_preview` to produce a representative Files window with NO syscalls.
 // This is what lets the screenshot harness render the LIVE Files path instead of
-// the dead quarantined `raeshell::file_manager` twin.
+// the dead quarantined `athshell::file_manager` twin.
 
 /// One row in the file list, as the renderer needs it (the syscall-read fields
 /// of a `DynamicEntry`, decoupled from the fixed-capacity on-stack layout).
@@ -1047,7 +1047,7 @@ pub fn preview_state_demo() -> FilesViewState {
     tabs.push(String::from("/home/rae"));
 
     FilesViewState {
-        theme_seed: raekit::sys::THEME_DEFAULT_ACCENT,
+        theme_seed: athkit::sys::THEME_DEFAULT_ACCENT,
         home: String::from("/home/rae"),
         cwd: String::from("/home/rae"),
         can_back: false,
@@ -1080,16 +1080,16 @@ struct App {
     // Decoded image for the current Quick Look target (PNG or JPEG → ARGB8888
     // pixels; JPEG is EXIF-oriented so portraits show upright). `None` whenever
     // the selection isn't a decodable image; the overlay then falls back to the
-    // dims/hex summary. Heap-backed (raekit allocator), so a large photo doesn't
+    // dims/hex summary. Heap-backed (athkit allocator), so a large photo doesn't
     // blow the stack-resident `App`.
     preview_image: Option<DecodedImage>,
     // Quick Look CSV/TSV table state. When the selection is a `.csv`/`.tsv` that
-    // `rae_csv::parse[_with]` accepted, `preview_csv` holds the parsed (ragged)
+    // `ath_csv::parse[_with]` accepted, `preview_csv` holds the parsed (ragged)
     // grid and the overlay renders an aligned table instead of raw text. `None`
     // for everything else (image/text/hex paths are untouched). `preview_csv_tsv`
     // records which delimiter parsed it (for the header label); `preview_csv_scroll`
     // is the first visible DATA row (the header row is pinned).
-    preview_csv: Option<rae_csv::Csv>,
+    preview_csv: Option<ath_csv::Csv>,
     preview_csv_tsv: bool,
     preview_csv_scroll: usize,
     // Quick Look DOCUMENT text. When the selection is a PDF or DOCX that the
@@ -1132,7 +1132,7 @@ struct App {
     verify_buf: [u8; 72],
     verify_len: usize,
     verify_result: VerifyResult,
-    // ── File-association state (rae_mime) ────────────────────────────────────
+    // ── File-association state (ath_mime) ────────────────────────────────────
     // The default-app registry: the built-in `Registry::with_defaults()` overlaid
     // with the user's persisted overrides from `<home>/.config/file_assoc.toml`
     // (loaded once at launch; a corrupt/missing config silently falls back to the
@@ -1140,7 +1140,7 @@ struct App {
     registry: Registry,
     // "Open With" overlay state, populated by `open_open_with`. `openwith_mime` is
     // the resolved MIME of the target file (the key "Set as default" writes under);
-    // `openwith_candidates` is the rae_mime candidate app-id list (default first);
+    // `openwith_candidates` is the ath_mime candidate app-id list (default first);
     // `openwith_selected` is the highlighted row. `openwith_name` is the target
     // file's leaf name, shown in the overlay header.
     openwith_mime: MimeType,
@@ -1148,10 +1148,10 @@ struct App {
     openwith_selected: usize,
     openwith_name: [u8; 48],
     openwith_name_len: usize,
-    // ── Global indexed search (raekit::search → kernel search_index) ──────────
+    // ── Global indexed search (athkit::search → kernel search_index) ──────────
     // The Files search box is a *global* find (Finder/Explorer "search this PC"),
     // NOT just an in-folder filter: it queries the SAME kernel index the command
-    // palette uses via `raekit::search::query_resolved` (SYS_SEARCH_QUERY_RESOLVED,
+    // palette uses via `athkit::search::query_resolved` (SYS_SEARCH_QUERY_RESOLVED,
     // 281), which returns each hit's NAME + PATH + is_folder — so the overlay can
     // render named, clickable result rows (no longer a count-only tally). A row is
     // openable: a file routes to the SAME default-open path Enter uses; a folder
@@ -1164,7 +1164,7 @@ struct App {
     // "haven't queried yet" from "queried, zero results" (→ "No results").
     search_buf: [u8; 64],
     search_len: usize,
-    search_results: Vec<raekit::syscalls::search::ResolvedHit>,
+    search_results: Vec<athkit::syscalls::search::ResolvedHit>,
     search_selected: usize,
     search_summary: SearchSummary,
     search_ran: bool,
@@ -1203,8 +1203,8 @@ impl SearchSummary {
 /// and asserts the exact per-kind counts the result panel renders. `Contact`
 /// folds into `other` (the Files panel does not have a contacts row). A wrong
 /// bucket mapping or a miscount flips the proof to `false`.
-fn summarize_hits(hits: &[raekit::syscalls::search::SearchHit]) -> SearchSummary {
-    use raekit::syscalls::search::Kind as K;
+fn summarize_hits(hits: &[athkit::syscalls::search::SearchHit]) -> SearchSummary {
+    use athkit::syscalls::search::Kind as K;
     let mut s = SearchSummary::empty();
     s.total = hits.len();
     for h in hits {
@@ -1224,8 +1224,8 @@ fn summarize_hits(hits: &[raekit::syscalls::search::SearchHit]) -> SearchSummary
 /// (Finder/Explorer treat directories as files in the result count), regardless
 /// of its index kind tag. PURE — no syscall — so the proof asserts the exact
 /// per-kind counts the header renders.
-fn summarize_resolved(hits: &[raekit::syscalls::search::ResolvedHit]) -> SearchSummary {
-    use raekit::syscalls::search::Kind as K;
+fn summarize_resolved(hits: &[athkit::syscalls::search::ResolvedHit]) -> SearchSummary {
+    use athkit::syscalls::search::Kind as K;
     let mut s = SearchSummary::empty();
     s.total = hits.len();
     for h in hits {
@@ -1264,7 +1264,7 @@ enum SearchOpenRoute {
 /// (apps/settings, or a path-less row) is [`SearchOpenRoute::NoTarget`] (never
 /// panics, never fabricates a path). PURE — the host proof feeds a file row, a
 /// folder row, and a path-less row and asserts the exact route.
-fn search_open_route(hit: &raekit::syscalls::search::ResolvedHit) -> SearchOpenRoute {
+fn search_open_route(hit: &athkit::syscalls::search::ResolvedHit) -> SearchOpenRoute {
     if hit.path.is_empty() {
         return SearchOpenRoute::NoTarget;
     }
@@ -1279,7 +1279,7 @@ fn search_open_route(hit: &raekit::syscalls::search::ResolvedHit) -> SearchOpenR
 /// `Dir`; a file is classified by its path's leaf extension (the SAME `classify`
 /// taxonomy the file list uses, so the search rows and the list rows share one
 /// icon palette). PURE.
-fn ftype_for_resolved(hit: &raekit::syscalls::search::ResolvedHit) -> FType {
+fn ftype_for_resolved(hit: &athkit::syscalls::search::ResolvedHit) -> FType {
     if hit.is_folder {
         return FType::Dir;
     }
@@ -1310,8 +1310,8 @@ enum VerifyResult {
 impl App {
     fn default_home() -> PathBuf {
         let mut info = [0u8; 96];
-        if raekit::sys::session_info(&mut info).is_some() {
-            if let Some(home) = raekit::sys::session_home_from(&info) {
+        if athkit::sys::session_info(&mut info).is_some() {
+            if let Some(home) = athkit::sys::session_home_from(&info) {
                 let mut p = PathBuf::new();
                 p.set(home);
                 return p;
@@ -1326,7 +1326,7 @@ impl App {
         let home = Self::default_home();
         // Best-effort: ensure the Trash bucket exists (idempotent; E_VFS_EXISTS ok).
         if let Some(td) = trash_dir_for_home(home.as_str()) {
-            let _ = raekit::sys::mkdir(td.as_str());
+            let _ = athkit::sys::mkdir(td.as_str());
         }
         let tabs = TabSet::new(home.as_str()).unwrap_or_else(|_| {
             // PATH_CAP guarantees this never fails for a real home, but never panic.
@@ -1381,7 +1381,7 @@ impl App {
             verify_len: 0,
             verify_result: VerifyResult::None,
             registry: load_registry(home.as_str()),
-            openwith_mime: rae_mime::OCTET_STREAM,
+            openwith_mime: ath_mime::OCTET_STREAM,
             openwith_candidates: Vec::new(),
             openwith_selected: 0,
             openwith_name: [0; 48],
@@ -1443,7 +1443,7 @@ impl App {
 
     fn load_readdir_at(&mut self, path: &str) {
         let mut buf = [0u8; 4096];
-        let count = raekit::sys::readdir_at(path, &mut buf) as usize;
+        let count = athkit::sys::readdir_at(path, &mut buf) as usize;
         let mut off = 0usize;
         for _ in 0..count {
             if off + 6 > buf.len() || self.entry_count >= MAX_ENTRIES {
@@ -1576,7 +1576,7 @@ impl App {
         }
     }
 
-    // ── File associations (rae_mime) ─────────────────────────────────────────
+    // ── File associations (ath_mime) ─────────────────────────────────────────
 
     /// Resolve the selected file against the registry, sniffing the leading bytes
     /// (so a mislabeled file — a PNG saved as `notes.txt` — still resolves by
@@ -1594,10 +1594,10 @@ impl App {
         self.entry_path(&entry, &mut p);
         let mut head = [0u8; 512];
         let mut n = 0usize;
-        let fd = raekit::sys::open(p.as_str(), 0);
+        let fd = athkit::sys::open(p.as_str(), 0);
         if fd != u64::MAX {
-            n = raekit::sys::read(fd, &mut head) as usize;
-            let _ = raekit::sys::close(fd);
+            n = athkit::sys::read(fd, &mut head) as usize;
+            let _ = athkit::sys::close(fd);
         }
         let magic: Option<&[u8]> = if n > 0 {
             Some(&head[..n.min(512)])
@@ -1632,17 +1632,17 @@ impl App {
                 // Unknown content (octet-stream) → keep the old sensible fallback:
                 // show it in Quick Look rather than spawning the Files app on top
                 // of itself.
-                if res.mime == rae_mime::OCTET_STREAM && res.default_app == rae_mime::FALLBACK_APP {
+                if res.mime == ath_mime::OCTET_STREAM && res.default_app == ath_mime::FALLBACK_APP {
                     self.open_quick_look();
                     return;
                 }
-                if res.default_app == rae_mime::FALLBACK_APP {
+                if res.default_app == ath_mime::FALLBACK_APP {
                     // The registry routes this type to Files itself (e.g. an
                     // archive). Show Quick Look instead of recursively spawning.
                     self.open_quick_look();
                     return;
                 }
-                let _ = raekit::sys::spawn(&res.default_app);
+                let _ = athkit::sys::spawn(&res.default_app);
                 self.toast.set("Opening…");
             }
             None => self.open_quick_look(),
@@ -1654,7 +1654,7 @@ impl App {
     /// kernel RAM-FS returns a read-only snapshot for an existing home file, so a
     /// fresh writable inode must be created each launch (`handoff::HANDOFF_PATH`
     /// docstring). After the handoff is in place we spawn the launcher via the
-    /// SAME app-launch syscall the start menu uses; `raebridge_run` then loads the
+    /// SAME app-launch syscall the start menu uses; `athbridge_run` then loads the
     /// PE as its own AthenaOS process and the session reaps its exit. Never panics;
     /// reports any failure via the status toast.
     fn launch_windows_exe(&mut self, plan: &ExeLaunch) {
@@ -1667,12 +1667,12 @@ impl App {
         };
         // RAM-FS quirk: remove any prior handoff so the next open re-creates a
         // writable inode (E_VFS_NOT_FOUND on the first launch is expected/benign).
-        let _ = raekit::sys::unlink(path);
+        let _ = athkit::sys::unlink(path);
         if !write_whole_file(path, &plan.record) {
             self.toast.set("Run failed");
             return;
         }
-        let pid = raekit::sys::spawn(plan.spawn);
+        let pid = athkit::sys::spawn(plan.spawn);
         if pid == u64::MAX {
             self.toast.set("Run failed");
         } else {
@@ -1711,7 +1711,7 @@ impl App {
     /// empty candidate list.
     fn open_with_launch_selected(&mut self) {
         if let Some(app_id) = self.openwith_candidates.get(self.openwith_selected) {
-            let _ = raekit::sys::spawn(app_id);
+            let _ = athkit::sys::spawn(app_id);
             self.toast.set("Opening…");
         }
         self.close_open_with();
@@ -1754,7 +1754,7 @@ impl App {
         self.openwith_selected = 0;
     }
 
-    // ── Global indexed search (raekit::search → kernel search_index) ──────────
+    // ── Global indexed search (athkit::search → kernel search_index) ──────────
 
     /// Open the global-search overlay with a fresh, empty query field. This is
     /// the Files counterpart of the command palette: an OS-wide find (not just an
@@ -1801,7 +1801,7 @@ impl App {
     }
 
     /// Run the typed query against the kernel search index via
-    /// `raekit::search::query_resolved` (SYS_SEARCH_QUERY_RESOLVED, 281) and store
+    /// `athkit::search::query_resolved` (SYS_SEARCH_QUERY_RESOLVED, 281) and store
     /// the NAMED hits (name + path + is_folder) as the live result rows, in the
     /// kernel's ranked order. An empty query clears the result. A pre-crawl /
     /// no-match index returns 0 hits gracefully (`search_ran = true`, empty list →
@@ -1816,7 +1816,7 @@ impl App {
             self.search_ran = false;
             return;
         }
-        let hits = raekit::syscalls::search::query_resolved(q, 64);
+        let hits = athkit::syscalls::search::query_resolved(q, 64);
         self.search_summary = summarize_resolved(&hits);
         self.search_results = hits;
         self.search_selected = 0;
@@ -1869,10 +1869,10 @@ impl App {
         let name = leaf_of(path);
         let mut head = [0u8; 512];
         let mut n = 0usize;
-        let fd = raekit::sys::open(path, 0);
+        let fd = athkit::sys::open(path, 0);
         if fd != u64::MAX {
-            n = raekit::sys::read(fd, &mut head) as usize;
-            let _ = raekit::sys::close(fd);
+            n = athkit::sys::read(fd, &mut head) as usize;
+            let _ = athkit::sys::close(fd);
         }
         let magic: Option<&[u8]> = if n > 0 {
             Some(&head[..n.min(512)])
@@ -1885,11 +1885,11 @@ impl App {
         // itself. (The list path opens its in-window Quick Look; here we have no
         // list selection, so launch the default text viewer if one is set, else
         // just report — never recurse into Files.)
-        if res.default_app == rae_mime::FALLBACK_APP {
+        if res.default_app == ath_mime::FALLBACK_APP {
             self.toast.set("Opening…");
             return;
         }
-        let _ = raekit::sys::spawn(&res.default_app);
+        let _ = athkit::sys::spawn(&res.default_app);
         self.toast.set("Opening…");
     }
 
@@ -1974,12 +1974,12 @@ impl App {
         let mut src = PathBuf::new();
         self.entry_path(&entry, &mut src);
         match trash_target(src.as_str(), self.home.as_str()) {
-            Ok(dst) => match raekit::sys::rename(src.as_str(), dst.as_str()) {
+            Ok(dst) => match athkit::sys::rename(src.as_str(), dst.as_str()) {
                 Ok(()) => {
                     self.toast.set("Moved to Trash");
                     self.refresh_entries();
                 }
-                Err(raekit::sys::E_VFS_EXISTS) => self.toast.set("Already in Trash (name taken)"),
+                Err(athkit::sys::E_VFS_EXISTS) => self.toast.set("Already in Trash (name taken)"),
                 Err(_) => self.toast.set("Delete failed"),
             },
             Err(_) => self.toast.set("Cannot trash this item"),
@@ -1995,12 +1995,12 @@ impl App {
         let mut src = PathBuf::new();
         self.entry_path(&entry, &mut src);
         match restore_target(src.as_str(), self.home.as_str(), self.home.as_str()) {
-            Ok(dst) => match raekit::sys::rename(src.as_str(), dst.as_str()) {
+            Ok(dst) => match athkit::sys::rename(src.as_str(), dst.as_str()) {
                 Ok(()) => {
                     self.toast.set("Restored to Home");
                     self.refresh_entries();
                 }
-                Err(raekit::sys::E_VFS_EXISTS) => self.toast.set("Restore: name taken at Home"),
+                Err(athkit::sys::E_VFS_EXISTS) => self.toast.set("Restore: name taken at Home"),
                 Err(_) => self.toast.set("Restore failed"),
             },
             Err(_) => self.toast.set("Not in Trash"),
@@ -2015,12 +2015,12 @@ impl App {
         };
         let mut src = PathBuf::new();
         self.entry_path(&entry, &mut src);
-        match raekit::sys::unlink(src.as_str()) {
+        match athkit::sys::unlink(src.as_str()) {
             Ok(()) => {
                 self.toast.set("Deleted permanently");
                 self.refresh_entries();
             }
-            Err(raekit::sys::E_VFS_NOT_EMPTY) => self.toast.set("Folder not empty"),
+            Err(athkit::sys::E_VFS_NOT_EMPTY) => self.toast.set("Folder not empty"),
             Err(_) => self.toast.set("Delete failed"),
         }
     }
@@ -2030,13 +2030,13 @@ impl App {
         let mut p = PathBuf::new();
         p.set(self.cwd());
         p.push_component("New Folder");
-        match raekit::sys::mkdir(p.as_str()) {
+        match athkit::sys::mkdir(p.as_str()) {
             Ok(()) => {
                 self.toast.set("Created New Folder");
                 self.refresh_entries();
             }
-            Err(raekit::sys::E_VFS_EXISTS) => self.toast.set("New Folder already exists"),
-            Err(raekit::sys::E_VFS_READONLY) => self.toast.set("Read-only location"),
+            Err(athkit::sys::E_VFS_EXISTS) => self.toast.set("New Folder already exists"),
+            Err(athkit::sys::E_VFS_READONLY) => self.toast.set("Read-only location"),
             Err(_) => self.toast.set("mkdir failed"),
         }
     }
@@ -2048,8 +2048,8 @@ impl App {
     // a third-party tool (Windows Explorer and macOS Finder both extract natively).
     // `.zip` is the Windows-world shape; `.tar.gz`/`.tgz` is the POSIX-world shape
     // (source releases, toolchains, container layers). The archive logic (parse /
-    // inflate / CRC / bomb bounds / zip-slip gate) is the host-KAT'd `rae_zip` and
-    // `rae_tar`; this method is the thin syscall shell that drives them, with the
+    // inflate / CRC / bomb bounds / zip-slip gate) is the host-KAT'd `ath_zip` and
+    // `ath_tar`; this method is the thin syscall shell that drives them, with the
     // per-format `is_safe_path` gate consulted before every write.
 
     /// True when the selected entry looks like a supported archive (zip or
@@ -2083,11 +2083,11 @@ impl App {
         // (offset 0), or ustar (offset 257) magic. 264 bytes covers all three.
         let mut p = PathBuf::new();
         self.entry_path(&entry, &mut p);
-        let fd = raekit::sys::open(p.as_str(), 0);
+        let fd = athkit::sys::open(p.as_str(), 0);
         if fd != u64::MAX {
             let mut hdr = [0u8; 264];
-            let n = raekit::sys::read(fd, &mut hdr) as usize;
-            let _ = raekit::sys::close(fd);
+            let n = athkit::sys::read(fd, &mut hdr) as usize;
+            let _ = athkit::sys::close(fd);
             let hdr = &hdr[..n.min(264)];
             if hdr.len() >= 2 && hdr[0] == 0x1F && hdr[1] == 0x8B {
                 return Some(ArchiveFormat::TarGz);
@@ -2141,13 +2141,13 @@ impl App {
         // Read the whole archive (same size cap as the image-decode path).
         let mut src = PathBuf::new();
         self.entry_path(&entry, &mut src);
-        let fd = raekit::sys::open(src.as_str(), 0);
+        let fd = athkit::sys::open(src.as_str(), 0);
         if fd == u64::MAX {
             self.toast.set("Extract: cannot open archive");
             return;
         }
         let bytes = read_whole_file(fd, &[]);
-        let _ = raekit::sys::close(fd);
+        let _ = athkit::sys::close(fd);
         let bytes = match bytes {
             Some(b) => b,
             None => {
@@ -2162,9 +2162,9 @@ impl App {
         let mut dest = PathBuf::new();
         dest.set(self.cwd());
         dest.push_component(stem);
-        match raekit::sys::mkdir(dest.as_str()) {
-            Ok(()) | Err(raekit::sys::E_VFS_EXISTS) => {}
-            Err(raekit::sys::E_VFS_READONLY) => {
+        match athkit::sys::mkdir(dest.as_str()) {
+            Ok(()) | Err(athkit::sys::E_VFS_EXISTS) => {}
+            Err(athkit::sys::E_VFS_READONLY) => {
                 self.toast.set("Extract: read-only location");
                 return;
             }
@@ -2195,7 +2195,7 @@ impl App {
     // daily driver lets you CREATE an archive (zip a project to email, gzip a log)
     // without a third-party tool (Windows Explorer "Send to > Compressed folder",
     // macOS Finder "Compress"). The compression core (LZ77 + fixed-Huffman DEFLATE,
-    // gzip framing, CRC-32) is the host-KAT'd `rae_deflate`; this method is the thin
+    // gzip framing, CRC-32) is the host-KAT'd `ath_deflate`; this method is the thin
     // syscall + container shell. The container choice mirrors the platforms:
     //   • exactly ONE marked FILE (no folders) → `<name>.gz` (gzip single stream),
     //   • anything else (2+ items, OR any folder) → `<base>.zip` (multi-member ZIP).
@@ -2273,7 +2273,7 @@ impl App {
                     return;
                 }
             };
-            let gz = rae_deflate::gzip_compress(&bytes);
+            let gz = ath_deflate::gzip_compress(&bytes);
 
             // Destination: `<name>.gz` in the current dir.
             let mut dst = PathBuf::new();
@@ -2400,9 +2400,9 @@ impl App {
         if is_csv || is_tsv {
             if let Some(text) = read_file_text_capped(p.as_str(), CSV_READ_CAP) {
                 let parsed = if is_tsv {
-                    rae_csv::parse_with(&text, '\t')
+                    ath_csv::parse_with(&text, '\t')
                 } else {
-                    rae_csv::parse(&text)
+                    ath_csv::parse(&text)
                 };
                 if let Ok(csv) = parsed {
                     if !csv.is_empty() {
@@ -2451,9 +2451,9 @@ impl App {
             return;
         }
 
-        let fd = raekit::sys::open(p.as_str(), 0);
+        let fd = athkit::sys::open(p.as_str(), 0);
         if fd != u64::MAX {
-            let n = raekit::sys::read(fd, &mut self.preview) as usize;
+            let n = athkit::sys::read(fd, &mut self.preview) as usize;
             self.preview_len = n.min(PREVIEW_CAP);
             // Heuristic: printable-ASCII-dominant → render as text.
             self.preview_is_text = looks_textual(&self.preview[..self.preview_len]);
@@ -2494,7 +2494,7 @@ impl App {
                     }
                 }
             }
-            let _ = raekit::sys::close(fd);
+            let _ = athkit::sys::close(fd);
         }
         self.overlay = Overlay::QuickLook;
     }
@@ -2502,10 +2502,10 @@ impl App {
     // ── Checksum / Verify (download-integrity) ─────────────────────────────
     //
     // LEGACY_GAMING_CONCEPT.md §"the user owns the machine" / "security by default,
-    // not by friction": when you download an installer, an ISO, or a `.raepkg`
+    // not by friction": when you download an installer, an ISO, or a `.athpkg`
     // and the publisher posted a checksum, you should be able to verify the
     // file's integrity locally — no network round-trip, no third party. Press
-    // `h` on a selected file: Files STREAMS it through `rae_hash` (64 KiB blocks,
+    // `h` on a selected file: Files STREAMS it through `ath_hash` (64 KiB blocks,
     // so a multi-GB image never loads whole) and shows SHA-256 (the primary),
     // SHA-1, MD5, and CRC32. Paste the published hash into the verify field and
     // press Enter — the algorithm is auto-detected by the hex LENGTH and matched
@@ -2575,7 +2575,7 @@ impl App {
     /// Run the pasted expected-hash against the file's digests. The algorithm is
     /// auto-detected by the trimmed hex LENGTH (64 = SHA-256, 40 = SHA-1, 32 =
     /// MD5, 8 = CRC32); an unrecognized length → NO MATCH (never panics). The
-    /// comparison itself is `rae_hash::verify`'s case-insensitive equality, run
+    /// comparison itself is `ath_hash::verify`'s case-insensitive equality, run
     /// against the digest we already streamed (so no second full file read).
     fn run_verify(&mut self) {
         let want = self.verify_str().trim();
@@ -2584,10 +2584,10 @@ impl App {
             return;
         }
         let got = match algo_for_len(want.len()) {
-            Some(rae_hash::Algo::Sha256) => Some(self.checksum_sha256.as_str()),
-            Some(rae_hash::Algo::Sha1) => Some(self.checksum_sha1.as_str()),
-            Some(rae_hash::Algo::Md5) => Some(self.checksum_md5.as_str()),
-            Some(rae_hash::Algo::Crc32) => Some(self.checksum_crc32.as_str()),
+            Some(ath_hash::Algo::Sha256) => Some(self.checksum_sha256.as_str()),
+            Some(ath_hash::Algo::Sha1) => Some(self.checksum_sha1.as_str()),
+            Some(ath_hash::Algo::Md5) => Some(self.checksum_md5.as_str()),
+            Some(ath_hash::Algo::Crc32) => Some(self.checksum_crc32.as_str()),
             None => None,
         };
         self.verify_result = match got {
@@ -2601,7 +2601,7 @@ impl App {
     // A genuine power-user/dev surface (Concept §Windows Pain Points "the modern
     // file manager"): mark EXACTLY two text files (`m`), press Compare, and see a
     // scrollable, color-coded unified diff. The diff itself is the host-KAT'd
-    // `rae_diff::unified_diff`; this method is the thin syscall + decode shell.
+    // `ath_diff::unified_diff`; this method is the thin syscall + decode shell.
     // Never panics: a binary / non-UTF-8 / oversized file shows a message and
     // leaves the app running.
 
@@ -2636,7 +2636,7 @@ impl App {
     /// Open the Compare overlay for the two marked files. Requires EXACTLY two
     /// marked entries, both files. Reads both (size-capped), guards against
     /// binary / non-UTF-8 content, computes a 3-context unified diff via
-    /// `rae_diff`, and shows it. Any failure → a status message, overlay stays
+    /// `ath_diff`, and shows it. Any failure → a status message, overlay stays
     /// closed, app alive.
     fn open_compare(&mut self) {
         if self.marked_count() != 2 {
@@ -2829,7 +2829,7 @@ impl App {
                     let mut dst = PathBuf::new();
                     dst.set(self.cwd());
                     dst.push_component(new_name.as_str());
-                    match raekit::sys::rename(src.as_str(), dst.as_str()) {
+                    match athkit::sys::rename(src.as_str(), dst.as_str()) {
                         Ok(()) => ok += 1,
                         Err(_) => failures += 1,
                     }
@@ -2994,7 +2994,7 @@ impl App {
                 true
             }
             Action::CloseApp => {
-                raekit::sys::exit(0);
+                athkit::sys::exit(0);
             }
             Action::GoBack => {
                 self.go_back();
@@ -3068,7 +3068,7 @@ fn render(app: &App, canvas: &mut Canvas) {
 }
 
 /// Render the Files main window from a syscall-free [`FilesViewState`]. PURE —
-/// it touches only the `canvas`, `rae_tokens`, and the embedded font/icon data,
+/// it touches only the `canvas`, `ath_tokens`, and the embedded font/icon data,
 /// so a host tool (the screenshot harness) can render the LIVE Files draw path
 /// with no kernel. The live app calls this every frame via `render`; the only
 /// difference between the two callers is where the state came from (live
@@ -3086,7 +3086,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
     // `glass.panel` tier and the content list is overdrawn SOLID + de-tinted
     // below; the window edge gets the iridescent rim last. A soft elev.2 ambient
     // shadow floats the window (skipped if it would clip the frame).
-    let shadow = rae_tokens::ELEV_2;
+    let shadow = ath_tokens::ELEV_2;
     canvas.fill_rounded_rect_shadow(
         0,
         0,
@@ -3121,12 +3121,12 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
         canvas.fill_rounded_rect(cx - tl_r, tl_y - tl_r, tl_r * 2, tl_r * 2, tl_r, *tint);
     }
     // "Files" title centered (the traffic lights took the left inset).
-    let title_w = canvas.measure_text_aa("Files", rae_tokens::TYPE_SUBTITLE, FontFamily::Sans);
+    let title_w = canvas.measure_text_aa("Files", ath_tokens::TYPE_SUBTITLE, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W as i32 - title_w) / 2,
-        ((TITLE_H.saturating_sub(rae_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
+        ((TITLE_H.saturating_sub(ath_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
         "Files",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -3145,7 +3145,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
         8,
         tb_by,
         tb_btn,
-        raegfx::icon::Icon::ChevronLeft,
+        athgfx::icon::Icon::ChevronLeft,
         state.can_back,
     );
     draw_tool_icon_button(
@@ -3153,7 +3153,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
         38,
         tb_by,
         tb_btn,
-        raegfx::icon::Icon::Chevron,
+        athgfx::icon::Icon::Chevron,
         state.can_forward,
     );
     draw_tool_icon_button(
@@ -3161,7 +3161,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
         68,
         tb_by,
         tb_btn,
-        raegfx::icon::Icon::ChevronUp,
+        athgfx::icon::Icon::ChevronUp,
         true,
     );
     draw_button(canvas, 110, tb_by, 92, tb_btn, "New Folder");
@@ -3171,9 +3171,9 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
     // Breadcrumb — rides on the frosted chrome (no opaque fill), IDENTITY §7.
     let bc_y = tb_y + TOOLBAR_H;
     let bc_ty = (bc_y
-        + (BREADCRUMB_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+        + (BREADCRUMB_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
         as i32;
-    // Accessibility (raeen-accessibility): the breadcrumb "Path:" label rides on
+    // Accessibility (athena-accessibility): the breadcrumb "Path:" label rides on
     // the frosted `glass.chrome` band, which over the bright-aurora region measured
     // ~1.1–2.7:1 in `text.secondary` (the shell hand-rolls glass and bypasses the
     // runtime luma cap). Promote to `text.primary` — the same fix already applied
@@ -3182,7 +3182,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
         12,
         bc_ty,
         "Path:",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -3190,7 +3190,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
         path_w + 8,
         bc_ty,
         state.cwd.as_str(),
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         accent_s(seed),
         FontFamily::Sans,
     );
@@ -3206,7 +3206,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
     // which overwrites) so the chrome/aurora reads through the translucent tier.
     canvas.fill_rounded_rect(0, sb_y, SIDEBAR_W, sb_h, 0, PANEL_TIER.tint);
     canvas.fill_rounded_rect(0, sb_y, SIDEBAR_W, sb_h, 0, PANEL_TIER.frost);
-    // Accessibility (raeen-accessibility): the "Quick Access" sidebar header sits
+    // Accessibility (athena-accessibility): the "Quick Access" sidebar header sits
     // on the frosted `glass.panel` rail over the bright aurora — `text.secondary`
     // measured ~1.1–2.7:1 there. Promote to `text.primary`, consistent with the
     // breadcrumb label above and the Control Center labels.
@@ -3214,7 +3214,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
         12,
         (sb_y + 8) as i32,
         "Quick Access",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -3240,13 +3240,13 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
                 sy,
                 SIDEBAR_W - 8,
                 sb_row_h,
-                rae_tokens::RADIUS_SM as usize,
+                ath_tokens::RADIUS_SM as usize,
                 row_sel_s(seed),
             );
         }
         let _ = glyph; // letter placeholder retired in favor of the line-icon
         let item_ty = (sy
-            + (sb_row_h.saturating_sub(rae_tokens::TYPE_LABEL.line_height as usize)) / 2)
+            + (sb_row_h.saturating_sub(ath_tokens::TYPE_LABEL.line_height as usize)) / 2)
             as i32;
         // Sidebar locations are directories → the real Folder line-icon tinted
         // `ftype.dir` (tracks accent, §6) — replaces the old letter placeholder.
@@ -3269,7 +3269,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
             32,
             item_ty,
             name,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             sb_text_ink,
             FontFamily::Sans,
         );
@@ -3289,12 +3289,12 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
     // Column header — one neutral step above the content field.
     canvas.fill_rect(lv_x, lv_y, lv_w, 22, CONTENT_HDR_BG);
     let hdr_ty =
-        (lv_y + (22usize.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2) as i32;
+        (lv_y + (22usize.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2) as i32;
     canvas.draw_text_aa(
         (lv_x + 32) as i32,
         hdr_ty,
         "Name",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -3302,7 +3302,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
         (lv_x + lv_w - 90) as i32,
         hdr_ty,
         "Size",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -3325,7 +3325,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
                 row_y + 1,
                 lv_w - 8,
                 ROW_H - 2,
-                rae_tokens::RADIUS_SM as usize,
+                ath_tokens::RADIUS_SM as usize,
                 row_sel_s(seed),
             );
         } else if e.marked {
@@ -3334,7 +3334,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
                 row_y + 1,
                 lv_w - 8,
                 ROW_H - 2,
-                rae_tokens::RADIUS_SM as usize,
+                ath_tokens::RADIUS_SM as usize,
                 DARK.bg_elevated,
             );
         } else if actual % 2 == 1 {
@@ -3345,7 +3345,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
 
         let name = e.name.as_str();
         // §4.4 file-type semantics: classify by kind+extension, tint from the
-        // `rae_tokens::ftype_*` palette (dir/code track the live accent).
+        // `ath_tokens::ftype_*` palette (dir/code track the live accent).
         let ft = if e.is_folder {
             FType::Dir
         } else {
@@ -3359,12 +3359,12 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
             (ftype_color_s(ft, seed), TEXT_FG, TEXT_MUTED)
         };
         let row_ty =
-            (row_y + (ROW_H.saturating_sub(rae_tokens::TYPE_BODY.line_height as usize)) / 2) as i32;
+            (row_y + (ROW_H.saturating_sub(ath_tokens::TYPE_BODY.line_height as usize)) / 2) as i32;
         // Mark indicator (checkbox dot) before the icon for selected-for-batch.
         if e.marked {
             canvas.fill_rounded_rect(lv_x + 2, row_y + ROW_H / 2 - 3, 6, 6, 3, accent_s(seed));
         }
-        // Real line-icon (`raegfx::icon`), tinted by the §4.4 palette — replaces
+        // Real line-icon (`athgfx::icon`), tinted by the §4.4 palette — replaces
         // the old letter/block placeholder (visual-QA Round-2 fix).
         let icon_sz = 16i32;
         let icon_y = (row_y + ROW_H.saturating_sub(icon_sz as usize) / 2) as i32;
@@ -3373,7 +3373,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
             (lv_x + 42) as i32,
             row_ty,
             name,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             name_ink,
             FontFamily::Sans,
         );
@@ -3382,13 +3382,13 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
             let mut buf = [0u8; 24];
             let n = fmt_size(e.bytes, &mut buf);
             if let Ok(s) = core::str::from_utf8(&buf[..n]) {
-                let sw = canvas.measure_text_aa(s, rae_tokens::TYPE_BODY, FontFamily::Sans);
+                let sw = canvas.measure_text_aa(s, ath_tokens::TYPE_BODY, FontFamily::Sans);
                 let px = (lv_x + lv_w - 8) as i32 - sw;
                 canvas.draw_text_aa(
                     px,
                     row_ty,
                     s,
-                    rae_tokens::TYPE_BODY,
+                    ath_tokens::TYPE_BODY,
                     size_ink,
                     FontFamily::Sans,
                 );
@@ -3404,7 +3404,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
     canvas.fill_rounded_rect(0, st_y, WIN_W, STATUS_H, 0, CHROME_TIER.tint);
     canvas.fill_rounded_rect(0, st_y, WIN_W, STATUS_H, 0, CHROME_TIER.frost);
     let st_ty = (st_y
-        + (STATUS_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+        + (STATUS_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
         as i32;
     // Left: toast (if any) else item count.
     if !state.toast.is_empty() {
@@ -3412,7 +3412,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
             12,
             st_ty,
             state.toast.as_str(),
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             accent_s(seed),
             FontFamily::Sans,
         );
@@ -3424,7 +3424,7 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
                 12,
                 st_ty,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_MUTED,
                 FontFamily::Sans,
             );
@@ -3433,12 +3433,12 @@ pub fn render_preview(canvas: &mut Canvas, state: &FilesViewState) {
     // Trimmed to the four highest-value shortcuts — the full seven-item wall
     // read as debug chrome (visual-QA); the rest stay discoverable via '?'.
     let hint = "/ Search   Space Look   F2 Rename   Del Trash";
-    let hint_w = canvas.measure_text_aa(hint, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let hint_w = canvas.measure_text_aa(hint, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 12) as i32 - hint_w,
         st_ty,
         hint,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -3517,7 +3517,7 @@ fn search_row_at(px: i32, py: i32, selected: usize, total: usize) -> Option<usiz
 /// Render the global indexed-search overlay: a centered glass card with the live
 /// query field, a per-kind tally header, and a scrollable list of NAMED result
 /// rows (each with its file-type icon tint, leaf name, and dimmed path) sourced
-/// from `raekit::search::query_resolved` (SYS_SEARCH_QUERY_RESOLVED, 281). The
+/// from `athkit::search::query_resolved` (SYS_SEARCH_QUERY_RESOLVED, 281). The
 /// highlighted row is selectable by Up/Down + Enter and by mouse click; Enter on
 /// a folder navigates, on a file opens via the default app. A queried-but-empty
 /// index shows "No results" (graceful, never an error); before the first Enter it
@@ -3532,7 +3532,7 @@ fn render_search(app: &App, canvas: &mut Canvas) {
         card_y,
         SEARCH_CARD_W,
         SEARCH_CARD_H,
-        rae_tokens::RADIUS_MD as usize,
+        ath_tokens::RADIUS_MD as usize,
         DARK.bg_overlay,
     );
 
@@ -3541,7 +3541,7 @@ fn render_search(app: &App, canvas: &mut Canvas) {
         (card_x + 16) as i32,
         (card_y + 12) as i32,
         "Search this PC",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -3553,7 +3553,7 @@ fn render_search(app: &App, canvas: &mut Canvas) {
         field_y,
         SEARCH_CARD_W - 32,
         28,
-        rae_tokens::RADIUS_SM as usize,
+        ath_tokens::RADIUS_SM as usize,
         DARK.bg_base,
     );
     let q = app.search_query();
@@ -3563,7 +3563,7 @@ fn render_search(app: &App, canvas: &mut Canvas) {
         (card_x + 26) as i32,
         (field_y + 6) as i32,
         shown,
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         q_color,
         FontFamily::Sans,
     );
@@ -3578,7 +3578,7 @@ fn render_search(app: &App, canvas: &mut Canvas) {
                 (card_x + 16) as i32,
                 summary_y as i32,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 accent(),
                 FontFamily::Sans,
             );
@@ -3591,7 +3591,7 @@ fn render_search(app: &App, canvas: &mut Canvas) {
             list_x as i32,
             list_y as i32,
             "Press Enter to search the index. Esc to close.",
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -3600,7 +3600,7 @@ fn render_search(app: &App, canvas: &mut Canvas) {
             list_x as i32,
             list_y as i32,
             "No results",
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -3621,11 +3621,11 @@ fn render_search(app: &App, canvas: &mut Canvas) {
                     row_y,
                     list_w,
                     SEARCH_ROW_H - 4,
-                    rae_tokens::RADIUS_SM as usize,
+                    ath_tokens::RADIUS_SM as usize,
                     DARK.bg_base,
                 );
             }
-            // Real file-type line-icon (`raegfx::icon`), tinted by the §4.4
+            // Real file-type line-icon (`athgfx::icon`), tinted by the §4.4
             // palette — replaces the old letter/block placeholder.
             let ft = ftype_for_resolved(hit);
             canvas.draw_icon(
@@ -3646,7 +3646,7 @@ fn render_search(app: &App, canvas: &mut Canvas) {
                 (list_x + 44) as i32,
                 (row_y + 2) as i32,
                 name,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 TEXT_FG,
                 FontFamily::Sans,
             );
@@ -3656,7 +3656,7 @@ fn render_search(app: &App, canvas: &mut Canvas) {
                     (list_x + 44) as i32,
                     (row_y + 18) as i32,
                     hit.path.as_str(),
-                    rae_tokens::TYPE_CAPTION,
+                    ath_tokens::TYPE_CAPTION,
                     TEXT_MUTED,
                     FontFamily::Sans,
                 );
@@ -3669,7 +3669,7 @@ fn render_search(app: &App, canvas: &mut Canvas) {
         (card_x + 16) as i32,
         (card_y + SEARCH_CARD_H - 22) as i32,
         "Enter opens  -  Up/Down selects  -  Esc closes",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -3723,7 +3723,7 @@ fn fmt_kind_row(label: &str, count: usize, out: &mut [u8]) -> usize {
 }
 
 /// Render the "Open With" overlay: a centered glass card listing the resolved
-/// rae_mime candidate app ids for the selected file, the default (index 0) drawn
+/// ath_mime candidate app ids for the selected file, the default (index 0) drawn
 /// bold/accented and first, the highlighted row inverted. The footer shows the
 /// resolved MIME type + the key hints (Enter = open, d = set default, Esc).
 fn render_open_with(app: &App, canvas: &mut Canvas) {
@@ -3743,7 +3743,7 @@ fn render_open_with(app: &App, canvas: &mut Canvas) {
         card_y,
         card_w,
         card_h,
-        rae_tokens::RADIUS_MD as usize,
+        ath_tokens::RADIUS_MD as usize,
         DARK.bg_overlay,
     );
 
@@ -3752,7 +3752,7 @@ fn render_open_with(app: &App, canvas: &mut Canvas) {
         (card_x + 16) as i32,
         (card_y + 12) as i32,
         "Open With",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -3761,7 +3761,7 @@ fn render_open_with(app: &App, canvas: &mut Canvas) {
         (card_x + 16) as i32,
         (card_y + 32) as i32,
         name,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -3785,9 +3785,9 @@ fn render_open_with(app: &App, canvas: &mut Canvas) {
         // The default carries a leading bullet so it reads as "default" even
         // without color (a11y); the typeface is the heavier label style.
         let style = if is_default {
-            rae_tokens::TYPE_LABEL
+            ath_tokens::TYPE_LABEL
         } else {
-            rae_tokens::TYPE_BODY
+            ath_tokens::TYPE_BODY
         };
         let mut text_x = card_x + 16;
         if is_default {
@@ -3817,7 +3817,7 @@ fn render_open_with(app: &App, canvas: &mut Canvas) {
         (card_x + 16) as i32,
         fy as i32,
         app.openwith_mime.as_str(),
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -3825,7 +3825,7 @@ fn render_open_with(app: &App, canvas: &mut Canvas) {
         (card_x + 16) as i32,
         (fy + 16) as i32,
         "Enter: open   d: set default   Esc: cancel",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -3849,7 +3849,7 @@ fn render_tabs_preview(state: &FilesViewState, canvas: &mut Canvas) {
         // frost-white lift (reads raised), inactive tabs a faint translucent slate
         // so the aurora still bleeds through the chrome band (IDENTITY §7).
         let bg = if is_active {
-            rae_tokens::GLASS_POPOVER_DARK.frost
+            ath_tokens::GLASS_POPOVER_DARK.frost
         } else {
             0x22_FF_FF_FF
         };
@@ -3858,7 +3858,7 @@ fn render_tabs_preview(state: &FilesViewState, canvas: &mut Canvas) {
             ty + 3,
             tab_w,
             TABBAR_H - 4,
-            rae_tokens::RADIUS_XS as usize,
+            ath_tokens::RADIUS_XS as usize,
             bg,
         );
         if is_active {
@@ -3874,7 +3874,7 @@ fn render_tabs_preview(state: &FilesViewState, canvas: &mut Canvas) {
         // a lone tab read as a stray text input over the chrome (visual-QA).
         let label = state.tabs.get(i).map(|t| leaf(t.as_str())).unwrap_or("/");
         let lty = (ty
-            + (TABBAR_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+            + (TABBAR_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
             as i32;
         let fg = if is_active { TEXT_FG } else { TEXT_MUTED };
         let tab_icon_sz = 12i32;
@@ -3890,7 +3890,7 @@ fn render_tabs_preview(state: &FilesViewState, canvas: &mut Canvas) {
             (tx + 8 + tab_icon_sz as usize + 6) as i32,
             lty,
             label,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             fg,
             FontFamily::Sans,
         );
@@ -3903,11 +3903,11 @@ fn render_tabs_preview(state: &FilesViewState, canvas: &mut Canvas) {
         plus.y,
         plus.w,
         plus.h,
-        rae_tokens::RADIUS_XS as usize,
+        ath_tokens::RADIUS_XS as usize,
         0x22_FF_FF_FF,
     );
     canvas.draw_icon(
-        raegfx::icon::Icon::Plus,
+        athgfx::icon::Icon::Plus,
         (plus.x + (plus.w.saturating_sub(12)) / 2) as i32,
         (plus.y + (plus.h.saturating_sub(12)) / 2) as i32,
         12,
@@ -3985,7 +3985,7 @@ fn render_compare(app: &App, canvas: &mut Canvas) {
         COMPARE_PANEL_Y,
         COMPARE_PANEL_W,
         COMPARE_PANEL_H,
-        rae_tokens::RADIUS_LG as usize,
+        ath_tokens::RADIUS_LG as usize,
         DARK.bg_overlay,
     );
     canvas.draw_rounded_rect_outline(
@@ -3993,7 +3993,7 @@ fn render_compare(app: &App, canvas: &mut Canvas) {
         COMPARE_PANEL_Y,
         COMPARE_PANEL_W,
         COMPARE_PANEL_H,
-        rae_tokens::RADIUS_LG as usize,
+        ath_tokens::RADIUS_LG as usize,
         STROKE_HL,
     );
 
@@ -4002,7 +4002,7 @@ fn render_compare(app: &App, canvas: &mut Canvas) {
         (COMPARE_PANEL_X + 16) as i32,
         (COMPARE_PANEL_Y + 12) as i32,
         "Compare",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -4012,7 +4012,7 @@ fn render_compare(app: &App, canvas: &mut Canvas) {
         hx,
         hy,
         app.compare_name_a_str(),
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         DARK.state_danger,
         FontFamily::Mono,
     );
@@ -4020,7 +4020,7 @@ fn render_compare(app: &App, canvas: &mut Canvas) {
         hx + aw + 6,
         hy,
         "->",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -4028,7 +4028,7 @@ fn render_compare(app: &App, canvas: &mut Canvas) {
         hx + aw + 6 + arrow_w + 6,
         hy,
         app.compare_name_b_str(),
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         DARK.state_ok,
         FontFamily::Mono,
     );
@@ -4053,7 +4053,7 @@ fn render_compare(app: &App, canvas: &mut Canvas) {
                 (COMPARE_PANEL_X + 16) as i32,
                 y as i32,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 color,
                 FontFamily::Mono,
             );
@@ -4071,19 +4071,19 @@ fn render_compare(app: &App, canvas: &mut Canvas) {
                 (COMPARE_PANEL_X + 16) as i32,
                 (COMPARE_PANEL_Y + COMPARE_PANEL_H - 22) as i32,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_MUTED,
                 FontFamily::Sans,
             );
         }
     }
     let hint = "Up/Down/PgUp/PgDn: scroll   Esc: close";
-    let hw = canvas.measure_text_aa(hint, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let hw = canvas.measure_text_aa(hint, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (COMPARE_PANEL_X + COMPARE_PANEL_W - 16) as i32 - hw,
         (COMPARE_PANEL_Y + COMPARE_PANEL_H - 22) as i32,
         hint,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -4122,10 +4122,10 @@ fn render_quick_look(app: &App, canvas: &mut Canvas) {
         py,
         pw,
         ph,
-        rae_tokens::RADIUS_LG as usize,
+        ath_tokens::RADIUS_LG as usize,
         DARK.bg_overlay,
     );
-    canvas.draw_rounded_rect_outline(px, py, pw, ph, rae_tokens::RADIUS_LG as usize, STROKE_HL);
+    canvas.draw_rounded_rect_outline(px, py, pw, ph, ath_tokens::RADIUS_LG as usize, STROKE_HL);
 
     // Header
     let name = app
@@ -4137,7 +4137,7 @@ fn render_quick_look(app: &App, canvas: &mut Canvas) {
         (px + 16) as i32,
         (py + 12) as i32,
         "Quick Look",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -4145,7 +4145,7 @@ fn render_quick_look(app: &App, canvas: &mut Canvas) {
         (px + 16) as i32,
         (py + 34) as i32,
         name,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         accent(),
         FontFamily::Sans,
     );
@@ -4159,12 +4159,12 @@ fn render_quick_look(app: &App, canvas: &mut Canvas) {
         // Extracted document text (PDF/DOCX): a scrollable, line-by-line view.
         // The header already shows the file name; the format label sits to the
         // right of "Quick Look" so the user knows what engine opened it.
-        let lw = canvas.measure_text_aa("Quick Look", rae_tokens::TYPE_SUBTITLE, FontFamily::Sans);
+        let lw = canvas.measure_text_aa("Quick Look", ath_tokens::TYPE_SUBTITLE, FontFamily::Sans);
         canvas.draw_text_aa(
             (px + 16) as i32 + lw + 10,
             (py + 14) as i32,
             app.preview_doc_label,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -4220,12 +4220,12 @@ fn render_quick_look(app: &App, canvas: &mut Canvas) {
     } else {
         "Space/Esc: close"
     };
-    let hw = canvas.measure_text_aa(hint, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let hw = canvas.measure_text_aa(hint, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (px + pw - 16) as i32 - hw,
         (py + ph - 22) as i32,
         hint,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -4239,7 +4239,7 @@ fn render_text_preview(
     _w: usize,
     max_y: usize,
 ) {
-    let line_h = rae_tokens::TYPE_BODY.line_height as usize + 2;
+    let line_h = ath_tokens::TYPE_BODY.line_height as usize + 2;
     let mut line_start = 0usize;
     for i in 0..=buf.len() {
         let at_end = i == buf.len();
@@ -4249,7 +4249,7 @@ fn render_text_preview(
                     x as i32,
                     y as i32,
                     "...",
-                    rae_tokens::TYPE_BODY,
+                    ath_tokens::TYPE_BODY,
                     TEXT_MUTED,
                     FontFamily::Sans,
                 );
@@ -4267,7 +4267,7 @@ fn render_text_preview(
                     x as i32,
                     y as i32,
                     s,
-                    rae_tokens::TYPE_BODY,
+                    ath_tokens::TYPE_BODY,
                     TEXT_FG,
                     FontFamily::Mono,
                 );
@@ -4295,7 +4295,7 @@ fn render_doc_text(
     _w: usize,
     max_y: usize,
 ) {
-    let line_h = rae_tokens::TYPE_BODY.line_height as usize + 2;
+    let line_h = ath_tokens::TYPE_BODY.line_height as usize + 2;
     let mut y = start_y;
     let mut page = 1usize;
     let mut visible_line = 0usize; // counts logical lines AFTER the scroll skip
@@ -4324,7 +4324,7 @@ fn render_doc_text(
                     x as i32,
                     y as i32,
                     "...",
-                    rae_tokens::TYPE_BODY,
+                    ath_tokens::TYPE_BODY,
                     TEXT_MUTED,
                     FontFamily::Sans,
                 );
@@ -4340,7 +4340,7 @@ fn render_doc_text(
                     x as i32,
                     y as i32,
                     &marker,
-                    rae_tokens::TYPE_CAPTION,
+                    ath_tokens::TYPE_CAPTION,
                     TEXT_MUTED,
                     FontFamily::Sans,
                 );
@@ -4356,7 +4356,7 @@ fn render_doc_text(
                         x as i32,
                         y as i32,
                         s,
-                        rae_tokens::TYPE_BODY,
+                        ath_tokens::TYPE_BODY,
                         TEXT_FG,
                         FontFamily::Sans,
                     );
@@ -4450,7 +4450,7 @@ fn cell_display_width(cell: &str, cap: usize) -> usize {
 /// capped-display-width of any cell in that column over the first
 /// `CSV_MAX_RENDER_ROWS` rows. Ragged rows are safe (a short row simply doesn't
 /// contribute to columns it lacks). Each width is clamped to `CSV_COL_CAP`.
-fn csv_column_widths(csv: &rae_csv::Csv) -> Vec<usize> {
+fn csv_column_widths(csv: &ath_csv::Csv) -> Vec<usize> {
     let cols = csv.cols();
     let mut widths: Vec<usize> = Vec::new();
     widths.resize(cols, 1); // min width 1 so an all-empty column still draws a gap
@@ -4471,7 +4471,7 @@ fn csv_column_widths(csv: &rae_csv::Csv) -> Vec<usize> {
 /// with spaces to its column width, columns separated by "  " (two spaces). Pads
 /// in CHARS (mono font → uniform advance), so columns align. Ragged-safe: missing
 /// cells render as empty (padded) fields.
-fn csv_render_row(csv: &rae_csv::Csv, row: usize, widths: &[usize]) -> alloc::string::String {
+fn csv_render_row(csv: &ath_csv::Csv, row: usize, widths: &[usize]) -> alloc::string::String {
     let mut line = alloc::string::String::new();
     for (c, &w) in widths.iter().enumerate() {
         if c > 0 {
@@ -4490,7 +4490,7 @@ fn csv_render_row(csv: &rae_csv::Csv, row: usize, widths: &[usize]) -> alloc::st
 
 #[allow(clippy::too_many_arguments)]
 fn render_csv_table(
-    csv: &rae_csv::Csv,
+    csv: &ath_csv::Csv,
     scroll: usize,
     canvas: &mut Canvas,
     x: usize,
@@ -4499,7 +4499,7 @@ fn render_csv_table(
     max_y: usize,
 ) {
     let widths = csv_column_widths(csv);
-    let line_h = rae_tokens::TYPE_BODY.line_height as usize + 2;
+    let line_h = ath_tokens::TYPE_BODY.line_height as usize + 2;
 
     // "N rows × M cols" summary (data rows = total minus the header row).
     let total_rows = csv.len();
@@ -4519,7 +4519,7 @@ fn render_csv_table(
         x as i32,
         y as i32,
         &hdr,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -4532,11 +4532,11 @@ fn render_csv_table(
         x as i32,
         yy as i32,
         &header_line,
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         accent(),
         FontFamily::Mono,
     );
-    yy += rae_tokens::TYPE_BODY.line_height as usize;
+    yy += ath_tokens::TYPE_BODY.line_height as usize;
     canvas.fill_rect(x, yy, w, 1, STROKE_HL);
     yy += 3;
 
@@ -4551,7 +4551,7 @@ fn render_csv_table(
                 x as i32,
                 yy as i32,
                 "…",
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 TEXT_MUTED,
                 FontFamily::Sans,
             );
@@ -4566,7 +4566,7 @@ fn render_csv_table(
             x as i32,
             yy as i32,
             &line,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_FG,
             FontFamily::Mono,
         );
@@ -4615,7 +4615,7 @@ fn render_binary_summary(app: &App, canvas: &mut Canvas, x: usize, y: usize, _w:
             x as i32,
             y as i32,
             s,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_FG,
             FontFamily::Sans,
         );
@@ -4631,7 +4631,7 @@ fn render_binary_summary(app: &App, canvas: &mut Canvas, x: usize, y: usize, _w:
                 x as i32,
                 yy as i32,
                 s,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 accent(),
                 FontFamily::Sans,
             );
@@ -4644,7 +4644,7 @@ fn render_binary_summary(app: &App, canvas: &mut Canvas, x: usize, y: usize, _w:
         x as i32,
         yy as i32,
         "First bytes (hex):",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -4669,7 +4669,7 @@ fn render_binary_summary(app: &App, canvas: &mut Canvas, x: usize, y: usize, _w:
                     x as i32,
                     yy as i32,
                     s,
-                    rae_tokens::TYPE_CAPTION,
+                    ath_tokens::TYPE_CAPTION,
                     TEXT_FG,
                     FontFamily::Mono,
                 );
@@ -4685,7 +4685,7 @@ fn render_binary_summary(app: &App, canvas: &mut Canvas, x: usize, y: usize, _w:
                 x as i32,
                 yy as i32,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_FG,
                 FontFamily::Mono,
             );
@@ -4722,7 +4722,7 @@ fn is_gif_signature(buf: &[u8]) -> bool {
     buf.len() >= 6 && (&buf[..6] == b"GIF87a" || &buf[..6] == b"GIF89a")
 }
 
-/// Bridge a `rae_gif::GifFrame`'s composited ARGB8888 buffer into the
+/// Bridge a `ath_gif::GifFrame`'s composited ARGB8888 buffer into the
 /// `png::DecodedImage` the Quick Look blit path consumes (a flat `0xAARRGGBB`
 /// `Vec<u32>` with `width`/`height`). Quick Look uses frame 0 — a static preview.
 fn gif_frame_to_canvas_image(width: u32, height: u32, pixels: Vec<u32>) -> DecodedImage {
@@ -4733,12 +4733,12 @@ fn gif_frame_to_canvas_image(width: u32, height: u32, pixels: Vec<u32>) -> Decod
     }
 }
 
-/// Bridge a `raemedia::jpeg::DecodedImage` into the `png::DecodedImage` the
+/// Bridge a `athmedia::jpeg::DecodedImage` into the `png::DecodedImage` the
 /// Quick Look blit path consumes. The two are structurally identical (both flat
 /// `0xAARRGGBB` `Vec<u32>` with `width`/`height`), so this is a zero-logic field
 /// move — it exists only to satisfy the type system and let JPEG reuse the EXACT
 /// `blit_image_fit` scale/letterbox/blit code PNG already uses.
-fn jpeg_to_canvas_image(img: raemedia::jpeg::DecodedImage) -> DecodedImage {
+fn jpeg_to_canvas_image(img: athmedia::jpeg::DecodedImage) -> DecodedImage {
     DecodedImage {
         width: img.width,
         height: img.height,
@@ -4758,7 +4758,7 @@ fn read_whole_file(fd: u64, prefix: &[u8]) -> Option<Vec<u8>> {
         if data.len() > PNG_DECODE_CAP {
             return None;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
@@ -4776,10 +4776,10 @@ fn read_whole_file(fd: u64, prefix: &[u8]) -> Option<Vec<u8>> {
 // LEGACY_GAMING_CONCEPT.md §Windows Pain Points "the modern file manager": opening a
 // document should Just Work, in the right viewer, without a terminal. Files
 // already previews images/text/CSV; this is the path that turns the orphaned
-// document engines (rae_pdf / rae_docx / rae_xlsx) and the unified image decoder
-// (rae_image) into a real "open this document" feature.
+// document engines (ath_pdf / ath_docx / ath_xlsx) and the unified image decoder
+// (ath_image) into a real "open this document" feature.
 //
-// Dispatch is by MAGIC BYTES (`rae_formats::detect`), never the extension — a PDF
+// Dispatch is by MAGIC BYTES (`ath_formats::detect`), never the extension — a PDF
 // renamed `.txt` still opens as a PDF, and a `.png` that's really a JPEG decodes
 // correctly. The pure core [`build_doc_preview`] takes the file bytes and returns
 // a renderable model; the syscall shell ([`App::open_quick_look`]) just reads the
@@ -4805,7 +4805,7 @@ pub enum DocPreview {
     /// Extracted plain text plus a short format label ("PDF"/"DOCX").
     Text { label: &'static str, text: String },
     /// A parsed grid to render as an aligned table (XLSX → CSV cell model).
-    Csv(rae_csv::Csv),
+    Csv(ath_csv::Csv),
     /// A decoded ARGB8888 bitmap for the image preview canvas.
     Image(DecodedImage),
     /// Not handled here — fall back to the existing preview behavior.
@@ -4852,12 +4852,12 @@ pub fn build_doc_preview(bytes: &[u8]) -> DocPreview {
                 doc_preview_xlsx(bytes)
             }
         }
-        // Every still-image kind the unified decoder supports. `rae_image::decode`
-        // re-sniffs internally (same `rae_formats::detect`) and returns the shared
+        // Every still-image kind the unified decoder supports. `ath_image::decode`
+        // re-sniffs internally (same `ath_formats::detect`) and returns the shared
         // ARGB8888 `Image`, which is structurally identical to the `DecodedImage`
         // the existing `blit_image_fit` path consumes — a zero-logic field move.
         FileKind::Png | FileKind::Jpeg | FileKind::Bmp | FileKind::Gif | FileKind::Webp => {
-            match rae_image::decode(bytes) {
+            match ath_image::decode(bytes) {
                 Ok(img) => DocPreview::Image(DecodedImage {
                     width: img.width,
                     height: img.height,
@@ -4874,7 +4874,7 @@ pub fn build_doc_preview(bytes: &[u8]) -> DocPreview {
 /// extractable text (a scanned/image-only document) yields [`DocPreview::None`]
 /// so the caller falls back to the summary rather than showing a blank page.
 fn doc_preview_pdf(bytes: &[u8]) -> DocPreview {
-    match rae_pdf::Document::open(bytes) {
+    match ath_pdf::Document::open(bytes) {
         Ok(doc) => {
             let text = doc.extract_text();
             if text.trim().is_empty() {
@@ -4890,7 +4890,7 @@ fn doc_preview_pdf(bytes: &[u8]) -> DocPreview {
 /// Extract a DOCX's text (paragraphs/headings/tables) into a [`DocPreview::Text`].
 /// A ZIP without `word/document.xml` is not a DOCX → [`DocPreview::None`].
 fn doc_preview_docx(bytes: &[u8]) -> DocPreview {
-    match rae_docx::Document::open(bytes) {
+    match ath_docx::Document::open(bytes) {
         Ok(doc) => {
             let text = doc.extract_text();
             if text.trim().is_empty() {
@@ -4907,11 +4907,11 @@ fn doc_preview_docx(bytes: &[u8]) -> DocPreview {
 }
 
 /// Render an XLSX's first sheet as a CSV grid ([`DocPreview::Csv`]). `to_csv` is
-/// the bounded, never-panic path; we re-parse it through the SAME `rae_csv` the
+/// the bounded, never-panic path; we re-parse it through the SAME `ath_csv` the
 /// live CSV table view uses so the rendering is byte-identical to opening a `.csv`.
 /// A ZIP without `xl/workbook.xml`, or an empty sheet, yields [`DocPreview::None`].
 fn doc_preview_xlsx(bytes: &[u8]) -> DocPreview {
-    match rae_xlsx::Workbook::open(bytes) {
+    match ath_xlsx::Workbook::open(bytes) {
         Ok(wb) => {
             let names = wb.sheet_names();
             let csv_text = names
@@ -4922,7 +4922,7 @@ fn doc_preview_xlsx(bytes: &[u8]) -> DocPreview {
             if csv_text.is_empty() {
                 DocPreview::None
             } else {
-                match rae_csv::parse(&csv_text) {
+                match ath_csv::parse(&csv_text) {
                     Ok(csv) if !csv.is_empty() => DocPreview::Csv(csv),
                     _ => DocPreview::None,
                 }
@@ -4938,7 +4938,7 @@ fn doc_preview_xlsx(bytes: &[u8]) -> DocPreview {
 /// panics. Unlike [`read_file_text_capped`] this keeps the raw bytes (documents
 /// are binary: PDFs and the ZIP-based OOXML formats are not UTF-8).
 fn read_whole_file_path(path: &str, cap: usize) -> Option<Vec<u8>> {
-    let fd = raekit::sys::open(path, 0);
+    let fd = athkit::sys::open(path, 0);
     if fd == u64::MAX {
         return None;
     }
@@ -4946,16 +4946,16 @@ fn read_whole_file_path(path: &str, cap: usize) -> Option<Vec<u8>> {
     let mut chunk = [0u8; PREVIEW_CAP];
     loop {
         if data.len() > cap {
-            let _ = raekit::sys::close(fd);
+            let _ = athkit::sys::close(fd);
             return None;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     if data.is_empty() {
         None
     } else {
@@ -4976,30 +4976,30 @@ struct FileDigests {
 /// tiny so a multi-GB file is hashed without ever being loaded whole into RAM.
 const HASH_BLOCK: usize = 64 * 1024;
 
-/// Stream the file at `path` through `rae_hash` in 64 KiB blocks, feeding every
+/// Stream the file at `path` through `ath_hash` in 64 KiB blocks, feeding every
 /// block to all four streaming digests at once. Returns `None` only if the file
 /// cannot be OPENED (a read that returns 0 at EOF on an empty file still yields
 /// the four valid empty-input digests). Never panics — the buffer is bounded, no
-/// slicing past the read length, and `rae_hash` is itself never-panic.
+/// slicing past the read length, and `ath_hash` is itself never-panic.
 ///
 /// This is the heart of the "verify a download's integrity" action: a single
 /// pass over the bytes computes SHA-256 (the primary), SHA-1, MD5, and CRC32, so
 /// the user can match whichever form the publisher posted.
 fn hash_file_streaming(path: &str) -> Option<FileDigests> {
-    let fd = raekit::sys::open(path, 0);
+    let fd = athkit::sys::open(path, 0);
     if fd == u64::MAX {
         return None;
     }
-    let mut sha256 = rae_hash::Sha256::new();
-    let mut sha1 = rae_hash::Sha1::new();
-    let mut md5 = rae_hash::Md5::new();
-    let mut crc32 = rae_hash::Crc32::new();
+    let mut sha256 = ath_hash::Sha256::new();
+    let mut sha1 = ath_hash::Sha1::new();
+    let mut md5 = ath_hash::Md5::new();
+    let mut crc32 = ath_hash::Crc32::new();
 
     // A heap block (not a stack array) so a larger future HASH_BLOCK never risks
     // the stack; freed when this function returns.
     let mut block = alloc::vec![0u8; HASH_BLOCK];
     loop {
-        let n = raekit::sys::read(fd, &mut block) as usize;
+        let n = athkit::sys::read(fd, &mut block) as usize;
         // A short/zero read is EOF; a bogus over-length return is clamped so we
         // never feed uninitialized tail bytes into a digest.
         if n == 0 {
@@ -5012,13 +5012,13 @@ fn hash_file_streaming(path: &str) -> Option<FileDigests> {
         md5.update(chunk);
         crc32.update(chunk);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
 
     Some(FileDigests {
-        sha256: rae_hash::to_hex(&sha256.finalize()),
-        sha1: rae_hash::to_hex(&sha1.finalize()),
-        md5: rae_hash::to_hex(&md5.finalize()),
-        crc32: rae_hash::to_hex(&crc32.finalize().to_be_bytes()),
+        sha256: ath_hash::to_hex(&sha256.finalize()),
+        sha1: ath_hash::to_hex(&sha1.finalize()),
+        md5: ath_hash::to_hex(&md5.finalize()),
+        crc32: ath_hash::to_hex(&crc32.finalize().to_be_bytes()),
     })
 }
 
@@ -5048,7 +5048,7 @@ const CSV_READ_CAP: usize = 4 * 1024 * 1024;
 /// UTF-8 (binary). Never panics — `from_utf8` is checked, no slicing. This is the
 /// shared, cap-parameterized core behind `read_file_text` and the CSV table view.
 fn read_file_text_capped(path: &str, cap: usize) -> Option<alloc::string::String> {
-    let fd = raekit::sys::open(path, 0);
+    let fd = athkit::sys::open(path, 0);
     if fd == u64::MAX {
         return None;
     }
@@ -5056,16 +5056,16 @@ fn read_file_text_capped(path: &str, cap: usize) -> Option<alloc::string::String
     let mut chunk = [0u8; PREVIEW_CAP];
     loop {
         if data.len() > cap {
-            let _ = raekit::sys::close(fd);
+            let _ = athkit::sys::close(fd);
             return None;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     if data.is_empty() {
         return None;
     }
@@ -5079,7 +5079,7 @@ fn read_file_text_capped(path: &str, cap: usize) -> Option<alloc::string::String
 /// when the file can't be opened, is empty, exceeds `COMPARE_READ_CAP`, or is not
 /// valid UTF-8 (binary). Never panics — `from_utf8` is checked, no slicing.
 fn read_file_text(path: &str) -> Option<alloc::string::String> {
-    let fd = raekit::sys::open(path, 0);
+    let fd = athkit::sys::open(path, 0);
     if fd == u64::MAX {
         return None;
     }
@@ -5087,16 +5087,16 @@ fn read_file_text(path: &str) -> Option<alloc::string::String> {
     let mut chunk = [0u8; PREVIEW_CAP];
     loop {
         if data.len() > COMPARE_READ_CAP {
-            let _ = raekit::sys::close(fd);
+            let _ = athkit::sys::close(fd);
             return None;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     if data.is_empty() {
         return None;
     }
@@ -5108,7 +5108,7 @@ fn read_file_text(path: &str) -> Option<alloc::string::String> {
 }
 
 /// Which archive container the Extract action detected. Routes the read path:
-/// `Zip` → `rae_zip::Archive`, `Tar`/`TarGz` → `rae_tar::read_tar(_gz)`.
+/// `Zip` → `ath_zip::Archive`, `Tar`/`TarGz` → `ath_tar::read_tar(_gz)`.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum ArchiveFormat {
     Zip,
@@ -5140,7 +5140,7 @@ fn extract_zip_bytes(bytes: &[u8], dest: &str) -> Option<(u32, u32, u32)> {
 
     for ze in archive.entries() {
         // Zip-slip defense FIRST: never write an entry whose name escapes the
-        // destination (`../`, absolute, drive-letter, NUL — `rae_zip` checks).
+        // destination (`../`, absolute, drive-letter, NUL — `ath_zip` checks).
         if !is_safe_path(&ze.name) {
             unsafe_skipped += 1;
             continue;
@@ -5173,7 +5173,7 @@ fn extract_zip_bytes(bytes: &[u8], dest: &str) -> Option<(u32, u32, u32)> {
 }
 
 /// Extract a TAR (or gzip-tar, when `gz`) byte buffer into `dest`. Mirrors the
-/// zip path: `rae_tar::is_safe_path` is consulted FIRST per entry (tar-slip
+/// zip path: `ath_tar::is_safe_path` is consulted FIRST per entry (tar-slip
 /// defense), `Dir` entries `mkdir` their relative path, `File` entries write
 /// `entry.data()`. Symlinks/hardlinks/Other are SKIPPED and counted as
 /// unsupported (a first-cut policy — we never create links). Returns
@@ -5192,7 +5192,7 @@ fn extract_tar_bytes(bytes: &[u8], dest: &str, gz: bool) -> Option<(u32, u32, u3
     for te in archive.entries() {
         // Tar-slip defense FIRST: the tar-side gate (its own ".."/absolute/drive
         // checks), consulted before any write.
-        if !rae_tar::is_safe_path(&te.name) {
+        if !ath_tar::is_safe_path(&te.name) {
             unsafe_skipped += 1;
             continue;
         }
@@ -5265,8 +5265,8 @@ fn mkdir_rel_dirs(dest: &PathBuf, rel: &str) -> bool {
             continue;
         }
         p.push_component(comp);
-        match raekit::sys::mkdir(p.as_str()) {
-            Ok(()) | Err(raekit::sys::E_VFS_EXISTS) => {}
+        match athkit::sys::mkdir(p.as_str()) {
+            Ok(()) | Err(athkit::sys::E_VFS_EXISTS) => {}
             Err(_) => return false,
         }
     }
@@ -5309,7 +5309,7 @@ fn write_entry_file(dest: &str, rel: &str, data: &[u8]) -> bool {
     }
 
     // O_WRONLY | O_CREAT | O_TRUNC = 0x0241 (mirrors the text-editor save path).
-    let fd = raekit::sys::open(full.as_str(), 0x0241);
+    let fd = athkit::sys::open(full.as_str(), 0x0241);
     if fd == u64::MAX {
         return false;
     }
@@ -5317,7 +5317,7 @@ fn write_entry_file(dest: &str, rel: &str, data: &[u8]) -> bool {
     if !data.is_empty() {
         let mut written = 0usize;
         while written < data.len() {
-            let n = raekit::sys::write(fd, &data[written..]) as usize;
+            let n = athkit::sys::write(fd, &data[written..]) as usize;
             if n == 0 {
                 ok = false;
                 break;
@@ -5325,7 +5325,7 @@ fn write_entry_file(dest: &str, rel: &str, data: &[u8]) -> bool {
             written += n;
         }
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     ok
 }
 
@@ -5335,19 +5335,19 @@ fn write_entry_file(dest: &str, rel: &str, data: &[u8]) -> bool {
 /// `read_whole_file`). Returns `None` if the file can't be opened, is empty, or
 /// exceeds the cap. Never panics.
 fn read_file_bytes(path: &str) -> Option<Vec<u8>> {
-    let fd = raekit::sys::open(path, 0);
+    let fd = athkit::sys::open(path, 0);
     if fd == u64::MAX {
         return None;
     }
     let data = read_whole_file(fd, &[]);
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     data
 }
 
-// ── File-association persistence (rae_toml) ──────────────────────────────────
+// ── File-association persistence (ath_toml) ──────────────────────────────────
 //
 // A user's "Set as default" overrides round-trip to `<home>/.config/file_assoc.toml`
-// so they survive relaunch (the rae_toml raison d'être: "remember my settings"
+// so they survive relaunch (the ath_toml raison d'être: "remember my settings"
 // must be real — LEGACY_GAMING_CONCEPT.md §"The user owns the machine"). The on-disk
 // shape is one `[[assoc]]` array-of-tables entry per overridden MIME type:
 //
@@ -5388,12 +5388,12 @@ fn load_registry(home: &str) -> Registry {
         Some(p) => p,
         None => return reg,
     };
-    let fd = raekit::sys::open(path.as_str(), 0);
+    let fd = athkit::sys::open(path.as_str(), 0);
     if fd == u64::MAX {
         return reg; // no config yet → defaults
     }
     let bytes = read_whole_file(fd, &[]);
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     let bytes = match bytes {
         Some(b) => b,
         None => return reg,
@@ -5411,27 +5411,27 @@ fn load_registry(home: &str) -> Registry {
 /// the worst case is "fewer overrides than the file intended", never a panic and
 /// never a wrong default. Separated from I/O so it is directly host-testable.
 fn apply_assoc_overrides(reg: &mut Registry, text: &str) {
-    let doc = match rae_toml::parse(text) {
+    let doc = match ath_toml::parse(text) {
         Ok(d) => d,
         Err(_) => return, // corrupt TOML → keep the built-in defaults
     };
-    let entries = match doc.get("assoc").and_then(rae_toml::Toml::as_array) {
+    let entries = match doc.get("assoc").and_then(ath_toml::Toml::as_array) {
         Some(a) => a,
         None => return,
     };
     for e in entries {
-        let mime = match e.get("mime").and_then(rae_toml::Toml::as_str) {
+        let mime = match e.get("mime").and_then(ath_toml::Toml::as_str) {
             Some(m) if !m.is_empty() => m,
             _ => continue,
         };
-        let default = match e.get("default").and_then(rae_toml::Toml::as_str) {
+        let default = match e.get("default").and_then(ath_toml::Toml::as_str) {
             Some(d) if !d.is_empty() => d,
             _ => continue,
         };
         // Candidates: each array element that is a non-empty string. If the array
         // is missing/empty, fall back to just [default] so the override is valid.
         let mut cand: Vec<&str> = Vec::new();
-        if let Some(arr) = e.get("candidates").and_then(rae_toml::Toml::as_array) {
+        if let Some(arr) = e.get("candidates").and_then(ath_toml::Toml::as_array) {
             for c in arr {
                 if let Some(s) = c.as_str() {
                     if !s.is_empty() {
@@ -5448,14 +5448,14 @@ fn apply_assoc_overrides(reg: &mut Registry, text: &str) {
 }
 
 /// Serialize the registry's overrides to a `file_assoc.toml` document via
-/// rae_toml's serializer. Only the entries that differ from the built-in defaults
+/// ath_toml's serializer. Only the entries that differ from the built-in defaults
 /// are emitted (the file carries deltas, not the whole world); the built-ins are
 /// re-applied on load. Separated from I/O so the round-trip is host-testable.
 fn serialize_assoc_overrides(reg: &Registry) -> String {
     let defaults = Registry::with_defaults();
     // Build a [[assoc]] array-of-tables of every MIME whose default OR candidate
     // list now differs from the built-in registry.
-    let mut assoc: Vec<rae_toml::Toml> = Vec::new();
+    let mut assoc: Vec<ath_toml::Toml> = Vec::new();
     for &mime in OVERRIDABLE_MIMES {
         let mt = MimeType(mime);
         let cur_default = reg.default_app(mt);
@@ -5465,27 +5465,27 @@ fn serialize_assoc_overrides(reg: &Registry) -> String {
         if cur_default == def_default && cur_cands == def_cands {
             continue; // unchanged from built-in → don't persist
         }
-        let mut table: Vec<(String, rae_toml::Toml)> = Vec::new();
+        let mut table: Vec<(String, ath_toml::Toml)> = Vec::new();
         table.push((
             String::from("mime"),
-            rae_toml::Toml::String(String::from(mime)),
+            ath_toml::Toml::String(String::from(mime)),
         ));
         table.push((
             String::from("default"),
-            rae_toml::Toml::String(String::from(cur_default)),
+            ath_toml::Toml::String(String::from(cur_default)),
         ));
-        let cand_arr: Vec<rae_toml::Toml> = cur_cands
+        let cand_arr: Vec<ath_toml::Toml> = cur_cands
             .iter()
-            .map(|c| rae_toml::Toml::String(c.clone()))
+            .map(|c| ath_toml::Toml::String(c.clone()))
             .collect();
-        table.push((String::from("candidates"), rae_toml::Toml::Array(cand_arr)));
-        assoc.push(rae_toml::Toml::Table(table));
+        table.push((String::from("candidates"), ath_toml::Toml::Array(cand_arr)));
+        assoc.push(ath_toml::Toml::Table(table));
     }
-    let root = rae_toml::Toml::Table(alloc::vec![(
+    let root = ath_toml::Toml::Table(alloc::vec![(
         String::from("assoc"),
-        rae_toml::Toml::Array(assoc),
+        ath_toml::Toml::Array(assoc),
     )]);
-    rae_toml::to_string(&root)
+    ath_toml::to_string(&root)
 }
 
 /// The closed set of MIME types whose default the user may override (the ones the
@@ -5525,8 +5525,8 @@ fn save_registry(home: &str, reg: &Registry) -> bool {
     let mut cfg_dir = PathBuf::new();
     cfg_dir.set(home);
     cfg_dir.push_component(".config");
-    match raekit::sys::mkdir(cfg_dir.as_str()) {
-        Ok(()) | Err(raekit::sys::E_VFS_EXISTS) => {}
+    match athkit::sys::mkdir(cfg_dir.as_str()) {
+        Ok(()) | Err(athkit::sys::E_VFS_EXISTS) => {}
         Err(_) => return false,
     }
     let path = match assoc_config_path(home) {
@@ -5540,7 +5540,7 @@ fn save_registry(home: &str, reg: &Registry) -> bool {
 /// Write `data` to `path` (O_WRONLY|O_CREAT|O_TRUNC = 0x0241, the text-editor save
 /// flags). Returns `false` on any open/short-write failure. Never panics.
 fn write_whole_file(path: &str, data: &[u8]) -> bool {
-    let fd = raekit::sys::open(path, 0x0241);
+    let fd = athkit::sys::open(path, 0x0241);
     if fd == u64::MAX {
         return false;
     }
@@ -5548,7 +5548,7 @@ fn write_whole_file(path: &str, data: &[u8]) -> bool {
     if !data.is_empty() {
         let mut written = 0usize;
         while written < data.len() {
-            let n = raekit::sys::write(fd, &data[written..]) as usize;
+            let n = athkit::sys::write(fd, &data[written..]) as usize;
             if n == 0 {
                 ok = false;
                 break;
@@ -5556,7 +5556,7 @@ fn write_whole_file(path: &str, data: &[u8]) -> bool {
             written += n;
         }
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     ok
 }
 
@@ -5613,7 +5613,7 @@ fn build_zip_basename(first_name: &str, out: &mut [u8]) -> usize {
 //
 // LEGACY_GAMING_CONCEPT.md §"The user owns the machine": zipping a FOLDER is the common
 // case (you compress a project directory, not loose files). The walk reuses the
-// SAME directory-read mechanism the file list uses (`raekit::sys::readdir_at`,
+// SAME directory-read mechanism the file list uses (`athkit::sys::readdir_at`,
 // decoding `[name_len:u16][size:u32][name…]` records) and the SAME `ZipWriter`,
 // adding each descendant FILE with its path RELATIVE to the archive root
 // (`docs/readme.md`, `docs/sub/a.txt`) and an explicit `dir/` entry per directory.
@@ -5701,7 +5701,7 @@ impl WalkChild {
 /// panics: a malformed buffer simply stops the decode early.
 fn walk_read_dir(abs_path: &str, out: &mut [WalkChild; MAX_ENTRIES]) -> usize {
     let mut buf = [0u8; 4096];
-    let count = raekit::sys::readdir_at(abs_path, &mut buf) as usize;
+    let count = athkit::sys::readdir_at(abs_path, &mut buf) as usize;
     let mut off = 0usize;
     let mut n = 0usize;
     for _ in 0..count {
@@ -5798,12 +5798,12 @@ fn zip_add_dir_recursive(
 }
 
 /// A minimal, from-scratch ZIP (APPNOTE) writer producing a 32-bit ZIP that
-/// `rae_zip::Archive::open` re-reads. Each added file is DEFLATE-compressed via
-/// `rae_deflate`; if the compressed form isn't smaller than the raw bytes the
+/// `ath_zip::Archive::open` re-reads. Each added file is DEFLATE-compressed via
+/// `ath_deflate`; if the compressed form isn't smaller than the raw bytes the
 /// entry is STORED (method 0) instead, so tiny/incompressible files never bloat.
 /// The local headers are written into `body` as files are added; `finish` appends
-/// the central directory + EOCD. CRC-32 is `rae_deflate::crc32` (IEEE), the same
-/// polynomial the ZIP/gzip spec and `rae_zip`'s verifier use.
+/// the central directory + EOCD. CRC-32 is `ath_deflate::crc32` (IEEE), the same
+/// polynomial the ZIP/gzip spec and `ath_zip`'s verifier use.
 struct ZipWriter {
     /// The accumulating archive: local headers + bodies, then CD + EOCD on finish.
     body: Vec<u8>,
@@ -5837,8 +5837,8 @@ impl ZipWriter {
     /// produces a smaller body than the raw bytes, else STORED (method 0). Writes
     /// the Local File Header + body and records the central-directory entry.
     fn add_file(&mut self, name: &str, raw: &[u8]) {
-        let crc = rae_deflate::crc32(raw);
-        let comp = rae_deflate::deflate(raw);
+        let crc = ath_deflate::crc32(raw);
+        let comp = ath_deflate::deflate(raw);
         // method 0 = stored when deflate didn't actually shrink it (tiny/random).
         let (method, payload): (u16, &[u8]) = if comp.len() < raw.len() {
             (8, &comp)
@@ -6017,16 +6017,16 @@ fn render_batch_rename(app: &App, canvas: &mut Canvas) {
         py,
         pw,
         ph,
-        rae_tokens::RADIUS_LG as usize,
+        ath_tokens::RADIUS_LG as usize,
         DARK.bg_overlay,
     );
-    canvas.draw_rounded_rect_outline(px, py, pw, ph, rae_tokens::RADIUS_LG as usize, STROKE_HL);
+    canvas.draw_rounded_rect_outline(px, py, pw, ph, ath_tokens::RADIUS_LG as usize, STROKE_HL);
 
     canvas.draw_text_aa(
         (px + 16) as i32,
         (py + 14) as i32,
         "Batch Rename",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -6038,7 +6038,7 @@ fn render_batch_rename(app: &App, canvas: &mut Canvas) {
             (px + 16) as i32,
             (py + 38) as i32,
             s,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -6049,7 +6049,7 @@ fn render_batch_rename(app: &App, canvas: &mut Canvas) {
         (px + 16) as i32,
         (py + 64) as i32,
         "Pattern (### = counter):",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -6058,7 +6058,7 @@ fn render_batch_rename(app: &App, canvas: &mut Canvas) {
         py + 84,
         pw - 32,
         28,
-        rae_tokens::RADIUS_SM as usize,
+        ath_tokens::RADIUS_SM as usize,
         DARK.bg_base,
     );
     canvas.draw_rounded_rect_outline(
@@ -6066,14 +6066,14 @@ fn render_batch_rename(app: &App, canvas: &mut Canvas) {
         py + 84,
         pw - 32,
         28,
-        rae_tokens::RADIUS_SM as usize,
+        ath_tokens::RADIUS_SM as usize,
         accent(),
     );
     canvas.draw_text_aa(
         (px + 24) as i32,
         (py + 90) as i32,
         app.pattern_str(),
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         TEXT_FG,
         FontFamily::Mono,
     );
@@ -6083,7 +6083,7 @@ fn render_batch_rename(app: &App, canvas: &mut Canvas) {
         (px + 16) as i32,
         (py + 124) as i32,
         "Preview:",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -6112,7 +6112,7 @@ fn render_batch_rename(app: &App, canvas: &mut Canvas) {
             (px + 24) as i32,
             pv_y as i32,
             txt,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             DARK.state_danger,
             FontFamily::Sans,
         );
@@ -6120,12 +6120,12 @@ fn render_batch_rename(app: &App, canvas: &mut Canvas) {
     }
 
     let hint = "Enter: apply   Esc: cancel";
-    let hw = canvas.measure_text_aa(hint, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let hw = canvas.measure_text_aa(hint, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (px + pw - 16) as i32 - hw,
         (py + ph - 22) as i32,
         hint,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -6181,7 +6181,7 @@ fn draw_digest_row(
         x as i32,
         y as i32,
         label,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -6190,7 +6190,7 @@ fn draw_digest_row(
         x as i32 + lw + 10,
         y as i32,
         hex,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         color,
         FontFamily::Mono,
     );
@@ -6206,17 +6206,17 @@ fn render_checksum(app: &App, canvas: &mut Canvas) {
         py,
         pw,
         ph,
-        rae_tokens::RADIUS_LG as usize,
+        ath_tokens::RADIUS_LG as usize,
         DARK.bg_overlay,
     );
-    canvas.draw_rounded_rect_outline(px, py, pw, ph, rae_tokens::RADIUS_LG as usize, STROKE_HL);
+    canvas.draw_rounded_rect_outline(px, py, pw, ph, ath_tokens::RADIUS_LG as usize, STROKE_HL);
 
     // Title + filename.
     canvas.draw_text_aa(
         (px + 16) as i32,
         (py + 12) as i32,
         "Checksum / Verify",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -6224,7 +6224,7 @@ fn render_checksum(app: &App, canvas: &mut Canvas) {
         (px + 16) as i32,
         (py + 36) as i32,
         app.checksum_name_str(),
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         accent(),
         FontFamily::Sans,
     );
@@ -6236,7 +6236,7 @@ fn render_checksum(app: &App, canvas: &mut Canvas) {
         cr.y,
         cr.w,
         cr.h,
-        rae_tokens::RADIUS_SM as usize,
+        ath_tokens::RADIUS_SM as usize,
         DARK.bg_base,
     );
     canvas.draw_rounded_rect_outline(
@@ -6244,15 +6244,15 @@ fn render_checksum(app: &App, canvas: &mut Canvas) {
         cr.y,
         cr.w,
         cr.h,
-        rae_tokens::RADIUS_SM as usize,
+        ath_tokens::RADIUS_SM as usize,
         STROKE_HL,
     );
-    let xw = canvas.measure_text_aa("x", rae_tokens::TYPE_BODY, FontFamily::Sans);
+    let xw = canvas.measure_text_aa("x", ath_tokens::TYPE_BODY, FontFamily::Sans);
     canvas.draw_text_aa(
         (cr.x + (cr.w.saturating_sub(xw as usize)) / 2) as i32,
         (cr.y + 4) as i32,
         "x",
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -6300,7 +6300,7 @@ fn render_checksum(app: &App, canvas: &mut Canvas) {
         (px + 16) as i32,
         (py + CK_PH - 118) as i32,
         "Paste expected hash, then Enter (algo auto-detected by length):",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -6310,7 +6310,7 @@ fn render_checksum(app: &App, canvas: &mut Canvas) {
         vr.y,
         vr.w,
         vr.h,
-        rae_tokens::RADIUS_SM as usize,
+        ath_tokens::RADIUS_SM as usize,
         DARK.bg_base,
     );
     canvas.draw_rounded_rect_outline(
@@ -6318,14 +6318,14 @@ fn render_checksum(app: &App, canvas: &mut Canvas) {
         vr.y,
         vr.w,
         vr.h,
-        rae_tokens::RADIUS_SM as usize,
+        ath_tokens::RADIUS_SM as usize,
         accent(),
     );
     canvas.draw_text_aa(
         (vr.x + 8) as i32,
         (vr.y + 6) as i32,
         app.verify_str(),
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         TEXT_FG,
         FontFamily::Mono,
     );
@@ -6338,7 +6338,7 @@ fn render_checksum(app: &App, canvas: &mut Canvas) {
                 (px + 16) as i32,
                 banner_y as i32,
                 "MATCH - integrity verified",
-                rae_tokens::TYPE_SUBTITLE,
+                ath_tokens::TYPE_SUBTITLE,
                 DARK.state_ok,
                 FontFamily::Sans,
             );
@@ -6348,7 +6348,7 @@ fn render_checksum(app: &App, canvas: &mut Canvas) {
                 (px + 16) as i32,
                 banner_y as i32,
                 "NO MATCH - file differs from the expected hash",
-                rae_tokens::TYPE_SUBTITLE,
+                ath_tokens::TYPE_SUBTITLE,
                 DARK.state_danger,
                 FontFamily::Sans,
             );
@@ -6357,12 +6357,12 @@ fn render_checksum(app: &App, canvas: &mut Canvas) {
     }
 
     let hint = "Enter: verify   Esc: close";
-    let hw = canvas.measure_text_aa(hint, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let hw = canvas.measure_text_aa(hint, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (px + pw - 16) as i32 - hw,
         (py + ph - 22) as i32,
         hint,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -6373,7 +6373,7 @@ fn draw_rename_row(canvas: &mut Canvas, x: usize, y: usize, original: &str, new:
         x as i32,
         y as i32,
         original,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Mono,
     );
@@ -6381,7 +6381,7 @@ fn draw_rename_row(canvas: &mut Canvas, x: usize, y: usize, original: &str, new:
         x as i32 + ow + 6,
         y as i32,
         "->",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -6389,7 +6389,7 @@ fn draw_rename_row(canvas: &mut Canvas, x: usize, y: usize, original: &str, new:
         x as i32 + ow + 6 + aw + 6,
         y as i32,
         new,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         accent(),
         FontFamily::Mono,
     );
@@ -6408,16 +6408,16 @@ fn draw_button_state(
     label: &str,
     enabled: bool,
 ) {
-    let r = rae_tokens::RADIUS_SM as usize;
+    let r = ath_tokens::RADIUS_SM as usize;
     // QUIET frosted pill — frost fill only, NO outline stroke: the full
     // rect outline over the frost read as a Win95 raised bevel (visual-QA).
     // Finder/Explorer toolbar controls are borderless quiet fills.
-    canvas.fill_rounded_rect(x, y, w, h, r, rae_tokens::GLASS_POPOVER_DARK.frost);
-    let label_w = canvas.measure_text_aa(label, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+    canvas.fill_rounded_rect(x, y, w, h, r, ath_tokens::GLASS_POPOVER_DARK.frost);
+    let label_w = canvas.measure_text_aa(label, ath_tokens::TYPE_LABEL, FontFamily::Sans);
     let tx = x as i32 + (w as i32 - label_w) / 2;
-    let ty = (y + (h.saturating_sub(rae_tokens::TYPE_LABEL.line_height as usize)) / 2) as i32;
+    let ty = (y + (h.saturating_sub(ath_tokens::TYPE_LABEL.line_height as usize)) / 2) as i32;
     let fg = if enabled { TEXT_FG } else { TEXT_MUTED };
-    canvas.draw_text_aa(tx, ty, label, rae_tokens::TYPE_LABEL, fg, FontFamily::Sans);
+    canvas.draw_text_aa(tx, ty, label, ath_tokens::TYPE_LABEL, fg, FontFamily::Sans);
 }
 
 /// Borderless toolbar ICON button (back/forward/up) — a quiet frost square
@@ -6428,11 +6428,11 @@ fn draw_tool_icon_button(
     x: usize,
     y: usize,
     sz: usize,
-    icon: raegfx::icon::Icon,
+    icon: athgfx::icon::Icon,
     enabled: bool,
 ) {
-    let r = rae_tokens::RADIUS_SM as usize;
-    canvas.fill_rounded_rect(x, y, sz, sz, r, rae_tokens::GLASS_POPOVER_DARK.frost);
+    let r = ath_tokens::RADIUS_SM as usize;
+    canvas.fill_rounded_rect(x, y, sz, sz, r, ath_tokens::GLASS_POPOVER_DARK.frost);
     let ink = if enabled { TEXT_FG } else { TEXT_MUTED };
     let isz = 16usize;
     canvas.draw_icon(
@@ -6534,22 +6534,22 @@ fn fmt_u64(mut v: u64, out: &mut [u8]) -> usize {
 // ── Design proof (R10: a fail-able check the token wiring + logic are correct) ─
 
 /// True iff File Manager's chrome is wired to the shared design tokens AND the
-/// `rae_files` logic engine produces the expected canonical outputs. Deliberately
+/// `ath_files` logic engine produces the expected canonical outputs. Deliberately
 /// fail-able: a regression in either the token wiring or the trash/rename/tab
 /// logic flips this to `false` (exit code 3 at startup).
 #[must_use]
 pub fn design_proof() -> bool {
-    let ramp = rae_tokens::derive_accent(theme_seed(), &DARK);
+    let ramp = ath_tokens::derive_accent(theme_seed(), &DARK);
     // Liquid Glass window-chrome wiring (visual-QA Round-5 §2 / IDENTITY §7): the
     // window chrome is glass TIERS, not flat dark palette fills. Assert the chrome
     // tiers ARE the canonical `glass.chrome` / `glass.panel` tokens and the content
     // field is the SOLID de-tinted neutral (NOT the old bluish `bg.raised` dark
     // box). FAIL-able: revert any chrome region to an opaque palette fill or re-tint
     // the content field back toward near-black navy and this flips false.
-    let glass_chrome_ok = CHROME_TIER.tint == rae_tokens::GLASS_CHROME_DARK.tint
-        && CHROME_TIER.frost == rae_tokens::GLASS_CHROME_DARK.frost
-        && PANEL_TIER.tint == rae_tokens::GLASS_PANEL_DARK.tint
-        && PANEL_TIER.frost == rae_tokens::GLASS_PANEL_DARK.frost
+    let glass_chrome_ok = CHROME_TIER.tint == ath_tokens::GLASS_CHROME_DARK.tint
+        && CHROME_TIER.frost == ath_tokens::GLASS_CHROME_DARK.frost
+        && PANEL_TIER.tint == ath_tokens::GLASS_PANEL_DARK.tint
+        && PANEL_TIER.frost == ath_tokens::GLASS_PANEL_DARK.frost
         // content is solid (opaque alpha) and de-tinted: brighter than the old
         // bg.raised AND its blue channel no longer dominates (neutral slate).
         && (CONTENT_BG >> 24) & 0xFF == 0xFF
@@ -6562,10 +6562,10 @@ pub fn design_proof() -> bool {
         && TEXT_FG == DARK.text_primary
         && TEXT_MUTED == DARK.text_secondary
         && STROKE_HL == DARK.stroke_strong
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
 
     // §4.4 file-type semantic palette: every icon tint resolves from the SHARED
-    // `rae_tokens::FTYPE_*` palette (no private FM_* / FOLDER_FG hardcode), the
+    // `ath_tokens::FTYPE_*` palette (no private FM_* / FOLDER_FG hardcode), the
     // fixed hues match the design table, AND a Vibe re-skin propagates to the
     // accent-tracking classes (dir/code) while the fixed classes stay put. This
     // is the cohesion contract of this re-skin. FAIL-able: a hardcoded tint, a
@@ -6587,20 +6587,20 @@ pub fn design_proof() -> bool {
         .unwrap_or(false);
 
     // Quick Look decode→blit invariant: build a tiny known PNG, run it through
-    // the real `raemedia::png::decode_png` + this app's `blit_image_fit`, and
+    // the real `athmedia::png::decode_png` + this app's `blit_image_fit`, and
     // assert a sampled framebuffer pixel matches the expected source color.
     // FAIL-able by construction: a decoder regression, a wrong ARGB mapping, or
     // a broken scale/sample loop flips this to `false` (exit code 3 at startup).
     let image_ok = quick_look_decode_blit_ok();
 
     // JPEG Quick Look invariant: decode an embedded baseline JPEG through the
-    // real `raemedia` decoder + this app's blit, and prove the EXIF-oriented
+    // real `athmedia` decoder + this app's blit, and prove the EXIF-oriented
     // path rotates a portrait upright. FAIL-able: a decode regression, a wrong
     // jpeg→canvas bridge, or a dropped orientation flips this to `false`.
     let jpeg_ok = quick_look_jpeg_decode_ok();
 
     // GIF Quick Look invariant: sniff + decode a hand-built 2-frame GIF through
-    // the real `rae_gif` decoder, take frame 0, and prove it bridges + blits to
+    // the real `ath_gif` decoder, take frame 0, and prove it bridges + blits to
     // red (frame 0), not blue (frame 1). FAIL-able: a broken sniff, wrong-frame
     // selection, or a bad bridge/blit flips this to `false`.
     let gif_ok = quick_look_gif_decode_ok();
@@ -6611,24 +6611,24 @@ pub fn design_proof() -> bool {
     // read_entry) and assert: the safe entry CRC-verifies to "hi", AND the
     // traversal entry is REJECTED by is_safe_path (never reaches a write). This
     // proves the Files-side wiring + that the zip-slip gate is actually consulted
-    // (rae_zip's 13 host KATs prove the archive logic itself). FAIL-able: dropping
+    // (ath_zip's 13 host KATs prove the archive logic itself). FAIL-able: dropping
     // the is_safe_path filter, or a CRC/inflate regression, flips this to `false`.
     let zip_ok = extract_zip_slip_guard_ok();
 
     // "Extract here (.tar.gz)" wiring invariant: build a tiny gzipped ustar tar
     // carrying a safe regular-file entry ("hello.txt" = "hi") and a path-traversal
     // entry ("../evil"), then run the SAME core the tar extractor uses
-    // (read_tar_gz → per-entry rae_tar::is_safe_path filter → data()) and assert:
+    // (read_tar_gz → per-entry ath_tar::is_safe_path filter → data()) and assert:
     // the safe entry's bytes are exactly "hi", AND the traversal entry is REJECTED
-    // by rae_tar::is_safe_path (never reaches a write). This proves the Files-side
-    // tar wiring + that the tar-slip gate is actually consulted (rae_tar's host
+    // by ath_tar::is_safe_path (never reaches a write). This proves the Files-side
+    // tar wiring + that the tar-slip gate is actually consulted (ath_tar's host
     // KATs prove the archive/gzip logic itself). FAIL-able: dropping the
     // is_safe_path filter, or a gunzip/tar-parse regression, flips this to `false`.
     let tar_ok = extract_tar_slip_guard_ok();
 
     // "Compress here" wiring invariant (the inverse of Extract): build a ZIP from a
     // known (name, bytes) pair using this app's `ZipWriter`, then OPEN it with the
-    // already-present `rae_zip::Archive` + `read_entry` and assert the extracted
+    // already-present `ath_zip::Archive` + `read_entry` and assert the extracted
     // bytes EQUAL the original — proving the writer emits valid, re-readable ZIPs
     // (correct headers, method 0/8 choice, CRC-32). Also asserts `gzip_compress`
     // carries the gzip magic `1F 8B` and round-trips back to the source via
@@ -6644,19 +6644,19 @@ pub fn design_proof() -> bool {
     let hit_ok = hit_test_proof();
 
     // Compare (diff) invariant: a known one-line change produces a `-b`/`+B`
-    // unified diff via `rae_diff`, AND the render color classification maps
+    // unified diff via `ath_diff`, AND the render color classification maps
     // `+`→green, `-`→red, ` `→dim, `@`→accent. FAIL-able: a diff-engine
     // regression or a wrong color mapping flips this to `false`.
     let compare_ok = compare_diff_proof();
 
     // CSV table Quick Look invariant: parse a known CSV with a quoted embedded
-    // comma through the SAME `rae_csv::parse` the table view uses, assert the grid
+    // comma through the SAME `ath_csv::parse` the table view uses, assert the grid
     // shape + the quoted cell survived, AND that this app's column-width
     // computation picks the right per-column max. FAIL-able: a parser regression
     // or a width-computation drift flips this to `false` (exit code 3 at startup).
     let csv_ok = csv_table_proof();
 
-    // Checksum / Verify invariant: the `rae_hash` SHA-256 of "abc" equals the
+    // Checksum / Verify invariant: the `ath_hash` SHA-256 of "abc" equals the
     // FIPS 180-4 known vector, the algo-by-LENGTH auto-detect picks the right
     // algorithm for 64/40/32/8-char hex, and `verify` is case-insensitive-true
     // for the right hash / false for a wrong one. FAIL-able: a hash regression,
@@ -6664,10 +6664,10 @@ pub fn design_proof() -> bool {
     // (exit code 3 at startup).
     let checksum_ok = checksum_verify_proof();
 
-    // File-association wiring invariant: rae_mime resolution drives the candidate
+    // File-association wiring invariant: ath_mime resolution drives the candidate
     // list + default (a .png → the image app, .txt → the editor, content-sniff
     // beating a mislabeled name), AND "Set as default" overrides + round-trips
-    // through the rae_toml persistence (serialize → parse → same default), AND a
+    // through the ath_toml persistence (serialize → parse → same default), AND a
     // corrupt config falls back to the built-in defaults without panicking. This
     // is the proof that the "Open With" / default-launch / set-default wiring is
     // real, not a mock. FAIL-able: a wrong default, a broken persistence
@@ -6676,13 +6676,13 @@ pub fn design_proof() -> bool {
 
     // Global indexed-search wiring invariant: the raw kernel result blob
     // (`[u64 id][u32 kind][u32 pad]` × N, the SYS_SEARCH_QUERY format) decodes
-    // via the SAME `raekit::search::decode_results` the live query uses, the
+    // via the SAME `athkit::search::decode_results` the live query uses, the
     // per-kind tally (`summarize_hits`) matches the synthetic set, and the
     // empty-blob case yields the "No results" tally (total == 0), AND the RESOLVED
     // surface (`query_resolved` → `decode_resolved` → named rows) decodes to the
     // exact rendered name+path rows and routes each row to the correct open action
     // (a file → open-by-path, a folder → navigate, a path-less hit → no-op). This
-    // proves the Files search consumes the committed raekit surface + maps hits to
+    // proves the Files search consumes the committed athkit surface + maps hits to
     // the exact rendered, openable rows, without a syscall. FAIL-able: a decode
     // regression, a wrong kind→bucket mapping, a miscount, a wrong row text, or a
     // wrong open route flips this to `false`.
@@ -6708,7 +6708,7 @@ pub fn design_proof() -> bool {
 }
 
 /// Prove the global indexed-search wiring the live Search overlay depends on:
-/// the kernel result blob decodes through the committed `raekit::search` surface,
+/// the kernel result blob decodes through the committed `athkit::search` surface,
 /// the RESOLVED hits (`decode_resolved`) render as the exact named name+path rows
 /// the overlay draws, each row routes to the correct open action (file →
 /// open-by-path, folder → navigate, path-less → no-op), the per-kind tally header
@@ -6720,7 +6720,7 @@ pub fn design_proof() -> bool {
 /// path flips it to `false` (exit code 3 at startup).
 #[must_use]
 fn search_proof() -> bool {
-    use raekit::syscalls::search::{
+    use athkit::syscalls::search::{
         decode_resolved, decode_results, Kind as K, ResolvedHit, SearchHit,
     };
 
@@ -6735,10 +6735,10 @@ fn search_proof() -> bool {
         b[base + 8..base + 12].copy_from_slice(&kind.to_le_bytes());
         // pad [12..16] left zero.
     };
-    put(&mut blob, 0, 10, raekit::sys::SEARCH_KIND_FILE);
-    put(&mut blob, 1, 20, raekit::sys::SEARCH_KIND_APP);
-    put(&mut blob, 2, 30, raekit::sys::SEARCH_KIND_SETTING);
-    put(&mut blob, 3, 40, raekit::sys::SEARCH_KIND_OTHER);
+    put(&mut blob, 0, 10, athkit::sys::SEARCH_KIND_FILE);
+    put(&mut blob, 1, 20, athkit::sys::SEARCH_KIND_APP);
+    put(&mut blob, 2, 30, athkit::sys::SEARCH_KIND_SETTING);
+    put(&mut blob, 3, 40, athkit::sys::SEARCH_KIND_OTHER);
 
     let hits = decode_results(&blob, 4);
     if hits.len() != 4 {
@@ -6769,7 +6769,7 @@ fn search_proof() -> bool {
     // A Document hit folds into its own bucket (a 5th record proves the mapping
     // is not collapsing Document into Other).
     let mut blob2 = [0u8; 16];
-    put(&mut blob2, 0, 50, raekit::sys::SEARCH_KIND_DOCUMENT);
+    put(&mut blob2, 0, 50, athkit::sys::SEARCH_KIND_DOCUMENT);
     let s2 = summarize_hits(&decode_results(&blob2, 1));
     if s2.documents != 1 || s2.other != 0 || s2.total != 1 {
         return false;
@@ -6821,23 +6821,23 @@ fn search_proof() -> bool {
     enc(
         &mut rblob,
         7,
-        raekit::sys::SEARCH_KIND_DOCUMENT,
+        athkit::sys::SEARCH_KIND_DOCUMENT,
         false,
         "resume.txt",
-        "/home/raeen/Documents/resume.txt",
+        "/home/athena/Documents/resume.txt",
     );
     enc(
         &mut rblob,
         9,
-        raekit::sys::SEARCH_KIND_FILE,
+        athkit::sys::SEARCH_KIND_FILE,
         true,
         "Vacation",
-        "/home/raeen/Pictures/Vacation",
+        "/home/athena/Pictures/Vacation",
     );
     enc(
         &mut rblob,
         1,
-        raekit::sys::SEARCH_KIND_APP,
+        athkit::sys::SEARCH_KIND_APP,
         false,
         "Calculator",
         "",
@@ -6853,14 +6853,14 @@ fn search_proof() -> bool {
             id: 7,
             kind: K::Document,
             name: alloc::string::String::from("resume.txt"),
-            path: alloc::string::String::from("/home/raeen/Documents/resume.txt"),
+            path: alloc::string::String::from("/home/athena/Documents/resume.txt"),
             is_folder: false,
         })
     {
         return false;
     }
     if rhits[1].name != "Vacation"
-        || rhits[1].path != "/home/raeen/Pictures/Vacation"
+        || rhits[1].path != "/home/athena/Pictures/Vacation"
         || !rhits[1].is_folder
     {
         return false;
@@ -6890,14 +6890,14 @@ fn search_proof() -> bool {
     // NoTarget (graceful no-op, never a fabricated path).
     if search_open_route(&rhits[0])
         != SearchOpenRoute::OpenFile(alloc::string::String::from(
-            "/home/raeen/Documents/resume.txt",
+            "/home/athena/Documents/resume.txt",
         ))
     {
         return false;
     }
     if search_open_route(&rhits[1])
         != SearchOpenRoute::NavigateFolder(alloc::string::String::from(
-            "/home/raeen/Pictures/Vacation",
+            "/home/athena/Pictures/Vacation",
         ))
     {
         return false;
@@ -6942,7 +6942,7 @@ fn search_proof() -> bool {
     true
 }
 
-/// Prove the file-association wiring (rae_mime + rae_toml) the live "Open With" /
+/// Prove the file-association wiring (ath_mime + ath_toml) the live "Open With" /
 /// default-open / set-default paths depend on. Pure logic — no syscalls — so it
 /// runs at startup as part of `design_proof`. FAIL-able by construction (every
 /// branch compares against an explicit expected value): a wrong resolution, a
@@ -6950,7 +6950,7 @@ fn search_proof() -> bool {
 /// `false` (exit code 3 at startup).
 #[must_use]
 fn assoc_proof() -> bool {
-    // 1. rae_mime resolution drives the candidate list + default off the built-in
+    // 1. ath_mime resolution drives the candidate list + default off the built-in
     //    registry the app loads: a .png → the image app, a .txt → the editor.
     let reg = Registry::with_defaults();
     let png = resolve("vacation.png", None, &reg);
@@ -6976,7 +6976,7 @@ fn assoc_proof() -> bool {
         return false;
     }
 
-    // 2. "Set as default" overrides AND round-trips through the rae_toml
+    // 2. "Set as default" overrides AND round-trips through the ath_toml
     //    persistence. Override image/png → a custom viewer (chosen-first), then
     //    serialize → parse-back-onto-fresh-defaults → assert the override survived
     //    while an untouched type kept its built-in default. This is the EXACT
@@ -7032,17 +7032,17 @@ fn assoc_proof() -> bool {
     true
 }
 
-/// Prove the §4.4 file-type icon palette is sourced from `rae_tokens` (the
+/// Prove the §4.4 file-type icon palette is sourced from `ath_tokens` (the
 /// cohesion fix), maps each extension class to the right token, and re-skins with
 /// Vibe Mode for the accent-tracking classes. FAIL-able by construction: a
 /// hardcoded tint, a wrong §4.4 value, a mis-classified extension, or a broken
 /// accent-track flips this to `false` (exit code 3 at startup).
 #[must_use]
 fn ftype_proof() -> bool {
-    // 0. Each §4.4 class maps to its real `raegfx::icon` line-icon (the visual-QA
+    // 0. Each §4.4 class maps to its real `athgfx::icon` line-icon (the visual-QA
     //    Round-2 fix that retired the letter/block placeholders). FAIL-able: a
     //    swapped or dropped arm (e.g. Dir→File) flips this to `false` (exit 3).
-    use raegfx::icon::Icon;
+    use athgfx::icon::Icon;
     if ftype_icon(FType::Dir) != Icon::Folder
         || ftype_icon(FType::Code) != Icon::Code
         || ftype_icon(FType::Exec) != Icon::Exec
@@ -7055,36 +7055,36 @@ fn ftype_proof() -> bool {
     }
 
     // 1. The fixed semantic hues resolve to the §4.4 table values, straight from
-    //    rae_tokens (a private FOLDER_FG hardcode would fail this identity).
-    if ftype_color(FType::Exec) != rae_tokens::FTYPE_EXEC
-        || ftype_color(FType::Media) != rae_tokens::FTYPE_MEDIA
-        || ftype_color(FType::Doc) != rae_tokens::FTYPE_DOC
-        || ftype_color(FType::Archive) != rae_tokens::FTYPE_ARCHIVE
-        || ftype_color(FType::Neutral) != rae_tokens::ftype_neutral(&DARK)
+    //    ath_tokens (a private FOLDER_FG hardcode would fail this identity).
+    if ftype_color(FType::Exec) != ath_tokens::FTYPE_EXEC
+        || ftype_color(FType::Media) != ath_tokens::FTYPE_MEDIA
+        || ftype_color(FType::Doc) != ath_tokens::FTYPE_DOC
+        || ftype_color(FType::Archive) != ath_tokens::FTYPE_ARCHIVE
+        || ftype_color(FType::Neutral) != ath_tokens::ftype_neutral(&DARK)
     {
         return false;
     }
-    if rae_tokens::FTYPE_MEDIA != 0xFF_C0_7C_FF
-        || rae_tokens::FTYPE_DOC != 0xFF_F0_C8_5C
-        || rae_tokens::FTYPE_ARCHIVE != 0xFF_F0_A0_3C
-        || rae_tokens::FTYPE_EXEC != DARK.state_ok
+    if ath_tokens::FTYPE_MEDIA != 0xFF_C0_7C_FF
+        || ath_tokens::FTYPE_DOC != 0xFF_F0_C8_5C
+        || ath_tokens::FTYPE_ARCHIVE != 0xFF_F0_A0_3C
+        || ath_tokens::FTYPE_EXEC != DARK.state_ok
     {
         return false;
     }
 
     // 2. The two accent-tracking classes (dir/code) MUST equal the live accent —
     //    proving a Vibe switch propagates to the Files icon tints (no FM_ACCENT).
-    let live_accent = rae_tokens::derive_accent(theme_seed(), &DARK).base;
+    let live_accent = ath_tokens::derive_accent(theme_seed(), &DARK).base;
     if ftype_color(FType::Dir) != live_accent || ftype_color(FType::Code) != live_accent {
         return false;
     }
     // …and that the dir tint actually MOVES with a different seed (re-skin), while
     // a fixed class (media) does NOT — the cohesion-vs-fixed distinction.
     let alt_seed = 0xFF_FF_50_80u32;
-    if rae_tokens::ftype_dir(alt_seed, &DARK) == rae_tokens::ftype_dir(RAEBLUE, &DARK) {
+    if ath_tokens::ftype_dir(alt_seed, &DARK) == ath_tokens::ftype_dir(RAEBLUE, &DARK) {
         return false;
     }
-    if rae_tokens::FTYPE_MEDIA == alt_seed {
+    if ath_tokens::FTYPE_MEDIA == alt_seed {
         return false; // a fixed hue must be seed-independent
     }
 
@@ -7116,13 +7116,13 @@ fn ftype_proof() -> bool {
         && cls("mystery.qq", Kind::File) == FType::Neutral
 }
 
-/// Prove the Checksum / Verify wiring against the `rae_hash` crate the action
+/// Prove the Checksum / Verify wiring against the `ath_hash` crate the action
 /// calls: the SHA-256 known vector, the algo-by-length auto-detect, and the
 /// case-insensitive verify. Returns `false` on any drift (exit code 3 at startup).
 #[must_use]
 fn checksum_verify_proof() -> bool {
     // 1. SHA-256 of "abc" is the FIPS 180-4 Appendix B.1 vector.
-    if rae_hash::to_hex(&rae_hash::sha256(b"abc"))
+    if ath_hash::to_hex(&ath_hash::sha256(b"abc"))
         != "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
     {
         return false;
@@ -7131,23 +7131,23 @@ fn checksum_verify_proof() -> bool {
     // 2. Algo-by-hex-LENGTH auto-detect (the same mapping `run_verify` uses):
     //    64 → SHA-256, 40 → SHA-1, 32 → MD5, 8 → CRC32. Use the real digest
     //    lengths so a future width change is caught here.
-    if rae_hash::to_hex(&rae_hash::sha256(b"abc")).len() != 64 {
+    if ath_hash::to_hex(&ath_hash::sha256(b"abc")).len() != 64 {
         return false;
     }
-    if rae_hash::to_hex(&rae_hash::sha1(b"abc")).len() != 40 {
+    if ath_hash::to_hex(&ath_hash::sha1(b"abc")).len() != 40 {
         return false;
     }
-    if rae_hash::to_hex(&rae_hash::md5(b"abc")).len() != 32 {
+    if ath_hash::to_hex(&ath_hash::md5(b"abc")).len() != 32 {
         return false;
     }
-    if rae_hash::to_hex(&rae_hash::crc32(b"abc").to_be_bytes()).len() != 8 {
+    if ath_hash::to_hex(&ath_hash::crc32(b"abc").to_be_bytes()).len() != 8 {
         return false;
     }
     // The length→algo decision must select the correct algorithm.
-    if algo_for_len(64) != Some(rae_hash::Algo::Sha256)
-        || algo_for_len(40) != Some(rae_hash::Algo::Sha1)
-        || algo_for_len(32) != Some(rae_hash::Algo::Md5)
-        || algo_for_len(8) != Some(rae_hash::Algo::Crc32)
+    if algo_for_len(64) != Some(ath_hash::Algo::Sha256)
+        || algo_for_len(40) != Some(ath_hash::Algo::Sha1)
+        || algo_for_len(32) != Some(ath_hash::Algo::Md5)
+        || algo_for_len(8) != Some(ath_hash::Algo::Crc32)
         || algo_for_len(63).is_some()
     {
         return false;
@@ -7155,24 +7155,24 @@ fn checksum_verify_proof() -> bool {
 
     // 3. Case-insensitive verify: an UPPERCASE expected SHA-256 of "abc" matches,
     //    a wrong hash does not — exactly the run_verify contract.
-    if !rae_hash::verify(
+    if !ath_hash::verify(
         b"abc",
         "BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD",
-        rae_hash::Algo::Sha256,
+        ath_hash::Algo::Sha256,
     ) {
         return false;
     }
-    if rae_hash::verify(
+    if ath_hash::verify(
         b"abc",
         "0000000000000000000000000000000000000000000000000000000000000000",
-        rae_hash::Algo::Sha256,
+        ath_hash::Algo::Sha256,
     ) {
         return false;
     }
 
     // 4. This app's hex_eq_ci (the digest-vs-pasted compare run_verify uses) is
     //    case-insensitive-true for the matching hash and false for a wrong one.
-    let sha = rae_hash::to_hex(&rae_hash::sha256(b"abc"));
+    let sha = ath_hash::to_hex(&ath_hash::sha256(b"abc"));
     if !hex_eq_ci(
         &sha,
         "BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD",
@@ -7186,29 +7186,29 @@ fn checksum_verify_proof() -> bool {
     true
 }
 
-/// Map a pasted-hex character LENGTH to the `rae_hash::Algo` it represents
+/// Map a pasted-hex character LENGTH to the `ath_hash::Algo` it represents
 /// (64 = SHA-256, 40 = SHA-1, 32 = MD5, 8 = CRC32). Any other length → `None`.
 /// Kept as a function so `run_verify`'s decision is the SAME logic the proof
 /// asserts.
-fn algo_for_len(len: usize) -> Option<rae_hash::Algo> {
+fn algo_for_len(len: usize) -> Option<ath_hash::Algo> {
     match len {
-        64 => Some(rae_hash::Algo::Sha256),
-        40 => Some(rae_hash::Algo::Sha1),
-        32 => Some(rae_hash::Algo::Md5),
-        8 => Some(rae_hash::Algo::Crc32),
+        64 => Some(ath_hash::Algo::Sha256),
+        40 => Some(ath_hash::Algo::Sha1),
+        32 => Some(ath_hash::Algo::Md5),
+        8 => Some(ath_hash::Algo::Crc32),
         _ => None,
     }
 }
 
 /// Prove the Quick Look CSV table wiring: parse a known CSV (with a quoted
-/// embedded comma) through `rae_csv::parse` and assert the grid shape + the
+/// embedded comma) through `ath_csv::parse` and assert the grid shape + the
 /// quoted cell, then run this app's `csv_column_widths` + `truncate_cell` and
 /// assert they pick the right per-column max and truncate char-boundary-safely.
 /// Returns `false` on any drift.
 #[must_use]
 fn csv_table_proof() -> bool {
     // 1. Parse correctness (the quoted-comma case the table relies on).
-    let csv = match rae_csv::parse("a,b,c\n1,2,3\n\"x,y\",4,5\n") {
+    let csv = match ath_csv::parse("a,b,c\n1,2,3\n\"x,y\",4,5\n") {
         Ok(c) => c,
         Err(_) => return false,
     };
@@ -7236,7 +7236,7 @@ fn csv_table_proof() -> bool {
     }
 
     // 3. A wider table to exercise the cap + a multi-char column max.
-    let csv2 = match rae_csv::parse("name,city\nalice,London\nbob,NYC\n") {
+    let csv2 = match ath_csv::parse("name,city\nalice,London\nbob,NYC\n") {
         Ok(c) => c,
         Err(_) => return false,
     };
@@ -7267,7 +7267,7 @@ fn csv_table_proof() -> bool {
 /// 1. ZIP round-trip: build a 2-entry ZIP via `ZipWriter` — one COMPRESSIBLE
 ///    entry (a long repeated run, so DEFLATE/method 8 engages) and one tiny entry
 ///    (so the STORED/method-0 fallback engages) — then open it with the real
-///    `rae_zip::Archive` and `read_entry` (which CRC-verifies) and assert BOTH
+///    `ath_zip::Archive` and `read_entry` (which CRC-verifies) and assert BOTH
 ///    entries decode byte-for-byte back to their originals, exercising both the
 ///    method-8 and method-0 paths through the same reader the extractor uses.
 /// 2. gzip round-trip: `gzip_compress` a known buffer, assert the `1F 8B` magic
@@ -7286,7 +7286,7 @@ fn compress_roundtrip_ok() -> bool {
 
     // NESTED relative paths exercise the recursive-folder-walk's path prefixing:
     // a folder compress emits entries like `dir/a.txt` and `dir/sub/b.txt`. Adding
-    // them through the SAME `ZipWriter` and reopening with `rae_zip::Archive` must
+    // them through the SAME `ZipWriter` and reopening with `ath_zip::Archive` must
     // decode BOTH at their FULL relative-path names, byte-for-byte — proving the
     // writer handles '/'-bearing nested names (and that the path-prefixing the walk
     // builds round-trips). FAIL-able: a writer that mangled the name, or a path that
@@ -7338,11 +7338,11 @@ fn compress_roundtrip_ok() -> bool {
 
     // (2) gzip round-trip — magic prefix + decode equality.
     let src: &[u8] = b"compress me to a gzip stream, then back again";
-    let gz = rae_deflate::gzip_compress(src);
+    let gz = ath_deflate::gzip_compress(src);
     if gz.len() < 2 || gz[0] != 0x1F || gz[1] != 0x8B {
         return false;
     }
-    match rae_deflate::gzip_decompress(&gz) {
+    match ath_deflate::gzip_decompress(&gz) {
         Ok(back) => back.as_slice() == src,
         Err(_) => false,
     }
@@ -7350,7 +7350,7 @@ fn compress_roundtrip_ok() -> bool {
 
 /// Prove the Compare (unified-diff) wiring (exit code 3 on failure):
 ///
-/// 1. `rae_diff::unified_diff` of a known one-line change ("b" → "B") yields a
+/// 1. `ath_diff::unified_diff` of a known one-line change ("b" → "B") yields a
 ///    body with a `-b` removed line and a `+B` added line, plus an `@@` hunk
 ///    header.
 /// 2. The render color classification (`diff_line_color`) maps the leading byte
@@ -7582,7 +7582,7 @@ fn extract_zip_slip_guard_ok() -> bool {
 
 /// Assemble a 32-bit ZIP with two stored (method-0) entries: "hello.txt"="hi"
 /// and "../evil"="x". Live-computes each CRC-32 (IEEE) so `read_entry` verifies.
-/// Mirrors the layout rae_zip's own test writer produces.
+/// Mirrors the layout ath_zip's own test writer produces.
 fn build_test_zip_two() -> Vec<u8> {
     fn zip_crc32(data: &[u8]) -> u32 {
         let mut crc: u32 = 0xFFFF_FFFF;
@@ -7663,7 +7663,7 @@ fn build_test_zip_two() -> Vec<u8> {
 /// Build a tiny gzipped ustar tar carrying a safe regular-file entry
 /// ("hello.txt" = "hi") and a path-traversal entry ("../evil" = "x"), then run the
 /// SAME core `extract_tar_bytes` uses (`read_tar_gz` → per-entry
-/// `rae_tar::is_safe_path` filter → `data()`) and assert: the safe entry's bytes
+/// `ath_tar::is_safe_path` filter → `data()`) and assert: the safe entry's bytes
 /// equal "hi" AND the traversal entry is REJECTED by the gate (never written).
 /// This exercises the gunzip + tar-parse + tar-slip path end-to-end. FAIL-able:
 /// dropping the `is_safe_path` filter (the traversal entry would extract), or a
@@ -7685,8 +7685,8 @@ fn extract_tar_slip_guard_ok() -> bool {
     let mut wrote_unsafe = false;
 
     for te in archive.entries() {
-        // The exact gate order the extractor uses: rae_tar::is_safe_path FIRST.
-        if !rae_tar::is_safe_path(&te.name) {
+        // The exact gate order the extractor uses: ath_tar::is_safe_path FIRST.
+        if !ath_tar::is_safe_path(&te.name) {
             if te.name == "../evil" {
                 saw_traversal_rejected = true;
             }
@@ -7716,7 +7716,7 @@ fn extract_tar_slip_guard_ok() -> bool {
 /// entries: "hello.txt"="hi" and "../evil"="x". The tar is built with correct
 /// ustar headers + checksums; the gzip wrapper uses a single stored DEFLATE
 /// block with a live-computed CRC-32 + ISIZE trailer. Mirrors the construction
-/// rae_tar's own host KATs use, so `read_tar_gz` accepts it.
+/// ath_tar's own host KATs use, so `read_tar_gz` accepts it.
 fn build_test_targz_two() -> Vec<u8> {
     /// One 512-byte ustar header with a correct (unsigned) checksum.
     fn ustar_header(name: &str, size: u64) -> [u8; 512] {
@@ -7866,7 +7866,7 @@ fn quick_look_decode_blit_ok() -> bool {
 //
 // Build a 1x1 two-frame GIF89a by hand (no GIF *encoder* in the binary) so the
 // Files-side GIF WIRING (sniff → decode_gif → frame-0 bridge → blit) is proven.
-// rae_gif's 17 host KATs are the decode-logic proof. Frame 0 is palette index 0
+// ath_gif's 17 host KATs are the decode-logic proof. Frame 0 is palette index 0
 // (red), frame 1 is index 1 (blue) — distinct pixels so a wrong-frame regression
 // is visible.
 
@@ -7925,7 +7925,7 @@ fn build_test_gif() -> Vec<u8> {
 }
 
 /// Prove the Files GIF Quick Look wiring: sniff a hand-built 2-frame GIF, decode
-/// it through the real `rae_gif::decode_gif`, take frame 0, bridge + blit it, and
+/// it through the real `ath_gif::decode_gif`, take frame 0, bridge + blit it, and
 /// assert the sampled framebuffer pixel is red (frame 0), NOT blue (frame 1).
 /// FAIL-able: a broken sniff, a wrong frame selection, a bad bridge, or a blit
 /// regression flips this to `false` (exit code 3 at startup).
@@ -7986,10 +7986,10 @@ fn quick_look_gif_decode_ok() -> bool {
 // ── Embedded baseline-JPEG fixtures for the design_proof gate ──────────────
 //
 // These are real, spec-valid baseline JPEG byte streams (produced off-line by
-// the same from-scratch encoder raemedia's host KATs use, then verified to
-// round-trip through `raemedia::jpeg::decode_jpeg`). They are embedded (not
+// the same from-scratch encoder athmedia's host KATs use, then verified to
+// round-trip through `athmedia::jpeg::decode_jpeg`). They are embedded (not
 // encoded at runtime) so the Files binary carries no JPEG *encoder* — the
-// decode-logic proof is raemedia's 165 host KATs; this fixture proves the FILES
+// decode-logic proof is athmedia's 165 host KATs; this fixture proves the FILES
 // WIRING (sniff → decode_jpeg_oriented → bridge → blit).
 //
 // `JPEG_GRAY8`: an 8x8 flat-gray (luma 160) baseline JPEG. Decodes to a uniform
@@ -8053,7 +8053,7 @@ const JPEG_COLOR16_EXIF6: [u8; 442] = [
     0x9F, 0x5D, 0xB5, 0x72, 0x14, 0x51, 0x45, 0x7F, 0xFF, 0xD9,
 ];
 
-/// Decode the embedded baseline JPEG fixtures through the real `raemedia`
+/// Decode the embedded baseline JPEG fixtures through the real `athmedia`
 /// decoder + this app's bridge/blit, asserting (1) a flat-gray JPEG decodes to
 /// the expected ARGB and blits, and (2) the EXIF-oriented portrait rotates
 /// upright. Returns `false` on any drift (exit code 3 at startup). Mirrors
@@ -8199,21 +8199,21 @@ fn build_test_png(width: u32, height: u32, raw_scanlines: &[u8]) -> Vec<u8> {
 
 /// The live Files application: create the surface, render, and run the input
 /// loop forever. Called by the `src/main.rs` bin's `_start`. Diverges (`-> !`)
-/// — it only returns via `raekit::sys::exit`.
+/// — it only returns via `athkit::sys::exit`.
 pub fn run() -> ! {
     if !design_proof() {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
 
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
     let mut app = App::new();
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, 240, 90);
+    athkit::sys::surface_present(sid, 240, 90);
 
     let mut extended = false;
 
@@ -8233,7 +8233,7 @@ pub fn run() -> ! {
         let mut mouse_activity = false;
         let mut left_down = left_was_down;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -8249,13 +8249,13 @@ pub fn run() -> ! {
                 app.compare_diff = Vec::new();
                 app.compare_scroll = 0;
                 render(&app, &mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
             } else if left_down && !left_was_down && app.overlay == Overlay::Checksum {
                 // Checksum overlay: the close (×) button dismisses it; a click on
                 // the verify field is a focus no-op (typing always targets it);
                 // any other click is swallowed (not routed to the list beneath).
-                let (cx, cy, _btn) = raekit::sys::cursor_pos();
-                let (ox, oy) = raekit::sys::surface_origin(sid)
+                let (cx, cy, _btn) = athkit::sys::cursor_pos();
+                let (ox, oy) = athkit::sys::surface_origin(sid)
                     .unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
                 let lx = (cx as i32).saturating_sub(ox as i32);
                 let ly = (cy as i32).saturating_sub(oy as i32);
@@ -8268,7 +8268,7 @@ pub fn run() -> ! {
                     app.verify_len = 0;
                     app.verify_result = VerifyResult::None;
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 }
             } else if left_down && !left_was_down && app.overlay == Overlay::OpenWith {
                 // Open With overlay is modal: a click dismisses it (mouse close
@@ -8277,13 +8277,13 @@ pub fn run() -> ! {
                 // and setting the default.
                 app.close_open_with();
                 render(&app, &mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
             } else if left_down && !left_was_down && app.overlay == Overlay::Search {
                 // Search overlay: a click on a NAMED result row selects + opens it
                 // (the mouse counterpart of Up/Down + Enter); a click anywhere else
                 // (the scrim) dismisses the overlay.
-                let (cx, cy, _btn) = raekit::sys::cursor_pos();
-                let (ox, oy) = raekit::sys::surface_origin(sid)
+                let (cx, cy, _btn) = athkit::sys::cursor_pos();
+                let (ox, oy) = athkit::sys::surface_origin(sid)
                     .unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
                 let lx = (cx as i32).saturating_sub(ox as i32);
                 let ly = (cy as i32).saturating_sub(oy as i32);
@@ -8296,15 +8296,15 @@ pub fn run() -> ! {
                     None => app.close_search(),
                 }
                 render(&app, &mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
             } else if left_down && !left_was_down {
-                let (cx, cy, _btn) = raekit::sys::cursor_pos();
+                let (cx, cy, _btn) = athkit::sys::cursor_pos();
                 // Subtract the LIVE window origin (not the stale present-time
                 // PRESENT_X/Y) so clicks land correctly after the window manager
                 // moves the window (Overview / Spaces / tiling). Falls back to the
                 // present origin if the surface isn't found. Saturating-sub keeps a
                 // cursor above/left of the window from underflowing.
-                let (ox, oy) = raekit::sys::surface_origin(sid)
+                let (ox, oy) = athkit::sys::surface_origin(sid)
                     .unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
                 let lx = (cx as i32).saturating_sub(ox as i32);
                 let ly = (cy as i32).saturating_sub(oy as i32);
@@ -8314,7 +8314,7 @@ pub fn run() -> ! {
                     Some(Action::SelectRow(idx)) => idx as i64,
                     _ => -1,
                 };
-                let now = raekit::sys::time_ns();
+                let now = athkit::sys::time_ns();
                 let is_double = row_now >= 0
                     && row_now == last_click_row
                     && now.saturating_sub(last_click_ns) <= DOUBLE_CLICK_NS;
@@ -8330,15 +8330,15 @@ pub fn run() -> ! {
                 };
                 if changed {
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 }
             }
             left_was_down = left_down;
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
 
@@ -8435,7 +8435,7 @@ pub fn run() -> ! {
                 }
                 if dirty {
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, 240, 90);
+                    athkit::sys::surface_present(sid, 240, 90);
                 }
                 continue;
             }
@@ -8464,7 +8464,7 @@ pub fn run() -> ! {
                 }
                 if dirty {
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, 240, 90);
+                    athkit::sys::surface_present(sid, 240, 90);
                 }
                 continue;
             }
@@ -8498,7 +8498,7 @@ pub fn run() -> ! {
                 }
                 if dirty {
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, 240, 90);
+                    athkit::sys::surface_present(sid, 240, 90);
                 }
                 continue;
             }
@@ -8536,7 +8536,7 @@ pub fn run() -> ! {
                 }
                 if dirty {
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, 240, 90);
+                    athkit::sys::surface_present(sid, 240, 90);
                 }
                 continue;
             }
@@ -8569,7 +8569,7 @@ pub fn run() -> ! {
                 }
                 if dirty {
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, 240, 90);
+                    athkit::sys::surface_present(sid, 240, 90);
                 }
                 continue;
             }
@@ -8613,7 +8613,7 @@ pub fn run() -> ! {
                 }
                 if dirty {
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, 240, 90);
+                    athkit::sys::surface_present(sid, 240, 90);
                 }
                 continue;
             }
@@ -8655,7 +8655,7 @@ pub fn run() -> ! {
                 dirty = true;
             } // Backspace = up
             (false, 0x01) => {
-                raekit::sys::exit(0);
+                athkit::sys::exit(0);
             } // Esc
             (false, 0x39) => {
                 app.open_quick_look();
@@ -8717,11 +8717,11 @@ pub fn run() -> ! {
             (false, 0x18) => {
                 app.open_open_with();
                 dirty = true;
-            } // 'o' = Open With… (rae_mime candidate list + Set as default)
+            } // 'o' = Open With… (ath_mime candidate list + Set as default)
             (false, 0x35) => {
                 app.open_search();
                 dirty = true;
-            } // '/' = global indexed search (raekit::search → kernel index)
+            } // '/' = global indexed search (athkit::search → kernel index)
             // Number keys 1–7 = jump to QUICK_ACCESS slot
             (false, c) if (0x02..=0x08).contains(&c) => {
                 let idx = (c - 0x02) as usize;
@@ -8735,7 +8735,7 @@ pub fn run() -> ! {
 
         if dirty {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, 240, 90);
+            athkit::sys::surface_present(sid, 240, 90);
         }
     }
 }
@@ -8845,9 +8845,9 @@ mod tests {
     use alloc::format;
     use alloc::vec;
 
-    // ── PDF fixture (the spec-shaped byte layout rae_pdf::Document::open needs) ──
+    // ── PDF fixture (the spec-shaped byte layout ath_pdf::Document::open needs) ──
     // A minimal classic-xref PDF: header, 5 objects (catalog/pages/page/contents/
-    // font), an xref table, and a trailer. Mirrors rae_pdf's own test builder.
+    // font), an xref table, and a trailer. Mirrors ath_pdf's own test builder.
     fn build_test_pdf(shown: &str) -> Vec<u8> {
         let bodies: [Vec<u8>; 5] = [
             b"<< /Type /Catalog /Pages 2 0 R >>".to_vec(),
@@ -8916,22 +8916,22 @@ mod tests {
         }
     }
 
-    // ── DOCX fixture (built with rae_docx's own writer) ──────────────────────────
+    // ── DOCX fixture (built with ath_docx's own writer) ──────────────────────────
     fn build_test_docx() -> Vec<u8> {
-        let doc = rae_docx::Document {
+        let doc = ath_docx::Document {
             blocks: vec![
-                rae_docx::Block::Paragraph(rae_docx::Paragraph {
+                ath_docx::Block::Paragraph(ath_docx::Paragraph {
                     style: Some("Heading1".into()),
-                    runs: vec![rae_docx::Run {
+                    runs: vec![ath_docx::Run {
                         text: "Quarterly Report".into(),
                         bold: true,
                         italic: false,
                         underline: false,
                     }],
                 }),
-                rae_docx::Block::Paragraph(rae_docx::Paragraph {
+                ath_docx::Block::Paragraph(ath_docx::Paragraph {
                     style: None,
-                    runs: vec![rae_docx::Run {
+                    runs: vec![ath_docx::Run {
                         text: "Revenue grew this quarter.".into(),
                         bold: false,
                         italic: false,
@@ -8972,9 +8972,9 @@ mod tests {
         }
     }
 
-    // ── XLSX fixture (built with rae_xlsx's WorkbookBuilder) ─────────────────────
+    // ── XLSX fixture (built with ath_xlsx's WorkbookBuilder) ─────────────────────
     fn build_test_xlsx() -> Vec<u8> {
-        use rae_xlsx::{Cell, CellValue};
+        use ath_xlsx::{Cell, CellValue};
         let cells = vec![
             Cell {
                 col: 0,
@@ -9001,7 +9001,7 @@ mod tests {
                 formula: None,
             },
         ];
-        rae_xlsx::WorkbookBuilder::new()
+        ath_xlsx::WorkbookBuilder::new()
             .add_sheet("Sheet1", cells)
             .to_xlsx()
             .expect("writer must emit a valid .xlsx")
@@ -9028,16 +9028,16 @@ mod tests {
         }
     }
 
-    // ── PNG fixture (built with rae_image's own encoder) ─────────────────────────
+    // ── PNG fixture (built with ath_image's own encoder) ─────────────────────────
     fn build_test_png(w: u32, h: u32) -> Vec<u8> {
         // A solid opaque-red bitmap: 0xAARRGGBB = 0xFFFF0000.
         let pixels = vec![0xFFFF_0000u32; (w * h) as usize];
-        let img = rae_image::Image {
+        let img = ath_image::Image {
             width: w,
             height: h,
             pixels,
         };
-        rae_image::encode(&img, rae_image::ImageFormat::Png).expect("PNG encode must succeed")
+        ath_image::encode(&img, ath_image::ImageFormat::Png).expect("PNG encode must succeed")
     }
 
     #[test]
@@ -9114,7 +9114,7 @@ mod tests {
     // The literal Concept promise: double-click a Windows `.exe` in Files → it
     // runs as its own sandboxed process. `exe_launch_plan` is the pure decision
     // core (no syscalls); these KATs prove that activating a `.exe` produces the
-    // correct handoff target for THAT path and requests the `raebridge_run`
+    // correct handoff target for THAT path and requests the `athbridge_run`
     // spawn, and that a non-`.exe` does NOT take the launch route (so the doc/
     // image preview path still runs). Each assertion is FAIL-able.
 
@@ -9124,7 +9124,7 @@ mod tests {
         let plan = exe_launch_plan(path).expect("a .exe must produce a launch plan");
 
         // The launcher spawned is the proven per-process loader, not something else.
-        assert_eq!(plan.spawn, "raebridge_run");
+        assert_eq!(plan.spawn, "athbridge_run");
         assert_eq!(plan.spawn, RAEBRIDGE_RUN);
 
         // The handoff record must decode back to a PE target whose path is EXACTLY
@@ -9164,13 +9164,13 @@ mod tests {
         // path. If any of these produced a plan, a double-clicked document would be
         // fed to the PE loader instead of being previewed.
         for path in [
-            "/home/raeen/notes.txt",
-            "/home/raeen/photo.png",
-            "/home/raeen/report.pdf",
+            "/home/athena/notes.txt",
+            "/home/athena/photo.png",
+            "/home/athena/report.pdf",
             "/system/apps/files",    // a native app, no extension
-            "/home/raeen/exe",       // bare word, not a .exe
-            "/home/raeen/myexe.txt", // .exe is not the suffix
-            "/home/raeen/archive.zip",
+            "/home/athena/exe",       // bare word, not a .exe
+            "/home/athena/myexe.txt", // .exe is not the suffix
+            "/home/athena/archive.zip",
         ] {
             assert!(
                 exe_launch_plan(path).is_none(),

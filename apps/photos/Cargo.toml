@@ -7,8 +7,8 @@ authors.workspace = true
 repository.workspace = true
 
 # Library target: the app's state + draw path + the syscall-free decode-dispatch
-# (`decode_oriented`) so a host KAT can link the LIVE image decoders (rae_image +
-# rae_gif) with no kernel. This is the structure `apps/files` / `apps/passwords`
+# (`decode_oriented`) so a host KAT can link the LIVE image decoders (ath_image +
+# ath_gif) with no kernel. This is the structure `apps/files` / `apps/passwords`
 # use.
 [lib]
 name = "photos"
@@ -25,23 +25,23 @@ path = "src/main.rs"
 test = false
 
 [features]
-# Forwards to `raekit/host`: lets the std `cargo test` harness link `photos`
-# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# Forwards to `athkit/host`: lets the std `cargo test` harness link `photos`
+# (-> `athkit`) without athkit's bare-ELF lang items colliding with std (E0152
 # duplicate panic_impl). The normal `cargo build -p photos --target
 # x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
 # with `cargo test -p photos --features host`.
-host = ["raekit/host"]
+host = ["athkit/host"]
 
 [dependencies]
-raegfx = { path = "../../components/raegfx" }
-raekit = { path = "../../components/raekit" }
-rae_tokens = { path = "../../components/rae_tokens" }
-raemedia = { path = "../../components/raemedia" }
-rae_gif = { path = "../../components/rae_gif" }
-rae_toml = { path = "../../components/rae_toml" }
+athgfx = { path = "../../components/athgfx" }
+athkit = { path = "../../components/athkit" }
+ath_tokens = { path = "../../components/ath_tokens" }
+athmedia = { path = "../../components/athmedia" }
+ath_gif = { path = "../../components/ath_gif" }
+ath_toml = { path = "../../components/ath_toml" }
 # Magic-byte content sniffer + unified still-image decoder
 # (PNG/JPEG/BMP/GIF/WebP -> ARGB8888). The single still-image "open any image"
 # front door now shared with the Files app: Photos sniffs by magic bytes and
 # dispatches through one path (BMP + WebP join the existing PNG/JPEG). Animated
-# GIFs still route to `rae_gif` directly for the multi-frame animation loop.
-rae_image = { path = "../../components/rae_image" }
+# GIFs still route to `ath_gif` directly for the multi-frame animation loop.
+ath_image = { path = "../../components/ath_image" }

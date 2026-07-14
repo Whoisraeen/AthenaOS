@@ -1,0 +1,10 @@
+[package]
+name = "athshield"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "AthGuard backend (crate athshield) - capability-based security, sandboxing, attestation for AthenaOS."
+
+[dependencies]
+ath_crypto = { path = "../ath_crypto" }

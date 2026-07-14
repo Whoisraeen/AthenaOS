@@ -11,8 +11,8 @@
 #![no_main]
 
 use core::panic::PanicInfo;
-use rae_abi::cap;
-use rae_abi::syscall as abi;
+use ath_abi::cap;
+use ath_abi::syscall as abi;
 
 const SYS_CAP_QUERY: u64 = 6;
 const SYS_MMIO_MAP: u64 = 7;
@@ -23,7 +23,7 @@ const MMIO_USER_BASE: u64 = 0x4000_0000;
 const MMIO_LEN: u64 = 4096;
 
 const _: () = assert!(abi::SYS_DRIVER_REGISTER == 109);
-const _: () = assert!(rae_abi::ABI_VERSION == 4);
+const _: () = assert!(ath_abi::ABI_VERSION == 4);
 
 #[inline(always)]
 unsafe fn sys_print(value: u64) {

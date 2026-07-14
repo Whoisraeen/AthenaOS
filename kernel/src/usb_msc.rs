@@ -960,7 +960,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// Human-readable status dump for `/proc/raeen/usb_msc` or the boot log.
+/// Human-readable status dump for `/proc/athena/usb_msc` or the boot log.
 pub fn dump_text() -> String {
     let devs = MSC_DEVICES.lock();
     if devs.is_empty() {

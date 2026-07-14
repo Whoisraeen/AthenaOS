@@ -3,12 +3,12 @@
 **Status: foundation / scaffolding. NOT a shipped feature.** This is the FreeBSD
 `drm-kmod` model applied to AthenaOS: compile the *real* upstream `amdgpu` C driver
 against a LinuxKPI compatibility layer (headers here + the C-ABI implementations in
-`components/raeen_linuxkpi`), so the complete, battle-tested amdgpu init brings the
-GPU up — instead of our hand-ported `components/raeen_amdgpu` Rust reimplementation.
+`components/ath_linuxkpi`), so the complete, battle-tested amdgpu init brings the
+GPU up — instead of our hand-ported `components/ath_amdgpu` Rust reimplementation.
 
 ## Why this exists
 
-`components/raeen_amdgpu` reimplements the gfx11 / MES bring-up in Rust. As of
+`components/ath_amdgpu` reimplements the gfx11 / MES bring-up in Rust. As of
 2026-06-30 we proved (via `docs/gpu-oracle/`, ftrace of the live driver + the real
 `mes_v11_0.c` source) that **our entire MES submission path is byte-identical to
 amdgpu** — queue-init (KIQ MAP_QUEUES + ring-test drain), the MES enable, and every
@@ -32,7 +32,7 @@ partition — separate license island"):
   source lives, and it is not tracked.
 - This directory (`linuxkpi-drm/`) is a **separate build** — it is NOT a cargo
   workspace member, NOT part of `kernel/`, and is not built by `xtask`. It links the
-  GPL amdgpu objects against `raeen_linuxkpi` at the **userspace daemon** boundary
+  GPL amdgpu objects against `ath_linuxkpi` at the **userspace daemon** boundary
   (`amdgpud`), preserving crash isolation (Concept §Architecture: IOMMU-sandboxed
   userspace drivers).
 - The LinuxKPI shim headers under `include/` are **MPL-2.0** (original work — Linux
@@ -81,7 +81,7 @@ make probe                 # show the next wall of missing LinuxKPI surface
   the 74-include graph. Run `make probe` to see the current wall.
 - **[ ] M3 — `mes_v11_0.c` + its direct deps *compile*** (the `amdgpu_device` struct
   surface stubbed enough to typecheck).
-- **[ ] M4 — the MES bring-up subset links** against `raeen_linuxkpi`.
+- **[ ] M4 — the MES bring-up subset links** against `ath_linuxkpi`.
 - **[ ] M5 — runs against the live device** (the real init brings pipe0 up).
 
 See `SCOPE.md` for the realistic effort and the per-milestone dependency walls.

@@ -31,8 +31,8 @@ backgrounding those is the open win.
 | Compositor frame deadline @60 Hz | 16.6 ms | — | per-frame VRR pacer budget | 🟡 |
 | @120 Hz | 8.3 ms | — | " | 🟡 |
 | @144 Hz / @240 Hz | 6.9 / 4.2 ms | — | " | 🟡 |
-| Missed-frame rate (steady state) | < 0.1 % | 0 | `/proc/raeen/perf` `frame.miss_rate_bp` (frametime > 1.5× refresh budget = skipped vsync) | 🟡 counter wired into the present path + logic-proven; live data desktop/iron-gated |
-| **GPU-scanout present pipeline @1080p** | ≥ 120 fps (frame ≤ 8.3 ms) | ≥ 240 fps | `[compositor] present-bench(gpu-scanout)` at DCN attach + `/proc/raeen/compositor` `present: frame_us/blit_us/fps` (row-blit + clflush present; pacer target 8 333 µs on attach) | 🟡 instrument + fast path landed 2026-07-02; iron number pending next DCN boot. Panel >60 Hz photons additionally need the DCN modeset (Phase 2.3 EDID). |
+| Missed-frame rate (steady state) | < 0.1 % | 0 | `/proc/athena/perf` `frame.miss_rate_bp` (frametime > 1.5× refresh budget = skipped vsync) | 🟡 counter wired into the present path + logic-proven; live data desktop/iron-gated |
+| **GPU-scanout present pipeline @1080p** | ≥ 120 fps (frame ≤ 8.3 ms) | ≥ 240 fps | `[compositor] present-bench(gpu-scanout)` at DCN attach + `/proc/athena/compositor` `present: frame_us/blit_us/fps` (row-blit + clflush present; pacer target 8 333 µs on attach) | 🟡 instrument + fast path landed 2026-07-02; iron number pending next DCN boot. Panel >60 Hz photons additionally need the DCN modeset (Phase 2.3 EDID). |
 | Input → photon (added by OS) | < 1 frame | < 4 ms | hardware capture (iron) | ⬜ |
 | **VRR**: present within refresh window | always | — | pacer + scanout timestamp | 🟡 VRR pacer exists |
 
@@ -46,8 +46,8 @@ dropped, never blow the deadline.
 | Metric | Target | Stretch | Measured how | Status |
 |---|---|---|---|---|
 | Round-trip latency (in→process→out) | < 3 ms | < 1.5 ms | loopback timestamp | 🟡 design target; HDA PCM not on iron |
-| Buffer underruns under game load | 0 | 0 | `/proc/raeen/perf` `audio_underruns` / `audio_periods` (live xrun counter; `record_audio_period(wrote==0)` at audio.rs) | 🟡 counter wired + live; 0-under-game-load needs HDA PCM on iron |
-| Audio thread wake jitter | < 100 µs | < 50 µs | `/proc/raeen/perf` `audio_jitter.{avg,max}_us` (\|realized period − budget\| at record_audio_period) | 🟡 wired + logic-proven; live needs sustained audio (iron, Phase 7) |
+| Buffer underruns under game load | 0 | 0 | `/proc/athena/perf` `audio_underruns` / `audio_periods` (live xrun counter; `record_audio_period(wrote==0)` at audio.rs) | 🟡 counter wired + live; 0-under-game-load needs HDA PCM on iron |
+| Audio thread wake jitter | < 100 µs | < 50 µs | `/proc/athena/perf` `audio_jitter.{avg,max}_us` (\|realized period − budget\| at record_audio_period) | 🟡 wired + logic-proven; live needs sustained audio (iron, Phase 7) |
 
 **Rule:** the audio mix thread runs on **SCHED_BODY**; its deadline is hard. Sub-3ms is
 the headline AthAudio promise — measured end-to-end once HDA PCM playback lands (Phase 7).
@@ -59,7 +59,7 @@ the headline AthAudio promise — measured end-to-end once HDA PCM playback land
 | USB HID poll rate | 1000 Hz | 1000 Hz | xHCI interrupt interval | 🟡 |
 | Gamepad (DualSense/Xbox) report → event | < 1 ms | < 0.5 ms | input pipeline trace | 🟡 parsers exist |
 | Keypress → event delivered | < 1 ms | — | i8042/HID IRQ → input.rs | 🟡 |
-| Input event → game (wake latency) | < 1 ms | < 0.5 ms | `/proc/raeen/perf` `input_game_wake.{avg,max,last}_us` (input IRQ → next SCHED_BODY dispatch) | 🟡 pipeline wired + logic-proven; live µs desktop/iron-gated |
+| Input event → game (wake latency) | < 1 ms | < 0.5 ms | `/proc/athena/perf` `input_game_wake.{avg,max,last}_us` (input IRQ → next SCHED_BODY dispatch) | 🟡 pipeline wired + logic-proven; live µs desktop/iron-gated |
 
 **Rule:** input is IRQ-driven and the consuming game thread is SCHED_BODY — an input
 event must preempt normal work. No batching that adds latency on the game path.
@@ -68,8 +68,8 @@ event must preempt normal work. No batching that adds latency on the game path.
 
 | Metric | Target | Stretch | Measured how | Status |
 |---|---|---|---|---|
-| Context-switch cost | < 2 µs | < 1 µs | TSC around switch_context; decision/scan now `/proc/raeen/perf` `sched_pick.{min,avg,max}_ns` | 🟡 pick/scan cost wired (live); the asm register/stack swap itself still ⬜ (needs an asm probe or ping-pong harness) |
-| SCHED_BODY wakeup latency (IRQ→run) | < 10 µs | < 5 µs | input-driven case: `/proc/raeen/perf` `input_game_wake.*_us` (input IRQ → SCHED_BODY dispatch, §4) | 🟡 input-driven wake measured; non-input (timer/IPC) wakes not separately traced |
+| Context-switch cost | < 2 µs | < 1 µs | TSC around switch_context; decision/scan now `/proc/athena/perf` `sched_pick.{min,avg,max}_ns` | 🟡 pick/scan cost wired (live); the asm register/stack swap itself still ⬜ (needs an asm probe or ping-pong harness) |
+| SCHED_BODY wakeup latency (IRQ→run) | < 10 µs | < 5 µs | input-driven case: `/proc/athena/perf` `input_game_wake.*_us` (input IRQ → SCHED_BODY dispatch, §4) | 🟡 input-driven wake measured; non-input (timer/IPC) wakes not separately traced |
 | EDF deadline-miss rate (SCHED_BODY) | 0 | 0 | per-class miss counter | 🟡 EDF exists |
 | Timer tick / preemption granularity | ≤ 1 ms | ≤ 250 µs | LAPIC timer cfg | ✅ |
 
@@ -90,7 +90,7 @@ race is fixed (intermittent rsp=0 #DF — see scheduler memory).
 
 | Metric | Target | Stretch | Measured how | Status |
 |---|---|---|---|---|
-| Heap alloc (slab fast path) | < 500 ns | < 200 ns | `perf::measure_heap_alloc` TSC microbench → `/proc/raeen/perf` `heap_alloc.{min,avg,max}_ns` | 🟡 ~129 ns avg / 69 ns min TCG (already < target; iron pending) |
+| Heap alloc (slab fast path) | < 500 ns | < 200 ns | `perf::measure_heap_alloc` TSC microbench → `/proc/athena/perf` `heap_alloc.{min,avg,max}_ns` | 🟡 ~129 ns avg / 69 ns min TCG (already < target; iron pending) |
 | Page fault → resident | < 5 µs | — | fault handler trace | ⬜ |
 | Hugepage-backed game heap | available | — | mmap flag honored | 🟡 hugepages exist |
 
@@ -98,7 +98,7 @@ race is fixed (intermittent rsp=0 #DF — see scheduler memory).
 
 ## 8. How we measure (the telemetry surface is now wired)
 
-- **`/proc/raeen/perf` is the one place**, lock-free per-metric counters, fed by the
+- **`/proc/athena/perf` is the one place**, lock-free per-metric counters, fed by the
   hot-path `record_*` helpers. As of 2026-06-25 it carries: boot time; input events +
   input→photon latency; frames presented + frametime ring + FPS + **missed-frame rate**
   (§2); audio periods + **underruns** (§3); SCHED_BODY dispatches + **deadline-miss rate**
@@ -120,7 +120,7 @@ race is fixed (intermittent rsp=0 #DF — see scheduler memory).
   input→photon: live µs/rate need the compositor + real input on a panel.
 - §3 audio round-trip + 0-underruns + wake jitter: need HDA PCM on iron (Phase 7).
 - §5 heap-alloc < 500 ns / pick-scan < 2 µs: QEMU shows ~130 ns / ~1.5 µs (already under
-  budget pre-deflation); the iron pass is a hardware `/proc/raeen/perf` read.
+  budget pre-deflation); the iron pass is a hardware `/proc/athena/perf` read.
 - §6 NVMe latency / CoW write-amp: need real NVMe I/O on iron.
 
 ### Not applicable by current design

@@ -3,7 +3,7 @@
  * <linux/workqueue.h> shim (MPL-2.0, original work).
  *
  * Deferred work. The DRM scheduler and amdgpu run reset/hotplug/fence-signal work
- * off workqueues. Backed by raeen_linuxkpi's PUMP-DRIVEN workqueue facade at M4
+ * off workqueues. Backed by ath_linuxkpi's PUMP-DRIVEN workqueue facade at M4
  * (the daemon drains queued work each loop). The struct layout is chosen to match
  * that facade: `func` sits at OFFSET 24 (atomic_long_t data @0..8, list_head
  * entry @8..24, func @24) — the facade reads the callback there.
@@ -60,7 +60,7 @@ struct work_struct;
 #define work_pending(work) (0)
 #define to_delayed_work(_w) ((struct delayed_work *)(_w))
 
-/* scheduling/cancel/flush — real, backed by raeen_linuxkpi (M4) */
+/* scheduling/cancel/flush — real, backed by ath_linuxkpi (M4) */
 struct workqueue_struct *alloc_workqueue(const char *fmt, unsigned int flags, int max_active, ...);
 struct workqueue_struct *alloc_ordered_workqueue(const char *fmt, unsigned int flags, ...);
 void destroy_workqueue(struct workqueue_struct *wq);

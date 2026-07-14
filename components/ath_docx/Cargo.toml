@@ -1,0 +1,26 @@
+[package]
+name = "ath_docx"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS DOCX (Word) reader — "open my Word documents" (LEGACY_GAMING_CONCEPT.md
+# §Compatibility Strategy / office-style productivity). A Windows/macOS switcher
+# brings a folder of .docx files; an OS that can't open them isn't a daily driver.
+# A .docx IS a ZIP container of Office Open XML (WordprocessingML), so this crate
+# REUSES `ath_zip` for the archive layer (no reimplemented inflate) and adds a
+# minimal, never-panic WordprocessingML parser over `word/document.xml` to build a
+# structured Document model plus a plain-text extraction path.
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_png / ath_zip pattern): the lib is
+# `no_std` + `alloc` in every shipped build and toggles to `std` only under
+# `cfg(test)` for the host KAT harness. Run the FAIL-able proof with
+# `cargo test -p ath_docx` — no QEMU, no image build. Treats every byte as hostile
+# (document parsers are an RCE surface): no `unwrap`/`expect`/raw-index-panic is
+# reachable from `Document::open`, the decompressed document.xml is size-capped,
+# and element nesting depth / total element count are bounded before allocation.
+
+[dependencies]
+ath_zip = { path = "../ath_zip" }

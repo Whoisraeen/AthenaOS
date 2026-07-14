@@ -1,6 +1,6 @@
 Subject: [PATCH] amdgpu/psp: flush HDP in the fence-wait loop + raise psp_timeout
 
-RaeenOS runs amdgpu as a userspace daemon and CPU-maps the APU VRAM carveout
+AthenaOS runs amdgpu as a userspace daemon and CPU-maps the APU VRAM carveout
 UNCACHED-direct (via SYS_LINUXKPI_MAP_PHYS), not through the GPU BAR + HDP the
 way an in-kernel driver does. The PSP writes its completion fence to that
 carveout DRAM; without draining the GPU HDP write path the fence becomes
@@ -29,7 +29,7 @@ this is safe for the in-kernel path too.
  		if (ras_intr)
  			break;
  		usleep_range(60, 100);
-+		/* RaeenOS: drain the GPU HDP write path so the PSP's fence write
++		/* AthenaOS: drain the GPU HDP write path so the PSP's fence write
 +		 * to (uncached-mapped) carveout DRAM is visible now, not ~18s
 +		 * later. Cheap register write on hw; no-op on the coherent side. */
 +		amdgpu_device_flush_hdp(psp->adev, NULL);

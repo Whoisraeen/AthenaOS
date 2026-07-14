@@ -681,19 +681,19 @@ pub fn pbkdf2_sha256(password: &[u8], salt: &[u8], iterations: u32, output: &mut
 //
 // The full algorithm (BLAKE2b core, H' hash, BlaMka compression, multi-lane
 // reference-indexed fill, Argon2id split addressing) now lives in the shared
-// `rae_crypto` crate so the kernel (FDE key derivation) and `raeid` (account
+// `ath_crypto` crate so the kernel (FDE key derivation) and `athid` (account
 // password hashing) share ONE KAT-proven implementation instead of each
 // carrying its own. Re-exported here so existing callers (`derive_key`,
 // `KdfParams::argon2id_default`) are unchanged. Validated against the RFC 9106
 // §5.3 vector in `run_boot_smoketest` below (fail-closed) and by the host
 // harness in `tools/argon2_kat/`.
-pub use rae_crypto::{argon2id_derive, argon2id_full};
+pub use ath_crypto::{argon2id_derive, argon2id_full};
 
 /// RFC 9106 §5.3 Argon2id known-answer test + a BLAKE2b self-check. Fail-closed:
 /// panics on mismatch so a broken KDF can never silently weaken FDE keys.
 pub fn run_boot_smoketest() {
     // BLAKE2b-512("abc") — RFC 7693 Appendix A test vector.
-    let b = rae_crypto::blake2b(64, b"abc");
+    let b = ath_crypto::blake2b(64, b"abc");
     const BLAKE2B_ABC: [u8; 64] = [
         0xba, 0x80, 0xa5, 0x3f, 0x98, 0x1c, 0x4d, 0x0d, 0x6a, 0x27, 0x97, 0xb6, 0x9f, 0x12, 0xf6,
         0xe9, 0x4c, 0x21, 0x2f, 0x14, 0x68, 0x5a, 0xc4, 0xb7, 0x4b, 0x12, 0xbb, 0x6f, 0xdb, 0xff,

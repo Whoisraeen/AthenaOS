@@ -139,7 +139,7 @@ pub enum WatchdogAction {
 /// advancing the kernel is wedged and the software watchdog ([`check_alive`])
 /// — and ultimately the hardware watchdog — reacts.
 ///
-/// Exposed publicly so the boot smoketest and `/proc/raeen/watchdog` can prove
+/// Exposed publicly so the boot smoketest and `/proc/athena/watchdog` can prove
 /// the heartbeat is live without taking the manager lock.
 pub static WATCHDOG_TICK: AtomicU64 = AtomicU64::new(0);
 
@@ -1436,7 +1436,7 @@ pub fn run_stall_detection_selftest() {
     }
 }
 
-/// procfs `/proc/raeen/watchdog` text dump.
+/// procfs `/proc/athena/watchdog` text dump.
 pub fn dump_text() -> String {
     let mgr = WATCHDOG.lock();
     let mut out = String::new();

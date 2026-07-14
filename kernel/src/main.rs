@@ -69,12 +69,12 @@ pub static INSTALLER_MODE: AtomicBool = AtomicBool::new(false);
 pub fn detect_installer_mode() {
     // Heuristic: if no valid AthFS partition is found during storage discovery,
     // we're likely booting from live USB → enter installer mode.
-    // The full installer process (raeinstaller) is spawned instead of the normal shell.
+    // The full installer process (athinstaller) is spawned instead of the normal shell.
     // For now: always false (installed boot) until installer flow is wired.
     // When the installer USB image is built, it will pass "installer" in BootInfo.
     INSTALLER_MODE.store(false, Ordering::Relaxed);
     if INSTALLER_MODE.load(Ordering::Relaxed) {
-        serial_println!("[boot] INSTALLER MODE: raeinstaller will replace normal user_init");
+        serial_println!("[boot] INSTALLER MODE: athinstaller will replace normal user_init");
     } else {
         serial_println!("[boot] normal boot mode (installed system)");
     }
@@ -109,7 +109,7 @@ mod panic;
 pub mod pci;
 pub mod pci_irq;
 pub mod pci_pm;
-pub mod raefs;
+pub mod athfs;
 pub mod rtc;
 pub mod sched_proof;
 pub mod scheduler;
@@ -254,7 +254,7 @@ pub mod posix_ipc;
 pub mod prefetch;
 pub mod procfs;
 pub mod rae_manifest;
-pub mod raebridge_boot;
+pub mod athbridge_boot;
 pub mod rgb;
 pub mod scripting;
 pub mod search_index;
@@ -686,10 +686,10 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     // window_chrome / login_ui have no init().
     {
         // Phase 8.1 / typography-rendering S3: build the crisp grayscale-AA text
-        // engine (embedded Inter + JetBrains Mono via raefont) BEFORE the OOBE /
+        // engine (embedded Inter + JetBrains Mono via athfont) BEFORE the OOBE /
         // desktop so the first composited frame is already crisp, not 8×8 block
         // font. Off the serial hot loop (memory `iron-console-logging-tax`).
-        let r = raegfx::text::run_boot_smoketest();
+        let r = athgfx::text::run_boot_smoketest();
         serial_println!(
             "[gfx] draw_text_aa smoketest: families={} face=Inter cov={} range={}..{} glyph_coverage={} -> {}",
             r.families,
@@ -712,7 +712,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     // (ADR 0006 — runs post-marker; init stays on the critical path).
     boot_selftest::init(); // ADR 0006: arm deferred-sweep orchestration (critical path, cheap)
     boot_selftest::run_boot_smoketest(); // ADR 0006: deferred-sweep registry armed (cheap)
-                                         // ADR 0006 (boot-time live-fix #1): the raeshell VT100/ANSI terminal-parser
+                                         // ADR 0006 (boot-time live-fix #1): the athshell VT100/ANSI terminal-parser
                                          // smoketest (escape decode / CUP / SGR / ED erase) is a pure decode test —
                                          // deferred to boot_selftest::run_deferred() post-marker.
     workqueue::init();
@@ -741,7 +741,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     uaccess::run_boot_smoketest();
     // Boot-log RAM ring smoketest — proves serial output is being
     // captured into the durable in-RAM buffer that backs
-    // /proc/raeen/bootlog (and the future ESP-persisted log).
+    // /proc/athena/bootlog (and the future ESP-persisted log).
     bootlog::run_boot_smoketest();
     driver_fw::init();
     let t_tier1_done = boot_elapsed_ms();
@@ -850,7 +850,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     serial_println!("[ OK ] QUIC subsystem initialized");
     quic::run_boot_smoketest();
     // RaeWeb native browser surface — fetch→parse→layout→paint→present + link
-    // navigation, all through the raeweb engine → raegfx (Concept §3: "renders
+    // navigation, all through the athweb engine → athgfx (Concept §3: "renders
     // through AthUI", §Core Principles #1: "No Electron tax"). Lands after the net
     // stack so a live fetch is possible, but the smoketest uses a bundled document
     // for determinism (QEMU/iron net RX is gated — live fix #2).
@@ -945,7 +945,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     dynamic_linker::init();
     tmpfs::init();
     procfs::init();
-    procfs::run_boot_smoketest(); // /proc/raeen/storage non-empty + physical_total_bytes > 0
+    procfs::run_boot_smoketest(); // /proc/athena/storage non-empty + physical_total_bytes > 0
     sysfs_kobject::init();
     serial_println!(
         "[TIER] Tier 5 complete: process model + virtual filesystems  (t={}ms)",
@@ -1247,7 +1247,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     syscall::run_boot_smoketest();
     storage_irq::run_boot_smoketest();
     windows_gap::run_boot_smoketest();
-    // ADR 0006 (boot-time live-fix #1): raebridge_boot::run_boot_smoketest()
+    // ADR 0006 (boot-time live-fix #1): athbridge_boot::run_boot_smoketest()
     // (throwaway DLL registry + embedded PE parse; pure) deferred to
     // boot_selftest::run_deferred() post-marker.
     linux_kabi::run_boot_smoketest();
@@ -1298,27 +1298,27 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     let _t_post9_start = boot_elapsed_ms();
 
     // Mount root: GPT AthFS partition when present, else whole-disk / format fallback.
-    if !storage_mount::try_mount_raefs_root() {
-        let _fs = raefs::AthFS::mount();
+    if !storage_mount::try_mount_athfs_root() {
+        let _fs = athfs::AthFS::mount();
     }
-    raefs::tiered_storage_init();
-    raefs::tiered_storage_smoketest();
-    raefs::init_extent_manager();
-    raefs::AthFS::run_boot_smoketest();
-    raefs::AthFS::run_format_smoketest();
-    raefs::run_snapshot_smoketest(); // Phase 5.1: snapshot syscall surface (101-103)
-    raefs::run_rollback_roundtrip_smoketest(); // Phase 5: snapshot→write→restore round trip
-    raefs::run_cow_journal_crash_smoketest(); // Phase 5: extent-data CoW crash-consistency (journal replay)
-    raefs::run_large_volume_bound_smoketest(); // Phase 3: multi-block bitmap/refcount — no OOB on real-disk (>128MiB) format
-    raefs::run_btree_overflow_smoketest(); // Phase 5: B-tree leaf overflow hard-errors (no silent loss / snapshot corruption)
+    athfs::tiered_storage_init();
+    athfs::tiered_storage_smoketest();
+    athfs::init_extent_manager();
+    athfs::AthFS::run_boot_smoketest();
+    athfs::AthFS::run_format_smoketest();
+    athfs::run_snapshot_smoketest(); // Phase 5.1: snapshot syscall surface (101-103)
+    athfs::run_rollback_roundtrip_smoketest(); // Phase 5: snapshot→write→restore round trip
+    athfs::run_cow_journal_crash_smoketest(); // Phase 5: extent-data CoW crash-consistency (journal replay)
+    athfs::run_large_volume_bound_smoketest(); // Phase 3: multi-block bitmap/refcount — no OOB on real-disk (>128MiB) format
+    athfs::run_btree_overflow_smoketest(); // Phase 5: B-tree leaf overflow hard-errors (no silent loss / snapshot corruption)
     snapshot_policy::init();
     snapshot_policy::run_boot_smoketest(); // Phase 5.1: retention ladder + quota
     prefetch::init();
     prefetch::run_boot_smoketest(); // Phase 5.5: sequential read-ahead through the real read path
-    raefs::run_encryption_smoketest(); // Phase 5.2: XTS-AES-256 + FIPS-197 KAT
-    raefs::run_bucket_key_selftest(); // Phase 5.6: per-app bucket key isolation
-    raefs::run_file_key_selftest(); // Phase 5.2: per-file (FSCRYPT-equiv) key isolation
-    raefs::run_compression_flag_smoketest(); // Phase 5.4: per-extent compression flag
+    athfs::run_encryption_smoketest(); // Phase 5.2: XTS-AES-256 + FIPS-197 KAT
+    athfs::run_bucket_key_selftest(); // Phase 5.6: per-app bucket key isolation
+    athfs::run_file_key_selftest(); // Phase 5.2: per-file (FSCRYPT-equiv) key isolation
+    athfs::run_compression_flag_smoketest(); // Phase 5.4: per-extent compression flag
                                              // Phase 16 account persistence: now that the AthFS root is mounted, load any
                                              // local accounts saved on a prior boot so the installed system has logins.
     session::load_persisted_accounts();
@@ -1326,7 +1326,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     // captured from the high-RAM tombstone, then prove the /var/crash path.
     crash_dump::flush_pending_crash_dump();
     crash_dump::run_persist_smoketest();
-    let _t_raefs = boot_elapsed_ms();
+    let _t_athfs = boot_elapsed_ms();
 
     // virtio-net demo: send one broadcast Ethernet frame, then poll for RX a
     // few times. QEMU's `user`-mode network responds with ARP for our IPs,
@@ -1398,7 +1398,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     // Kick DHCPDISCOVER and pump the smoltcp poll loop a few times so
     // the boot log shows whether ARP + DHCP make it on the wire. We
     // intentionally bound this tightly (boot can't wait on a real DHCP
-    // server) — userspace's raenet daemon picks it up afterwards.
+    // server) — userspace's athnet daemon picks it up afterwards.
     {
         let kicked = dhcp::kick_discovery(0);
         serial_println!(
@@ -1426,9 +1426,9 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     }
     let _t_dhcp = boot_elapsed_ms();
     serial_println!(
-        "[post9-prof] raefs={}ms vnet_demo={}ms vnet_probe={}ms dhcp={}ms",
-        _t_raefs.saturating_sub(_t_post9_start),
-        _t_vnet_demo.saturating_sub(_t_raefs),
+        "[post9-prof] athfs={}ms vnet_demo={}ms vnet_probe={}ms dhcp={}ms",
+        _t_athfs.saturating_sub(_t_post9_start),
+        _t_vnet_demo.saturating_sub(_t_athfs),
         _t_vnet_probe.saturating_sub(_t_vnet_demo),
         _t_dhcp.saturating_sub(_t_vnet_probe),
     );
@@ -1440,14 +1440,14 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     // Boot the graphical demo init process.
     // IMPORTANT: do NOT call scheduler::spawn here — defer it until after the
     // procfs dump so a timer interrupt cannot context-switch to user_init while
-    // dump_all_raeen_endpoints_to_serial() runs on the boot kernel stack.
+    // dump_all_athena_endpoints_to_serial() runs on the boot kernel stack.
     // Doing so would make the userspace syscall handler use the *boot* stack and
     // immediately trigger a double fault on the first sys_open.
-    // In installer mode, spawn `raeinstaller` in place of the normal shell init.
+    // In installer mode, spawn `athinstaller` in place of the normal shell init.
     // MasterChecklist Phase 3.1: "Installer userspace process spawned in place of
     // normal user_init."
     let init_app = if INSTALLER_MODE.load(Ordering::Relaxed) {
-        "raeinstaller"
+        "athinstaller"
     } else {
         "user_init"
     };
@@ -1517,7 +1517,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
                 rights: crate::capability::Rights::READ | crate::capability::Rights::WRITE,
             });
             serial_println!(
-                "[ OK ] Seeded raeinstaller System cap (handle={})",
+                "[ OK ] Seeded athinstaller System cap (handle={})",
                 h_sys.raw()
             );
         }
@@ -1538,12 +1538,12 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     // ADR 0006 (never-fake-green): the [BOOT-BENCH] T0->userspace print MOVED
     // from here to the record_boot_complete() point below. Snapping it here read
     // ~3.5 s while the real 6 s gate failed at ~8 s, because this point is
-    // BEFORE the post-boot spawns + net/raefs post-9 work — it MASKED the red
+    // BEFORE the post-boot spawns + net/athfs post-9 work — it MASKED the red
     // gate. There is now ONE honest boot-time number, printed alongside the
     // gate verdict (`boot_start_tsc` is the T0 reference fast_boot uses).
 
-    // ADR 0006 (next lever): the /proc/raeen 98-endpoint serial snapshot
-    // (`dump_all_raeen_endpoints_to_serial`) is a DIAGNOSTIC, not boot-critical.
+    // ADR 0006 (next lever): the /proc/athena 98-endpoint serial snapshot
+    // (`dump_all_athena_endpoints_to_serial`) is a DIAGNOSTIC, not boot-critical.
     // It used to run HERE — before record_boot_complete() — so its ~900 KiB,
     // 98-getter sweep (every getter does format!/Vec/String work, several take
     // procfs locks) counted against the timed boot and pushed the gate over
@@ -1601,7 +1601,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     // invokes every kernel32 thunk). It can't run in the boot smoketest — the
     // context construction overflows the small BSP boot stack (#DF, "Latent
     // kernel bugs" row) — so it runs here on a spawned thread's 64 KiB stack.
-    raebridge_boot::spawn_thunk_invoke_thread();
+    athbridge_boot::spawn_thunk_invoke_thread();
 
     // Capture ~15s of POST-boot activity (desktop auto-advance, HID input, net
     // poll) into BOOTLOG.TXT with one late flush — the end-of-boot flush runs
@@ -1635,7 +1635,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
         procfs::record_boot_time_ms(honest_ms);
     }
 
-    // Dump every /proc/raeen/* endpoint to serial so an external dev tool (or a
+    // Dump every /proc/athena/* endpoint to serial so an external dev tool (or a
     // remote AI agent) gets a complete observable snapshot per boot. See
     // `docs/HARDWARE_PATH.md` §"smart practical version" — Tier 1 of the
     // Claude-on-host introspection ladder.
@@ -1648,7 +1648,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     // that stack. The dump's own inner without_interrupts (procfs.rs) is
     // re-entrant-safe with this outer mask.
     x86_64::instructions::interrupts::without_interrupts(|| {
-        procfs::dump_all_raeen_endpoints_to_serial();
+        procfs::dump_all_athena_endpoints_to_serial();
     });
 
     // ── Phase 6.4 smoketest: confirm VRR + HDR stubs were registered ───────

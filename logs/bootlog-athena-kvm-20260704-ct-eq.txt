@@ -513,7 +513,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Config registry: 29 default keys seeded (versioned, with snapshots)
 [ OK ] Per-app data buckets (/data/apps/self/)
 [buckets] run_boot_smoketest: store=true vfs_deny=true deny_foreign=true allow_owner=true self_needs_task=true -> PASS
-[session] AthID ready — default user 'raeen' (password: raeen)
+[session] AthID ready — default user 'athena' (password: athena)
 [session] persistence smoketest: records=1 hash_match=true reload_auth=true -> PASS
 [compositor] kernel surface 1 created: 1280x800 (z=0, desktop)
 [latency-prof] compositor: frame_us=2875 if_off_us=2270 blit_us=0 fps=0
@@ -569,8 +569,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [winreg] registry shim up (Windows-10 defaults seeded, 0 persisted value(s) replayed from versioned config)
 [winreg] registry shim up (Windows-10 defaults seeded, 2 persisted value(s) replayed from versioned config)
 [winreg] smoketest: set=true versioned_mirror=true cold_restore=true win10_defaults=true err_semantics=true -> PASS
-[session] user config seeded at /users/raeen/
-[session] user 'raeen' logged in
+[session] user config seeded at /users/athena/
+[session] user 'athena' logged in
 [session] workstation locked
 [session] workstation unlocked
 [session] logged out
@@ -616,7 +616,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Network manager initialized (2 interfaces, 3 routes, status=Connected)
 [netlog] initialized: UDP-broadcast log channel on port 51514 (boot_id=0xa5735f0f)
 [netlog] smoketest: frame=70B ip_header=valid tx=submitted -> PASS
-[mdns] responder up: advertising _raeen._tcp.local (DNS-SD), host athenaos.local
+[mdns] responder up: advertising _athena._tcp.local (DNS-SD), host athenaos.local
 [mdns] smoketest: query_answered=true ptr_cached=true srv_port_7690=true -> PASS
 [ OK ] AthGuard firewall initialized (4 rules, profile=DefaultDeny, conntrack 64k, rate-limit 1k pps)
 [ OK ] firewall selftest: 7/7 verdicts correct, per-app rule added, cap-gate enforced, telemetry-logged yes (profile=GamingOptimized, 9 rules)
@@ -641,8 +641,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Storage encryption initialized
 [encryption] KDF KAT: BLAKE2b-512(abc)=PASS Argon2id(RFC9106)=PASS -> PASS
 [fde] AES-256-XTS volume encryption ready (per-sector tweak=LBA, whole-volume incl. metadata)
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: fde-canary.txt -> inode 2
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: fde-canary.txt -> inode 2
 [fde] smoketest: write=true read_through_crypto=true plaintext_on_disk=false superblock_plaintext=false cipher_at_rest=true wrong_key_rejected=true -> PASS
 [ OK ] Kernel crypto API initialized
 [crypto] RNG: rdrand=true rdseed=true hw_live=true getrandom_distinct=true getrandom_nonzero=true hw_seeded=true -> PASS
@@ -883,17 +883,17 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [update] staged kernel "selftest-good" into slot B (35 bytes, signature OK)
 [update] REFUSED kernel stage "selftest-forged": signature does not verify against the trust anchor
 [update] slots smoketest: stage=true switch=true fallback=true commit=true cfg_roundtrip=true sig_accept=true sig_reject=true -> PASS
-[session] create_local_account: 'installtest' (Install Test) id=2 -> OK (password set, raefs_persisted=false)
+[session] create_local_account: 'installtest' (Install Test) id=2 -> OK (password set, athfs_persisted=false)
 [install] run_boot_smoketest: account_create=true password_auth=true -> PASS
 [install] H2 firewall smoketest: match_ok=true sectorcount_mismatch_refused=true sectorsize_mismatch_refused=true oob_refused=true refuse_path=true zero_writes_on_refuse=true -> PASS
 [install] ===== AthenaOS installer starting =====
 [install] H2 firewall OK: target sectors=64 sector_size=512 write_window=[0..63]
 [install] stage 1 GPT FAILED: cannot partition target
-[install] H3 abort smoketest: decision_truth_table=true sentinel=true tiny_disk_no_raefs_format=true zero_destructive_writes=true (result=0x0) -> PASS
+[install] H3 abort smoketest: decision_truth_table=true sentinel=true tiny_disk_no_athfs_format=true zero_destructive_writes=true (result=0x0) -> PASS
 [install] payload smoketest: ramdisk_real=true ramdisk_bytes=11992576 tar_magic=true kernel_root_on_active_dev=0B (0=QEMU firmware-boot, resolves on Athena USB-MSC) -> PASS
 [install] layout smoketest: blank=FullDisk:true win_gpt=DualBoot(esp+aligned_gap):true packed=Refuse:true no_esp=Refuse:true -> PASS
 [fatfs] add_gpt_partition: AthFS in slot 2 at LBA 2240..6239 (array_crc=0x8a886b55, 2 existing entries preserved)
-[install] apply-plan smoketest: slot2=true esp_intact=true ntfs_intact=true raefs_added=true arr_crc=true hdr_crc=true backup_mirrored=true overlap_refused=true -> PASS
+[install] apply-plan smoketest: slot2=true esp_intact=true ntfs_intact=true athfs_added=true arr_crc=true hdr_crc=true backup_mirrored=true overlap_refused=true -> PASS
 [install] boot-entry smoketest: attrs_active=true fpl=true desc=AthenaOS:true hd_node=true part_guid=true end_node=true total_len=true -> PASS
 [install] ui smoketest: welcome->disk->layout(dualboot:alongside/erase, empty->full, refuse->erase)->account(reject mismatch)->review->install -> PASS
 [installer] ui: accent=0xFF4E9CFF palette=tokens -> PASS
@@ -908,8 +908,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [fastqueue] spsc enq=7 drained=6 vec_pushed=4 -> PASS
 [ OK ] dwarf_sym: gimli DWARF line resolver ready (embed pending)
 [dwarf_sym] graceful: empty=true garbage=true -> PASS
-[ OK ] perf telemetry ready (/proc/raeen/perf)
-[perf] /proc/raeen/perf surface + input->photon pipeline (armed/sample/idle=true/true/true) -> PASS
+[ OK ] perf telemetry ready (/proc/athena/perf)
+[perf] /proc/athena/perf surface + input->photon pipeline (armed/sample/idle=true/true/true) -> PASS
 [perf] input->render->display latency harness: measured=13us budget<16667us -> PASS
 [perf] smoketest: misses=1 lateness=5000000ns -> PASS
 [perf] heap_alloc fast path: min=9ns avg=15ns max=189ns samples=256 (target <500ns iron) -> PASS
@@ -919,9 +919,9 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [perf] audio wake jitter (§3 <100us): on_budget_0=true late100_jitter=true -> PASS
 [acpi-quirks] 6 known DSDT vendor quirk(s) registered
 [acpi-quirks] smoketest: entries=6 hp_match=1 lenovo_match=1 -> PASS
-[storage] boot disk: virtio-blk gpt sectors=2048 esp=true raefs=false
+[storage] boot disk: virtio-blk gpt sectors=2048 esp=true athfs=false
 [ OK ] Storage mount helper initialized
-[storage] smoketest: device=virtio-blk table=gpt sectors=2048 esp=true raefs=false
+[storage] smoketest: device=virtio-blk table=gpt sectors=2048 esp=true athfs=false
 [acpi] SCI wired to IRQ 9 -> vector 240
 [acpi] GPE dispatcher: 0 handler(s) in \_GPE (2 block(s) at GPE0=0xafe0)
 [ OK ] GPE dispatcher: 0 _Lxx/_Exx handler(s) registered
@@ -1059,7 +1059,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] WireGuard: tunnel registry ready (kernel-side state machine, userspace UDP)
 [ OK ] Live wallpaper engine: 8 wallpaper(s) registered, current=1 (paused when occluded)
 [compositor] live wallpaper installed
-[ OK ] Aurora Mesh wallpaper: default backdrop set (base=#0b0f1e, anisotropic ribbon mesh via raegfx::glass, vignette, no per-frame alloc)
+[ OK ] Aurora Mesh wallpaper: default backdrop set (base=#0b0f1e, anisotropic ribbon mesh via athgfx::glass, vignette, no per-frame alloc)
 [aurora] smoketest: PASS (ribbon mesh: luma spread 135, peak 146 in [120,190], interior 110 > corner 38, default=on)
 [ OK ] Vibe Mode: 5 preset(s) (theme+wallpaper+sound+RGB switch as one)
 [ OK ] Capability audit ring initialized (capacity 256 events)
@@ -1107,8 +1107,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [linux_kabi] smoketest: 10/10 symbols registered
 [linux_compat][INFO ] linux_compat: registered device 'linux_compat-smoke' id=1
 [linux_compat] smoketest PASS: 6 checks (jiffies=3291, devices=1)
-[linux_compat][INFO ] firmware: request 'raeen-selftest.bin'
-[linux_compat][INFO ] firmware: loaded 'raeen-selftest.bin' (334 bytes) from initramfs
+[linux_compat][INFO ] firmware: request 'athena-selftest.bin'
+[linux_compat][INFO ] firmware: loaded 'athena-selftest.bin' (334 bytes) from initramfs
 [linuxkpi] request_firmware probe: found 334 bytes
 [linuxkpi] firmware host call wired: syscall=142 fw_probe=found loads=0
 [linuxkpi] host smoketest: version=0x524b50490001 jiffies=3299 hz=100 devices=0 irq_delivery=dispatch_msi+pending bridge=usdriver+caps -> PASS
@@ -1140,55 +1140,55 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [BOOT] All 9 tiers initialized successfully
 [storage] scanning active block device for AthFS partition...
 [storage] partition table: Gpt
-[raefs] no AthFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via raeinstaller)
-[raefs] Registered Virtio tier with 4096 blocks
-[raefs] tiered storage detected 1 distinct tier(s): NVMe=0 SATA(spinning)=0 Virtio=4096 (4KiB blocks)
-[raefs] Registered NVMe tier with 16 blocks
-[raefs] Registered Sata tier with 16 blocks
-[raefs] Promoted block 0 to NVMe
-[raefs] Promoted block 1 to NVMe
-[raefs] Rebalance complete: promoted 2, demoted 0
-[raefs] Demoted block 1 to SATA
-[raefs] Demoted block 0 to SATA
-[raefs] Rebalance complete: promoted 0, demoted 2
-[raefs] tiered policy smoketest: promoted_to_nvme=2 demoted_to_sata=2
-[raefs] Extent manager initialized
-[raefs] Running boot smoketest...
-[raefs] Skipping smoketest: no mounted FS
-[raefs] format: wrote superblock magic=0x526165465321 blocks=256 bitmap_blocks=1 refcount_blocks=1 dirs=[/System,/Apps,/Users,/Games,/Vaults] label="smoketest-vol" -> OK
-[raefs] format_smoketest: magic=true blocks=true free=true ibitmap=true bbitmap=true itable=true root_inode=true dirs=true apex_root=true -> PASS
-[raefs] run_format_smoketest -> PASS
-[raefs] snapshot syscall smoketest: skipped (no mounted FS)
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: rollback.txt -> inode 2
-[raefs] Snapshot #1 created (ts=1)
-[raefs] Rolled back to snapshot #1
-[raefs] Mounted AthFS (CoW). root=0, free=244/256
-[raefs] on-disk persistence marker absent (first boot on this volume)
-[raefs] rollback round-trip: pre_rollback_v2=true rollback_ran=true inode_table_restored=true content_recovered=true -> PASS
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: cowj.txt -> inode 2
-[raefs] Snapshot #1 created (ts=1)
-[raefs] Journal replay: undo inode 2 blk_idx 0
-[raefs] Journal replay complete
-[raefs] cow-journal smoketest: crash_reverted=true fsck_ok=true -> PASS
-[raefs] large-volume smoketest: bitmap_blocks(40000)=2 refcount_blocks(40000)=10 big_bm_limit=40000 big_rc_limit=40000 hostile_bm_limit=32768 hostile_rc_limit=4096 sizing_ok=true no_oob=true -> PASS
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] insert_extent: REFUSED — leaf full (127 extents) for inode 2; node split needs multi-level CoW (not yet implemented). Failing loud to protect snapshot integrity (no silent loss).
-[raefs] btree-overflow smoketest: hard_errored=true replace_ok=true -> PASS
+[athfs] no AthFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via athinstaller)
+[athfs] Registered Virtio tier with 4096 blocks
+[athfs] tiered storage detected 1 distinct tier(s): NVMe=0 SATA(spinning)=0 Virtio=4096 (4KiB blocks)
+[athfs] Registered NVMe tier with 16 blocks
+[athfs] Registered Sata tier with 16 blocks
+[athfs] Promoted block 0 to NVMe
+[athfs] Promoted block 1 to NVMe
+[athfs] Rebalance complete: promoted 2, demoted 0
+[athfs] Demoted block 1 to SATA
+[athfs] Demoted block 0 to SATA
+[athfs] Rebalance complete: promoted 0, demoted 2
+[athfs] tiered policy smoketest: promoted_to_nvme=2 demoted_to_sata=2
+[athfs] Extent manager initialized
+[athfs] Running boot smoketest...
+[athfs] Skipping smoketest: no mounted FS
+[athfs] format: wrote superblock magic=0x526165465321 blocks=256 bitmap_blocks=1 refcount_blocks=1 dirs=[/System,/Apps,/Users,/Games,/Vaults] label="smoketest-vol" -> OK
+[athfs] format_smoketest: magic=true blocks=true free=true ibitmap=true bbitmap=true itable=true root_inode=true dirs=true apex_root=true -> PASS
+[athfs] run_format_smoketest -> PASS
+[athfs] snapshot syscall smoketest: skipped (no mounted FS)
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: rollback.txt -> inode 2
+[athfs] Snapshot #1 created (ts=1)
+[athfs] Rolled back to snapshot #1
+[athfs] Mounted AthFS (CoW). root=0, free=244/256
+[athfs] on-disk persistence marker absent (first boot on this volume)
+[athfs] rollback round-trip: pre_rollback_v2=true rollback_ran=true inode_table_restored=true content_recovered=true -> PASS
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: cowj.txt -> inode 2
+[athfs] Snapshot #1 created (ts=1)
+[athfs] Journal replay: undo inode 2 blk_idx 0
+[athfs] Journal replay complete
+[athfs] cow-journal smoketest: crash_reverted=true fsck_ok=true -> PASS
+[athfs] large-volume smoketest: bitmap_blocks(40000)=2 refcount_blocks(40000)=10 big_bm_limit=40000 big_rc_limit=40000 hostile_bm_limit=32768 hostile_rc_limit=4096 sizing_ok=true no_oob=true -> PASS
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] insert_extent: REFUSED — leaf full (127 extents) for inode 2; node split needs multi-level CoW (not yet implemented). Failing loud to protect snapshot integrity (no silent loss).
+[athfs] btree-overflow smoketest: hard_errored=true replace_ok=true -> PASS
 [snap-policy] retention ladder armed (1h all / 24h hourly / 7d daily / 4w weekly, quota 12)
 [snap-policy] retention selftest: fresh_kept=true buckets_kept=true dup_thinned=true ancient_thinned=true quota_ok=true -> PASS
 [prefetch] sequential read-ahead armed (run>=2 -> +4 blocks, cache 128 KiB)
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: prefetch-stream.bin -> inode 2
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: prefetch-stream.bin -> inode 2
 [prefetch] smoketest: stream_read=true run_detected=true prefetched>=4=true cache_hits>=4=true random_quiet=true -> PASS
-[raefs] encryption selftest: aes256_kat=true xts_changed=true xts_roundtrip=true tweak_sensitive=true kdf_deterministic=true aes_ni=true -> PASS
-[raefs] bucket-key selftest: distinct=true deterministic=true cross_app_unreadable=true own_key_recovers=true -> PASS
-[raefs] per-file-key selftest: distinct=true deterministic=true cross_file_unreadable=true own_key_recovers=true composed_ok=true composed_distinct=true -> PASS
-[raefs] compression-flag smoketest: skipped (no mounted FS)
+[athfs] encryption selftest: aes256_kat=true xts_changed=true xts_roundtrip=true tweak_sensitive=true kdf_deterministic=true aes_ni=true -> PASS
+[athfs] bucket-key selftest: distinct=true deterministic=true cross_app_unreadable=true own_key_recovers=true -> PASS
+[athfs] per-file-key selftest: distinct=true deterministic=true cross_file_unreadable=true own_key_recovers=true composed_ok=true composed_distinct=true -> PASS
+[athfs] compression-flag smoketest: skipped (no mounted FS)
 [session] load_persisted_accounts: no accounts.dat on AthFS (fresh system)
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: varcrash-selftest.dump -> inode 2
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: varcrash-selftest.dump -> inode 2
 [crash] persist smoketest: wrote=true readback_matches=true bytes=176 (ram-volume) -> PASS
 [crash] report smoketest: msg=true rip_hex=true dump_path=true proc_path=true -> PASS
 [virtio-net] tx_frame OK (60 bytes)
@@ -1202,7 +1202,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [dhcp] rx -> event=Bound
 [DHCP] Configured: IP 10.0.2.15/24, GW 10.0.2.2, DNS servers: 1
 [dhcp] after 64 poll_full() ticks: state=Some(Bound)
-[post9-prof] raefs=3897ms vnet_demo=87ms vnet_probe=0ms dhcp=250ms
+[post9-prof] athfs=3897ms vnet_demo=87ms vnet_probe=0ms dhcp=250ms
 [ OK ] Loading INITRAMFS, size: 11992576 bytes
 [ OK ] Found user_init (199632 bytes)
 [elf-reloc] applied 2 RELATIVE relocs
@@ -1214,7 +1214,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [linux_exec] exec '/bin/cat' argv_len=2
 [linux-exec] dynamic ELF: interpreter = /lib64/ld-linux-x86-64.so.2
 [linux-exec] ld.so loaded: base=0x90ab8000 entry=0x90ad7300
-[ld.so] stock /bin/cat /etc/motd spawned (task TaskId(82)) -> expect `raeen-cat-ok` below
+[ld.so] stock /bin/cat /etc/motd spawned (task TaskId(82)) -> expect `athena-cat-ok` below
 [linux_exec] exec '/bin/seq' argv_len=3
 [linux-exec] dynamic ELF: interpreter = /lib64/ld-linux-x86-64.so.2
 [linux-exec] ld.so loaded: base=0x90ab8000 entry=0x90ad7300
@@ -1222,7 +1222,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [linux_exec] exec '/bin/pthreadtest' argv_len=1
 [linux-exec] dynamic ELF: interpreter = /lib64/ld-linux-x86-64.so.2
 [linux-exec] ld.so loaded: base=0x90ab8000 entry=0x90ad7300
-[ld.so] glibc pthread test spawned (task TaskId(84)) -> expect `raeen-pthread-ok` below
+[ld.so] glibc pthread test spawned (task TaskId(84)) -> expect `athena-pthread-ok` below
 [net] post-boot poll thread spawned (drives DHCP/RX/TCP, BSP-pinned)
 [thermal] post-boot poll thread spawned (BSP-pinned; drives passive throttle)
 [bootlog-persist] late-flush capture thread spawned (post-boot -> BOOTLOG.TXT in ~15s, BSP-pinned) + SAFE-MODE auto-return safety net + hw-watchdog backstop
@@ -1230,61 +1230,61 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [BOOT-BENCH] T0 -> userspace = 33505 ms. Concept target: <6000 ms (stretch 3000 ms).
 [BOOT-BENCH] [WARN] Boot exceeded 6s target by 27505 ms.
 
-<<<<<<<< raeen:snapshot:begin 109 endpoints >>>>>>>>
-<<<<<<<< raeen:/proc/raeen/index >>>>>>>>
+<<<<<<<< athena:snapshot:begin 109 endpoints >>>>>>>>
+<<<<<<<< athena:/proc/athena/index >>>>>>>>
 # AthenaOS introspection endpoints (cat any of these)
-/proc/raeen/index           — this file
-/proc/raeen/boot            — boot benchmark vs concept-doc targets
-/proc/raeen/gaming          — game-mode / NULL_LATENCY / deadline stats
-/proc/raeen/config          — versioned config registry dump
-/proc/raeen/search          — local search index latency stats
-/proc/raeen/games           — per-game profiles
-/proc/raeen/rgb             — unified RGB device + zone state
-/proc/raeen/bundles         — installed components + verify stats
-/proc/raeen/perm            — permission-prompt queue summary
-/proc/raeen/themes          — theme engine + current theme
-/proc/raeen/scripts         — Rae scripting lifecycle
-/proc/raeen/arch            — architecture HAL identity + status
-/proc/raeen/apic            — APIC mode and frequency info
-/proc/raeen/pcie            — PCIe ECAM discovery and status
-/proc/raeen/pcie_aer        — PCIe Advanced Error Reporting map
-/proc/raeen/pci_irq         — PCI legacy IRQ routing table
-/proc/raeen/acpi            — ACPI tables and AML status
-/proc/raeen/gpe             — General Purpose Event (GPE) counts
-/proc/raeen/session         — AthID login/session state
-/proc/raeen/wireguard       — WireGuard tunnel registry
-/proc/raeen/wallpaper       — live wallpaper + occlusion stats
-/proc/raeen/caps            — capability audit log
-/proc/raeen/memory          — memory subsystem snapshot
-/proc/raeen/sched_stats     — scheduler counters
-/proc/raeen/compositor      — compositor state
-/proc/raeen/web             — RaeWeb browser surface (URL + DOM/paint stats)
-/proc/raeen/cpu             — CPU vendor + features + Zen 4 detection
-/proc/raeen/msr_amd         — AMD CPPC / SVM / SMCA MSR detection
-/proc/raeen/hardening       — KASLR/SMEP/SMAP/CFI/W^X/Spectre status
-/proc/raeen/heap_guard      — kernel-heap freelist integrity guard
-/proc/raeen/hardening_truth — IOMMU/AER/MCE/OOM runtime counters
-/proc/raeen/raefs           — AthFS mount + journal + snapshot entries
-/proc/raeen/network         — net stack + firewall summary
-/proc/raeen/power           — battery/AC periodic telemetry
-/proc/raeen/audio           — AthAudio kernel-side state
-/proc/raeen/syscalls        — runtime syscall table mirror
-/proc/raeen/windows_gap     — Concept-doc Windows pain-point kernel map
-/proc/raeen/clipboard       — session text clipboard stats
-/proc/raeen/clipboard-panel — clipboard-history flyout (Super+C) state
-/proc/raeen/capture         — compositor screen-capture sessions
-/proc/raeen/storage_irq     — NVMe/AHCI MSI-X vs INTx fallback
-/proc/raeen/storage         — AthFS aggregated capacity (total/free/used)
-/proc/raeen/ahci           — AHCI controllers and SATA ports
-/proc/raeen/nvme           — NVMe controllers and namespaces
-/proc/raeen/syscall_guard   — syscall hardening counters + limits
-/proc/raeen/linux_kabi     — Linux kABI symbol registry (scaffold)
-/proc/raeen/linux_compat   — Linux driver API shim (DMA/IRQ/kmalloc)
-/proc/raeen/linuxkpi       — LinuxKPI host (jiffies/msleep/printk ABI)
-/proc/raeen/linux_syscall  — Linux ABI translation counters
-/proc/raeen/vfs            — Virtual Filesystem hierarchy status
-/proc/raeen/msr_intel      — Intel HWP/Thread-Director/CET MSR state
-<<<<<<<< raeen:/proc/raeen/boot >>>>>>>>
+/proc/athena/index           — this file
+/proc/athena/boot            — boot benchmark vs concept-doc targets
+/proc/athena/gaming          — game-mode / NULL_LATENCY / deadline stats
+/proc/athena/config          — versioned config registry dump
+/proc/athena/search          — local search index latency stats
+/proc/athena/games           — per-game profiles
+/proc/athena/rgb             — unified RGB device + zone state
+/proc/athena/bundles         — installed components + verify stats
+/proc/athena/perm            — permission-prompt queue summary
+/proc/athena/themes          — theme engine + current theme
+/proc/athena/scripts         — Rae scripting lifecycle
+/proc/athena/arch            — architecture HAL identity + status
+/proc/athena/apic            — APIC mode and frequency info
+/proc/athena/pcie            — PCIe ECAM discovery and status
+/proc/athena/pcie_aer        — PCIe Advanced Error Reporting map
+/proc/athena/pci_irq         — PCI legacy IRQ routing table
+/proc/athena/acpi            — ACPI tables and AML status
+/proc/athena/gpe             — General Purpose Event (GPE) counts
+/proc/athena/session         — AthID login/session state
+/proc/athena/wireguard       — WireGuard tunnel registry
+/proc/athena/wallpaper       — live wallpaper + occlusion stats
+/proc/athena/caps            — capability audit log
+/proc/athena/memory          — memory subsystem snapshot
+/proc/athena/sched_stats     — scheduler counters
+/proc/athena/compositor      — compositor state
+/proc/athena/web             — RaeWeb browser surface (URL + DOM/paint stats)
+/proc/athena/cpu             — CPU vendor + features + Zen 4 detection
+/proc/athena/msr_amd         — AMD CPPC / SVM / SMCA MSR detection
+/proc/athena/hardening       — KASLR/SMEP/SMAP/CFI/W^X/Spectre status
+/proc/athena/heap_guard      — kernel-heap freelist integrity guard
+/proc/athena/hardening_truth — IOMMU/AER/MCE/OOM runtime counters
+/proc/athena/athfs           — AthFS mount + journal + snapshot entries
+/proc/athena/network         — net stack + firewall summary
+/proc/athena/power           — battery/AC periodic telemetry
+/proc/athena/audio           — AthAudio kernel-side state
+/proc/athena/syscalls        — runtime syscall table mirror
+/proc/athena/windows_gap     — Concept-doc Windows pain-point kernel map
+/proc/athena/clipboard       — session text clipboard stats
+/proc/athena/clipboard-panel — clipboard-history flyout (Super+C) state
+/proc/athena/capture         — compositor screen-capture sessions
+/proc/athena/storage_irq     — NVMe/AHCI MSI-X vs INTx fallback
+/proc/athena/storage         — AthFS aggregated capacity (total/free/used)
+/proc/athena/ahci           — AHCI controllers and SATA ports
+/proc/athena/nvme           — NVMe controllers and namespaces
+/proc/athena/syscall_guard   — syscall hardening counters + limits
+/proc/athena/linux_kabi     — Linux kABI symbol registry (scaffold)
+/proc/athena/linux_compat   — Linux driver API shim (DMA/IRQ/kmalloc)
+/proc/athena/linuxkpi       — LinuxKPI host (jiffies/msleep/printk ABI)
+/proc/athena/linux_syscall  — Linux ABI translation counters
+/proc/athena/vfs            — Virtual Filesystem hierarchy status
+/proc/athena/msr_intel      — Intel HWP/Thread-Director/CET MSR state
+<<<<<<<< athena:/proc/athena/boot >>>>>>>>
 boot_ms: 33505
 concept_target_ms: 6000
 concept_stretch_ms: 3000
@@ -1292,7 +1292,7 @@ status: over_target
 deferred_selftest_ran: false
 deferred_selftest_count: 0
 splash_mark_px: 2848
-<<<<<<<< raeen:/proc/raeen/cpu >>>>>>>>
+<<<<<<<< athena:/proc/athena/cpu >>>>>>>>
 # AthenaOS CPU feature detection
 vendor: AMD (AuthenticAMD)
 brand:  "AMD Ryzen 5 7640HS w/ Radeon 760M Graphics"
@@ -1343,7 +1343,7 @@ L1 Data        :     64 KB, shared_by=1
 L1 Instruction :     64 KB, shared_by=1
 L2 Unified     :    512 KB, shared_by=1
 L3 Unified     :  16384 KB, shared_by=2
-<<<<<<<< raeen:/proc/raeen/msr_amd >>>>>>>>
+<<<<<<<< athena:/proc/athena/msr_amd >>>>>>>>
 # AthenaOS AMD MSR detection
 is_amd: true
 
@@ -1364,16 +1364,16 @@ note:             not enabled by AthenaOS (we are not a hypervisor)
 supported:        false
 mca_bank_count:   10
 mc0_status:       0x0
-<<<<<<<< raeen:/proc/raeen/numa >>>>>>>>
+<<<<<<<< athena:/proc/athena/numa >>>>>>>>
 nodes: 1
 online_nodes: 1
 total_memory: 4294967296
 node 0: cpus=1, memory_ranges=1, total_memory=4294967296
-<<<<<<<< raeen:/proc/raeen/msr_intel >>>>>>>>
-# /proc/raeen/msr_intel — Intel-specific MSR features
+<<<<<<<< athena:/proc/athena/msr_intel >>>>>>>>
+# /proc/athena/msr_intel — Intel-specific MSR features
 vendor_intel: false
 note: HWP/ITD/CET MSRs are Intel-only; skipped on this CPU
-<<<<<<<< raeen:/proc/raeen/hardware >>>>>>>>
+<<<<<<<< athena:/proc/athena/hardware >>>>>>>>
 # AthenaOS hardware profile + DMI snapshot
 system_manufacturer: AthenaOS Virtual Machine
 product_name:        AthenaOS QEMU
@@ -1392,12 +1392,12 @@ is_concept_target:   false
 expected_cpus:       4..=32
 expected_ram_min:    4096 MiB
 quirks:              0x00000000
-<<<<<<<< raeen:/proc/raeen/drivers >>>>>>>>
+<<<<<<<< athena:/proc/athena/drivers >>>>>>>>
 # AthenaOS userspace driver framework
 # totals: active=0 idle=0 registered=3 unregistered=3 claims_granted=2 claims_denied=1 dma_enabled=0
 # IOMMU enforcement: NOT YET WIRED — `iommu.rs` parser only. Untrusted drivers must NOT use this until that lands.
 # legend: handle  class       state    owner   claims  dma_maps  domain  dma  name
-<<<<<<<< raeen:/proc/raeen/buddy >>>>>>>>
+<<<<<<<< athena:/proc/athena/buddy >>>>>>>>
 # node 0  total=524012 frames (2046 MiB)  free=474671 frames (1854 MiB)
   order  0 (    4 KiB): 1 block(s)
   order  1 (    8 KiB): 1 block(s)
@@ -1407,13 +1407,13 @@ quirks:              0x00000000
   order  9 ( 2048 KiB): 1 block(s)
   order 10 ( 4096 KiB): 1 block(s)
   order 11 ( 8192 KiB): 231 block(s)
-<<<<<<<< raeen:/proc/raeen/heap_guard >>>>>>>>
+<<<<<<<< athena:/proc/athena/heap_guard >>>>>>>>
 cookie_installed: true
 encoding: xor+location-tie
 failure_action: panic (fail-closed)
 validations: 1262728
 corruptions: 0
-<<<<<<<< raeen:/proc/raeen/vulnerabilities >>>>>>>>
+<<<<<<<< athena:/proc/athena/vulnerabilities >>>>>>>>
 # AthenaOS CPU transient-execution vulnerability posture
 # (Linux /sys .../vulnerabilities equivalent; Concept §Security)
 cpu                Amd family=0x19 model=0x74 arch_caps=absent
@@ -1426,26 +1426,26 @@ mds                Not affected
 taa                Not affected
 srbds              Not affected
 retbleed           Not affected
-<<<<<<<< raeen:/proc/raeen/tls >>>>>>>>
+<<<<<<<< athena:/proc/athena/tls >>>>>>>>
 # AthenaOS TLS 1.3 (0 connection(s), 0 total handshakes)
-<<<<<<<< raeen:/proc/raeen/rtc >>>>>>>>
+<<<<<<<< athena:/proc/athena/rtc >>>>>>>>
 # AthenaOS wall clock (CMOS RTC + hpet delta)
 boot_wall: 2026-07-04 16:58:21 UTC
 boot_epoch: 1783184301
 now_epoch:  1783184334
 tsc_per_sec: 4301000000
 time_source: hpet
-<<<<<<<< raeen:/proc/raeen/dhcp >>>>>>>>
+<<<<<<<< athena:/proc/athena/dhcp >>>>>>>>
 # AthenaOS DHCP client (iface="eth0")
 mac:   52:54:00:12:34:56
 state: Bound
 lease_ip: 10.0.2.15
 gateway:  10.0.2.2
 lease_s:  86400
-<<<<<<<< raeen:/proc/raeen/pcie >>>>>>>>
+<<<<<<<< athena:/proc/athena/pcie >>>>>>>>
 # AthenaOS PCIe ECAM Status
 status: disabled (using legacy CF8/CFC)
-<<<<<<<< raeen:/proc/raeen/pcie_aer >>>>>>>>
+<<<<<<<< athena:/proc/athena/pcie_aer >>>>>>>>
 # PCIe Advanced Error Reporting (capability detection + status)
 ecam_active: false
 scanned_functions: 10
@@ -1453,18 +1453,18 @@ aer_capable: 0
 correctable_status_bits: 0
 uncorrectable_status_bits: 0
 # no AER-capable functions detected
-<<<<<<<< raeen:/proc/raeen/selftest >>>>>>>>
+<<<<<<<< athena:/proc/athena/selftest >>>>>>>>
 # AthenaOS consolidated boot self-test
 status: not yet run
-<<<<<<<< raeen:/proc/raeen/pci_irq >>>>>>>>
+<<<<<<<< athena:/proc/athena/pci_irq >>>>>>>>
 PCI IRQ Routing Table:
 BUS  DEV  PIN  GSI    SOURCE              
-<<<<<<<< raeen:/proc/raeen/apic >>>>>>>>
+<<<<<<<< athena:/proc/athena/apic >>>>>>>>
 APIC Mode: X2apic
 x2APIC Supported: true
 LAPIC Timer Ticks (10ms): 625589
 TSC Frequency: 4301 MHz
-<<<<<<<< raeen:/proc/raeen/acpi >>>>>>>>
+<<<<<<<< athena:/proc/athena/acpi >>>>>>>>
 ACPI Subsystem Status
 =====================
 Initialized: true
@@ -1477,19 +1477,19 @@ Tables Found: 5
   BGRT @ 0x2807fb75000 (rev 1, len 56)
 PM Registers: PM1a_CNT=0xb004 GPE0=0xafe0 (source: Legacy)
 Namespace Devices: 55
-<<<<<<<< raeen:/proc/raeen/gpe >>>>>>>>
+<<<<<<<< athena:/proc/athena/gpe >>>>>>>>
 # gpe handler summary
 registered_handlers: 0
 sci_interrupts_received: 0
 # per-gpe raise counts
-<<<<<<<< raeen:/proc/raeen/smp >>>>>>>>
+<<<<<<<< athena:/proc/athena/smp >>>>>>>>
 # AthenaOS SMP heartbeat (per-CPU timer IRQ counters)
 cpu0: ticks=777 task_picks=0 steals=0
 cpu1: ticks=3315 task_picks=2 steals=4
 cpu2: ticks=0 task_picks=0 steals=0
 cpu3: ticks=0 task_picks=0 steals=0
 # 2 of 64 CPU slot(s) heartbeating, 1 actually running scheduler work
-<<<<<<<< raeen:/proc/raeen/hardening >>>>>>>>
+<<<<<<<< athena:/proc/athena/hardening >>>>>>>>
 # AthenaOS kernel hardening (Concept §Security)
 KASLR                    enabled
 stack_canary             enabled
@@ -1511,7 +1511,7 @@ kfence.detector            false  (detector not yet implemented)
 ubsan.overflow_checks      false  (debug_overflow_checks=cfg(debug_assertions))
 kcfi.compiler_sanitizer    false  (requires nightly -Z sanitizer=kcfi; software CfiManager only)
 honesty_audit              PASS (no false advertising)
-<<<<<<<< raeen:/proc/raeen/hardening_truth >>>>>>>>
+<<<<<<<< athena:/proc/athena/hardening_truth >>>>>>>>
 # hardening truth
 # IOMMU
 enabled: 0
@@ -1556,19 +1556,19 @@ heap_delta:      0 bytes
 leak_ok:         true
 # AthenaOS per-bundle memory limits (Phase 4.1)
 (no per-bundle limits registered)
-<<<<<<<< raeen:/proc/raeen/uaccess >>>>>>>>
+<<<<<<<< athena:/proc/athena/uaccess >>>>>>>>
 uaccess: user_addr_max=0x0000800000000000 chokepoint=copy_from_user/copy_to_user backing=extable-fixup validated=bounds+pagewalk
-<<<<<<<< raeen:/proc/raeen/raefs >>>>>>>>
+<<<<<<<< athena:/proc/athena/athfs >>>>>>>>
 AthFS Status: Not Mounted
-<<<<<<<< raeen:/proc/raeen/memory >>>>>>>>
+<<<<<<<< athena:/proc/athena/memory >>>>>>>>
 # AthenaOS memory subsystem
 heap_start: 0xffff999900000000
 heap_size:  0x8000000 (131072 KiB)
 pinned_pages: 0 (0 KiB)
 physical_total_bytes: 2146353152 (2046 MiB)
 physical_free_bytes: 1944252416 (1854 MiB)
-# detailed buddy stats: see /proc/raeen/buddy (per-order free-list)
-<<<<<<<< raeen:/proc/raeen/sched_stats >>>>>>>>
+# detailed buddy stats: see /proc/athena/buddy (per-order free-list)
+<<<<<<<< athena:/proc/athena/sched_stats >>>>>>>>
 # AthenaOS scheduler counters
 deadline_tasks: 3
 deadline_invocations: 3
@@ -1580,7 +1580,7 @@ null_latency_active: 0
 # per-CPU scheduler picks + work-steals (runqueue activity)
 cpu1: picks=2 steals=4
 switch_aborts: 0
-<<<<<<<< raeen:/proc/raeen/compositor >>>>>>>>
+<<<<<<<< athena:/proc/athena/compositor >>>>>>>>
 # AthenaOS compositor
 resolution: 1280x800
 surfaces: 1
@@ -1592,7 +1592,7 @@ cursor: 645,398
 magnifier: enabled=false zoom_x256=256 center=0,0
 a11y_filter: mode=0 strength=160
 shadow_penumbra: not-run peak_alpha=0 ramp_px=0
-<<<<<<<< raeen:/proc/raeen/a11y >>>>>>>>
+<<<<<<<< athena:/proc/athena/a11y >>>>>>>>
 # AthenaOS accessibility tree (window + widget tier, AccessKit-compatible)
 enabled: true
 nodes: 1
@@ -1612,11 +1612,11 @@ color_filter_mode: 0
 reduced_motion: false
 focus_order: active_len=0 modal_open=false focused=none
 node id=0 parent=0 role=Desktop state=0x0002 bounds=0,0,1280,800 actions=0x00 name="Desktop"
-<<<<<<<< raeen:/proc/raeen/web >>>>>>>>
+<<<<<<<< athena:/proc/athena/web >>>>>>>>
 # RaeWeb — native web surface (renders through AthUI, no Electron tax)
-engine=raeweb tabs=1 last_url=rae://about dom_nodes=12 paint_cmds=4 source=bundled js=disabled
+engine=athweb tabs=1 last_url=rae://about dom_nodes=12 paint_cmds=4 source=bundled js=disabled
 boot_smoketest=PASS
-<<<<<<<< raeen:/proc/raeen/caps >>>>>>>>
+<<<<<<<< athena:/proc/athena/caps >>>>>>>>
 # AthenaOS capability audit
 # totals: grants=3 revokes=1 queries=1 uses=1 denied=1 (ring 7/256 wrapped=0)
 # legend: rights = r(ead) w(rite) x(ec) M(map) W(ait) g(rant) R(evoke)
@@ -1628,7 +1628,7 @@ boot_smoketest=PASS
     5 QUERY       1     1  Mmio         rwM      0x1002
     6 REVOKE      0     1  Irq          W        0x1003
     7 DENIED      2     2  Process      g        0xdead
-<<<<<<<< raeen:/proc/raeen/gaming >>>>>>>>
+<<<<<<<< athena:/proc/athena/gaming >>>>>>>>
 # AthenaOS gaming session counters
 game_mode_active: 1
 null_latency_active: 0
@@ -1664,7 +1664,7 @@ couch_crossfade_ms: 320
 couch_crossfade_ramp_ok: 1
 couch_autoenter_on_padbind: 1
 couch_osk_ok: 1
-<<<<<<<< raeen:/proc/raeen/games >>>>>>>>
+<<<<<<<< athena:/proc/athena/games >>>>>>>>
 # AthenaOS per-game profiles (3 stored, 0 applied since boot)
 
 [preset:balanced]
@@ -1699,15 +1699,15 @@ couch_osk_ok: 1
   affinity_mask = 0xf
   memory_pin_mib = 256
   deadline_us = 4167/3000
-<<<<<<<< raeen:/proc/raeen/config >>>>>>>>
+<<<<<<<< athena:/proc/athena/config >>>>>>>>
 # AthenaOS config registry (generation 21, 41 keys, 1 snapshot(s))
 /a11y/sticky_keys = false
 /a11y/visual_alerts = true
 /audio/master_volume = 70
 /audio/mute = false
 /audio/spatial_audio = false
-/bridge/registry/HKCU/Software/RaeenSelftest/InstallDir = "1:C:\Games\Rae"
-/bridge/registry/HKCU/Software/RaeenSelftest/Launches = "4:42"
+/bridge/registry/HKCU/Software/AthenaSelftest/InstallDir = "1:C:\Games\Rae"
+/bridge/registry/HKCU/Software/AthenaSelftest/Launches = "4:42"
 /display/hdr_enabled = false
 /display/refresh_hz = 60
 /display/refresh_hz_str = "60"
@@ -1738,11 +1738,11 @@ couch_osk_ok: 1
 /users/installtest/profile/created = "18"
 /users/installtest/profile/display_name = "Install Test"
 /users/installtest/profile/username = "installtest"
-/users/raeen/desktop/wallpaper = "RaeBlue"
-/users/raeen/profile/display_name = "Raeen"
-/users/raeen/profile/home = "/home/raeen"
-/users/raeen/profile/username = "raeen"
-<<<<<<<< raeen:/proc/raeen/search >>>>>>>>
+/users/athena/desktop/wallpaper = "RaeBlue"
+/users/athena/profile/display_name = "Athena"
+/users/athena/profile/home = "/home/athena"
+/users/athena/profile/username = "athena"
+<<<<<<<< athena:/proc/athena/search >>>>>>>>
 # AthenaOS local search index
 items: 35
 tokens: 60
@@ -1752,7 +1752,7 @@ last_query_cycles: 0
 best_query_cycles: 0
 worst_query_cycles: 0
 concept_target_ms_per_query: 100
-<<<<<<<< raeen:/proc/raeen/themes >>>>>>>>
+<<<<<<<< athena:/proc/athena/themes >>>>>>>>
 # AthenaOS theme engine (8 themes, 0 applies since boot)
 # current = 1
 
@@ -1771,7 +1771,7 @@ concept_target_ms_per_query: 100
 #7   flags=0x5  accent=#ffff00  glass=0  blur=0  scanline=0  font="Helvetica Bold"  name="Brutalist"
 
 #8   flags=0xd  accent=#88ffff  glass=95  blur=28  scanline=8  font="SF Pro Rounded"  name="Holographic"
-<<<<<<<< raeen:/proc/raeen/scripts >>>>>>>>
+<<<<<<<< athena:/proc/athena/scripts >>>>>>>>
 # AthenaOS scripting layer (8 scripts ever, 4 failures, 8 live)
 #1    state=Completed exit=55 cap_mask=0x0 hash=6378637678df7e1d
 #2    state=Timeout exit=-1 cap_mask=0x0 hash=1407f9898613debb
@@ -1781,16 +1781,16 @@ concept_target_ms_per_query: 100
 #6    state=Completed exit=1 cap_mask=0x8 hash=4ff846aed6c731ab
 #7    state=Failed exit=-1 cap_mask=0x0 hash=3d0ad64f823b3759
 #8    state=Completed exit=7 cap_mask=0x0 hash=b0fa2e6a2ad614f7
-<<<<<<<< raeen:/proc/raeen/session >>>>>>>>
+<<<<<<<< athena:/proc/athena/session >>>>>>>>
 # AthenaOS session
 phase: login
 active_uid: 0
 active_user: none
-home_dir: /home/raeen
-default_account: raeen
-<<<<<<<< raeen:/proc/raeen/wireguard >>>>>>>>
+home_dir: /home/athena
+default_account: athena
+<<<<<<<< athena:/proc/athena/wireguard >>>>>>>>
 # AthenaOS WireGuard (0 tunnels, 0/0 successful handshakes)
-<<<<<<<< raeen:/proc/raeen/firewall >>>>>>>>
+<<<<<<<< athena:/proc/athena/firewall >>>>>>>>
 # AthGuard firewall (capability-gated, per-app)
 profile: DefaultDeny
 enabled: true
@@ -1802,23 +1802,23 @@ packets_rate_limited: 0
 packets_conntrack_allowed: 0
 bytes_allowed: 0
 bytes_denied: 0
-<<<<<<<< raeen:/proc/raeen/dns >>>>>>>>
+<<<<<<<< athena:/proc/athena/dns >>>>>>>>
 # AthNet DNS resolver
 upstream_servers: 1
   server: 10.0.2.3
 static_hosts: 1
   localhost -> 127.0.0.1
-<<<<<<<< raeen:/proc/raeen/dot >>>>>>>>
+<<<<<<<< athena:/proc/athena/dot >>>>>>>>
 # DNS over TLS (RFC 7858)
 upstream: 1.1.1.1:853 sni=cloudflare-dns.com
 upstream: 9.9.9.9:853 sni=dns.quad9.net
 queries_framed: 1
 answers_parsed: 1
-<<<<<<<< raeen:/proc/raeen/quic >>>>>>>>
+<<<<<<<< athena:/proc/athena/quic >>>>>>>>
 # AthNet QUIC (RFC 9000)
 initialized: true
 active_connections: 0
-<<<<<<<< raeen:/proc/raeen/shaper >>>>>>>>
+<<<<<<<< athena:/proc/athena/shaper >>>>>>>>
 # AthNet gaming traffic shaper (strict priority)
 game_pending: 0
 interactive_pending: 0
@@ -1826,24 +1826,24 @@ bulk_pending: 0
 game: enqueued=0 dequeued=0 dropped=0
 interactive: enqueued=0 dequeued=0 dropped=0
 bulk: enqueued=0 dequeued=0 dropped=0
-<<<<<<<< raeen:/proc/raeen/netlog >>>>>>>>
+<<<<<<<< athena:/proc/athena/netlog >>>>>>>>
 # netlog (UDP-broadcast bootlog, port 51514)
 boot_id: 0xa5735f0f
 frames_sent: 1
 snapshots_sent: 0
 last_snapshot_bytes: 0
-<<<<<<<< raeen:/proc/raeen/mdns >>>>>>>>
-# mDNS/DNS-SD responder (_raeen._tcp.local)
+<<<<<<<< athena:/proc/athena/mdns >>>>>>>>
+# mDNS/DNS-SD responder (_athena._tcp.local)
 hostname: athenaos.local
 services: 1
 cache_entries: 2
 queries_answered: 2
-<<<<<<<< raeen:/proc/raeen/snap_policy >>>>>>>>
+<<<<<<<< athena:/proc/athena/snap_policy >>>>>>>>
 # snapshot retention policy (1h all / 24h hourly / 7d daily / 4w weekly)
 count_quota: 12
 retention_runs: 0
 snapshots_thinned: 0
-<<<<<<<< raeen:/proc/raeen/update_slots >>>>>>>>
+<<<<<<<< athena:/proc/athena/update_slots >>>>>>>>
 # atomic kernel update slots (A/B)
 active: A
 pending: false
@@ -1853,24 +1853,24 @@ config_on_disk: false
 fallbacks: 0
 stage_refused_badsig: 1
 max_boot_retries: 3
-<<<<<<<< raeen:/proc/raeen/fde >>>>>>>>
+<<<<<<<< athena:/proc/athena/fde >>>>>>>>
 # AthFS full-disk encryption (AES-256-XTS, tweak=LBA)
 cipher: AES-256-XTS
 kdf: Argon2id (RFC 9106; selftest uses PBKDF2-low)
 sectors_encrypted: 224
 sectors_decrypted: 194
 root_volume_encrypted: false (opt-in at install; binding proven by smoketest)
-<<<<<<<< raeen:/proc/raeen/perm_ui >>>>>>>>
+<<<<<<<< athena:/proc/athena/perm_ui >>>>>>>>
 # permission prompt UI (compositor-rendered, modal)
 dialog_open: false
 prompts_shown: 3
 approved: 1
 denied: 2
-<<<<<<<< raeen:/proc/raeen/hid_pad >>>>>>>>
+<<<<<<<< athena:/proc/athena/hid_pad >>>>>>>>
 # generic HID gamepad decoder (report-descriptor-driven)
 descriptors_parsed: 2
 reports_decoded: 2
-<<<<<<<< raeen:/proc/raeen/a11y_keys >>>>>>>>
+<<<<<<<< athena:/proc/athena/a11y_keys >>>>>>>>
 # accessibility keyboard filters
 sticky_keys: false
 slow_keys_ms: 0
@@ -1882,18 +1882,18 @@ locked_mods: 0x0
 bounced: 0
 slow_rejected: 0
 sticky_applied: 0
-<<<<<<<< raeen:/proc/raeen/captions >>>>>>>>
+<<<<<<<< athena:/proc/athena/captions >>>>>>>>
 # captions / visual alerts
 enabled: false
 posted: 44
 ring_len: 0
 visual_alert_pending: false
-<<<<<<<< raeen:/proc/raeen/wm >>>>>>>>
+<<<<<<<< athena:/proc/athena/wm >>>>>>>>
 # window-manager policy (swappable: float/tile/stack)
 mode: float
 applies: 0
 managed_windows: 0
-<<<<<<<< raeen:/proc/raeen/vibe >>>>>>>>
+<<<<<<<< athena:/proc/athena/vibe >>>>>>>>
 # Vibe Mode (one-tap aesthetic bundles)
 active: (none — custom theme/wallpaper)
 applies: 0
@@ -1902,7 +1902,7 @@ preset: Studio Ghibli Morning (theme=Studio Ghibli Morning, wallpaper=Cherry Blo
 preset: Bauhaus (theme=Bauhaus, wallpaper=RaeBlue Solid, sound=minimal-click, rgb=0xffe53a2c)
 preset: Neo-noir (theme=Neo-noir, wallpaper=Tokyo Neon Skyline, sound=rain-on-glass, rgb=0xffe8b54b)
 preset: Holographic (theme=Holographic, wallpaper=Liquid Glass, sound=glass-chimes, rgb=0xff88ffff)
-<<<<<<<< raeen:/proc/raeen/notify >>>>>>>>
+<<<<<<<< athena:/proc/athena/notify >>>>>>>>
 # notification surface (toasts)
 visible: 0
 posted: 0
@@ -1920,7 +1920,7 @@ control: Mute = off
 control: Focus = off
 control: Night Light = off
 control: Vibe Accent = off
-<<<<<<<< raeen:/proc/raeen/prefetch >>>>>>>>
+<<<<<<<< athena:/proc/athena/prefetch >>>>>>>>
 # sequential read-ahead (game asset streaming)
 run_threshold: 2
 depth: 4
@@ -1930,12 +1930,12 @@ runs_detected: 1
 blocks_prefetched: 6
 hits: 6
 misses: 6
-<<<<<<<< raeen:/proc/raeen/winreg >>>>>>>>
+<<<<<<<< athena:/proc/athena/winreg >>>>>>>>
 # Win32 registry shim (backed by versioned config under /bridge/registry)
 sets_persisted: 2
 restored_at_boot: 2
 hive_loaded: true
-<<<<<<<< raeen:/proc/raeen/raebridge_seh >>>>>>>>
+<<<<<<<< athena:/proc/athena/athbridge_seh >>>>>>>>
 AthBridge x64 SEH engine (MasterChecklist Phase 11.2)
 self_test: PASS
 model: table-based (.pdata RUNTIME_FUNCTION + .xdata UNWIND_INFO)
@@ -1944,20 +1944,20 @@ unwind ops: PUSH_NONVOL ALLOC_SMALL ALLOC_LARGE SET_FPREG
 features: chained-info, partial-prolog skip, frame-pointer recovery
 dispatch: UNW_FLAG_EHANDLER walk + __C_specific_handler SCOPE_TABLE
 wired: exec::load_pe_executable parses .pdata into runtime_functions
-<<<<<<<< raeen:/proc/raeen/raebridge_sync >>>>>>>>
+<<<<<<<< athena:/proc/athena/athbridge_sync >>>>>>>>
 AthBridge sync objects (broker §6.1, in-process)
 self_test: PASS
 objects: mutex(owner+recursion) event(manual/auto) semaphore(count/max)
 namespace: named create/open + ERROR_ALREADY_EXISTS, refcounted close
 waits: WaitForSingleObject + WaitForMultipleObjects (any/all)
-note: cross-process + true blocking = raebridge_server daemon (slice 2)
-<<<<<<<< raeen:/proc/raeen/raebridge_registry >>>>>>>>
+note: cross-process + true blocking = athbridge_server daemon (slice 2)
+<<<<<<<< athena:/proc/athena/athbridge_registry >>>>>>>>
 AthBridge advapi32 registry thunks (Phase A.3)
 self_test: PASS
 thunks: RegOpen/Create/Close/Query/Set/Delete/Enum/QueryInfo/Flush (W+A)
 backing: ctx.registry hive -> win_registry versioned config (snapshot/rollback)
 exposed: IAT shim table under advapi32.dll (was fail-loud trampoline)
-<<<<<<<< raeen:/proc/raeen/raebridge_syncbroker >>>>>>>>
+<<<<<<<< athena:/proc/athena/athbridge_syncbroker >>>>>>>>
 AthBridge cross-process sync engine (broker §6.1, Slice 2b host half)
 self_test: PASS
 model: SharedSyncState atomics + wake-elision; SYS_FUTEX only when parked
@@ -1967,28 +1967,28 @@ fsync-parity counters (live, from an uncontended batch of 7 ops):
   futex_waits = 0  futex_wakes = 0  uncontended_ops = 7/7
 invariants: 1=uncontended-zero-syscall 2=phys-page-key 3=expected-compare 4=wake-elision
 kernel half (HUMAN-GATED): SYS_FUTEX 258 re-key + locking.rs expected-compare
-<<<<<<<< raeen:/proc/raeen/widgets >>>>>>>>
+<<<<<<<< athena:/proc/athena/widgets >>>>>>>>
 # desktop widgets (Rainmeter-equivalent; /widgets/<name> in versioned config)
 live: 0
 refreshes: 0
 widget: clock enabled=true value="16:58"
 widget: uptime enabled=false value="0m 33s"
 widget: windows enabled=false value="0 open"
-<<<<<<<< raeen:/proc/raeen/palette >>>>>>>>
+<<<<<<<< athena:/proc/athena/palette >>>>>>>>
 # command palette (Super+Space launcher + action runner)
 live: false (no desktop yet)
 settings_actions: 13
 indexed_apps: 0
 indexed_files: 0
-<<<<<<<< raeen:/proc/raeen/keyboard >>>>>>>>
-# keyboard layout (raelocale)
+<<<<<<<< athena:/proc/athena/keyboard >>>>>>>>
+# keyboard layout (athlocale)
 active: us (English (US, QWERTY))
 # available:
 * us (English (US, QWERTY))
   fr (French (AZERTY))
   de (German (QWERTZ))
   dvorak (English (Dvorak))
-<<<<<<<< raeen:/proc/raeen/control_center >>>>>>>>
+<<<<<<<< athena:/proc/athena/control_center >>>>>>>>
 # control center (quick-settings glass flyout)
 live: false (no desktop yet)
 proof_pass: true
@@ -1996,18 +1996,18 @@ tiles: 9
 panel_width: 360
 rgb_chips: 9
 real_backends: 7
-<<<<<<<< raeen:/proc/raeen/pci_pm >>>>>>>>
+<<<<<<<< athena:/proc/athena/pci_pm >>>>>>>>
 # PCI device power states (PM cap, PMCSR)
 devices: 0
 transitions: 0
-<<<<<<<< raeen:/proc/raeen/swap >>>>>>>>
+<<<<<<<< athena:/proc/athena/swap >>>>>>>>
 # swap (page-out/page-in, 4 KiB slots)
 active: false
 total_slots: 0
 used_slots: 0
 pages_out: 64
 pages_in: 1
-<<<<<<<< raeen:/proc/raeen/sched_proof >>>>>>>>
+<<<<<<<< athena:/proc/athena/sched_proof >>>>>>>>
 # AthenaOS SCHED_BODY/EDF deadline-adherence proof
 # EDF clock: TSC wall-time microseconds (scheduler::edf_monotonic_us)
 result: PENDING
@@ -2031,9 +2031,9 @@ frame_runs: 0
 input_runs: 0
 audio_runs: 0
 hog_runs: 0
-<<<<<<<< raeen:/proc/raeen/wallpaper >>>>>>>>
+<<<<<<<< athena:/proc/athena/wallpaper >>>>>>>>
 # AthenaOS default backdrop = "Aurora Mesh" (Aurora Mesh, IDENTITY §3)
-# default_active=true base=#0b0f1e blobs=[blue #4e9cff, violet #9b5cff, teal #3fc8e0] ribbon_mesh=raegfx::glass vignette=0.85 per_frame_alloc=none
+# default_active=true base=#0b0f1e blobs=[blue #4e9cff, violet #9b5cff, teal #3fc8e0] ribbon_mesh=athgfx::glass vignette=0.85 per_frame_alloc=none
 # AthenaOS live wallpaper engine (8 wallpapers, occluded=false, frames 0/0 skipped, 0% saved)
 # current = 1
 #1   kind=Solid cost=0% color=#0a0e1a name="RaeBlue Solid"
@@ -2044,7 +2044,7 @@ hog_runs: 0
 #6   kind=Shader cost=22% color=#070a18 name="Cyberpunk Rain Shader"
 #7   kind=Shader cost=12% color=#f0c0c0 name="Cherry Blossom Drift"
 #8   kind=Shader cost=18% color=#aaddff name="Liquid Glass"
-<<<<<<<< raeen:/proc/raeen/rgb >>>>>>>>
+<<<<<<<< athena:/proc/athena/rgb >>>>>>>>
 # AthenaOS unified RGB (12 devices, 185 zones, 0 commands since boot)
 
 dev1 kind=motherboard zones=12 brightness=100 effect=Static effect_speed=50 effect_color=0xff4e9cff
@@ -2109,24 +2109,24 @@ dev11 kind=led_strip zones=30 brightness=100 effect=Static effect_speed=50 effec
 dev12 kind=case zones=4 brightness=100 effect=Static effect_speed=50 effect_color=0xff4e9cff
   name = "Lian Li O11 Dynamic"
   zone_colors = [0xff000000, 0xff000000, 0xff000000, 0xff000000]
-<<<<<<<< raeen:/proc/raeen/bundles >>>>>>>>
+<<<<<<<< athena:/proc/athena/bundles >>>>>>>>
 # AthenaOS installed components (12 unique, 12 total versions, 1 verifications, 0 passed)
 libc-rae             v1.0.0  sha256:cc6c6860…
-raeaudio             v0.1.0  sha256:cc726067…
-raebridge            v0.1.0  sha256:cc726067…
-raefont              v0.1.0  sha256:cc726067…
-raegfx               v0.1.0  sha256:cc726067…
-raekit               v0.1.0  sha256:cc726067…
-raenet               v0.1.0  sha256:cc726067…
-raeplay              v0.1.0  sha256:cc726067…
-raeshield            v0.1.0  sha256:cc726067…
-raestore             v0.1.0  sha256:cc726067…
-raeui                v0.1.0  sha256:cc726067…
+athaudio             v0.1.0  sha256:cc726067…
+athbridge            v0.1.0  sha256:cc726067…
+athfont              v0.1.0  sha256:cc726067…
+athgfx               v0.1.0  sha256:cc726067…
+athkit               v0.1.0  sha256:cc726067…
+athnet               v0.1.0  sha256:cc726067…
+athplay              v0.1.0  sha256:cc726067…
+athshield            v0.1.0  sha256:cc726067…
+athstore             v0.1.0  sha256:cc726067…
+athui                v0.1.0  sha256:cc726067…
 rust-std             v1.80.0  sha256:cc727471…
-<<<<<<<< raeen:/proc/raeen/perm >>>>>>>>
+<<<<<<<< athena:/proc/athena/perm >>>>>>>>
 # AthenaOS permission-prompt queue (0 pending)
 # (peek only — use SYS_PERM_LIST/RESPOND to act)
-<<<<<<<< raeen:/proc/raeen/network >>>>>>>>
+<<<<<<<< athena:/proc/athena/network >>>>>>>>
 # PCI net driver selection
 8086:100e  e1000         active
 8086:15b8  i219          active
@@ -2149,7 +2149,7 @@ dhcp_state: Bound
 # NetDriver manager
 default: none
 lo: link=Up speed=100000mbps mtu=65535 mac=00:00:00:00:00:00 tx_pkts=0 rx_pkts=0 rx_bytes=0 rx_errs=0
-<<<<<<<< raeen:/proc/raeen/power >>>>>>>>
+<<<<<<<< athena:/proc/athena/power >>>>>>>>
 # power telemetry
 polls: 41
 interval_ticks: 100
@@ -2163,7 +2163,7 @@ ac_connected: 0
 voltage_mv: 0
 current_ma: 0
 remaining_mwh: 0
-<<<<<<<< raeen:/proc/raeen/thermal >>>>>>>>
+<<<<<<<< athena:/proc/athena/thermal >>>>>>>>
 === Thermal (Phase 4.7) ===
 initialized:      true
 sw_zones:         4
@@ -2187,7 +2187,7 @@ breach_selftest:  PASS (_PSV→cap, _CRT→shutdown intent)
 
 -- ACPI thermal zones (last poll) --
   THM0: 25°C (_PSV=80°C _CRT=105°C)
-<<<<<<<< raeen:/proc/raeen/audio >>>>>>>>
+<<<<<<<< athena:/proc/athena/audio >>>>>>>>
 # AthenaOS audio subsystem
 hda_present: 1
 playback_streams: 1
@@ -2202,12 +2202,12 @@ audio_submit_samples: 256
 output_backlog_frames: 0
 output_rate_hz: 48000
 output_latency_us: 0
-<<<<<<<< raeen:/proc/raeen/usb_audio >>>>>>>>
+<<<<<<<< athena:/proc/athena/usb_audio >>>>>>>>
 # AthenaOS USB Audio Class (UAC1/UAC2)
 class: 0x01 (AUDIO)  subclasses: AC=0x01 AS=0x02
 formats: PCM Format-Type-I  transport: isochronous
 directions: playback (speaker/headphones) + capture (microphone)
-<<<<<<<< raeen:/proc/raeen/syscalls >>>>>>>>
+<<<<<<<< athena:/proc/athena/syscalls >>>>>>>>
 # AthenaOS syscall table (98 live syscalls across 18+ blocks)
 # Full layout with rdi/rsi/rdx/r10: see docs/SYSCALL_TABLE.md
 
@@ -2229,7 +2229,7 @@ directions: playback (speaker/headphones) + capture (microphone)
  85-87   live wallpaper engine
 109-118  userspace driver host ABI
 284-290  anti-cheat attestation
-<<<<<<<< raeen:/proc/raeen/linux_kabi >>>>>>>>
+<<<<<<<< athena:/proc/athena/linux_kabi >>>>>>>>
 # AthenaOS Linux kABI symbol registry (scaffold)
 # NOT GPL Linux code — MPL-2.0 metadata + stub dispatch only.
 total_symbols: 58
@@ -2264,7 +2264,7 @@ total_symbols: 58
 
 # Real handlers must return LinuxKabiError — stubs never succeed.
 # Supported path: IOMMU-sandboxed userspace drivers (Concept §Architecture).
-<<<<<<<< raeen:/proc/raeen/linux_compat >>>>>>>>
+<<<<<<<< athena:/proc/athena/linux_compat >>>>>>>>
 # AthenaOS Linux driver compat layer
 # Shims for userspace LinuxKPI hosting — see docs/LINUX_DRIVER_STRATEGY.md
 jiffies: 4130
@@ -2276,10 +2276,10 @@ usb_drivers: 0
 irq_handler_vectors: 0
 dma: frame_allocator (coherent stub, no IOMMU yet)
 status: init+smoketest wired on boot path
-<<<<<<<< raeen:/proc/raeen/linuxkpi >>>>>>>>
+<<<<<<<< athena:/proc/athena/linuxkpi >>>>>>>>
 linuxkpi_host: abi=0x524b50490001 jiffies=4129 hz=100
 ioremaps=0 dma_allocs=0 irq_doorbells=1 daemon_restarts=0 iommu_blocks=0
-<<<<<<<< raeen:/proc/raeen/linux_syscall >>>>>>>>
+<<<<<<<< athena:/proc/athena/linux_syscall >>>>>>>>
 # AthenaOS Linux syscall translation
 mode: Linux x86_64 ABI -> AthenaOS posix/syscall shims
 linux_tasks_tracked: 4
@@ -2287,58 +2287,58 @@ total_dispatched: 0
 handled_or_stubbed: 0
 unhandled_enosys: 0
 last_syscall_nr: none
-<<<<<<<< raeen:/proc/raeen/windows_gap >>>>>>>>
+<<<<<<<< athena:/proc/athena/windows_gap >>>>>>>>
 # AthenaOS Windows pain-point kernel map
 # Source: LEGACY_GAMING_CONCEPT.md §Windows Pain Points → AthenaOS Solutions
 
-[01] status=USERSPACE  kernel=raeupdate (userspace)
+[01] status=USERSPACE  kernel=athupdate (userspace)
      windows: Forced restarts for updates
-     raeen:   User controls update timing
-[02] status=STUB       kernel=raefs.rs (snapshot API stub)
+     athena:   User controls update timing
+[02] status=STUB       kernel=athfs.rs (snapshot API stub)
      windows: Update breaks your machine
-     raeen:   Atomic CoW updates + rollback
-[03] status=USERSPACE  kernel=raestore manifest policy
+     athena:   Atomic CoW updates + rollback
+[03] status=USERSPACE  kernel=athstore manifest policy
      windows: Bloatware preinstalled
-     raeen:   Zero — OS only default install
-[04] status=USERSPACE  kernel=raeshell policy
+     athena:   Zero — OS only default install
+[04] status=USERSPACE  kernel=athshell policy
      windows: Ads in Start / Explorer / lock screen
-     raeen:   Forbidden by design
+     athena:   Forbidden by design
 [05] status=DONE       kernel=config_registry (/system/telemetry_enabled=false)
      windows: Telemetry hard to disable
-     raeen:   Off by default, opt-in
+     athena:   Off by default, opt-in
 [06] status=DONE       kernel=config_registry.rs (syscalls 50-53)
      windows: Registry graveyard
-     raeen:   Versioned hierarchical config + snapshots
+     athena:   Versioned hierarchical config + snapshots
 [07] status=PARTIAL    kernel=app_bundle.rs (verify syscall 66-67)
      windows: DLL hell
-     raeen:   App bundles with hashed deps
-[08] status=USERSPACE  kernel=raesettings app
+     athena:   App bundles with hashed deps
+[08] status=USERSPACE  kernel=athsettings app
      windows: Settings vs Control Panel split
-     raeen:   Single unified Settings
+     athena:   Single unified Settings
 [09] status=DONE       kernel=search_index.rs (syscalls 54-57)
      windows: Search is broken
-     raeen:   Local-first indexed sub-100ms
+     athena:   Local-first indexed sub-100ms
 [10] status=PARTIAL    kernel=perm_prompt.rs + suspend.rs stub
      windows: Random reboots
-     raeen:   Never without explicit consent
-[11] status=PARTIAL    kernel=procfs /proc/raeen/boot + fast_boot.rs
+     athena:   Never without explicit consent
+[11] status=PARTIAL    kernel=procfs /proc/athena/boot + fast_boot.rs
      windows: Slow boot
-     raeen:   <6s NVMe, target 3s
+     athena:   <6s NVMe, target 3s
 [12] status=PARTIAL    kernel=capability.rs + iommu.rs stub + storage_irq.rs
      windows: Driver Wild West
-     raeen:   Signed drivers + IOMMU sandbox
-[13] status=USERSPACE  kernel=raeshell install policy
+     athena:   Signed drivers + IOMMU sandbox
+[13] status=USERSPACE  kernel=athshell install policy
      windows: Pushed Copilot / Cortana / Edge
-     raeen:   AI optional, off by default
+     athena:   AI optional, off by default
 [14] status=PARTIAL    kernel=vfs.rs hierarchical paths + mkdir/unlink/rename syscalls
      windows: File Explorer from 2007
-     raeen:   Modern file manager
+     athena:   Modern file manager
 [15] status=PARTIAL    kernel=linux_syscall.rs + linux_exec.rs (SYS_LINUX_EXEC=5000)
      windows: WSL friction
-     raeen:   Linux subsystem first-class
+     athena:   Linux subsystem first-class
 
 summary: total=15 done=3 partial=6
-<<<<<<<< raeen:/proc/raeen/clipboard >>>>>>>>
+<<<<<<<< athena:/proc/athena/clipboard >>>>>>>>
 # AthenaOS clipboard
 bytes: 27
 set_count: 2
@@ -2348,33 +2348,33 @@ pinned_count: 0
 max_entries: 64
 local_only: 1
 preview: "AthenaOS clipboard smoketest"
-<<<<<<<< raeen:/proc/raeen/clipboard-panel >>>>>>>>
+<<<<<<<< athena:/proc/athena/clipboard-panel >>>>>>>>
 # clipboard-history panel (Super+C — Win+V analog)
 ring_entries: 2
 ring_pinned: 0
 live: false (no desktop yet)
-<<<<<<<< raeen:/proc/raeen/capture >>>>>>>>
+<<<<<<<< athena:/proc/athena/capture >>>>>>>>
 # AthenaOS compositor capture sessions
 active_sessions: 0
-<<<<<<<< raeen:/proc/raeen/storage_irq >>>>>>>>
+<<<<<<<< athena:/proc/athena/storage_irq >>>>>>>>
 # AthenaOS storage IRQ modes
 devices: 0
 note: no NVMe/AHCI controllers probed (normal in virtio-only QEMU)
-<<<<<<<< raeen:/proc/raeen/storage >>>>>>>>
+<<<<<<<< athena:/proc/athena/storage >>>>>>>>
 # AthenaOS storage capacity (AthFS, aggregated)
 mounted: 0
 total_bytes: (unavailable)
 free_bytes:  (unavailable)
 used_bytes:  (unavailable)
-<<<<<<<< raeen:/proc/raeen/ahci >>>>>>>>
+<<<<<<<< athena:/proc/athena/ahci >>>>>>>>
 # AthenaOS AHCI
 controllers: 0
 note: no AHCI HBA found (normal when QEMU has no ahci device)
-<<<<<<<< raeen:/proc/raeen/nvme >>>>>>>>
+<<<<<<<< athena:/proc/athena/nvme >>>>>>>>
 # AthenaOS NVMe
 controllers: 0
 note: no NVMe controller (add `-device nvme` in QEMU)
-<<<<<<<< raeen:/proc/raeen/usb_hid >>>>>>>>
+<<<<<<<< athena:/proc/athena/usb_hid >>>>>>>>
 # USB HID boot keyboard
 kbd_reports:    3
 kbd_keydowns:   2
@@ -2389,13 +2389,13 @@ mouse_motion:   1
 mouse_wheel:    1
 legacy_key_bridge:   4
 legacy_mouse_bridge: 2
-<<<<<<<< raeen:/proc/raeen/oom >>>>>>>>
+<<<<<<<< athena:/proc/athena/oom >>>>>>>>
 # OOM policy: kill-largest-task fallback
 tries:           0
 kills:           0
 halts:           0
 largest_victim:  none
-<<<<<<<< raeen:/proc/raeen/soak >>>>>>>>
+<<<<<<<< athena:/proc/athena/soak >>>>>>>>
 # AthenaOS soak / leak harness (Phase 4.9)
 runs:            1
 cpu_checksum:    0x76af0c709d8ae6a1
@@ -2406,10 +2406,10 @@ heap_start:      18575136 bytes
 heap_end:        18575136 bytes
 heap_delta:      0 bytes
 leak_ok:         true
-<<<<<<<< raeen:/proc/raeen/memlimits >>>>>>>>
+<<<<<<<< athena:/proc/athena/memlimits >>>>>>>>
 # AthenaOS per-bundle memory limits (Phase 4.1)
 (no per-bundle limits registered)
-<<<<<<<< raeen:/proc/raeen/drivers >>>>>>>>
+<<<<<<<< athena:/proc/athena/drivers >>>>>>>>
 # AthenaOS driver manifest (HWID → driver package)
 devices: 10  builtin: 6  linuxkpi: 0  none: 4
 
@@ -2427,7 +2427,7 @@ devices: 10  builtin: 6  linuxkpi: 0  none: 4
 
 # LinuxKPI packages the installer copies + the driver manager launches:
   (none — every device is handled by an in-kernel driver)
-<<<<<<<< raeen:/proc/raeen/virtio_gpu >>>>>>>>
+<<<<<<<< athena:/proc/athena/virtio_gpu >>>>>>>>
 # virtio-gpu (Phase 6 CPU→GPU on-ramp, modern virtio-pci)
 present:      true
 controlq_size: 64
@@ -2436,7 +2436,7 @@ display:      1280x800
 present_cmds_ok: 8
 smoketest:    PASS
 hw_cursor:    PASS
-<<<<<<<< raeen:/proc/raeen/fatfs_esp >>>>>>>>
+<<<<<<<< athena:/proc/athena/fatfs_esp >>>>>>>>
 # FAT32 ESP locator — native no_std parser
 mount_attempts: 1
 mount_ok:       0
@@ -2446,20 +2446,20 @@ last_error:     VBR missing 0x55AA signature
 bpb: <none — sector 0 is not a FAT32 VBR>
 # Root directory (first cluster, up to 16 entries):
   <no entries — VBR not parsed or root empty>
-<<<<<<<< raeen:/proc/raeen/installer >>>>>>>>
+<<<<<<<< athena:/proc/athena/installer >>>>>>>>
 # AthenaOS installer
 runs: 1
 last_result: 0b00000
-  gpt=0 esp_format=0 boot_tree=0 raefs=0 verify=0
+  gpt=0 esp_format=0 boot_tree=0 athfs=0 verify=0
 payload_source: PASS
   ramdisk=INITRAMFS(11992576 B)
-<<<<<<<< raeen:/proc/raeen/installer_ui >>>>>>>>
+<<<<<<<< athena:/proc/athena/installer_ui >>>>>>>>
 # AthenaOS install wizard (UI)
 smoketest: PASS
 last_step: Account
 last_install_result: 0b00000
 safe_mode: false
-<<<<<<<< raeen:/proc/raeen/suspend >>>>>>>>
+<<<<<<<< athena:/proc/athena/suspend >>>>>>>>
 # S3 suspend/resume
 last_result: never-attempted
 roundtrips: 0
@@ -2468,14 +2468,14 @@ last_aps_parked: 0
 last_aps_reonlined: 0
 last_tasks_migrated: 0
 s3_present: true
-<<<<<<<< raeen:/proc/raeen/sandbox >>>>>>>>
+<<<<<<<< athena:/proc/athena/sandbox >>>>>>>>
 # AthenaOS sandbox enforcement (AthGuard PolicyEnforcer)
 sandboxed_tasks: 0
 checks: 4
 denials: 3
 grant_allows: 1
 default_level: Trusted
-<<<<<<<< raeen:/proc/raeen/manifests >>>>>>>>
+<<<<<<<< athena:/proc/athena/manifests >>>>>>>>
 # AthenaOS app permission manifests (RaeManifest.toml)
 discovered: 3
 spawns_from_manifest: 1
@@ -2484,7 +2484,7 @@ trust_caps: 1
   calculator v1.0.0 sandbox=AppSandbox signed=true net=true dev=false install=false
   hello_window v1.0.0 sandbox=Strict signed=true net=false dev=false install=false
   terminal v1.0.0 sandbox=Trusted signed=true net=false dev=false install=false
-<<<<<<<< raeen:/proc/raeen/anticheat >>>>>>>>
+<<<<<<<< athena:/proc/athena/anticheat >>>>>>>>
 anti-cheat: ring-0 attestation API (no kernel AC driver)
 wx_policy            = Strict
 protected_processes  = 0
@@ -2493,7 +2493,7 @@ total_violations     = 0
 ban_list_entries     = 0
 tpm_available        = false
 attestation_sessions = 0
-<<<<<<<< raeen:/proc/raeen/syscall_guard >>>>>>>>
+<<<<<<<< athena:/proc/athena/syscall_guard >>>>>>>>
 # AthenaOS syscall hardening
 ptr_rejects: 0
 bounds_rejects: 0
@@ -2501,12 +2501,12 @@ fs_cap_rejects: 0
 proc_cap_rejects: 0
 path_len_limit: 4096
 clipboard_len_limit: 65536
-<<<<<<<< raeen:/proc/raeen/extable >>>>>>>>
+<<<<<<<< athena:/proc/athena/extable >>>>>>>>
 # extable — copy_from_user fault-fixup
 installs: 8
 hits:     5
 per-cpu armed slots:
-<<<<<<<< raeen:/proc/raeen/bootlog >>>>>>>>
+<<<<<<<< athena:/proc/athena/bootlog >>>>>>>>
 # AthenaOS boot log (RAM ring, 1024 KiB capacity)
 # bytes_logged: 83696  wrapped: false  oldest_lost: 0 bytes
 # === transcript follows ===
@@ -2940,7 +2940,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Config registry: 29 default keys seeded (versioned, with snapshots)
 [ OK ] Per-app data buckets (/data/apps/self/)
 [buckets] run_boot_smoketest: store=true vfs_deny=true deny_foreign=true allow_owner=true self_needs_task=true -> PASS
-[session] AthID ready — default user 'raeen' (password: raeen)
+[session] AthID ready — default user 'athena' (password: athena)
 [session] persistence smoketest: records=1 hash_match=true reload_auth=true -> PASS
 [compositor] kernel surface 1 created: 1280x800 (z=0, desktop)
 [latency-prof] compositor: frame_us=2875 if_off_us=2270 blit_us=0 fps=0
@@ -2996,8 +2996,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [winreg] registry shim up (Windows-10 defaults seeded, 0 persisted value(s) replayed from versioned config)
 [winreg] registry shim up (Windows-10 defaults seeded, 2 persisted value(s) replayed from versioned config)
 [winreg] smoketest: set=true versioned_mirror=true cold_restore=true win10_defaults=true err_semantics=true -> PASS
-[session] user config seeded at /users/raeen/
-[session] user 'raeen' logged in
+[session] user config seeded at /users/athena/
+[session] user 'athena' logged in
 [session] workstation locked
 [session] workstation unlocked
 [session] logged out
@@ -3043,7 +3043,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Network manager initialized (2 interfaces, 3 routes, status=Connected)
 [netlog] initialized: UDP-broadcast log channel on port 51514 (boot_id=0xa5735f0f)
 [netlog] smoketest: frame=70B ip_header=valid tx=submitted -> PASS
-[mdns] responder up: advertising _raeen._tcp.local (DNS-SD), host athenaos.local
+[mdns] responder up: advertising _athena._tcp.local (DNS-SD), host athenaos.local
 [mdns] smoketest: query_answered=true ptr_cached=true srv_port_7690=true -> PASS
 [ OK ] AthGuard firewall initialized (4 rules, profile=DefaultDeny, conntrack 64k, rate-limit 1k pps)
 [ OK ] firewall selftest: 7/7 verdicts correct, per-app rule added, cap-gate enforced, telemetry-logged yes (profile=GamingOptimized, 9 rules)
@@ -3068,8 +3068,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Storage encryption initialized
 [encryption] KDF KAT: BLAKE2b-512(abc)=PASS Argon2id(RFC9106)=PASS -> PASS
 [fde] AES-256-XTS volume encryption ready (per-sector tweak=LBA, whole-volume incl. metadata)
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: fde-canary.txt -> inode 2
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: fde-canary.txt -> inode 2
 [fde] smoketest: write=true read_through_crypto=true plaintext_on_disk=false superblock_plaintext=false cipher_at_rest=true wrong_key_rejected=true -> PASS
 [ OK ] Kernel crypto API initialized
 [crypto] RNG: rdrand=true rdseed=true hw_live=true getrandom_distinct=true getrandom_nonzero=true hw_seeded=true -> PASS
@@ -3310,17 +3310,17 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [update] staged kernel "selftest-good" into slot B (35 bytes, signature OK)
 [update] REFUSED kernel stage "selftest-forged": signature does not verify against the trust anchor
 [update] slots smoketest: stage=true switch=true fallback=true commit=true cfg_roundtrip=true sig_accept=true sig_reject=true -> PASS
-[session] create_local_account: 'installtest' (Install Test) id=2 -> OK (password set, raefs_persisted=false)
+[session] create_local_account: 'installtest' (Install Test) id=2 -> OK (password set, athfs_persisted=false)
 [install] run_boot_smoketest: account_create=true password_auth=true -> PASS
 [install] H2 firewall smoketest: match_ok=true sectorcount_mismatch_refused=true sectorsize_mismatch_refused=true oob_refused=true refuse_path=true zero_writes_on_refuse=true -> PASS
 [install] ===== AthenaOS installer starting =====
 [install] H2 firewall OK: target sectors=64 sector_size=512 write_window=[0..63]
 [install] stage 1 GPT FAILED: cannot partition target
-[install] H3 abort smoketest: decision_truth_table=true sentinel=true tiny_disk_no_raefs_format=true zero_destructive_writes=true (result=0x0) -> PASS
+[install] H3 abort smoketest: decision_truth_table=true sentinel=true tiny_disk_no_athfs_format=true zero_destructive_writes=true (result=0x0) -> PASS
 [install] payload smoketest: ramdisk_real=true ramdisk_bytes=11992576 tar_magic=true kernel_root_on_active_dev=0B (0=QEMU firmware-boot, resolves on Athena USB-MSC) -> PASS
 [install] layout smoketest: blank=FullDisk:true win_gpt=DualBoot(esp+aligned_gap):true packed=Refuse:true no_esp=Refuse:true -> PASS
 [fatfs] add_gpt_partition: AthFS in slot 2 at LBA 2240..6239 (array_crc=0x8a886b55, 2 existing entries preserved)
-[install] apply-plan smoketest: slot2=true esp_intact=true ntfs_intact=true raefs_added=true arr_crc=true hdr_crc=true backup_mirrored=true overlap_refused=true -> PASS
+[install] apply-plan smoketest: slot2=true esp_intact=true ntfs_intact=true athfs_added=true arr_crc=true hdr_crc=true backup_mirrored=true overlap_refused=true -> PASS
 [install] boot-entry smoketest: attrs_active=true fpl=true desc=AthenaOS:true hd_node=true part_guid=true end_node=true total_len=true -> PASS
 [install] ui smoketest: welcome->disk->layout(dualboot:alongside/erase, empty->full, refuse->erase)->account(reject mismatch)->review->install -> PASS
 [installer] ui: accent=0xFF4E9CFF palette=tokens -> PASS
@@ -3335,8 +3335,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [fastqueue] spsc enq=7 drained=6 vec_pushed=4 -> PASS
 [ OK ] dwarf_sym: gimli DWARF line resolver ready (embed pending)
 [dwarf_sym] graceful: empty=true garbage=true -> PASS
-[ OK ] perf telemetry ready (/proc/raeen/perf)
-[perf] /proc/raeen/perf surface + input->photon pipeline (armed/sample/idle=true/true/true) -> PASS
+[ OK ] perf telemetry ready (/proc/athena/perf)
+[perf] /proc/athena/perf surface + input->photon pipeline (armed/sample/idle=true/true/true) -> PASS
 [perf] input->render->display latency harness: measured=13us budget<16667us -> PASS
 [perf] smoketest: misses=1 lateness=5000000ns -> PASS
 [perf] heap_alloc fast path: min=9ns avg=15ns max=189ns samples=256 (target <500ns iron) -> PASS
@@ -3346,9 +3346,9 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [perf] audio wake jitter (§3 <100us): on_budget_0=true late100_jitter=true -> PASS
 [acpi-quirks] 6 known DSDT vendor quirk(s) registered
 [acpi-quirks] smoketest: entries=6 hp_match=1 lenovo_match=1 -> PASS
-[storage] boot disk: virtio-blk gpt sectors=2048 esp=true raefs=false
+[storage] boot disk: virtio-blk gpt sectors=2048 esp=true athfs=false
 [ OK ] Storage mount helper initialized
-[storage] smoketest: device=virtio-blk table=gpt sectors=2048 esp=true raefs=false
+[storage] smoketest: device=virtio-blk table=gpt sectors=2048 esp=true athfs=false
 [acpi] SCI wired to IRQ 9 -> vector 240
 [acpi] GPE dispatcher: 0 handler(s) in \_GPE (2 block(s) at GPE0=0xafe0)
 [ OK ] GPE dispatcher: 0 _Lxx/_Exx handler(s) registered
@@ -3486,7 +3486,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] WireGuard: tunnel registry ready (kernel-side state machine, userspace UDP)
 [ OK ] Live wallpaper engine: 8 wallpaper(s) registered, current=1 (paused when occluded)
 [compositor] live wallpaper installed
-[ OK ] Aurora Mesh wallpaper: default backdrop set (base=#0b0f1e, anisotropic ribbon mesh via raegfx::glass, vignette, no per-frame alloc)
+[ OK ] Aurora Mesh wallpaper: default backdrop set (base=#0b0f1e, anisotropic ribbon mesh via athgfx::glass, vignette, no per-frame alloc)
 [aurora] smoketest: PASS (ribbon mesh: luma spread 135, peak 146 in [120,190], interior 110 > corner 38, default=on)
 [ OK ] Vibe Mode: 5 preset(s) (theme+wallpaper+sound+RGB switch as one)
 [ OK ] Capability audit ring initialized (capacity 256 events)
@@ -3534,8 +3534,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [linux_kabi] smoketest: 10/10 symbols registered
 [linux_compat][INFO ] linux_compat: registered device 'linux_compat-smoke' id=1
 [linux_compat] smoketest PASS: 6 checks (jiffies=3291, devices=1)
-[linux_compat][INFO ] firmware: request 'raeen-selftest.bin'
-[linux_compat][INFO ] firmware: loaded 'raeen-selftest.bin' (334 bytes) from initramfs
+[linux_compat][INFO ] firmware: request 'athena-selftest.bin'
+[linux_compat][INFO ] firmware: loaded 'athena-selftest.bin' (334 bytes) from initramfs
 [linuxkpi] request_firmware probe: found 334 bytes
 [linuxkpi] firmware host call wired: syscall=142 fw_probe=found loads=0
 [linuxkpi] host smoketest: version=0x524b50490001 jiffies=3299 hz=100 devices=0 irq_delivery=dispatch_msi+pending bridge=usdriver+caps -> PASS
@@ -3567,55 +3567,55 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [BOOT] All 9 tiers initialized successfully
 [storage] scanning active block device for AthFS partition...
 [storage] partition table: Gpt
-[raefs] no AthFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via raeinstaller)
-[raefs] Registered Virtio tier with 4096 blocks
-[raefs] tiered storage detected 1 distinct tier(s): NVMe=0 SATA(spinning)=0 Virtio=4096 (4KiB blocks)
-[raefs] Registered NVMe tier with 16 blocks
-[raefs] Registered Sata tier with 16 blocks
-[raefs] Promoted block 0 to NVMe
-[raefs] Promoted block 1 to NVMe
-[raefs] Rebalance complete: promoted 2, demoted 0
-[raefs] Demoted block 1 to SATA
-[raefs] Demoted block 0 to SATA
-[raefs] Rebalance complete: promoted 0, demoted 2
-[raefs] tiered policy smoketest: promoted_to_nvme=2 demoted_to_sata=2
-[raefs] Extent manager initialized
-[raefs] Running boot smoketest...
-[raefs] Skipping smoketest: no mounted FS
-[raefs] format: wrote superblock magic=0x526165465321 blocks=256 bitmap_blocks=1 refcount_blocks=1 dirs=[/System,/Apps,/Users,/Games,/Vaults] label="smoketest-vol" -> OK
-[raefs] format_smoketest: magic=true blocks=true free=true ibitmap=true bbitmap=true itable=true root_inode=true dirs=true apex_root=true -> PASS
-[raefs] run_format_smoketest -> PASS
-[raefs] snapshot syscall smoketest: skipped (no mounted FS)
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: rollback.txt -> inode 2
-[raefs] Snapshot #1 created (ts=1)
-[raefs] Rolled back to snapshot #1
-[raefs] Mounted AthFS (CoW). root=0, free=244/256
-[raefs] on-disk persistence marker absent (first boot on this volume)
-[raefs] rollback round-trip: pre_rollback_v2=true rollback_ran=true inode_table_restored=true content_recovered=true -> PASS
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: cowj.txt -> inode 2
-[raefs] Snapshot #1 created (ts=1)
-[raefs] Journal replay: undo inode 2 blk_idx 0
-[raefs] Journal replay complete
-[raefs] cow-journal smoketest: crash_reverted=true fsck_ok=true -> PASS
-[raefs] large-volume smoketest: bitmap_blocks(40000)=2 refcount_blocks(40000)=10 big_bm_limit=40000 big_rc_limit=40000 hostile_bm_limit=32768 hostile_rc_limit=4096 sizing_ok=true no_oob=true -> PASS
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] insert_extent: REFUSED — leaf full (127 extents) for inode 2; node split needs multi-level CoW (not yet implemented). Failing loud to protect snapshot integrity (no silent loss).
-[raefs] btree-overflow smoketest: hard_errored=true replace_ok=true -> PASS
+[athfs] no AthFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via athinstaller)
+[athfs] Registered Virtio tier with 4096 blocks
+[athfs] tiered storage detected 1 distinct tier(s): NVMe=0 SATA(spinning)=0 Virtio=4096 (4KiB blocks)
+[athfs] Registered NVMe tier with 16 blocks
+[athfs] Registered Sata tier with 16 blocks
+[athfs] Promoted block 0 to NVMe
+[athfs] Promoted block 1 to NVMe
+[athfs] Rebalance complete: promoted 2, demoted 0
+[athfs] Demoted block 1 to SATA
+[athfs] Demoted block 0 to SATA
+[athfs] Rebalance complete: promoted 0, demoted 2
+[athfs] tiered policy smoketest: promoted_to_nvme=2 demoted_to_sata=2
+[athfs] Extent manager initialized
+[athfs] Running boot smoketest...
+[athfs] Skipping smoketest: no mounted FS
+[athfs] format: wrote superblock magic=0x526165465321 blocks=256 bitmap_blocks=1 refcount_blocks=1 dirs=[/System,/Apps,/Users,/Games,/Vaults] label="smoketest-vol" -> OK
+[athfs] format_smoketest: magic=true blocks=true free=true ibitmap=true bbitmap=true itable=true root_inode=true dirs=true apex_root=true -> PASS
+[athfs] run_format_smoketest -> PASS
+[athfs] snapshot syscall smoketest: skipped (no mounted FS)
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: rollback.txt -> inode 2
+[athfs] Snapshot #1 created (ts=1)
+[athfs] Rolled back to snapshot #1
+[athfs] Mounted AthFS (CoW). root=0, free=244/256
+[athfs] on-disk persistence marker absent (first boot on this volume)
+[athfs] rollback round-trip: pre_rollback_v2=true rollback_ran=true inode_table_restored=true content_recovered=true -> PASS
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: cowj.txt -> inode 2
+[athfs] Snapshot #1 created (ts=1)
+[athfs] Journal replay: undo inode 2 blk_idx 0
+[athfs] Journal replay complete
+[athfs] cow-journal smoketest: crash_reverted=true fsck_ok=true -> PASS
+[athfs] large-volume smoketest: bitmap_blocks(40000)=2 refcount_blocks(40000)=10 big_bm_limit=40000 big_rc_limit=40000 hostile_bm_limit=32768 hostile_rc_limit=4096 sizing_ok=true no_oob=true -> PASS
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] insert_extent: REFUSED — leaf full (127 extents) for inode 2; node split needs multi-level CoW (not yet implemented). Failing loud to protect snapshot integrity (no silent loss).
+[athfs] btree-overflow smoketest: hard_errored=true replace_ok=true -> PASS
 [snap-policy] retention ladder armed (1h all / 24h hourly / 7d daily / 4w weekly, quota 12)
 [snap-policy] retention selftest: fresh_kept=true buckets_kept=true dup_thinned=true ancient_thinned=true quota_ok=true -> PASS
 [prefetch] sequential read-ahead armed (run>=2 -> +4 blocks, cache 128 KiB)
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: prefetch-stream.bin -> inode 2
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: prefetch-stream.bin -> inode 2
 [prefetch] smoketest: stream_read=true run_detected=true prefetched>=4=true cache_hits>=4=true random_quiet=true -> PASS
-[raefs] encryption selftest: aes256_kat=true xts_changed=true xts_roundtrip=true tweak_sensitive=true kdf_deterministic=true aes_ni=true -> PASS
-[raefs] bucket-key selftest: distinct=true deterministic=true cross_app_unreadable=true own_key_recovers=true -> PASS
-[raefs] per-file-key selftest: distinct=true deterministic=true cross_file_unreadable=true own_key_recovers=true composed_ok=true composed_distinct=true -> PASS
-[raefs] compression-flag smoketest: skipped (no mounted FS)
+[athfs] encryption selftest: aes256_kat=true xts_changed=true xts_roundtrip=true tweak_sensitive=true kdf_deterministic=true aes_ni=true -> PASS
+[athfs] bucket-key selftest: distinct=true deterministic=true cross_app_unreadable=true own_key_recovers=true -> PASS
+[athfs] per-file-key selftest: distinct=true deterministic=true cross_file_unreadable=true own_key_recovers=true composed_ok=true composed_distinct=true -> PASS
+[athfs] compression-flag smoketest: skipped (no mounted FS)
 [session] load_persisted_accounts: no accounts.dat on AthFS (fresh system)
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: varcrash-selftest.dump -> inode 2
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: varcrash-selftest.dump -> inode 2
 [crash] persist smoketest: wrote=true readback_matches=true bytes=176 (ram-volume) -> PASS
 [crash] report smoketest: msg=true rip_hex=true dump_path=true proc_path=true -> PASS
 [virtio-net] tx_frame OK (60 bytes)
@@ -3629,7 +3629,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [dhcp] rx -> event=Bound
 [DHCP] Configured: IP 10.0.2.15/24, GW 10.0.2.2, DNS servers: 1
 [dhcp] after 64 poll_full() ticks: state=Some(Bound)
-[post9-prof] raefs=3897ms vnet_demo=87ms vnet_probe=0ms dhcp=250ms
+[post9-prof] athfs=3897ms vnet_demo=87ms vnet_probe=0ms dhcp=250ms
 [ OK ] Loading INITRAMFS, size: 11992576 bytes
 [ OK ] Found user_init (199632 bytes)
 [elf-reloc] applied 2 RELATIVE relocs
@@ -3641,7 +3641,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [linux_exec] exec '/bin/cat' argv_len=2
 [linux-exec] dynamic ELF: interpreter = /lib64/ld-linux-x86-64.so.2
 [linux-exec] ld.so loaded: base=0x90ab8000 entry=0x90ad7300
-[ld.so] stock /bin/cat /etc/motd spawned (task TaskId(82)) -> expect `raeen-cat-ok` below
+[ld.so] stock /bin/cat /etc/motd spawned (task TaskId(82)) -> expect `athena-cat-ok` below
 [linux_exec] exec '/bin/seq' argv_len=3
 [linux-exec] dynamic ELF: interpreter = /lib64/ld-linux-x86-64.so.2
 [linux-exec] ld.so loaded: base=0x90ab8000 entry=0x90ad7300
@@ -3649,14 +3649,14 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [linux_exec] exec '/bin/pthreadtest' argv_len=1
 [linux-exec] dynamic ELF: interpreter = /lib64/ld-linux-x86-64.so.2
 [linux-exec] ld.so loaded: base=0x90ab8000 entry=0x90ad7300
-[ld.so] glibc pthread test spawned (task TaskId(84)) -> expect `raeen-pthread-ok` below
+[ld.so] glibc pthread test spawned (task TaskId(84)) -> expect `athena-pthread-ok` below
 [net] post-boot poll thread spawned (drives DHCP/RX/TCP, BSP-pinned)
 [thermal] post-boot poll thread spawned (BSP-pinned; drives passive throttle)
 [bootlog-persist] late-flush capture thread spawned (post-boot -> BOOTLOG.TXT in ~15s, BSP-pinned) + SAFE-MODE auto-return safety net + hw-watchdog backstop
 [boot] WARN: boot time 33505ms exceeds 6000ms target!
 [BOOT-BENCH] T0 -> userspace = 33505 ms. Concept target: <6000 ms (stretch 3000 ms).
 [BOOT-BENCH] [WARN] Boot exceeded 6s target by 27505 ms.
-<<<<<<<< raeen:/proc/raeen/bootlog_persist >>>>>>>>
+<<<<<<<< athena:/proc/athena/bootlog_persist >>>>>>>>
 # bootlog persistence (ESP \BOOTLOG.TXT, data-only overwrite)
 initialized: true
 ready: true
@@ -3665,7 +3665,7 @@ sector_count: 2048
 flushes: 8
 last_flush_bytes: 77578
 carveout_writes: 9216
-<<<<<<<< raeen:snapshot:end >>>>>>>>
+<<<<<<<< athena:snapshot:end >>>>>>>>
 [procfs] snapshot self-check: emitted=109/109 getter_total=5116us slowest=manifests@4035us wedged=false -> PASS
 
 [compositor] vrr_registered=true hdr_registered=true -> PASS

@@ -577,7 +577,7 @@ impl BlurEngine {
     }
 
     /// §2.3 / §9 interior legibility cap (the SHIP-GATE white-`text.primary` rule),
-    /// mirrored from `raegfx::glass::clamp_interior_luma_region` for the LIVE blur
+    /// mirrored from `athgfx::glass::clamp_interior_luma_region` for the LIVE blur
     /// path. After the tint→frost composite the live glass over a BRIGHT backdrop
     /// (the aurora blob) is still washed out — white text.primary drops below
     /// 4.5:1 — because this path mirrors the frost step rather than calling
@@ -589,12 +589,12 @@ impl BlurEngine {
     /// frosted/translucent look is untouched). Hue-preserving (uniform scale),
     /// integer fixed-point (no float in the IF=0 recompose hot path — the kernel is
     /// soft-float), in place on the blur scratch (no per-frame alloc). The ceiling
-    /// is imported from `rae_tokens` so the threshold stays single-source; only the
+    /// is imported from `ath_tokens` so the threshold stays single-source; only the
     /// algorithm (the trivial scale-to-black) is mirrored because
-    /// `rae_tokens::clamp_interior_luma` / `mean_luma` are private to the catalog.
+    /// `ath_tokens::clamp_interior_luma` / `mean_luma` are private to the catalog.
     fn clamp_interior_luma(buf: &mut [u32], ceil: f32) {
         // Rec.709 luma weights ×10000 (sum 10000): the same perceptual weighting
-        // `rae_tokens::mean_luma` and the gfx mirror use, so this render-side clamp
+        // `ath_tokens::mean_luma` and the gfx mirror use, so this render-side clamp
         // lands on the identical line the WCAG audit measures.
         const WR: u64 = 2126;
         const WG: u64 = 7152;
@@ -624,13 +624,13 @@ impl BlurEngine {
     }
 
     /// SHIP-GATE §9 WCAG legibility pass — the FINAL white-`text.primary` guarantee,
-    /// mirrored from `raegfx::glass::clamp_interior_wcag_region` for the LIVE blur path.
+    /// mirrored from `athgfx::glass::clamp_interior_wcag_region` for the LIVE blur path.
     ///
     /// The mean-channel cap [`clamp_interior_luma`] works in *gamma-encoded* mean-channel
     /// space, but WCAG contrast is computed on the *gamma-decoded* relative luminance —
     /// and the two diverge for saturated/colored pixels: a pixel held at mean-channel 0.40
     /// can still measure as low as ~2.8:1 against white text (the context-menu AA failure
-    /// raegfx caught). This pass closes the gap on the quantity WCAG actually measures:
+    /// athgfx caught). This pass closes the gap on the quantity WCAG actually measures:
     /// for every interior pixel, measure the REAL contrast between [`TEXT_PRIMARY_DARK`]
     /// (white `text.primary`, the ink the glass carries) and the composited interior, and
     /// if it falls under [`TEXT_AA_TARGET`] (4.5 + margin) scale the pixel UNIFORMLY toward
@@ -650,11 +650,11 @@ impl BlurEngine {
     /// "kernel is soft-float"). The interior pixel count is bounded per glass surface and
     /// the bisection is a fixed 12 iterations, so cost is bounded; the bisection only runs
     /// for pixels that actually FAIL the target (a dark backdrop short-circuits at the
-    /// contrast check). Matches raegfx's bisection math exactly so live == host-render.
+    /// contrast check). Matches athgfx's bisection math exactly so live == host-render.
     fn clamp_interior_wcag(buf: &mut [u32]) {
         for px in buf.iter_mut() {
             let p = *px | 0xFF00_0000;
-            if rae_tokens::contrast_ratio(TEXT_PRIMARY_DARK, p) >= TEXT_AA_TARGET {
+            if ath_tokens::contrast_ratio(TEXT_PRIMARY_DARK, p) >= TEXT_AA_TARGET {
                 continue; // already legible — dark-backdrop NO-OP
             }
             // Bisection on the uniform darkening factor in (0, 1]. contrast vs factor is
@@ -672,7 +672,7 @@ impl BlurEngine {
                     | (((r0 * mid + 0.5) as u32).min(0xFF) << 16)
                     | (((g0 * mid + 0.5) as u32).min(0xFF) << 8)
                     | ((b0 * mid + 0.5) as u32).min(0xFF);
-                if rae_tokens::contrast_ratio(TEXT_PRIMARY_DARK, q) >= TEXT_AA_TARGET {
+                if ath_tokens::contrast_ratio(TEXT_PRIMARY_DARK, q) >= TEXT_AA_TARGET {
                     lo = mid;
                 } else {
                     hi = mid;
@@ -687,18 +687,18 @@ impl BlurEngine {
     }
 }
 
-/// Dark-theme white body ink (`rae_tokens::DARK.text_primary` = `#F0F2F8`) — the
+/// Dark-theme white body ink (`ath_tokens::DARK.text_primary` = `#F0F2F8`) — the
 /// foreground the §9 WCAG interior pass guarantees AA contrast against. Mirrored as a
 /// const (the palette field is not a `pub` standalone token) so the live legibility
 /// pass measures against the EXACT ink it protects, identical to the value
-/// `raegfx::glass` uses, keeping live == host-render.
+/// `athgfx::glass` uses, keeping live == host-render.
 const TEXT_PRIMARY_DARK: u32 = 0xFF_F0_F2_F8;
 
 /// The WCAG contrast target the interior must clear for white body text, with a small
 /// safety margin over the 4.5:1 AA floor (the relative-luminance math is accurate to a
 /// few 1e-3, and visual-qa samples antialiased glyph edges — the margin keeps the
 /// *measured* ratio above 4.5 even at the worst sample). IDENTITY.md §9. Matches the
-/// `raegfx::glass::TEXT_AA_TARGET` value so the live cap and host-render agree.
+/// `athgfx::glass::TEXT_AA_TARGET` value so the live cap and host-render agree.
 const TEXT_AA_TARGET: f32 = 4.7;
 
 // ─── Tiered glass (IDENTITY §2) ─────────────────────────────────────────────
@@ -716,20 +716,20 @@ const TEXT_AA_TARGET: f32 = 4.7;
 /// effective alpha. The three tiers sit at ~0x40 / 0x73 / 0x99 alpha; anything a
 /// call site declared (including the old single `GLASS_TINT_DARK` panel alias)
 /// snaps to the closest. IDENTITY §2.1.
-fn glass_tier_for_tint(tint: u32) -> rae_tokens::GlassTier {
+fn glass_tier_for_tint(tint: u32) -> ath_tokens::GlassTier {
     let a = (tint >> 24) & 0xFF;
-    let ca = (rae_tokens::GLASS_CHROME_DARK.tint >> 24) & 0xFF;
-    let pa = (rae_tokens::GLASS_PANEL_DARK.tint >> 24) & 0xFF;
-    let poa = (rae_tokens::GLASS_POPOVER_DARK.tint >> 24) & 0xFF;
+    let ca = (ath_tokens::GLASS_CHROME_DARK.tint >> 24) & 0xFF;
+    let pa = (ath_tokens::GLASS_PANEL_DARK.tint >> 24) & 0xFF;
+    let poa = (ath_tokens::GLASS_POPOVER_DARK.tint >> 24) & 0xFF;
     let d_chrome = a.abs_diff(ca);
     let d_panel = a.abs_diff(pa);
     let d_pop = a.abs_diff(poa);
     if d_chrome <= d_panel && d_chrome <= d_pop {
-        rae_tokens::GLASS_CHROME_DARK
+        ath_tokens::GLASS_CHROME_DARK
     } else if d_panel <= d_pop {
-        rae_tokens::GLASS_PANEL_DARK
+        ath_tokens::GLASS_PANEL_DARK
     } else {
-        rae_tokens::GLASS_POPOVER_DARK
+        ath_tokens::GLASS_POPOVER_DARK
     }
 }
 
@@ -753,7 +753,7 @@ fn region_mean_luma(buf: &[u32]) -> f32 {
 }
 
 // (The live iridescent-rim wrapper was retired with the rim itself —
-// IDENTITY-OBSIDIAN.md §2. `raegfx::glass::draw_iridescent_rim` remains
+// IDENTITY-OBSIDIAN.md §2. `athgfx::glass::draw_iridescent_rim` remains
 // available to theming callers.)
 
 // ─── Live Wallpapers ────────────────────────────────────────────────────────
@@ -1800,7 +1800,7 @@ struct CompositorState {
     comp_buf: Vec<u32>,
     /// Software backbuffer (BGR u32, full framebuffer sized) to eliminate tearing.
     sw_backbuf: Vec<u32>,
-    /// Stable "ready" scanout buffer (raeen-perf RANK 5 / goal #2). `recomposite`
+    /// Stable "ready" scanout buffer (athena-perf RANK 5 / goal #2). `recomposite`
     /// composites into `comp_buf` UNDER the IF=0 lock, then swaps the finished
     /// frame into this buffer (a cheap `Vec` pointer swap), DROPS the lock, and
     /// scans this buffer out with interrupts ENABLED. Because the next frame
@@ -1918,7 +1918,7 @@ static VRR_RANGE_PACKED: AtomicU64 = AtomicU64::new(0);
 static HDR_PARAMS_PACKED: AtomicU64 = AtomicU64::new(0);
 
 /// Result of the drop-shadow penumbra test (material-and-shadow.md acceptance),
-/// exposed via /proc/raeen/compositor. 0 = not run, 1 = PASS (soft monotonic
+/// exposed via /proc/athena/compositor. 0 = not run, 1 = PASS (soft monotonic
 /// near-black penumbra), 2 = FAIL (hard step or color tint). Set once at boot by
 /// `run_drop_shadow_penumbra_smoketest`.
 static SHADOW_PENUMBRA_RESULT: AtomicU64 = AtomicU64::new(0);
@@ -1959,7 +1959,7 @@ static WALLPAPER_ALPHA: AtomicU64 = AtomicU64::new(255);
 /// solid the occluded/no-wallpaper path paints). IDENTITY §3: the Aurora Mesh base
 /// (`WALLPAPER_AURORA_BASE_DARK`) — a deep blue-violet night sky, not the old
 /// near-black navy void, so the occluded/cross-fade fill matches the live aurora.
-const DESKTOP_BASE_ARGB: u32 = rae_tokens::WALLPAPER_AURORA_BASE_DARK;
+const DESKTOP_BASE_ARGB: u32 = ath_tokens::WALLPAPER_AURORA_BASE_DARK;
 
 /// `scrim.modal` (DESIGN_LANGUAGE) — ~12% black dim drawn over the live desktop
 /// in overview so thumbnails read without hiding the wallpaper.
@@ -3094,7 +3094,7 @@ pub fn run_snapshot_smoketest() {
 }
 
 /// FAIL-able proof that the scanout copy runs OUTSIDE the IF=0 COMPOSITOR guard
-/// (raeen-perf RANK 5 / goal #2 responsiveness). `recomposite` composites into
+/// (athena-perf RANK 5 / goal #2 responsiveness). `recomposite` composites into
 /// `comp_buf` under `lock_compositor()` (interrupts disabled, reading user
 /// pages), swaps the finished frame into `scanout_ready`, DROPS the guard, then
 /// scans out from a buffer taken out of `st` — so the per-pixel framebuffer
@@ -3135,7 +3135,7 @@ pub fn run_render_outside_lock_smoketest() {
     );
 }
 
-/// FAIL-able proof of the damage→wake path (raeen-perf RANK 1 / goal #2
+/// FAIL-able proof of the damage→wake path (athena-perf RANK 1 / goal #2
 /// sub-frame input latency). Asserts:
 ///   1. a set dirty flag makes one compositor tick recomposite IMMEDIATELY
 ///      (does NOT wait the full idle interval) and clears the flag, and
@@ -3300,7 +3300,7 @@ pub fn run_effects_smoketest() {
     // Interior legibility cap (§2.3 / §9): the live glass-over-bright-aurora fix.
     // Rec.709 mean-channel luma ×255×10000 (the same scale `clamp_interior_luma`
     // compares against) so we can assert in integer space.
-    let ceil = rae_tokens::GLASS_INTERIOR_LUMA_CEIL;
+    let ceil = ath_tokens::GLASS_INTERIOR_LUMA_CEIL;
     let ceil_num: u64 = (ceil * 255.0 * 10000.0) as u64;
     let luma_num = |p: u32| -> u64 {
         2126 * ((p >> 16) & 0xFF) as u64 + 7152 * ((p >> 8) & 0xFF) as u64 + 722 * (p & 0xFF) as u64
@@ -3334,7 +3334,7 @@ pub fn run_effects_smoketest() {
     );
 
     // SHIP-GATE §9 WCAG legibility pass (the FINAL guarantee, mirrored from
-    // `raegfx::glass::clamp_interior_wcag_region`). Asserts REAL WCAG contrast — not a
+    // `athgfx::glass::clamp_interior_wcag_region`). Asserts REAL WCAG contrast — not a
     // mean-channel proxy — so it catches the gamma-encoded/decoded divergence the
     // mean-channel cap misses for saturated pixels.
     //
@@ -3347,9 +3347,9 @@ pub fn run_effects_smoketest() {
     //     mean-channel cap alone never touches it).
     let mut wcag_sat = vec![0xFFC0_40C0u32; 16]; // mean ~0.394 (≤ceil) but WCAG ~3.96:1
     BlurEngine::clamp_interior_luma(&mut wcag_sat, ceil); // mean-channel pre-pass: NO-OP here
-    let sat_before = rae_tokens::contrast_ratio(TEXT_PRIMARY_DARK, wcag_sat[0] | 0xFF00_0000);
+    let sat_before = ath_tokens::contrast_ratio(TEXT_PRIMARY_DARK, wcag_sat[0] | 0xFF00_0000);
     BlurEngine::clamp_interior_wcag(&mut wcag_sat);
-    let sat_after = rae_tokens::contrast_ratio(TEXT_PRIMARY_DARK, wcag_sat[0] | 0xFF00_0000);
+    let sat_after = ath_tokens::contrast_ratio(TEXT_PRIMARY_DARK, wcag_sat[0] | 0xFF00_0000);
     check(
         sat_before < 4.5 && sat_after >= 4.5,
         "glass-wcag-saturated-clears-aa",
@@ -3360,7 +3360,7 @@ pub fn run_effects_smoketest() {
     BlurEngine::clamp_interior_luma(&mut wcag_bright, ceil);
     BlurEngine::clamp_interior_wcag(&mut wcag_bright);
     check(
-        rae_tokens::contrast_ratio(TEXT_PRIMARY_DARK, wcag_bright[0] | 0xFF00_0000) >= 4.5,
+        ath_tokens::contrast_ratio(TEXT_PRIMARY_DARK, wcag_bright[0] | 0xFF00_0000) >= 4.5,
         "glass-wcag-bright-clears-aa",
     );
     // (c) Hue preservation: the uniform darkening keeps the channel ORDER of the
@@ -3658,7 +3658,7 @@ pub fn set_output_resolution(width: u32, height: u32) -> bool {
 /// Move the hardware cursor by a delta and request an immediate recomposite.
 /// Called from the mouse IRQ handler. Marks the compositor dirty so the cursor
 /// reaches the panel on the next scheduler tick (~couple of µs of OS latency)
-/// instead of waiting up to a full idle poll interval (raeen-perf RANK 1).
+/// instead of waiting up to a full idle poll interval (athena-perf RANK 1).
 pub fn move_cursor(dx: i32, dy: i32) {
     let mut state = lock_compositor();
     let Some(st) = state.as_mut() else { return };
@@ -3829,7 +3829,7 @@ pub fn create_surface(width: u32, height: u32, user_virt: u64) -> Option<u64> {
 
 /// Create a kernel-owned surface (no user page-table mapping).
 /// Returns `(surface_id, kernel_ptr)` so the caller can render into it
-/// directly via `raegfx::Canvas`.
+/// directly via `athgfx::Canvas`.
 pub fn create_kernel_surface(width: u32, height: u32) -> Option<(u64, *mut u8)> {
     if width == 0 || height == 0 || width > 8192 || height > 8192 {
         return None;
@@ -3906,7 +3906,7 @@ pub fn present_surface(id: u64, x: i32, y: i32) -> Result<(), ()> {
     surface.visible = true;
     drop(state);
     recomposite();
-    // Telemetry: compositor throughput for /proc/raeen/perf.
+    // Telemetry: compositor throughput for /proc/athena/perf.
     crate::perf::record_frame_present();
     Ok(())
 }
@@ -4581,13 +4581,13 @@ pub fn cleanup_task_captures(owner_pid: u64) {
     }
 }
 
-/// Number of live capture sessions (for `/proc/raeen/capture`).
+/// Number of live capture sessions (for `/proc/athena/capture`).
 pub fn capture_session_count() -> usize {
     let state = lock_compositor();
     state.as_ref().map(|st| st.captures.len()).unwrap_or(0)
 }
 
-/// `/proc/raeen/capture` body — one line per live session plus a header.
+/// `/proc/athena/capture` body — one line per live session plus a header.
 pub fn capture_dump_text() -> alloc::string::String {
     use core::fmt::Write;
     let state = lock_compositor();
@@ -4681,7 +4681,7 @@ pub fn read_capture_fmt(id: u64) -> Option<(Vec<u32>, u32, u32, CaptureFormat)> 
 ///   4. Flush to GPU / software framebuffer
 ///   5. Frame pacing (VRR)
 ///
-/// IF=0 lock discipline (raeen-perf RANK 5 / goal #2 responsiveness): steps 1–3
+/// IF=0 lock discipline (athena-perf RANK 5 / goal #2 responsiveness): steps 1–3
 /// read `surf.kernel_ptr` (USER-owned pages) — a preempting syscall could free a
 /// surface's pages, so they MUST run under `lock_compositor()` (interrupts
 /// disabled). The SCANOUT copy (step 4: the ~2M-pixel `comp_buf` → framebuffer/
@@ -4696,14 +4696,14 @@ pub fn read_capture_fmt(id: u64) -> Option<(Vec<u32>, u32, u32, CaptureFormat)> 
 // The present pipeline must sustain 120+ fps at 1080p on iron — the number is
 // owned by docs/PERFORMANCE_TARGETS.md; these counters are the live instrument
 // behind it (rule 8: no perf claim without a counter). Written by the scanout
-// path each frame, read by /proc/raeen/compositor + the present-bench.
+// path each frame, read by /proc/athena/compositor + the present-bench.
 static FRAME_US_LAST: AtomicU64 = AtomicU64::new(0);
 static SCANOUT_BLIT_US: AtomicU64 = AtomicU64::new(0);
 static FPS_WINDOW_START_US: AtomicU64 = AtomicU64::new(0);
 static FPS_WINDOW_FRAMES: AtomicU64 = AtomicU64::new(0);
 static FPS_NOW: AtomicU64 = AtomicU64::new(0);
 
-/// `(frame_us_last, scanout_blit_us_last, fps_now)` for /proc/raeen/compositor.
+/// `(frame_us_last, scanout_blit_us_last, fps_now)` for /proc/athena/compositor.
 pub fn present_perf() -> (u64, u64, u64) {
     (
         FRAME_US_LAST.load(Ordering::Relaxed),
@@ -5057,12 +5057,12 @@ pub fn recomposite() {
                         // material repoint.
                         let tier = glass_tier_for_tint(tint);
                         let mean_luma = region_mean_luma(&region[..needed]);
-                        let adjusted = rae_tokens::glass_luma_adjust(tier, mean_luma);
+                        let adjusted = ath_tokens::glass_luma_adjust(tier, mean_luma);
                         BlurEngine::apply_tint(&mut region[..needed], adjusted);
                         // FROST: lay the per-tier low-alpha WHITE sheen ON TOP of
                         // the slate tint (NOT before it), matching the canonical
-                        // `rae_tokens::glass_tier_interior` order (tint → frost) and
-                        // the finalized `raegfx::glass::draw_glass_surface`. This is
+                        // `ath_tokens::glass_tier_interior` order (tint → frost) and
+                        // the finalized `athgfx::glass::draw_glass_surface`. This is
                         // the single step that moves "dark card" → "luminous frosted
                         // glass" (Round-3 visual-QA P0 #2): the FIXED per-tier frost
                         // alpha (chrome 0x04 < panel 0x23 < popover 0x38) also makes
@@ -5074,8 +5074,8 @@ pub fn recomposite() {
                         // SHIP-GATE legibility cap (§2.3 / §9 — white text.primary):
                         // the tint→frost composite above mirrors the canonical glass
                         // ladder but NOT the `clamp_interior_luma` cap that
-                        // `rae_tokens::glass_tier_interior` (and the finalized
-                        // `raegfx::glass::draw_glass_surface`) apply on top — so the
+                        // `ath_tokens::glass_tier_interior` (and the finalized
+                        // `athgfx::glass::draw_glass_surface`) apply on top — so the
                         // LIVE glass over a bright aurora blob stayed washed out and
                         // white text dropped below 4.5:1. Re-apply the SAME cap here,
                         // per pixel, over the composited region: a bright backdrop is
@@ -5084,17 +5084,17 @@ pub fn recomposite() {
                         // place on the blur scratch — no per-frame alloc.
                         BlurEngine::clamp_interior_luma(
                             &mut region[..needed],
-                            rae_tokens::GLASS_INTERIOR_LUMA_CEIL,
+                            ath_tokens::GLASS_INTERIOR_LUMA_CEIL,
                         );
                         // SHIP-GATE §9 WCAG legibility pass — the FINAL guarantee. The
                         // mean-channel cap above is a cheap gamma-ENCODED pre-pass; WCAG
                         // contrast is computed on the gamma-DECODED relative luminance, and
                         // the two diverge for saturated pixels (a pixel held at mean 0.40
                         // can still measure ~2.8:1 white-on-glass — the context-menu AA
-                        // failure raegfx caught). This pass measures the REAL contrast of
+                        // failure athgfx caught). This pass measures the REAL contrast of
                         // white text.primary against each interior pixel and bisects a
                         // hue-preserving darkening factor until it clears 4.5:1 (+margin),
-                        // so live glass == the `raegfx::glass` host-render. No-op over a
+                        // so live glass == the `athgfx::glass` host-render. No-op over a
                         // dark backdrop (every pixel already clears AA). In place on the
                         // blur scratch — no per-frame alloc.
                         BlurEngine::clamp_interior_wcag(&mut region[..needed]);
@@ -5472,7 +5472,7 @@ pub fn recomposite() {
 
     // Present-perf counters (always-on, lock-free): whole-frame time + a ~1s
     // sliding FPS window — the live instrument behind the 120 fps present target
-    // (/proc/raeen/compositor `present:` line; docs/PERFORMANCE_TARGETS.md).
+    // (/proc/athena/compositor `present:` line; docs/PERFORMANCE_TARGETS.md).
     let frame_us = monotonic_us().saturating_sub(frame_start);
     FRAME_US_LAST.store(frame_us, Ordering::Relaxed);
     {
@@ -5493,7 +5493,7 @@ pub fn recomposite() {
         }
     }
 
-    // Latency proof (raeen-perf RANK 5 / goal #2): `if_off_us` EXCLUDES the
+    // Latency proof (athena-perf RANK 5 / goal #2): `if_off_us` EXCLUDES the
     // scanout above; `frame_us` includes it. Rate-capped to the serial UART (the
     // probe itself is a byte-polled latency tax — see DIRTY_PROBE_EVERY note).
     if DIRTY_PROBE_COUNT.fetch_add(1, Ordering::Relaxed) % DIRTY_PROBE_EVERY == 0 {
@@ -5562,7 +5562,7 @@ fn alpha_blend(fg: u32, bg: u32) -> u32 {
 /// contract). The shadow is a **blurred, offset, constant-color silhouette** of
 /// the surface's rounded-rect coverage — NOT an analytic per-pixel falloff and
 /// it NEVER samples the backdrop (the old renderer leaked the wallpaper's blue
-/// into the shadow — raeen-visual-qa finding #1, the #1 "looks basic" defect).
+/// into the shadow — athena-visual-qa finding #1, the #1 "looks basic" defect).
 ///
 /// Concept §AthUI: "glassmorphic, GPU-accelerated… looks like Metal." A soft
 /// ambient shadow with a smooth penumbra is exactly the premium cue that the
@@ -5819,7 +5819,7 @@ fn flush_comp_buf_to_sw_fb(
 
 // ─── Damage / Dirty → Wake ──────────────────────────────────────────────────
 //
-// raeen-perf RANK 1 (goal #2 "sub-frame input latency"): without a damage path
+// athena-perf RANK 1 (goal #2 "sub-frame input latency"): without a damage path
 // every cursor move / surface update sat in compositor state until the next
 // fixed poll, adding up to a full poll interval of input→photon latency. The
 // state-mutating paths now set `COMPOSITOR_DIRTY`; the compositor thread wakes
@@ -5885,7 +5885,7 @@ pub fn mark_dirty() {
         .ok();
 }
 
-/// Alias matching raeen-perf's vocabulary; see [`mark_dirty`].
+/// Alias matching athena-perf's vocabulary; see [`mark_dirty`].
 pub fn request_recomposite() {
     mark_dirty();
 }
@@ -5980,7 +5980,7 @@ extern "C" fn compositor_thread_entry() {
 /// the rest of the system runs. BSP-pinned because the APs don't schedule
 /// post-boot.
 ///
-/// The loop is damage-driven (raeen-perf RANK 1): input/surface mutations set
+/// The loop is damage-driven (athena-perf RANK 1): input/surface mutations set
 /// `COMPOSITOR_DIRTY` and it recomposites IMMEDIATELY, rate-capped to the panel
 /// interval via a real-time TSC µs clock (`monotonic_us`). When idle it paces
 /// the same real-time clock against `frame_pacer.vrr.target_frame_us` (~60 fps)

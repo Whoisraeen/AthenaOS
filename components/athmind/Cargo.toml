@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
-description = "AthMind — self-model, memory, goals, planner, and cognitive tick for AthenaOS."
+description = "AthMind - self-model, memory, goals, planner, and cognitive tick for AthenaOS."
 
 [dependencies]
 athsense = { path = "../athsense" }

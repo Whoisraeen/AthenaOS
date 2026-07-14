@@ -34,7 +34,7 @@ IOMMU-sandboxed (caps 109–118 lineage) and is the only holder of GPU MMIO/DMA.
 │  /dev/dri/renderD128          │
 └──────────────┬────────────────┘
                │ SYS_IOCTL / SYS_MMAP on the render fd
-┌ kernel broker (TRUST BOUNDARY)┐   rae_render_broker (this design)
+┌ kernel broker (TRUST BOUNDARY)┐   ath_render_broker (this design)
 │  · per-fd session table       │   · dispatch on DRM type/number/size
 │  · fail-closed ioctl allowlist│   · bounded marshal into shmem queue
 │  · copies bounded payloads    │   · never forwards raw pointers
@@ -62,7 +62,7 @@ IOMMU-sandboxed (caps 109–118 lineage) and is the only holder of GPU MMIO/DMA.
 
 ## 3. ABI surface (steward plan — NOT yet allocated)
 
-This will be **one batched `[interface]` commit** (`RAEEN_AGENT=opus`) when the
+This will be **one batched `[interface]` commit** (`ATHENA_AGENT=opus`) when the
 live path is wired, with `docs/SYSCALL_TABLE.md` updated in the same commit and
 `ABI_VERSION` bumped. Nothing below is a live magic number yet.
 
@@ -81,7 +81,7 @@ live path is wired, with `docs/SYSCALL_TABLE.md` updated in the same commit and
   sub-protocol on the node) for session setup if the VFS path proves
   insufficient. Deferred until the live wiring slice decides.
 
-## 4. The ioctl dispatch/normalization gate (LANDING NOW — `rae_render_broker`)
+## 4. The ioctl dispatch/normalization gate (LANDING NOW — `ath_render_broker`)
 
 The first host-testable slice, because it is the fail-closed heart of `ioctl()`
 forwarding and it encodes the oracle's hardest compatibility rule.
@@ -91,7 +91,7 @@ forwarding and it encodes the oracle's hardest compatibility rule.
 to `0x40406448` (`_IOW`). Linux dispatches on **command number + descriptor**,
 not the full 32-bit value. So the broker must, too.
 
-`rae_render_broker::ioctl`:
+`ath_render_broker::ioctl`:
 - `decode(req: u32) -> Ioctl { dir, type_, nr, size }` — the Linux `_IOC` bit
   layout (nr 0–7, type 8–15, size 16–29, dir 30–31).
 - A fail-closed **allowlist** of the render node's permitted commands: the 3
@@ -115,7 +115,7 @@ write by lying about direction or size.
 
 ## 5. Proof ladder
 
-1. **Host KATs (this slice):** `cargo test -p rae_render_broker` — every oracle
+1. **Host KATs (this slice):** `cargo test -p ath_render_broker` — every oracle
    ioctl value resolves to the right command; **both** GEM-VA encodings normalize
    to one `Resolved`; wrong type / unknown nr / size mismatch all fail closed; no
    payload exceeds `MAX_PAYLOAD`. FAIL-able by construction.

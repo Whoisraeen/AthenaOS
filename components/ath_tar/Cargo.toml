@@ -1,0 +1,30 @@
+[package]
+name = "ath_tar"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS TAR + gzip archive reader — a zero-dependency, never-panic, `no_std`
+# decoder for `.tar`, `.tar.gz`, and `.tgz` (LEGACY_GAMING_CONCEPT.md §"The user owns
+# the machine" / daily-driver table stakes). `.tar.gz` is the single most common
+# shape of a downloaded source/release tarball; a computer you can't double-click
+# one on isn't a daily driver. This complements ath_zip (the .zip side) — the two
+# cover the overwhelming majority of compressed downloads.
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_zip / ath_json / ath_calc pattern) so
+# the lib is `no_std` + `alloc` in every shipped build and toggles to `std` only
+# under `cfg(test)` for the host KAT harness. The gzip-layer DEFLATE `inflate` is a
+# from-scratch reimplementation (RFC 1951) — deliberately self-contained, with NO
+# dependency on ath_zip or athmedia so this crate stands entirely alone. Run the
+# FAIL-able proof with `cargo test -p ath_tar` — no QEMU, no image build.
+
+[dependencies]
+# The `.tar.gz` *writer* path (`TarWriter::finish_gz`) reuses `ath_deflate`'s
+# `gzip_compress` (10-byte gzip header + raw DEFLATE body + CRC-32 + ISIZE
+# trailer) rather than reimplementing a compressor — the reader side
+# (`decode_gzip`, from-scratch RFC 1951 inflate) stays self-contained, and the
+# two round-trip against each other in the host KATs. The READ path keeps zero
+# dependencies; only the convenience compress path links ath_deflate.
+ath_deflate = { path = "../ath_deflate" }

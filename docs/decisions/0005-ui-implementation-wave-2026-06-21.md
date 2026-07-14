@@ -2,15 +2,15 @@
 
 - Status: accepted
 - Date: 2026-06-21
-- Owner: raeen-lead (autonomous)
+- Owner: athena-lead (autonomous)
 
 ## Context
-Green baseline confirmed at HEAD 544a696 (raeen-verifier: build exit 0, marker present,
+Green baseline confirmed at HEAD 544a696 (athena-verifier: build exit 0, marker present,
 7/7 HEALTHY, 8/8 smoketests, 0 panics; only the standing >6s total-boot WARN is red against
 an absolute target). With a known-green tree, the marquee UI loop (charter Step 3.1) can fan
 out.
 
-raeen-design-researcher audited docs/design/ (already mature: 16 specs; login/OOBE and
+athena-design-researcher audited docs/design/ (already mature: 16 specs; login/OOBE and
 window-chrome are essentially done and were deliberately NOT re-specced) and wrote three new
 specs for the highest-gap surfaces:
 1. docs/design/files.md — Files app re-skin (kills hardcoded FM_* palette + 8x8 block glyphs).
@@ -21,24 +21,24 @@ specs for the highest-gap surfaces:
    fast-lane row). Depends on (2) landing first.
 
 File locations (confirmed by grep, drives merge-safety):
-- (2) -> kernel/src/compositor.rs::render_drop_shadow  = KERNEL CORE (raeen-gfx)
-- (1) -> components/raeshell/src/file_manager.rs        = raeshell crate (raeen-shell-apps)
-- (3) -> components/raeshell + raeui                    = (raeen-shell-apps + raeen-ui)
+- (2) -> kernel/src/compositor.rs::render_drop_shadow  = KERNEL CORE (athena-gfx)
+- (1) -> components/athshell/src/file_manager.rs        = athshell crate (athena-shell-apps)
+- (3) -> components/athshell + athui                    = (athena-shell-apps + athena-ui)
 
 ## Decision
 - **Priority order:** (2) Material & Shadow first (systemic, highest fan-out — every elevated
   surface inherits the fix), then (1) Files (table-stakes switcher surface), then (3) Control
   Center (gated on (2)).
-- **Sequencing for merge safety:** raeen-perf is currently doing a full `xtask run` to measure
+- **Sequencing for merge safety:** athena-perf is currently doing a full `xtask run` to measure
   the boot-time gate; mutating kernel/src/compositor.rs during that build would corrupt it and
-  pollute the measurement. Hold the kernel-core shadow work (2) until raeen-perf clears. Then
-  run (2) raeen-gfx [kernel] and (1) raeen-shell-apps [raeshell] in PARALLEL — different
+  pollute the measurement. Hold the kernel-core shadow work (2) until athena-perf clears. Then
+  run (2) athena-gfx [kernel] and (1) athena-shell-apps [athshell] in PARALLEL — different
   crates, merge-safe. (3) is deferred until (2) verifies.
 - **Proof path caveat:** the live desktop is currently unreachable in headless CI (noted by
   the design-researcher and ADR 0004), so full visual-QA pixel proof is itself blocked. Until
   that is cleared, each UI item is proven by its boot-log smoketest assertions (each spec
   defines them) + host-render; visual-QA screenshot proof is a follow-up gated on the
-  desktop-in-CI unblock (candidate raeen-debugger investigation, tracked separately).
+  desktop-in-CI unblock (candidate athena-debugger investigation, tracked separately).
 
 ## Rationale
 Tie-breaker: (1) Concept says UI is the differentiator; (2) the shadow defect is the most

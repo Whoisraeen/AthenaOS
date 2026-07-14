@@ -4,7 +4,7 @@ index 0ed118e..3d1ecdc 100644
 +++ b/amdgpud/src/main.rs
 @@ -79,6 +79,17 @@ fn klog(msg: &str) {
  /// preflight and the stage code can never drift apart.
- const AMDGPU_FW_PHOENIX: &[&str] = raeen_amdgpu::bringup::FW_PHOENIX;
+ const AMDGPU_FW_PHOENIX: &[&str] = ath_amdgpu::bringup::FW_PHOENIX;
  
 +/// Firmware-load path selector (option C). The PSP path (`false`) PSP-loads RLC/CP
 +/// and lights GFX, but this Phoenix PSP REFUSES SDMA via LOAD_IP_FW (TH0 0xffff0010
@@ -34,6 +34,6 @@ index 0ed118e..3d1ecdc 100644
 +                "[amdgpu] PSP LOAD_IP_FW SKIPPED — RLC-backdoor autoload path (option C); init_rings' IMU loads all engines + SDMA from the autoload buffer",
 +            );
 +        } else if pass {
-             if let Some(psp) = raeen_amdgpu::bringup::GpuOps::psp_regs(&mut ops) {
+             if let Some(psp) = ath_amdgpu::bringup::GpuOps::psp_regs(&mut ops) {
                  // 3b: the full firmware-load handshake — LOAD_TOC -> SETUP_TMR ->
                  // per-blob LOAD_IP_FW (IMU first) -> AUTOLOAD_RLC after RLC_G. This is

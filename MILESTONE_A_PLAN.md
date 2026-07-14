@@ -18,7 +18,7 @@ Three of the four long poles are **userspace components**, so they ship as packa
 |---|---|---|
 | AMD GPU acceleration | `amdgpud` userspace daemon (LinuxKPI Path C) | userspace package update |
 | Wi-Fi | `iwlwifi` userspace LinuxKPI port | userspace package update |
-| Web browser | userspace app (`raeweb` / native engine) | AthStore / package update |
+| Web browser | userspace app (`athweb` / native engine) | AthStore / package update |
 | S3 sleep/wake | **kernel-side** | A/B kernel slot update (Phase 3.6) |
 
 This is exactly the Concept model — *"atomic CoW updates that never half-apply"* (§Core 2). The SW compositor renders the desktop today on iron; GPU/Wi-Fi/browser layer on top without rearchitecting. The only kernel-side deferral (S3) rides the A/B slot mechanism you've already built.
@@ -105,7 +105,7 @@ These are iron-verify items on already-written fixes. Until they're confirmed on
 
 ### WS2 — Ethernet to usable (parallel, independent of WS1)
 - [~] **RTL8125 RX → DHCP Bound** — RX `[x]` iron; *"next flash confirms `[net] post-boot: DHCP BOUND`"*. MasterChecklist **2.2** + *IRON VERIFICATION 2026-06-14*; memory `rtl8125-rx-and-net-poll`.
-- [~] **DNS resolve** — `SYS_NET_DNS(264)` wired; iron-gated on the lease. MasterChecklist **10.2**; memory `raenet-sockets-dns`.
+- [~] **DNS resolve** — `SYS_NET_DNS(264)` wired; iron-gated on the lease. MasterChecklist **10.2**; memory `athnet-sockets-dns`.
 
 **Depends on:** Wave 0. **Effort:** S, one flash to confirm.
 
@@ -122,7 +122,7 @@ These are iron-verify items on already-written fixes. Until they're confirmed on
 - **3.9 acceptance** lines 515–517.
 - ⚠️ **SAFETY (cardinal rule):** the *only* internal-disk write path. Follow `docs/SAFE_ATHENA_BOOT.md`; every byte routes through `block_io::safe_mode_guard_write`; the real install is a deliberate, explicitly-confirmed non-safe boot. memory `install-spine-code-complete`, `athena-install-path`.
 
-**Depends on:** WS1 (wizard UI) — headless `raeinstaller` path does not. **Effort:** M, verification + one careful real install.
+**Depends on:** WS1 (wizard UI) — headless `athinstaller` path does not. **Effort:** M, verification + one careful real install.
 
 ### WS4 — Shell usable with no terminal
 - [~] **AthShell as default shell** (login→desktop, taskbar, start, WM). MasterChecklist **14.1** line 1016.
@@ -146,10 +146,10 @@ These are iron-verify items on already-written fixes. Until they're confirmed on
 **Depends on:** nothing in Waves 0–2 (independent). **Effort:** L, highest risk. **Ships as:** Update 1 (userspace, no kernel reflash).
 
 ### WS6 — Web browser (Phase 14.2)
-- [ ] **Web browser** — MasterChecklist **14.2** line 1030 (*"Chromium via AthBridge or native?"*). `raeweb` component exists (~4.9k LOC, thin).
+- [ ] **Web browser** — MasterChecklist **14.2** line 1030 (*"Chromium via AthBridge or native?"*). `athweb` component exists (~4.9k LOC, thin).
 - **DECISION LOCKED (2026-06-15): defer to fast-follow Update 4.** v0.1 ships no full browser (web on another machine until then; an optional trivial link-opener is the only v0.1 web surface). The engine choice (Servo-class native vs minimal native web view) is itself deferred to Update-4 scheduling. AthBridge+Chromium stays off the table (years out). **WS6 is parked** — do not schedule engine work until Update 4.
 
-**Depends on:** networking (WS2) + TLS (10.2) + fonts (`raefont`) + ideally GPU (WS5). **Effort:** L. **Ships as:** Update 4 (userspace app).
+**Depends on:** networking (WS2) + TLS (10.2) + fonts (`athfont`) + ideally GPU (WS5). **Effort:** L. **Ships as:** Update 4 (userspace app).
 
 ---
 
@@ -164,7 +164,7 @@ These are iron-verify items on already-written fixes. Until they're confirmed on
 - Hard on real AMD silicon (device save/restore + GPU/USB re-init). **Ships as:** Update 3 (kernel A/B slot).
 
 ### WS9 — OTA update + rollback on iron (Phase 3.6)
-- [~] **Two-slot kernel layout** (489) · [~] **`raeupdate` writes inactive slot** (490, signature-gated) · [~] **boot fallback** (492).
+- [~] **Two-slot kernel layout** (489) · [~] **`athupdate` writes inactive slot** (490, signature-gated) · [~] **boot fallback** (492).
 - [ ] **Atomic CoW update + one-click rollback verified end-to-end** — needs persisted `RAESLOT.CFG` + a real staged-kernel reboot on Athena. MasterChecklist **3.6** line 493.
 - This is the vehicle that delivers Updates 1–3 to *other* users. Dogfood can defer it (reflash instead).
 

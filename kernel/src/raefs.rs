@@ -6,7 +6,7 @@ use crate::block_io::ACTIVE_BLOCK_DEVICE;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering};
 
-const RAEFS_MAGIC: u64 = 0x526165465321; // "AthFS!"
+const ATHFS_MAGIC: u64 = 0x526165465321; // "AthFS!"
 const BLOCK_SIZE: usize = 4096;
 const MAX_SNAPSHOTS: usize = 16;
 const MAX_JOURNAL_ENTRIES: usize = 64;
@@ -127,11 +127,11 @@ const EXTENT_FLAG_COMPRESSED: u32 = 1 << 1;
 const EXTENT_FLAG_GAME: u32 = 1 << 2;
 
 /// Syscall / VFS errors for AthFS-specific surfaces (see docs/SYSCALL_TABLE.md nr 99).
-pub const E_RAEFS_NO_MOUNT: u64 = 0xFFFF_FFFF_FFFF_F901;
-pub const E_RAEFS_EXTENT_FAIL: u64 = 0xFFFF_FFFF_FFFF_F902;
-pub const E_RAEFS_BAD_PATH: u64 = 0xFFFF_FFFF_FFFF_F903;
+pub const E_ATHFS_NO_MOUNT: u64 = 0xFFFF_FFFF_FFFF_F901;
+pub const E_ATHFS_EXTENT_FAIL: u64 = 0xFFFF_FFFF_FFFF_F902;
+pub const E_ATHFS_BAD_PATH: u64 = 0xFFFF_FFFF_FFFF_F903;
 
-/// Result of `game_install_hint` / `SYS_RAEFS_GAME_INSTALL_HINT`.
+/// Result of `game_install_hint` / `SYS_ATHFS_GAME_INSTALL_HINT`.
 #[derive(Debug, Clone, Copy)]
 pub struct GameInstallHintReport {
     pub inode_id: u64,
@@ -215,11 +215,11 @@ pub struct AthFS {
 /// Aggregated AthFS capacity for the Settings → Storage panel, read safely.
 ///
 /// Returns `(total_bytes, free_bytes, block_size)` if a volume is mounted, or
-/// `None` if AthFS is unmounted or the `RAEFS` lock is contended. Uses a
+/// `None` if AthFS is unmounted or the `ATHFS` lock is contended. Uses a
 /// non-blocking `try_lock` so a procfs dump can never deadlock on a held
 /// filesystem lock (the same discipline as `proc_dump_text`). Read-only.
 pub fn capacity_bytes() -> Option<(u64, u64, u64)> {
-    let lock = RAEFS.try_lock()?;
+    let lock = ATHFS.try_lock()?;
     let fs = lock.as_ref()?;
     let bs = BLOCK_SIZE as u64;
     Some((
@@ -231,14 +231,14 @@ pub fn capacity_bytes() -> Option<(u64, u64, u64)> {
 
 pub fn proc_dump_text() -> alloc::string::String {
     let mut out = alloc::string::String::new();
-    // try_lock with a bounded spin: a held RAEFS lock should not be
+    // try_lock with a bounded spin: a held ATHFS lock should not be
     // able to block the diagnostic dump indefinitely. If we can't
     // acquire after a short grace window the dumper notes "busy" and
     // moves on instead of hanging the boot snapshot.
     let lock = {
         let mut attempt: Option<spin::MutexGuard<'_, _>> = None;
         for _ in 0..1_000_000 {
-            if let Some(g) = RAEFS.try_lock() {
+            if let Some(g) = ATHFS.try_lock() {
                 attempt = Some(g);
                 break;
             }
@@ -282,8 +282,8 @@ pub fn proc_dump_text() -> alloc::string::String {
         if snapshots.is_empty() {
             out.push_str("    <none>\n");
         } else {
-            // try_lock only: we already hold RAEFS, and the snapshot wrappers
-            // lock SNAPSHOT_NAMES *after* releasing RAEFS, so a blocking lock
+            // try_lock only: we already hold ATHFS, and the snapshot wrappers
+            // lock SNAPSHOT_NAMES *after* releasing ATHFS, so a blocking lock
             // here could not deadlock — but try_lock keeps the dumper robust.
             let names = SNAPSHOT_NAMES.try_lock();
             for snap in snapshots.iter() {
@@ -386,33 +386,33 @@ pub fn proc_dump_text() -> alloc::string::String {
     out
 }
 
-pub static RAEFS: spin::Mutex<Option<AthFS>> = spin::Mutex::new(None);
+pub static ATHFS: spin::Mutex<Option<AthFS>> = spin::Mutex::new(None);
 
 /// Human-readable label for each snapshot id (Phase 5.1). The on-disk
 /// `SnapshotEntry` stores only `id`+`timestamp`; userspace passes a name via
-/// `SYS_RAEFS_SNAPSHOT_CREATE`, which we keep here keyed by id. Lock order:
-/// never acquire `RAEFS` while holding this — the snapshot wrappers always
-/// release `RAEFS` before touching `SNAPSHOT_NAMES`.
+/// `SYS_ATHFS_SNAPSHOT_CREATE`, which we keep here keyed by id. Lock order:
+/// never acquire `ATHFS` while holding this — the snapshot wrappers always
+/// release `ATHFS` before touching `SNAPSHOT_NAMES`.
 pub static SNAPSHOT_NAMES: spin::Mutex<alloc::collections::BTreeMap<u32, alloc::string::String>> =
     spin::Mutex::new(alloc::collections::BTreeMap::new());
 
 /// Create a named snapshot of the live FS. Returns the new snapshot id, or an
-/// `E_RAEFS_*` error sentinel. Safe-mode refuses (snapshots write metadata).
+/// `E_ATHFS_*` error sentinel. Safe-mode refuses (snapshots write metadata).
 pub fn snapshot_create(name: &str) -> u64 {
     if crate::block_io::safe_mode_enabled() && !RAM_FS_WINDOW.load(Ordering::Relaxed) {
-        return E_RAEFS_NO_MOUNT;
+        return E_ATHFS_NO_MOUNT;
     }
     let ts = crate::hpet::read_millis().unwrap_or(0) as u64;
     let id = {
-        let mut guard = RAEFS.lock();
+        let mut guard = ATHFS.lock();
         match guard.as_mut() {
             Some(fs) => match fs.create_snapshot(ts) {
                 Some(id) => id,
-                None => return E_RAEFS_EXTENT_FAIL,
+                None => return E_ATHFS_EXTENT_FAIL,
             },
-            None => return E_RAEFS_NO_MOUNT,
+            None => return E_ATHFS_NO_MOUNT,
         }
-    }; // RAEFS released here before locking SNAPSHOT_NAMES.
+    }; // ATHFS released here before locking SNAPSHOT_NAMES.
     SNAPSHOT_NAMES
         .lock()
         .insert(id, alloc::string::String::from(name));
@@ -422,36 +422,36 @@ pub fn snapshot_create(name: &str) -> u64 {
 /// Atomically roll the live FS back to `snap_id`. Returns 0 or an error sentinel.
 pub fn snapshot_restore(snap_id: u32) -> u64 {
     if crate::block_io::safe_mode_enabled() && !RAM_FS_WINDOW.load(Ordering::Relaxed) {
-        return E_RAEFS_NO_MOUNT;
+        return E_ATHFS_NO_MOUNT;
     }
-    let mut guard = RAEFS.lock();
+    let mut guard = ATHFS.lock();
     match guard.as_mut() {
         Some(fs) => match fs.rollback_to_snapshot(snap_id) {
             Ok(()) => 0,
-            Err(()) => E_RAEFS_BAD_PATH,
+            Err(()) => E_ATHFS_BAD_PATH,
         },
-        None => E_RAEFS_NO_MOUNT,
+        None => E_ATHFS_NO_MOUNT,
     }
 }
 
 /// Delete `snap_id` and reclaim its CoW block references. Returns 0 or an error.
 pub fn snapshot_delete(snap_id: u32) -> u64 {
     if crate::block_io::safe_mode_enabled() && !RAM_FS_WINDOW.load(Ordering::Relaxed) {
-        return E_RAEFS_NO_MOUNT;
+        return E_ATHFS_NO_MOUNT;
     }
     let res = {
-        let mut guard = RAEFS.lock();
+        let mut guard = ATHFS.lock();
         match guard.as_mut() {
             Some(fs) => fs.delete_snapshot(snap_id),
-            None => return E_RAEFS_NO_MOUNT,
+            None => return E_ATHFS_NO_MOUNT,
         }
-    }; // RAEFS released before SNAPSHOT_NAMES.
+    }; // ATHFS released before SNAPSHOT_NAMES.
     match res {
         Ok(()) => {
             SNAPSHOT_NAMES.lock().remove(&snap_id);
             0
         }
-        Err(()) => E_RAEFS_BAD_PATH,
+        Err(()) => E_ATHFS_BAD_PATH,
     }
 }
 
@@ -474,13 +474,13 @@ pub fn run_snapshot_smoketest() {
         // Safe mode: the live FS is read-only, but the snapshot syscall
         // surface proves identically against a throwaway RAM-backed volume
         // (pure-memory writes; real storage swapped out and restored).
-        if with_ram_raefs(snapshot_smoketest_body).is_none() {
-            crate::serial_println!("[raefs] snapshot syscall smoketest: RAM-volume setup failed");
+        if with_ram_athfs(snapshot_smoketest_body).is_none() {
+            crate::serial_println!("[athfs] snapshot syscall smoketest: RAM-volume setup failed");
         }
         return;
     }
-    if RAEFS.lock().is_none() {
-        crate::serial_println!("[raefs] snapshot syscall smoketest: skipped (no mounted FS)");
+    if ATHFS.lock().is_none() {
+        crate::serial_println!("[athfs] snapshot syscall smoketest: skipped (no mounted FS)");
         return;
     }
     snapshot_smoketest_body();
@@ -494,23 +494,23 @@ pub fn run_snapshot_smoketest() {
 /// the swap assumes single-threaded access to the storage globals.
 /// pub(crate): crash_dump's persist smoketest proves its write+readback here
 /// when no on-disk mount exists (default QEMU disk has no AthFS partition).
-pub(crate) fn with_ram_raefs<R>(f: impl FnOnce() -> R) -> Option<R> {
+pub(crate) fn with_ram_athfs<R>(f: impl FnOnce() -> R) -> Option<R> {
     use alloc::boxed::Box;
-    with_custom_raefs_device(Box::new(RamBlockDevice::new(4096)), f)
+    with_custom_athfs_device(Box::new(RamBlockDevice::new(4096)), f)
 }
 
-/// Same swap-format-run-restore dance as [`with_ram_raefs`], but over a
+/// Same swap-format-run-restore dance as [`with_ram_athfs`], but over a
 /// caller-supplied device. The device must be memory-backed (or wrap one):
 /// the RAM window exempts the volume from the safe-mode write gate, so
 /// nothing here may reach real storage. fde.rs mounts AthFS through its
 /// AES-XTS wrapper this way to prove full-volume encryption.
-pub(crate) fn with_custom_raefs_device<R>(
+pub(crate) fn with_custom_athfs_device<R>(
     dev: alloc::boxed::Box<dyn crate::block_io::BlockDevice>,
     f: impl FnOnce() -> R,
 ) -> Option<R> {
     let saved_active = crate::block_io::ACTIVE_BLOCK_DEVICE.lock().take();
     let saved_lba = *crate::block_io::ROOT_PARTITION_LBA.lock();
-    let saved_mount = RAEFS.lock().take();
+    let saved_mount = ATHFS.lock().take();
     // Inode ids restart on the test volume and again on restore — stale
     // read-ahead blocks from the other mount must never be served.
     crate::prefetch::invalidate_all();
@@ -522,7 +522,7 @@ pub(crate) fn with_custom_raefs_device<R>(
 
     let result = match AthFS::format() {
         Some(fs) => {
-            *RAEFS.lock() = Some(fs);
+            *ATHFS.lock() = Some(fs);
             Some(f())
         }
         None => None,
@@ -530,13 +530,13 @@ pub(crate) fn with_custom_raefs_device<R>(
 
     RAM_FS_WINDOW.store(false, Ordering::Relaxed);
     crate::prefetch::invalidate_all(); // test-volume blocks must not leak out
-    *RAEFS.lock() = saved_mount;
+    *ATHFS.lock() = saved_mount;
     *crate::block_io::ROOT_PARTITION_LBA.lock() = saved_lba;
     *crate::block_io::ACTIVE_BLOCK_DEVICE.lock() = saved_active;
     result
 }
 
-/// True while [`with_ram_raefs`] has the RAM volume swapped in (boot-phase,
+/// True while [`with_ram_athfs`] has the RAM volume swapped in (boot-phase,
 /// single-threaded). Lets the snapshot SYSCALL guards distinguish "the global
 /// mount is the real (read-only in safe mode) disk" from "the global mount is
 /// the RAM test volume" — every write during the window is pure memory.
@@ -544,10 +544,10 @@ static RAM_FS_WINDOW: AtomicBool = AtomicBool::new(false);
 
 fn snapshot_smoketest_body() {
     let created = snapshot_create("boot-smoke");
-    let create_ok = !crate::raefs::is_err_sentinel(created);
+    let create_ok = !crate::athfs::is_err_sentinel(created);
     let id = created as u32;
 
-    let listed = RAEFS
+    let listed = ATHFS
         .lock()
         .as_ref()
         .map(|fs| fs.list_snapshots().iter().any(|s| s.id == id))
@@ -558,7 +558,7 @@ fn snapshot_smoketest_body() {
     let del = snapshot_delete(id);
     let delete_ok = del == 0;
 
-    let gone = RAEFS
+    let gone = ATHFS
         .lock()
         .as_ref()
         .map(|fs| !fs.list_snapshots().iter().any(|s| s.id == id))
@@ -566,7 +566,7 @@ fn snapshot_smoketest_body() {
 
     let pass = create_ok && listed && name_ok && delete_ok && gone;
     crate::serial_println!(
-        "[raefs] snapshot syscall smoketest: create_ok={} id={} listed={} name_ok={} delete_ok={} gone={} -> {}",
+        "[athfs] snapshot syscall smoketest: create_ok={} id={} listed={} name_ok={} delete_ok={} gone={} -> {}",
         create_ok,
         id,
         listed,
@@ -577,7 +577,7 @@ fn snapshot_smoketest_body() {
     );
 }
 
-/// True if `rax` carries an `E_RAEFS_*` error sentinel (top bits set).
+/// True if `rax` carries an `E_ATHFS_*` error sentinel (top bits set).
 #[inline]
 pub fn is_err_sentinel(rax: u64) -> bool {
     rax >= 0xFFFF_FFFF_F000_0000
@@ -605,7 +605,7 @@ pub fn run_rollback_roundtrip_smoketest() {
     // ── Save the live storage state ──
     let saved_active = crate::block_io::ACTIVE_BLOCK_DEVICE.lock().take();
     let saved_lba = *crate::block_io::ROOT_PARTITION_LBA.lock();
-    let saved_mount = RAEFS.lock().take();
+    let saved_mount = ATHFS.lock().take();
 
     // ── Install a fresh 1 MiB RAM device as ACTIVE ──
     crate::block_io::set_active_block_device(Box::new(RamBlockDevice::new(2048)));
@@ -636,7 +636,7 @@ pub fn run_rollback_roundtrip_smoketest() {
     })();
 
     // ── Restore the live storage state ──
-    *RAEFS.lock() = saved_mount;
+    *ATHFS.lock() = saved_mount;
     *crate::block_io::ROOT_PARTITION_LBA.lock() = saved_lba;
     *crate::block_io::ACTIVE_BLOCK_DEVICE.lock() = saved_active;
 
@@ -649,7 +649,7 @@ pub fn run_rollback_roundtrip_smoketest() {
             // pre-snapshot content (v1).
             let pass = mid_is_v2 && rolled && recovered_v1;
             crate::serial_println!(
-                "[raefs] rollback round-trip: pre_rollback_v2={} rollback_ran={} inode_table_restored=true content_recovered={} -> {}",
+                "[athfs] rollback round-trip: pre_rollback_v2={} rollback_ran={} inode_table_restored=true content_recovered={} -> {}",
                 mid_is_v2,
                 rolled,
                 recovered_v1,
@@ -657,7 +657,7 @@ pub fn run_rollback_roundtrip_smoketest() {
             );
         }
         None => {
-            crate::serial_println!("[raefs] rollback round-trip: setup FAILED (format/snapshot)");
+            crate::serial_println!("[athfs] rollback round-trip: setup FAILED (format/snapshot)");
         }
     }
 }
@@ -680,9 +680,9 @@ pub fn run_rollback_roundtrip_smoketest() {
 /// Runs on a throwaway RAM volume (pure memory — no disk writes, safe-mode
 /// compatible) and can print FAIL on any broken assertion.
 pub fn run_cow_journal_crash_smoketest() {
-    if with_ram_raefs(cow_journal_crash_smoketest_body).is_none() {
+    if with_ram_athfs(cow_journal_crash_smoketest_body).is_none() {
         crate::serial_println!(
-            "[raefs] cow-journal smoketest: crash_reverted=false fsck_ok=false -> FAIL (RAM-volume setup failed)"
+            "[athfs] cow-journal smoketest: crash_reverted=false fsck_ok=false -> FAIL (RAM-volume setup failed)"
         );
     }
 }
@@ -690,7 +690,7 @@ pub fn run_cow_journal_crash_smoketest() {
 fn cow_journal_crash_smoketest_body() {
     let v1: &[u8] = b"original-block-content-before-snapshot-v1";
     let result = (|| -> Option<(bool, bool)> {
-        let mut guard = RAEFS.lock();
+        let mut guard = ATHFS.lock();
         let fs = guard.as_mut()?;
 
         // Lay down a file and snapshot it so its data block becomes shared
@@ -771,7 +771,7 @@ fn cow_journal_crash_smoketest_body() {
         Some((crash_reverted, fsck_ok)) => {
             let pass = crash_reverted && fsck_ok;
             crate::serial_println!(
-                "[raefs] cow-journal smoketest: crash_reverted={} fsck_ok={} -> {}",
+                "[athfs] cow-journal smoketest: crash_reverted={} fsck_ok={} -> {}",
                 crash_reverted,
                 fsck_ok,
                 if pass { "PASS" } else { "FAIL" }
@@ -779,7 +779,7 @@ fn cow_journal_crash_smoketest_body() {
         }
         None => {
             crate::serial_println!(
-                "[raefs] cow-journal smoketest: crash_reverted=false fsck_ok=false -> FAIL (setup/divergence failed)"
+                "[athfs] cow-journal smoketest: crash_reverted=false fsck_ok=false -> FAIL (setup/divergence failed)"
             );
         }
     }
@@ -837,7 +837,7 @@ pub fn run_large_volume_bound_smoketest() {
 
     let pass = sizing_ok && big_ok && no_oob;
     crate::serial_println!(
-        "[raefs] large-volume smoketest: bitmap_blocks(40000)={} refcount_blocks(40000)={} \
+        "[athfs] large-volume smoketest: bitmap_blocks(40000)={} refcount_blocks(40000)={} \
          big_bm_limit={} big_rc_limit={} hostile_bm_limit={} hostile_rc_limit={} \
          sizing_ok={} no_oob={} -> {}",
         bm2,
@@ -862,8 +862,8 @@ pub fn run_large_volume_bound_smoketest() {
 /// Can print FAIL: if the overflow returned Ok (silent loss) or the harness
 /// could not reach the full-leaf state, `hard_errored`/`replace_ok` go false.
 pub fn run_btree_overflow_smoketest() {
-    let result = with_ram_raefs(|| -> Option<(bool, bool)> {
-        let mut guard = RAEFS.lock();
+    let result = with_ram_athfs(|| -> Option<(bool, bool)> {
+        let mut guard = ATHFS.lock();
         let fs = guard.as_mut()?;
 
         // Allocate an inode and force it into a single B-tree leaf, then insert
@@ -930,14 +930,14 @@ pub fn run_btree_overflow_smoketest() {
         Some((hard_errored && tree_intact, replace_ok))
     });
 
-    // `with_ram_raefs` returns `Option<R>` and the closure's `R` is itself an
+    // `with_ram_athfs` returns `Option<R>` and the closure's `R` is itself an
     // `Option<(bool,bool)>`, so flatten the two layers (RAM-volume-setup failure
     // OR in-closure `?` short-circuit both collapse to `None`).
     match result.flatten() {
         Some((hard_errored, replace_ok)) => {
             let pass = hard_errored && replace_ok;
             crate::serial_println!(
-                "[raefs] btree-overflow smoketest: hard_errored={} replace_ok={} -> {}",
+                "[athfs] btree-overflow smoketest: hard_errored={} replace_ok={} -> {}",
                 hard_errored,
                 replace_ok,
                 if pass { "PASS" } else { "FAIL" }
@@ -945,7 +945,7 @@ pub fn run_btree_overflow_smoketest() {
         }
         None => {
             crate::serial_println!(
-                "[raefs] btree-overflow smoketest: hard_errored=false replace_ok=false -> FAIL (RAM-volume/leaf-fill setup failed)"
+                "[athfs] btree-overflow smoketest: hard_errored=false replace_ok=false -> FAIL (RAM-volume/leaf-fill setup failed)"
             );
         }
     }
@@ -956,7 +956,7 @@ pub fn run_btree_overflow_smoketest() {
 /// pure `bitmap_index_limit` / `refcount_index_limit` math.
 fn forge_superblock(total_blocks: u64) -> Superblock {
     Superblock {
-        magic: RAEFS_MAGIC,
+        magic: ATHFS_MAGIC,
         total_blocks,
         free_blocks: total_blocks,
         root_inode: 0,
@@ -986,7 +986,7 @@ fn forge_superblock(total_blocks: u64) -> Superblock {
 /// Write a flat root file by name (creating it if needed) and flush the
 /// superblock. `name` must be a flat name (no `/`, ≤55 bytes). Returns false in
 /// safe-mode, if the FS is unmounted, or on write failure. Used by the
-/// crash-dump persistence path (Phase 4.5). Locks `RAEFS` internally — callers
+/// crash-dump persistence path (Phase 4.5). Locks `ATHFS` internally — callers
 /// must NOT already hold it.
 pub fn write_flat_file(name: &str, data: &[u8]) -> bool {
     // Writes inside the RAM-volume window are pure memory — exempt from the
@@ -994,7 +994,7 @@ pub fn write_flat_file(name: &str, data: &[u8]) -> bool {
     if crate::block_io::safe_mode_enabled() && !RAM_FS_WINDOW.load(Ordering::Relaxed) {
         return false;
     }
-    let mut guard = RAEFS.lock();
+    let mut guard = ATHFS.lock();
     match guard.as_mut() {
         Some(fs) => fs.write_file_bytes_on(name, data) && fs.flush_superblock().is_ok(),
         None => false,
@@ -1002,9 +1002,9 @@ pub fn write_flat_file(name: &str, data: &[u8]) -> bool {
 }
 
 /// Read a flat root file by name. Returns `None` if unmounted or absent.
-/// Locks `RAEFS` internally — callers must NOT already hold it.
+/// Locks `ATHFS` internally — callers must NOT already hold it.
 pub fn read_flat_file(name: &str) -> Option<alloc::vec::Vec<u8>> {
-    RAEFS
+    ATHFS
         .lock()
         .as_ref()
         .and_then(|fs| fs.read_file_bytes_on(name))
@@ -1012,17 +1012,17 @@ pub fn read_flat_file(name: &str) -> Option<alloc::vec::Vec<u8>> {
 
 /// Cached mirror of `superblock.compression_enabled`. Block-I/O helpers such as
 /// `write_data_block` must check the compression flag WITHOUT re-locking
-/// `RAEFS`: callers like `AthFSInode::write_at` already hold `RAEFS.lock()`
+/// `ATHFS`: callers like `AthFSInode::write_at` already hold `ATHFS.lock()`
 /// across the whole operation, and `spin::Mutex` is non-reentrant, so a re-lock
 /// inside `write_data_block` self-deadlocks. Kept in sync at mount/format and in
 /// `enable_compression`.
-pub static RAEFS_COMPRESSION_ENABLED: AtomicBool = AtomicBool::new(false);
+pub static ATHFS_COMPRESSION_ENABLED: AtomicBool = AtomicBool::new(false);
 
 /// Compression accounting (only updated while compression is enabled).
 /// `LOGICAL` = pre-compression block bytes presented to `write_data_block`;
 /// `STORED` = bytes actually persisted (compressed payload + header, or full
 /// block when compression did not help). The ratio of these two is the live
-/// space-savings metric surfaced in `/proc/raeen/raefs`.
+/// space-savings metric surfaced in `/proc/athena/athfs`.
 pub static COMPRESS_LOGICAL_BYTES: AtomicU64 = AtomicU64::new(0);
 pub static COMPRESS_STORED_BYTES: AtomicU64 = AtomicU64::new(0);
 pub static COMPRESS_BLOCKS: AtomicU64 = AtomicU64::new(0);
@@ -1105,7 +1105,7 @@ impl AthFS {
         // normalise to the single-block layout they actually used on disk.
         Self::normalise_region_counts(&mut sb);
 
-        if sb.magic != RAEFS_MAGIC || sb.refcount_block == 0 || sb.bucket_table_block == 0 {
+        if sb.magic != ATHFS_MAGIC || sb.refcount_block == 0 || sb.bucket_table_block == 0 {
             // SAFETY GATE — auto-format ONLY a demonstrably blank device.
             // The old unconditional format was a host-data landmine: on
             // Athena the active device is the internal NVMe carrying the
@@ -1113,18 +1113,18 @@ impl AthFS {
             // straight at it (LBA 0 GPT/MBR area) — only the --safe build's
             // write guard stopped it (photographed: "[safe-mode] BLOCKED
             // nvme write lba=0"). Formatting a non-blank disk is the
-            // INSTALLER's explicit, user-confirmed job (raeinstaller /
+            // INSTALLER's explicit, user-confirmed job (athinstaller /
             // SYS_INSTALL_RUN), never a mount() side effect. QEMU's blank
             // virtio scratch disk passes the blank check, so the boot
             // smoketests keep their volume.
             if !Self::device_blank_for_autoformat(&sb_buf) {
                 crate::serial_println!(
-                    "[raefs] no AthFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via raeinstaller)"
+                    "[athfs] no AthFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via athinstaller)"
                 );
                 return None;
             }
             crate::serial_println!(
-                "[raefs] blank device, no AthFS volume — formatting with CoW support..."
+                "[athfs] blank device, no AthFS volume — formatting with CoW support..."
             );
             return Self::format();
         }
@@ -1132,29 +1132,29 @@ impl AthFS {
         Self::replay_journal(&sb);
 
         crate::serial_println!(
-            "[raefs] Mounted AthFS (CoW). root={}, free={}/{}",
+            "[athfs] Mounted AthFS (CoW). root={}, free={}/{}",
             sb.root_inode,
             sb.free_blocks,
             sb.total_blocks,
         );
-        RAEFS_COMPRESSION_ENABLED.store(sb.compression_enabled != 0, Ordering::Relaxed);
+        ATHFS_COMPRESSION_ENABLED.store(sb.compression_enabled != 0, Ordering::Relaxed);
         let fs = AthFS { superblock: sb };
         if let Some(bytes) = fs.read_file_bytes_on("boot_persist.chk") {
             if bytes.len() >= 8 {
                 if let Ok(arr) = bytes[0..8].try_into() {
                     let gen = u64::from_le_bytes(arr);
                     crate::serial_println!(
-                        "[raefs] on-disk persistence marker generation={} (from virtio-blk)",
+                        "[athfs] on-disk persistence marker generation={} (from virtio-blk)",
                         gen
                     );
                 }
             }
         } else {
             crate::serial_println!(
-                "[raefs] on-disk persistence marker absent (first boot on this volume)"
+                "[athfs] on-disk persistence marker absent (first boot on this volume)"
             );
         }
-        *RAEFS.lock() = Some(AthFS { superblock: sb });
+        *ATHFS.lock() = Some(AthFS { superblock: sb });
         Some(fs)
     }
 
@@ -1163,7 +1163,7 @@ impl AthFS {
         let reserved: u64 = 9;
 
         let sb = Superblock {
-            magic: RAEFS_MAGIC,
+            magic: ATHFS_MAGIC,
             total_blocks,
             free_blocks: total_blocks - reserved,
             root_inode: 0,
@@ -1248,10 +1248,10 @@ impl AthFS {
         Self::write_block(sb.bucket_table_block, &zero).ok()?;
         Self::write_block(sb.versioned_meta_block, &zero).ok()?;
 
-        crate::serial_println!("[raefs] Formatted 1MB AthFS with CoW + snapshots.");
-        RAEFS_COMPRESSION_ENABLED.store(sb.compression_enabled != 0, Ordering::Relaxed);
+        crate::serial_println!("[athfs] Formatted 1MB AthFS with CoW + snapshots.");
+        ATHFS_COMPRESSION_ENABLED.store(sb.compression_enabled != 0, Ordering::Relaxed);
         let fs = AthFS { superblock: sb };
-        *RAEFS.lock() = Some(AthFS { superblock: sb });
+        *ATHFS.lock() = Some(AthFS { superblock: sb });
         Some(fs)
     }
 
@@ -1266,15 +1266,15 @@ impl AthFS {
             return false;
         }
         let magic = u64::from_le_bytes(buf[0..8].try_into().unwrap_or([0u8; 8]));
-        magic == RAEFS_MAGIC
+        magic == ATHFS_MAGIC
     }
 
     pub fn run_boot_smoketest() {
-        crate::serial_println!("[raefs] Running boot smoketest...");
+        crate::serial_println!("[athfs] Running boot smoketest...");
 
-        let mut fs_lock = RAEFS.lock();
+        let mut fs_lock = ATHFS.lock();
         if fs_lock.is_none() {
-            crate::serial_println!("[raefs] Skipping smoketest: no mounted FS");
+            crate::serial_println!("[athfs] Skipping smoketest: no mounted FS");
             return;
         }
         let fs = fs_lock.as_mut().unwrap();
@@ -1296,7 +1296,7 @@ impl AthFS {
         // sections in safe-mode; the read-only fsck above still ran.
         if crate::block_io::safe_mode_enabled() {
             crate::serial_println!(
-                "[raefs] smoketest passed (safe-mode, read-only): fsck(mismatches={}) btree_mismatches={}",
+                "[athfs] smoketest passed (safe-mode, read-only): fsck(mismatches={}) btree_mismatches={}",
                 fsck.bitmap_refcount_mismatches,
                 btree_mismatches,
             );
@@ -1324,7 +1324,7 @@ impl AthFS {
                     game_extent_ok = contiguous && registered;
                 }
                 crate::serial_println!(
-                    "[raefs] game extent smoketest: path={} inode={} start={} blocks={} ok={}",
+                    "[athfs] game extent smoketest: path={} inode={} start={} blocks={} ok={}",
                     game_path,
                     rep.inode_id,
                     rep.start_block,
@@ -1333,7 +1333,7 @@ impl AthFS {
                 );
             }
             Err(e) => {
-                crate::serial_println!("[raefs] game extent smoketest: hint failed err=0x{:X}", e);
+                crate::serial_println!("[athfs] game extent smoketest: hint failed err=0x{:X}", e);
             }
         }
 
@@ -1361,14 +1361,14 @@ impl AthFS {
         let orphan_report = fs.fsck_orphan_inode_cleanup();
         if orphan_report.cleaned_inodes == 0 {
             crate::serial_println!(
-                "[raefs] smoketest: orphan cleanup found no reclaimable inode this run"
+                "[athfs] smoketest: orphan cleanup found no reclaimable inode this run"
             );
         }
 
         // 5. Compression ratio metric: write a highly compressible block through
         // the transparent-compression path and verify a lossless roundtrip. This
-        // populates the COMPRESS_* counters surfaced in /proc/raeen/raefs.
-        let prev_compress = RAEFS_COMPRESSION_ENABLED.swap(true, Ordering::Relaxed);
+        // populates the COMPRESS_* counters surfaced in /proc/athena/athfs.
+        let prev_compress = ATHFS_COMPRESSION_ENABLED.swap(true, Ordering::Relaxed);
         if let Some(cblk) = fs.allocate_block() {
             let mut payload = [0u8; BLOCK_SIZE];
             // Repeating 64-byte pattern → non-overlapping back-references the
@@ -1386,7 +1386,7 @@ impl AthFS {
             let logical = COMPRESS_LOGICAL_BYTES.load(Ordering::Relaxed);
             let stored = COMPRESS_STORED_BYTES.load(Ordering::Relaxed);
             crate::serial_println!(
-                "[raefs] compression metric: roundtrip={} logical={}B stored={}B",
+                "[athfs] compression metric: roundtrip={} logical={}B stored={}B",
                 if roundtrip_ok { "OK" } else { "MISMATCH" },
                 logical,
                 stored
@@ -1423,7 +1423,7 @@ impl AthFS {
             };
             let log_ratio_ok = ratio_x10 >= 15;
             crate::serial_println!(
-                "[raefs] /var/log compression: {}B -> {}B ratio={}.{}x -> {}",
+                "[athfs] /var/log compression: {}B -> {}B ratio={}.{}x -> {}",
                 BLOCK_SIZE,
                 compressed.len(),
                 ratio_x10 / 10,
@@ -1435,7 +1435,7 @@ impl AthFS {
                 }
             );
         }
-        RAEFS_COMPRESSION_ENABLED.store(prev_compress, Ordering::Relaxed);
+        ATHFS_COMPRESSION_ENABLED.store(prev_compress, Ordering::Relaxed);
 
         // 6. Per-app data buckets: creation + cross-app isolation + quota +
         // capability gating. Buckets give each app an isolated subtree root.
@@ -1480,7 +1480,7 @@ impl AthFS {
             let _ = fs.delete_bucket(app_a);
             let _ = fs.delete_bucket(app_b);
             crate::serial_println!(
-                "[raefs] bucket smoketest: isolation={} quota={} cap={}",
+                "[athfs] bucket smoketest: isolation={} quota={} cap={}",
                 bucket_isolation,
                 bucket_quota,
                 bucket_cap
@@ -1502,14 +1502,14 @@ impl AthFS {
         let persist_ok = fs.write_file_bytes_on(persist_name, &next_gen.to_le_bytes())
             && fs.flush_superblock().is_ok();
         crate::serial_println!(
-            "[raefs] persistence smoketest: gen {} -> {} flush={}",
+            "[athfs] persistence smoketest: gen {} -> {} flush={}",
             prev_gen,
             next_gen,
             persist_ok
         );
 
         crate::serial_println!(
-            "[raefs] smoketest passed: fsck(checked={}, mismatches={}) + btree_mismatches={} + orphan_cleanup(scanned={}, orphaned={}, cleaned={}) + compression_metric + buckets(iso={}, quota={}, cap={}) + game_extent={} + persist(gen={})",
+            "[athfs] smoketest passed: fsck(checked={}, mismatches={}) + btree_mismatches={} + orphan_cleanup(scanned={}, orphaned={}, cleaned={}) + compression_metric + buckets(iso={}, quota={}, cap={}) + game_extent={} + persist(gen={})",
             fsck.checked_blocks,
             fsck.bitmap_refcount_mismatches,
             btree_mismatches,
@@ -1527,10 +1527,10 @@ impl AthFS {
     /// Boot smoketest extension: verify the standalone `format()` path against
     /// an in-memory block device. Call after `run_boot_smoketest()`.
     pub fn run_format_smoketest() {
-        // format_smoketest() uses only a RAM device — no RAEFS lock acquired.
+        // format_smoketest() uses only a RAM device — no ATHFS lock acquired.
         let ok = format_smoketest();
         crate::serial_println!(
-            "[raefs] run_format_smoketest -> {}",
+            "[athfs] run_format_smoketest -> {}",
             if ok { "PASS" } else { "FAIL" }
         );
     }
@@ -1732,7 +1732,7 @@ impl AthFS {
                 // (~127 fragmented extents ≈ 508 KiB of fragments; contiguous
                 // writes coalesce into far fewer extents and are unaffected).
                 crate::serial_println!(
-                    "[raefs] insert_extent: REFUSED — leaf full (127 extents) for inode {}; \
+                    "[athfs] insert_extent: REFUSED — leaf full (127 extents) for inode {}; \
                      node split needs multi-level CoW (not yet implemented). \
                      Failing loud to protect snapshot integrity (no silent loss).",
                     inode.id
@@ -1749,7 +1749,7 @@ impl AthFS {
             // loudly instead. Walking + repointing internal nodes with CoW is
             // the deferred multi-level-CoW follow-up.
             crate::serial_println!(
-                "[raefs] insert_extent: REFUSED — internal node (btree_depth > 0) for inode {}; \
+                "[athfs] insert_extent: REFUSED — internal node (btree_depth > 0) for inode {}; \
                  multi-level B-tree insert needs parent-repointing CoW (not yet implemented). \
                  Failing loud to avoid silent extent loss.",
                 inode.id
@@ -2171,7 +2171,7 @@ impl AthFS {
         // they can never OOB-panic regardless.
         if Self::bitmap_span_blocks(&self.superblock) > 1 {
             crate::serial_println!(
-                "[raefs] create_snapshot: REFUSED — volume bitmap spans {} blocks; \
+                "[athfs] create_snapshot: REFUSED — volume bitmap spans {} blocks; \
                  multi-block snapshot metadata not yet implemented (no silent capture)",
                 Self::bitmap_span_blocks(&self.superblock)
             );
@@ -2246,7 +2246,7 @@ impl AthFS {
         Self::write_block(self.superblock.snapshot_block, &snap_buf).ok()?;
         self.flush_superblock().ok()?;
 
-        crate::serial_println!("[raefs] Snapshot #{} created (ts={})", snap_id, timestamp);
+        crate::serial_println!("[athfs] Snapshot #{} created (ts={})", snap_id, timestamp);
         Some(snap_id)
     }
 
@@ -2349,7 +2349,7 @@ impl AthFS {
         self.superblock.free_blocks = self.superblock.total_blocks - used;
         self.flush_superblock()?;
 
-        crate::serial_println!("[raefs] Rolled back to snapshot #{}", snap_id);
+        crate::serial_println!("[athfs] Rolled back to snapshot #{}", snap_id);
         Ok(())
     }
 
@@ -2443,7 +2443,7 @@ impl AthFS {
         Self::write_block(self.superblock.snapshot_block, &snap_buf)?;
         self.superblock.snapshot_count = self.superblock.snapshot_count.saturating_sub(1);
         self.flush_superblock()?;
-        crate::serial_println!("[raefs] Deleted snapshot #{}", snap_id);
+        crate::serial_println!("[athfs] Deleted snapshot #{}", snap_id);
         Ok(())
     }
 
@@ -2574,7 +2574,7 @@ impl AthFS {
 
         let _ = Self::write_block(self.superblock.inode_bitmap_block, &ibm);
         crate::serial_println!(
-            "[raefs] fsck orphan cleanup: scanned={} orphaned={} cleaned={}",
+            "[athfs] fsck orphan cleanup: scanned={} orphaned={} cleaned={}",
             report.scanned_inodes,
             report.orphaned_inodes,
             report.cleaned_inodes
@@ -2622,7 +2622,7 @@ impl AthFS {
                 mismatches += 1;
             }
         }
-        crate::serial_println!("[raefs] fsck btree mismatches={}", mismatches);
+        crate::serial_println!("[athfs] fsck btree mismatches={}", mismatches);
         mismatches
     }
 
@@ -2688,7 +2688,7 @@ impl AthFS {
             }
 
             crate::serial_println!(
-                "[raefs] Journal replay: undo inode {} blk_idx {}",
+                "[athfs] Journal replay: undo inode {} blk_idx {}",
                 e.inode_id,
                 e.block_idx_in_inode,
             );
@@ -2774,7 +2774,7 @@ impl AthFS {
 
         if dirty {
             let _ = Self::write_block(sb.journal_block, &buf);
-            crate::serial_println!("[raefs] Journal replay complete");
+            crate::serial_println!("[athfs] Journal replay complete");
         }
     }
 
@@ -2788,12 +2788,12 @@ impl AthFS {
     ) -> Result<GameInstallHintReport, u64> {
         let name = path.trim();
         if name.is_empty() || name.len() > 55 || name.contains('\0') {
-            return Err(E_RAEFS_BAD_PATH);
+            return Err(E_ATHFS_BAD_PATH);
         }
 
         ensure_extent_manager();
 
-        let inode_id = self.find_or_create_file_on(name).ok_or(E_RAEFS_BAD_PATH)?;
+        let inode_id = self.find_or_create_file_on(name).ok_or(E_ATHFS_BAD_PATH)?;
 
         let bytes = if expected_size == 0 {
             // Default: 8 × 4 KiB — fits the QEMU 256-block test image.
@@ -2805,22 +2805,22 @@ impl AthFS {
         let max_alloc = self.superblock.free_blocks.saturating_sub(4).min(48);
         block_count = block_count.min(max_alloc);
         if block_count == 0 {
-            return Err(E_RAEFS_EXTENT_FAIL);
+            return Err(E_ATHFS_EXTENT_FAIL);
         }
 
         crate::serial_println!(
-            "[raefs] game install hint: allocating {} contiguous blocks for inode {}",
+            "[athfs] game install hint: allocating {} contiguous blocks for inode {}",
             block_count,
             inode_id
         );
         let extent = ExtentManager::allocate_extent(self, block_count, inode_id)
-            .ok_or(E_RAEFS_EXTENT_FAIL)?;
+            .ok_or(E_ATHFS_EXTENT_FAIL)?;
 
         if let Some(mgr) = EXTENT_MANAGER.lock().as_mut() {
             mgr.register_extent(extent);
         }
 
-        let mut inode = self.get_inode(inode_id).ok_or(E_RAEFS_EXTENT_FAIL)?;
+        let mut inode = self.get_inode(inode_id).ok_or(E_ATHFS_EXTENT_FAIL)?;
         if block_count <= 12 {
             // Fast path: map the contiguous run through direct blocks (QEMU
             // smoketest + installs up to 48 KiB). Avoids B-tree node I/O on
@@ -2830,7 +2830,7 @@ impl AthFS {
             }
             inode.size = block_count * BLOCK_SIZE as u64;
             inode.flags |= INODE_FLAG_GAME_HINT;
-            self.write_inode(&inode).map_err(|_| E_RAEFS_EXTENT_FAIL)?;
+            self.write_inode(&inode).map_err(|_| E_ATHFS_EXTENT_FAIL)?;
         } else {
             let leaf = BTreeLeafEntry {
                 logical_start: 0,
@@ -2839,10 +2839,10 @@ impl AthFS {
                 flags: EXTENT_FLAG_GAME,
             };
             self.insert_extent(&mut inode, leaf)
-                .map_err(|_| E_RAEFS_EXTENT_FAIL)?;
+                .map_err(|_| E_ATHFS_EXTENT_FAIL)?;
             inode.size = block_count * BLOCK_SIZE as u64;
             inode.flags |= INODE_FLAG_GAME_HINT;
-            self.write_inode(&inode).map_err(|_| E_RAEFS_EXTENT_FAIL)?;
+            self.write_inode(&inode).map_err(|_| E_ATHFS_EXTENT_FAIL)?;
         }
 
         let tier_pinned = if let Some(ts) = TIERED_STORAGE.lock().as_mut() {
@@ -2852,7 +2852,7 @@ impl AthFS {
         };
 
         crate::serial_println!(
-            "[raefs] game install hint: path={} inode={} extent_start={} blocks={} contiguous=true tier_pinned={}",
+            "[athfs] game install hint: path={} inode={} extent_start={} blocks={} contiguous=true tier_pinned={}",
             name, inode_id, extent.start_block, block_count, tier_pinned
         );
 
@@ -2866,7 +2866,7 @@ impl AthFS {
     // ─── File Lookup ───────────────────────────────────────────────────────
 
     /// Resolve or create a flat-name file under the AthFS root directory.
-    /// Caller must hold `RAEFS` when invoking this variant (avoids re-lock).
+    /// Caller must hold `ATHFS` when invoking this variant (avoids re-lock).
     /// Look up a flat file name in the root directory (no create).
     pub fn find_flat_inode_on(&self, name: &str) -> Option<u64> {
         let name = name.trim_start_matches('/');
@@ -2902,7 +2902,7 @@ impl AthFS {
         None
     }
 
-    /// Read entire flat file from root (does not take `RAEFS` lock — safe during `mount()`).
+    /// Read entire flat file from root (does not take `ATHFS` lock — safe during `mount()`).
     pub fn read_file_bytes_on(&self, name: &str) -> Option<alloc::vec::Vec<u8>> {
         let id = self.find_flat_inode_on(name)?;
         let inode = self.get_inode(id)?;
@@ -2969,7 +2969,7 @@ impl AthFS {
         Ok(())
     }
 
-    /// Write bytes to a flat root file without re-locking `RAEFS`.
+    /// Write bytes to a flat root file without re-locking `ATHFS`.
     pub fn write_file_bytes_on(&mut self, name: &str, data: &[u8]) -> bool {
         let id = match self.find_flat_inode_on(name) {
             Some(id) => id,
@@ -3110,7 +3110,7 @@ impl AthFS {
                     if entry.inode != 0 && entry.name_len as usize == name.len() {
                         if &entry.name[..name.len()] == name.as_bytes() {
                             crate::serial_println!(
-                                "[raefs] found existing file: {} -> inode {}",
+                                "[athfs] found existing file: {} -> inode {}",
                                 name,
                                 entry.inode
                             );
@@ -3165,7 +3165,7 @@ impl AthFS {
         self.write_inode(&root).ok()?;
 
         crate::serial_println!(
-            "[raefs] created new file: {} -> inode {}",
+            "[athfs] created new file: {} -> inode {}",
             name,
             new_inode_id
         );
@@ -3173,8 +3173,8 @@ impl AthFS {
     }
 
     pub fn find_or_create_file(path: &str) -> Option<u64> {
-        let mut raefs_lock = RAEFS.lock();
-        let fs = raefs_lock.as_mut()?;
+        let mut athfs_lock = ATHFS.lock();
+        let fs = athfs_lock.as_mut()?;
         fs.find_or_create_file_on(path)
     }
 
@@ -3197,7 +3197,7 @@ impl AthFS {
                 if &entry.name[..name.len()] == name.as_bytes() {
                     buf[i * 64..(i + 1) * 64].fill(0);
                     root_inode.write_at(i * 64, &buf[i * 64..(i + 1) * 64]);
-                    crate::serial_println!("[raefs] deleted file: {}", name);
+                    crate::serial_println!("[athfs] deleted file: {}", name);
                     return true;
                 }
             }
@@ -3233,7 +3233,7 @@ impl AthFS {
                     let mut entry_buf = [0u8; 64];
                     unsafe { core::ptr::write(entry_buf.as_mut_ptr() as *mut DirEntry, entry) };
                     root_inode.write_at(i * 64, &entry_buf);
-                    crate::serial_println!("[raefs] renamed {} -> {}", old_name, new_name);
+                    crate::serial_println!("[athfs] renamed {} -> {}", old_name, new_name);
                     return true;
                 }
             }
@@ -3301,21 +3301,21 @@ impl SealedKeyBlob {
 
     /// Seal an encryption key to the current TPM PCR state (stub).
     pub fn seal(_key: &EncryptionKey, _pcr_mask: u32) -> Self {
-        crate::serial_println!("[raefs] TPM seal: stubbed — real sealing requires TPM 2.0 driver");
+        crate::serial_println!("[athfs] TPM seal: stubbed — real sealing requires TPM 2.0 driver");
         Self::new()
     }
 
     /// Unseal an encryption key from TPM (stub).
     pub fn unseal(&self) -> Option<EncryptionKey> {
         crate::serial_println!(
-            "[raefs] TPM unseal: stubbed — real unsealing requires TPM 2.0 driver"
+            "[athfs] TPM unseal: stubbed — real unsealing requires TPM 2.0 driver"
         );
         None
     }
 }
 
 /// Active encryption state for the mounted filesystem.
-pub static RAEFS_ENCRYPTION_KEY: spin::Mutex<Option<EncryptionKey>> = spin::Mutex::new(None);
+pub static ATHFS_ENCRYPTION_KEY: spin::Mutex<Option<EncryptionKey>> = spin::Mutex::new(None);
 
 /// Encrypt a data block in-place using XTS-AES-256.
 /// The block number serves as the tweak (sector number).
@@ -3411,17 +3411,17 @@ fn xts_gf128_mul_alpha(tweak: &mut [u8; 16]) {
 /// Enable encryption on the mounted filesystem.
 pub fn enable_encryption(passphrase: &[u8], salt: [u8; 32]) {
     let key = EncryptionKey::derive(passphrase, &salt);
-    *RAEFS_ENCRYPTION_KEY.lock() = Some(key);
-    if let Some(fs) = RAEFS.lock().as_mut() {
+    *ATHFS_ENCRYPTION_KEY.lock() = Some(key);
+    if let Some(fs) = ATHFS.lock().as_mut() {
         fs.superblock.encrypted = 1;
         fs.superblock.kdf_salt = salt;
         let _ = fs.flush_superblock();
     }
-    crate::serial_println!("[raefs] Encryption enabled (XTS-AES-256)");
+    crate::serial_println!("[athfs] Encryption enabled (XTS-AES-256)");
 }
 
 /// Crypto self-test result: 0 = not run, 1 = PASS, 2 = FAIL. Surfaced at
-/// `/proc/raeen/raefs` so the encryption stack's correctness is observable.
+/// `/proc/athena/athfs` so the encryption stack's correctness is observable.
 pub static ENCRYPTION_SELFTEST: AtomicU8 = AtomicU8::new(0);
 
 /// Phase 5.2 R10 proof: verify the block-encryption stack end-to-end.
@@ -3497,7 +3497,7 @@ pub fn run_encryption_smoketest() {
     ENCRYPTION_SELFTEST.store(if pass { 1 } else { 2 }, Ordering::SeqCst);
 
     crate::serial_println!(
-        "[raefs] encryption selftest: aes256_kat={} xts_changed={} xts_roundtrip={} tweak_sensitive={} kdf_deterministic={} aes_ni={} -> {}",
+        "[athfs] encryption selftest: aes256_kat={} xts_changed={} xts_roundtrip={} tweak_sensitive={} kdf_deterministic={} aes_ni={} -> {}",
         kat_ok,
         changed,
         roundtrip_ok,
@@ -3509,7 +3509,7 @@ pub fn run_encryption_smoketest() {
 }
 
 /// Per-bucket (per-app) key-isolation self-test result: 0 = not run, 1 = PASS,
-/// 2 = FAIL. Surfaced at `/proc/raeen/raefs`.
+/// 2 = FAIL. Surfaced at `/proc/athena/athfs`.
 pub static BUCKET_KEY_SELFTEST: AtomicU8 = AtomicU8::new(0);
 
 /// Derive a per-bucket (per-app) encryption key from the FS master key and the
@@ -3520,7 +3520,7 @@ pub static BUCKET_KEY_SELFTEST: AtomicU8 = AtomicU8::new(0);
 /// full-disk master key. If no master key is set, a deterministic dev master is
 /// used so derivation is still stable and per-app isolated.
 pub fn bucket_encryption_key(app_id: u64) -> EncryptionKey {
-    let master = RAEFS_ENCRYPTION_KEY.lock().clone();
+    let master = ATHFS_ENCRYPTION_KEY.lock().clone();
     let mut salt = [0u8; 32];
     salt[..8].copy_from_slice(&app_id.to_le_bytes());
     salt[8..14].copy_from_slice(b"raebkt"); // domain separation from FDE master
@@ -3564,7 +3564,7 @@ pub fn bucket_file_encryption_key(app_id: u64, inode_num: u64) -> EncryptionKey 
 }
 
 /// Per-file key-isolation self-test result: 0 = not run, 1 = PASS, 2 = FAIL.
-/// Surfaced at `/proc/raeen/raefs`.
+/// Surfaced at `/proc/athena/athfs`.
 pub static FILE_KEY_SELFTEST: AtomicU8 = AtomicU8::new(0);
 
 /// Phase 5.2 R10 proof: verify per-file (FSCRYPT-equivalent) key isolation.
@@ -3637,7 +3637,7 @@ pub fn run_file_key_selftest() {
         && composed_distinct;
     FILE_KEY_SELFTEST.store(if pass { 1 } else { 2 }, Ordering::SeqCst);
     crate::serial_println!(
-        "[raefs] per-file-key selftest: distinct={} deterministic={} cross_file_unreadable={} own_key_recovers={} composed_ok={} composed_distinct={} -> {}",
+        "[athfs] per-file-key selftest: distinct={} deterministic={} cross_file_unreadable={} own_key_recovers={} composed_ok={} composed_distinct={} -> {}",
         distinct,
         deterministic,
         cross_file_unreadable,
@@ -3687,7 +3687,7 @@ pub fn run_bucket_key_selftest() {
     let pass = distinct && deterministic && cross_app_unreadable && own_key_recovers;
     BUCKET_KEY_SELFTEST.store(if pass { 1 } else { 2 }, Ordering::SeqCst);
     crate::serial_println!(
-        "[raefs] bucket-key selftest: distinct={} deterministic={} cross_app_unreadable={} own_key_recovers={} -> {}",
+        "[athfs] bucket-key selftest: distinct={} deterministic={} cross_app_unreadable={} own_key_recovers={} -> {}",
         distinct,
         deterministic,
         cross_app_unreadable,
@@ -3748,7 +3748,7 @@ impl TieredStorage {
             used_blocks: 0,
         });
         crate::serial_println!(
-            "[raefs] Registered {:?} tier with {} blocks",
+            "[athfs] Registered {:?} tier with {} blocks",
             tier,
             total_blocks
         );
@@ -3787,7 +3787,7 @@ impl TieredStorage {
             entry.physical_block = new_physical;
         }
 
-        crate::serial_println!("[raefs] Promoted block {} to NVMe", logical_block);
+        crate::serial_println!("[athfs] Promoted block {} to NVMe", logical_block);
         Ok(())
     }
 
@@ -3811,7 +3811,7 @@ impl TieredStorage {
             entry.physical_block = new_physical;
         }
 
-        crate::serial_println!("[raefs] Demoted block {} to SATA", logical_block);
+        crate::serial_println!("[athfs] Demoted block {} to SATA", logical_block);
         Ok(())
     }
 
@@ -3866,7 +3866,7 @@ impl TieredStorage {
         }
 
         crate::serial_println!(
-            "[raefs] Rebalance complete: promoted {}, demoted {}",
+            "[athfs] Rebalance complete: promoted {}, demoted {}",
             promoted,
             demoted
         );
@@ -3961,7 +3961,7 @@ pub fn tiered_storage_init() {
     let tiers_detected =
         (nvme_blocks > 0) as u32 + (sata_blocks > 0) as u32 + (virtio_blocks > 0) as u32;
     crate::serial_println!(
-        "[raefs] tiered storage detected {} distinct tier(s): NVMe={} SATA(spinning)={} Virtio={} (4KiB blocks)",
+        "[athfs] tiered storage detected {} distinct tier(s): NVMe={} SATA(spinning)={} Virtio={} (4KiB blocks)",
         tiers_detected, nvme_blocks, sata_blocks, virtio_blocks
     );
     *TIERED_STORAGE.lock() = Some(ts);
@@ -4007,7 +4007,7 @@ pub fn tiered_storage_smoketest() {
         .count();
 
     crate::serial_println!(
-        "[raefs] tiered policy smoketest: promoted_to_nvme={} demoted_to_sata={}",
+        "[athfs] tiered policy smoketest: promoted_to_nvme={} demoted_to_sata={}",
         promoted,
         demoted
     );
@@ -4272,7 +4272,7 @@ impl ExtentManager {
                         inode_id,
                     };
                     crate::serial_println!(
-                        "[raefs] Allocated extent: start={}, count={}, inode={}",
+                        "[athfs] Allocated extent: start={}, count={}, inode={}",
                         run_start,
                         block_count,
                         inode_id
@@ -4353,7 +4353,7 @@ impl AthFS {
         Self::read_block(block_idx, &mut raw)?;
 
         // Decrypt if encryption is active
-        let key_lock = RAEFS_ENCRYPTION_KEY.lock();
+        let key_lock = ATHFS_ENCRYPTION_KEY.lock();
         if let Some(ref key) = *key_lock {
             decrypt_data_block(key, block_idx, &mut raw);
         }
@@ -4390,7 +4390,7 @@ impl AthFS {
     /// re-reading the block header. Deterministic for given bytes, so the flag
     /// always agrees with what `write_data_block` actually persisted.
     pub fn block_stored_compressed(data: &[u8; BLOCK_SIZE]) -> bool {
-        if !RAEFS_COMPRESSION_ENABLED.load(Ordering::Relaxed) {
+        if !ATHFS_COMPRESSION_ENABLED.load(Ordering::Relaxed) {
             return false;
         }
         let compressed = lz4_compress(data);
@@ -4411,9 +4411,9 @@ impl AthFS {
         let mut to_write = *data;
 
         // Try compression if enabled. Read the cached atomic rather than
-        // re-locking RAEFS: callers (e.g. write_at) already hold RAEFS.lock(),
+        // re-locking ATHFS: callers (e.g. write_at) already hold ATHFS.lock(),
         // and spin::Mutex is non-reentrant — re-locking here would deadlock.
-        let compress_enabled = RAEFS_COMPRESSION_ENABLED.load(Ordering::Relaxed);
+        let compress_enabled = ATHFS_COMPRESSION_ENABLED.load(Ordering::Relaxed);
 
         if compress_enabled {
             let compressed = lz4_compress(data);
@@ -4438,7 +4438,7 @@ impl AthFS {
         }
 
         // Encrypt if encryption is active
-        let key_lock = RAEFS_ENCRYPTION_KEY.lock();
+        let key_lock = ATHFS_ENCRYPTION_KEY.lock();
         if let Some(ref key) = *key_lock {
             encrypt_data_block(key, block_idx, &mut to_write);
         }
@@ -4450,12 +4450,12 @@ impl AthFS {
 
 /// Enable transparent compression on the mounted filesystem.
 pub fn enable_compression() {
-    if let Some(fs) = RAEFS.lock().as_mut() {
+    if let Some(fs) = ATHFS.lock().as_mut() {
         fs.superblock.compression_enabled = 1;
         let _ = fs.flush_superblock();
     }
-    RAEFS_COMPRESSION_ENABLED.store(true, Ordering::Relaxed);
-    crate::serial_println!("[raefs] Transparent compression enabled (LZ4-style)");
+    ATHFS_COMPRESSION_ENABLED.store(true, Ordering::Relaxed);
+    crate::serial_println!("[athfs] Transparent compression enabled (LZ4-style)");
 }
 
 /// Per-extent compression-flag self-test result: 0 = not run, 1 = PASS, 2 = FAIL.
@@ -4472,10 +4472,10 @@ pub static COMPRESSION_FLAG_SELFTEST: AtomicU8 = AtomicU8::new(0);
 pub fn run_compression_flag_smoketest() {
     if crate::block_io::safe_mode_enabled() {
         // Safe mode: prove the per-extent compression flag against a
-        // throwaway RAM-backed volume (see with_ram_raefs — pure-memory
+        // throwaway RAM-backed volume (see with_ram_athfs — pure-memory
         // writes; the live read-only mount is untouched).
-        if with_ram_raefs(compression_flag_smoketest_body).is_none() {
-            crate::serial_println!("[raefs] compression-flag smoketest: RAM-volume setup failed");
+        if with_ram_athfs(compression_flag_smoketest_body).is_none() {
+            crate::serial_println!("[athfs] compression-flag smoketest: RAM-volume setup failed");
         }
         return;
     }
@@ -4483,17 +4483,17 @@ pub fn run_compression_flag_smoketest() {
 }
 
 fn compression_flag_smoketest_body() {
-    let mut guard = RAEFS.lock();
+    let mut guard = ATHFS.lock();
     let fs = match guard.as_mut() {
         Some(f) => f,
         None => {
-            crate::serial_println!("[raefs] compression-flag smoketest: skipped (no mounted FS)");
+            crate::serial_println!("[athfs] compression-flag smoketest: skipped (no mounted FS)");
             return;
         }
     };
 
     // 1. Pure compression-decision helper (toggle compression on for the probe).
-    let prev_comp = RAEFS_COMPRESSION_ENABLED.swap(true, Ordering::Relaxed);
+    let prev_comp = ATHFS_COMPRESSION_ENABLED.swap(true, Ordering::Relaxed);
     // Repeating 64-byte pattern → non-overlapping back-references the LZ4-style
     // coder can fully exploit (matches the existing compression-metric probe).
     // All-0xAA would NOT compress here: the matcher forbids overlapping (offset-1)
@@ -4510,7 +4510,7 @@ fn compression_flag_smoketest_body() {
     }
     let comp_pos = AthFS::block_stored_compressed(&compressible);
     let comp_neg = !AthFS::block_stored_compressed(&incompressible);
-    RAEFS_COMPRESSION_ENABLED.store(prev_comp, Ordering::Relaxed);
+    ATHFS_COMPRESSION_ENABLED.store(prev_comp, Ordering::Relaxed);
 
     // 2. Extent-layer flag round-trip through the B-tree.
     let mut flag_set = false;
@@ -4558,7 +4558,7 @@ fn compression_flag_smoketest_body() {
     let pass = comp_pos && comp_neg && flag_set && flag_clear;
     COMPRESSION_FLAG_SELFTEST.store(if pass { 1 } else { 2 }, Ordering::SeqCst);
     crate::serial_println!(
-        "[raefs] compression-flag smoketest: comp_decision_pos={} comp_decision_neg={} extent_flag_set={} extent_flag_clear={} -> {}",
+        "[athfs] compression-flag smoketest: comp_decision_pos={} comp_decision_neg={} extent_flag_set={} extent_flag_clear={} -> {}",
         comp_pos,
         comp_neg,
         flag_set,
@@ -4571,7 +4571,7 @@ fn ensure_extent_manager() {
     let mut guard = EXTENT_MANAGER.lock();
     if guard.is_none() {
         *guard = Some(ExtentManager::new());
-        crate::serial_println!("[raefs] Extent manager initialized");
+        crate::serial_println!("[athfs] Extent manager initialized");
     }
 }
 
@@ -4580,29 +4580,29 @@ pub fn init_extent_manager() {
     ensure_extent_manager();
 }
 
-/// Userspace entry: `SYS_RAEFS_GAME_INSTALL_HINT` (nr 99).
-pub fn sys_raefs_game_install_hint(
+/// Userspace entry: `SYS_ATHFS_GAME_INSTALL_HINT` (nr 99).
+pub fn sys_athfs_game_install_hint(
     path_ptr: u64,
     path_len: u64,
     expected_size: u64,
     copy_path: impl Fn(u64, u64) -> Result<alloc::vec::Vec<u8>, ()>,
 ) -> u64 {
     if path_len == 0 || path_len > 4096 {
-        return E_RAEFS_BAD_PATH;
+        return E_ATHFS_BAD_PATH;
     }
     let bytes = match copy_path(path_ptr, path_len) {
         Ok(b) => b,
-        Err(()) => return E_RAEFS_BAD_PATH,
+        Err(()) => return E_ATHFS_BAD_PATH,
     };
     let path = match core::str::from_utf8(&bytes) {
         Ok(p) => p,
-        Err(_) => return E_RAEFS_BAD_PATH,
+        Err(_) => return E_ATHFS_BAD_PATH,
     };
 
-    let mut lock = RAEFS.lock();
+    let mut lock = ATHFS.lock();
     let fs = match lock.as_mut() {
         Some(f) => f,
-        None => return E_RAEFS_NO_MOUNT,
+        None => return E_ATHFS_NO_MOUNT,
     };
 
     match fs.game_install_hint(path, expected_size) {
@@ -4619,8 +4619,8 @@ pub struct AthFSInode {
 
 impl crate::vfs::Inode for AthFSInode {
     fn read_at(&self, offset: usize, buf: &mut [u8]) -> usize {
-        let raefs_lock = RAEFS.lock();
-        let fs = match raefs_lock.as_ref() {
+        let athfs_lock = ATHFS.lock();
+        let fs = match athfs_lock.as_ref() {
             Some(f) => f,
             None => return 0,
         };
@@ -4682,8 +4682,8 @@ impl crate::vfs::Inode for AthFSInode {
     }
 
     fn write_at(&self, offset: usize, buf: &[u8]) -> usize {
-        let mut raefs_lock = RAEFS.lock();
-        let fs = match raefs_lock.as_mut() {
+        let mut athfs_lock = ATHFS.lock();
+        let fs = match athfs_lock.as_mut() {
             Some(f) => f,
             None => return 0,
         };
@@ -4783,8 +4783,8 @@ impl crate::vfs::Inode for AthFSInode {
     }
 
     fn size(&self) -> usize {
-        let raefs_lock = RAEFS.lock();
-        if let Some(fs) = raefs_lock.as_ref() {
+        let athfs_lock = ATHFS.lock();
+        if let Some(fs) = athfs_lock.as_ref() {
             if let Some(inode) = fs.get_inode(self.id) {
                 return inode.size as usize;
             }
@@ -4934,7 +4934,7 @@ impl AthFS {
             return None;
         }
         if self.find_bucket_slot(app_id).is_some() {
-            crate::serial_println!("[raefs] Bucket already exists for app {}", app_id);
+            crate::serial_println!("[athfs] Bucket already exists for app {}", app_id);
             return None;
         }
 
@@ -4975,7 +4975,7 @@ impl AthFS {
         self.write_bucket_entry(slot, &entry).ok()?;
 
         crate::serial_println!(
-            "[raefs] Created bucket for app {} (root_inode={}, quota={})",
+            "[athfs] Created bucket for app {} (root_inode={}, quota={})",
             app_id,
             inode_id,
             quota_blocks
@@ -5062,7 +5062,7 @@ impl AthFS {
 
         // Create a new file in the bucket
         if bucket.used_blocks >= bucket.quota_blocks {
-            crate::serial_println!("[raefs] Bucket quota exceeded for app {}", app_id);
+            crate::serial_println!("[athfs] Bucket quota exceeded for app {}", app_id);
             return None;
         }
 
@@ -5116,7 +5116,7 @@ impl AthFS {
         self.write_inode(&root_inode).ok()?;
 
         crate::serial_println!(
-            "[raefs] Created file '{}' in bucket {} -> inode {}",
+            "[athfs] Created file '{}' in bucket {} -> inode {}",
             name,
             app_id,
             new_inode_id
@@ -5160,7 +5160,7 @@ impl AthFS {
 
             let needs_alloc = inode.direct_blocks[blk_idx] == 0;
             if needs_alloc && bucket.used_blocks >= bucket.quota_blocks {
-                crate::serial_println!("[raefs] Bucket quota hit for app {}", app_id);
+                crate::serial_println!("[athfs] Bucket quota hit for app {}", app_id);
                 break;
             }
 
@@ -5277,7 +5277,7 @@ impl AthFS {
         };
         self.write_bucket_entry(slot, &empty)?;
 
-        crate::serial_println!("[raefs] Deleted bucket for app {}", app_id);
+        crate::serial_println!("[athfs] Deleted bucket for app {}", app_id);
         Ok(())
     }
 }
@@ -5400,7 +5400,7 @@ impl AthFS {
             return Err(());
         }
         if self.find_versioned_slot(inode).is_some() {
-            crate::serial_println!("[raefs] Inode {} is already versioned", inode);
+            crate::serial_println!("[athfs] Inode {} is already versioned", inode);
             return Ok(());
         }
 
@@ -5431,7 +5431,7 @@ impl AthFS {
         self.write_versioned_index(slot, &idx)?;
 
         crate::serial_println!(
-            "[raefs] Marked inode {} as versioned (max_versions={}, meta_block={})",
+            "[athfs] Marked inode {} as versioned (max_versions={}, meta_block={})",
             inode,
             max_versions,
             meta_block
@@ -5514,7 +5514,7 @@ impl AthFS {
         self.write_versioned_index(slot, &idx)?;
 
         crate::serial_println!(
-            "[raefs] Saved version {} of inode {} (ts={})",
+            "[athfs] Saved version {} of inode {} (ts={})",
             ver_id,
             inode,
             timestamp
@@ -5718,7 +5718,7 @@ impl AthFS {
         self.write_inode(&disk_inode)?;
 
         crate::serial_println!(
-            "[raefs] Rolled back inode {} to version {}",
+            "[athfs] Rolled back inode {} to version {}",
             inode,
             version_id
         );
@@ -5825,7 +5825,7 @@ impl AthFS {
         self.write_inode(&shared_root_inode).ok()?;
 
         crate::serial_println!(
-            "[raefs] Created shared file '{}' -> inode {}",
+            "[athfs] Created shared file '{}' -> inode {}",
             name,
             new_inode_id
         );
@@ -5887,7 +5887,7 @@ impl AthFS {
         self.write_inode(&dst_inode)?;
 
         crate::serial_println!(
-            "[raefs] Published '{}' from bucket {} to shared '{}'",
+            "[athfs] Published '{}' from bucket {} to shared '{}'",
             local_path,
             app_id,
             shared_path
@@ -5925,7 +5925,7 @@ impl AthFS {
         let existing_blocks = dst_inode.direct_blocks.iter().filter(|&&b| b != 0).count() as u64;
         let net_new = src_block_count.saturating_sub(existing_blocks);
         if bucket.used_blocks + net_new > bucket.quota_blocks {
-            crate::serial_println!("[raefs] Import would exceed quota for app {}", app_id);
+            crate::serial_println!("[athfs] Import would exceed quota for app {}", app_id);
             return Err(());
         }
 
@@ -5961,7 +5961,7 @@ impl AthFS {
         self.write_bucket_entry(slot, &bucket)?;
 
         crate::serial_println!(
-            "[raefs] Imported shared '{}' into bucket {} as '{}'",
+            "[athfs] Imported shared '{}' into bucket {} as '{}'",
             shared_path,
             app_id,
             local_path
@@ -6008,8 +6008,8 @@ impl AthFS {
 
 /// Check shared region access: the bucket must have the appropriate shared cap.
 pub fn check_shared_access(app_id: u64, need_write: bool) -> bool {
-    let raefs_lock = RAEFS.lock();
-    let fs = match raefs_lock.as_ref() {
+    let athfs_lock = ATHFS.lock();
+    let fs = match athfs_lock.as_ref() {
         Some(f) => f,
         None => return false,
     };
@@ -6067,7 +6067,7 @@ pub fn format(dev: &dyn crate::block_io::BlockDevice, label: &str) -> Result<(),
     let total_blocks: u64 = if total_sectors >= 10 * 8 {
         total_sectors / 8
     } else {
-        return Err("raefs: device too small to format");
+        return Err("athfs: device too small to format");
     };
 
     // ── Layout (Landmine-1 multi-block bitmap/refcount) ──────────────────────
@@ -6104,12 +6104,12 @@ pub fn format(dev: &dyn crate::block_io::BlockDevice, label: &str) -> Result<(),
     };
 
     if used_blocks > total_blocks {
-        return Err("raefs: device too small for its own metadata");
+        return Err("athfs: device too small for its own metadata");
     }
 
     // ── Superblock ──────────────────────────────────────────────────────────
     let mut sb = Superblock {
-        magic: RAEFS_MAGIC,
+        magic: ATHFS_MAGIC,
         total_blocks,
         free_blocks: total_blocks - used_blocks,
         root_inode: 0,
@@ -6285,8 +6285,8 @@ pub fn format(dev: &dyn crate::block_io::BlockDevice, label: &str) -> Result<(),
     write_blk(dev, root_dir_block, &rootdir)?;
 
     crate::serial_println!(
-        "[raefs] format: wrote superblock magic=0x{:X} blocks={} bitmap_blocks={} refcount_blocks={} dirs=[/System,/Apps,/Users,/Games,/Vaults] label={:?} -> OK",
-        RAEFS_MAGIC, total_blocks, bitmap_blocks, refcount_blocks, label
+        "[athfs] format: wrote superblock magic=0x{:X} blocks={} bitmap_blocks={} refcount_blocks={} dirs=[/System,/Apps,/Users,/Games,/Vaults] label={:?} -> OK",
+        ATHFS_MAGIC, total_blocks, bitmap_blocks, refcount_blocks, label
     );
     Ok(())
 }
@@ -6353,7 +6353,7 @@ pub fn format_smoketest() -> bool {
     // 256 blocks x 8 sectors/block = 2048 sectors of 512 B = 1 MiB
     let ram = RamBlockDevice::new(2048);
     if let Err(e) = format(&ram as &dyn crate::block_io::BlockDevice, "smoketest-vol") {
-        crate::serial_println!("[raefs] format_smoketest: format() failed: {}", e);
+        crate::serial_println!("[athfs] format_smoketest: format() failed: {}", e);
         return false;
     }
 
@@ -6363,7 +6363,7 @@ pub fn format_smoketest() -> bool {
         match ram.read_raw(i) {
             Some(sector) => sb_buf[i * 512..(i + 1) * 512].copy_from_slice(&sector),
             None => {
-                crate::serial_println!("[raefs] format_smoketest: read back sector {} failed", i);
+                crate::serial_println!("[athfs] format_smoketest: read back sector {} failed", i);
                 return false;
             }
         }
@@ -6371,7 +6371,7 @@ pub fn format_smoketest() -> bool {
 
     let sb: Superblock = unsafe { core::ptr::read(sb_buf.as_ptr() as *const Superblock) };
 
-    let magic_ok = sb.magic == RAEFS_MAGIC;
+    let magic_ok = sb.magic == ATHFS_MAGIC;
     let blocks_ok = sb.total_blocks == 256;
     // 10 blocks used now: 9 metadata (0..8) + the root directory block (9).
     let free_ok = sb.free_blocks == 256 - 10;
@@ -6402,7 +6402,7 @@ pub fn format_smoketest() -> bool {
         && dirs_ok
         && apex_ok;
     crate::serial_println!(
-        "[raefs] format_smoketest: magic={} blocks={} free={} ibitmap={} bbitmap={} itable={} root_inode={} dirs={} apex_root={} -> {}",
+        "[athfs] format_smoketest: magic={} blocks={} free={} ibitmap={} bbitmap={} itable={} root_inode={} dirs={} apex_root={} -> {}",
         magic_ok, blocks_ok, free_ok, ibitmap_ok, bbitmap_ok, itable_ok, root_inode_ok, dirs_ok, apex_ok,
         if pass { "PASS" } else { "FAIL" }
     );

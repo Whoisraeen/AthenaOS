@@ -21,14 +21,14 @@ shell. Same library, same saves, same accounts.
 
 ## Layering
 
-- **raeplay-library**: catalog across providers; sourced from Steam manifests, Epic
+- **athplay-library**: catalog across providers; sourced from Steam manifests, Epic
   manifests, AthStore, and direct installs.
-- **raeplay-profiles**: per-game saved profiles, applied by the compositor and AthAudio.
-- **raeplay-overlay**: the in-game overlay, drawn by the compositor as a system
+- **athplay-profiles**: per-game saved profiles, applied by the compositor and AthAudio.
+- **athplay-overlay**: the in-game overlay, drawn by the compositor as a system
   layer above the game's swapchain.
-- **raeplay-capture**: video encode pipeline tied to the compositor's framebuffer
+- **athplay-capture**: video encode pipeline tied to the compositor's framebuffer
   (no readback overhead).
-- **raeplay-gameos**: alternate shell, swapped in via the swappable-shells design.
+- **athplay-gameos**: alternate shell, swapped in via the swappable-shells design.
 
 ## Open design questions
 

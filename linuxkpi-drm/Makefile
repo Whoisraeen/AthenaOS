@@ -37,7 +37,7 @@ SHIM_INCLUDES := -I include/amd-stubs -I include
 # the drm/*.h API is maintained as a unit with amdgpu and its struct layouts must
 # byte-match what amdgpu reads, so we use the upstream headers verbatim rather than
 # hand-reshimming them — and let them compile against our linux/*.h shim layer
-# (their only deps are dma-fence/completion/xarray/workqueue, which raeen_linuxkpi
+# (their only deps are dma-fence/completion/xarray/workqueue, which ath_linuxkpi
 # already implements). fetch-source.sh pulls include/drm + include/uapi/drm only
 # (no include/linux), so there is no conflict with our shims. GPL, vendored,
 # git-ignored — used at BUILD time exactly like the amdgpu .c it serves.

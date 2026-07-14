@@ -10,7 +10,7 @@ the *catalogue*; the *method* lives in its companions:
 | `docs/LINUX_DRIVER_STRATEGY.md` | The LinuxKPI userspace path (Path C) for GPU + Wi-Fi, and the GPL/license boundary |
 | `docs/HARDWARE_PATH.md` | Coverage roadmap, effort/LOC estimates, the bare-metal boot gate |
 | `docs/FIRMWARE.md` | Which microcode blobs each driver loads via `request_firmware` (syscall 142) |
-| `kernel/src/driver_manifest.rs` | The live HWID→driver matcher (`/proc/raeen/drivers`) |
+| `kernel/src/driver_manifest.rs` | The live HWID→driver matcher (`/proc/athena/drivers`) |
 | `MasterChecklist.md` | **Authoritative live status.** When a status here and there disagree, the MasterChecklist wins — re-verify before relying on a row below. |
 
 > **Status is a snapshot (2026-06-15).** Every `[x]` claim must trace to an Athena
@@ -23,7 +23,7 @@ the *catalogue*; the *method* lives in its companions:
 
 **Backend** — who wrote the device logic:
 - **Native** — first-party Rust, from a public spec. Default where the spec is public and the surface is bounded (Concept-aligned: MPL-clean, audit-friendly, crash-isolatable).
-- **LinuxKPI** — an unmodified Linux *userspace* driver hosted over the re-implemented MPL-2.0 `raeen_linuxkpi` shim (Path C). Reserved for black-box-firmware devices (GPU 3D, Wi-Fi MLME) where a from-scratch rewrite is a multi-year effort with no payoff.
+- **LinuxKPI** — an unmodified Linux *userspace* driver hosted over the re-implemented MPL-2.0 `ath_linuxkpi` shim (Path C). Reserved for black-box-firmware devices (GPU 3D, Wi-Fi MLME) where a from-scratch rewrite is a multi-year effort with no payoff.
 - **Hybrid** — native modeset/scanout + LinuxKPI for 3D, or native data-plane + firmware blob.
 
 **Residence** — where it runs:
@@ -82,7 +82,7 @@ the *catalogue*; the *method* lives in its companions:
 | 37 | Realtek rtw89 | wifi | LinuxKPI | User | `[ ]` | `rtw89.elf` |
 | 38 | Broadcom brcmfmac | wifi | LinuxKPI | User | `[ ]` | `brcmfmac.elf` |
 | **GPU / display** |
-| 39 | AMD GPU (amdgpud — RDNA, Phoenix iGPU) | gpu | Hybrid | User | `[~]` | `amdgpud/` (daemon), `components/raeen_amdgpu` (lib) |
+| 39 | AMD GPU (amdgpud — RDNA, Phoenix iGPU) | gpu | Hybrid | User | `[~]` | `amdgpud/` (daemon), `components/ath_amdgpu` (lib) |
 | 40 | Intel GPU (i915d / Xe) | gpu | Hybrid | User | `[~]` | `i915d/` (daemon) |
 | 41 | NVIDIA (nouveau, open) | gpu | LinuxKPI | User | `[ ]` | `nouveau.elf` |
 | 42 | Native modeset/scanout (per vendor) | gpu | Native | Kernel | `[~]` | `gpu.rs`, `display.rs` |
@@ -122,7 +122,7 @@ These aren't device drivers in the user sense — they're what every *other* dri
 ### 1. PCIe ECAM / config space — `pci.rs`, `pcie.rs` — `[x]`
 - **Does:** enumerates the PCI(e) bus, reads config space (legacy 0xCF8/0xCFC and MMIO ECAM via the ACPI MCFG table), exposes `PciDevice {vendor,device,class,subclass,bars}` to every driver and to `driver_manifest`.
 - **Spec:** PCI Local Bus 3.0, PCIe Base 5.0, ACPI MCFG.
-- **Dev info:** BAR sizing (write all-ones, read back mask), capability-list walk (cap id 0x10 = PCIe, 0x05 = MSI, 0x11 = MSI-X). Proof: `/proc/raeen/pci`; iron shows full device tree.
+- **Dev info:** BAR sizing (write all-ones, read back mask), capability-list walk (cap id 0x10 = PCIe, 0x05 = MSI, 0x11 = MSI-X). Proof: `/proc/athena/pci`; iron shows full device tree.
 - **Gotcha:** ECAM base comes from MCFG; some firmware hides it — fall back to 0xCF8.
 
 ### 2. MSI / MSI-X — `pci_irq.rs`, `pcie.rs` — `[x]`
@@ -271,7 +271,7 @@ The gateway to *all* networking is one working NIC reaching DHCP `Bound`.
 
 ## 6. Networking — wireless (all LinuxKPI / Path C)
 
-Native Wi-Fi is 30,000+ LOC per vendor (opaque firmware + huge MLME/regulatory surface) — the Concept blesses the userspace LinuxKPI shim here. Each runs as an ELF daemon over `raeen_linuxkpi`, talking to `wpa_supplicant`-class WPA2/WPA3 negotiation above it.
+Native Wi-Fi is 30,000+ LOC per vendor (opaque firmware + huge MLME/regulatory surface) — the Concept blesses the userspace LinuxKPI shim here. Each runs as an ELF daemon over `ath_linuxkpi`, talking to `wpa_supplicant`-class WPA2/WPA3 negotiation above it.
 
 ### 34. Intel iwlwifi (AX200/AX210/BE200) — `iwlwifi.elf` — `[ ]`
 - **Does:** the most common gaming-laptop Wi-Fi. The **recommended path for Athena** is to swap the M.2 2230 for an **Intel AX210**, then drop `iwlwifi-ty-a0-gf-a0-<NN>.ucode` into `firmware/`.
@@ -292,11 +292,11 @@ Native Wi-Fi is 30,000+ LOC per vendor (opaque firmware + huge MLME/regulatory s
 
 The single biggest open Concept Year-1 deliverable: a **real GPU submit path** (`vkQueueSubmit`-equivalent) instead of the current software raster. Strategy: **native modeset/scanout** (small, doable — set a mode, flip a buffer, move the cursor) + **LinuxKPI userspace Mesa** for 3D/Vulkan (RADV/RadeonSI/Iris). Never a from-scratch 3D driver.
 
-### 39. AMD GPU (amdgpud) — `amdgpud/` (daemon, repo root), `components/raeen_amdgpu` (host-testable bring-up lib) — `[~]`
+### 39. AMD GPU (amdgpud) — `amdgpud/` (daemon, repo root), `components/ath_amdgpu` (host-testable bring-up lib) — `[~]`
 - **Does:** the Athena iGPU (Radeon 780M, Phoenix, GC 11.0.1) and discrete RDNA. Userspace LinuxKPI daemon: GMC/IH/SMU/GFX bring-up, then Mesa RADV on top. Supervised by `driver_supervisor/` (repo root).
 - **Firmware (`docs/FIRMWARE.md`, vendored at `firmware/amdgpu/`):** PSP TOC/TA, GC 11.0.1 IMU/PFP/ME/MEC/RLC/MES, SDMA 6.0.1, DCN 3.1.4 DMCUB, VCN 4.0.2. **No `smu_13_0_4.bin`** — APU SMU is embedded in the system BIOS, loaded by PSP. VBIOS comes from the ACPI **VFCT** table (no PCI ROM on APUs), vendored at `firmware/vbios/1002-15bf.bin`.
 - **Status:** real-Athena-blob host-KAT'd bring-up sequence; **iron BAR5 bring-up failure currently reproduces deterministically** (recent `logs/` captures) — active debug. The `iron-pending-offset` pattern: no guessed MMIO pre-iron (`amdgpu-bringup-host-kat` memory).
-- **Dev info:** `tools/linuxkpi_harness` replays the real bring-up against a mock register file on the host; `raeen_amdgpu::bringup` over a `GpuOps` trait is the testable lib.
+- **Dev info:** `tools/linuxkpi_harness` replays the real bring-up against a mock register file on the host; `ath_amdgpu::bringup` over a `GpuOps` trait is the testable lib.
 
 ### 40. Intel GPU (i915d / Xe) — `i915d` — `[~]`
 - **Does:** Intel UHD/Iris/Xe iGPU. LinuxKPI daemon + Mesa Iris. GuC/HuC firmware (`firmware/i915/`).
@@ -384,7 +384,7 @@ xtask bundles **everything under `firmware/`** recursively (drop a blob, it ship
 | iwlwifi (AX210) | `iwlwifi-ty-a0-gf-a0-<NN>.ucode` | linux-firmware | ❌ (licensed; drop in) |
 | RTL8125 | none required (in-kernel native runs without `rtl8125b-2.fw`) | — | n/a |
 | MT7902 | **none exists** | — | ❌ blocked |
-| self-test | `firmware/raeen-selftest.bin` | in-tree | ✅ keep |
+| self-test | `firmware/athena-selftest.bin` | in-tree | ✅ keep |
 
 > APUs have no `smu_*.bin` (SMU/PMFW is in the system BIOS, loaded by PSP) and no PCI expansion ROM (VBIOS via VFCT). Don't preflight a `smu_13_0_4.bin` — it will report `11/12 absent` forever.
 
@@ -392,7 +392,7 @@ xtask bundles **everything under `firmware/`** recursively (drop a blob, it ship
 
 ## 11. The selection layer — "default drivers you can choose"
 
-Every device should resolve to a **ranked candidate list**, not one hardcoded assignment, with a `DriverPolicy` (per-device pin → per-class preference → global `native-first`/`linuxkpi-first` → fallback chain). Today `driver_manifest::match_pci()` returns one `DriverMatch{package,kind}`; the target taxonomy (`DriverBackend × DriverResidence × DriverStatus + rank`) is additive. This is the inspectable "choose your driver" control surfaced at `/proc/raeen/drivers`. Full design + acceptance: `docs/NATIVE_DRIVER_PLAN.md §2`.
+Every device should resolve to a **ranked candidate list**, not one hardcoded assignment, with a `DriverPolicy` (per-device pin → per-class preference → global `native-first`/`linuxkpi-first` → fallback chain). Today `driver_manifest::match_pci()` returns one `DriverMatch{package,kind}`; the target taxonomy (`DriverBackend × DriverResidence × DriverStatus + rank`) is additive. This is the inspectable "choose your driver" control surfaced at `/proc/athena/drivers`. Full design + acceptance: `docs/NATIVE_DRIVER_PLAN.md §2`.
 
 ---
 
@@ -405,7 +405,7 @@ Per `docs/NATIVE_DRIVER_PLAN.md §3–5`, every native driver has the same shape
 3. **Host KAT first** — a mock register file models the device's responses; assert the driver walks reset→init→ready→one data op. Green on host **before** QEMU (CLAUDE.md §15 — the cheapest real proof, caught the most bugs).
 4. **Lifecycle** — implement `RaeDriver` (probe/attach/detach) + the data-plane trait (`BlockDevice`/`NetDriver`/`CharDevice`); declare `capabilities()` (`Cap::Dma`/`Mmio`/`PciConfig`).
 5. **Residence** — userspace ELF daemon (default, sandboxed, safe to crash) → promote to in-kernel only if the hot path demands it.
-6. **R10 4-artifact contract** — `init()` from `kernel_main` + `run_boot_smoketest()` (must be able to print FAIL) + `/proc/raeen/<driver>` + Concept docstring.
+6. **R10 4-artifact contract** — `init()` from `kernel_main` + `run_boot_smoketest()` (must be able to print FAIL) + `/proc/athena/<driver>` + Concept docstring.
 7. **QEMU** — prove a real transaction if QEMU emulates the part.
 8. **Iron** — the only thing that earns `[x]`.
 

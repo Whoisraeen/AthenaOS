@@ -3,15 +3,15 @@
 # agent does not own. Reads agents/OWNERSHIP.toml. Part of the three-agent
 # parallel-development guardrail. Wired into .git/hooks/pre-commit.
 #
-# Identity comes from $RAEEN_AGENT: one of opus | gemini | composer.
-# OWNERLESS crates (e.g. components/raebridge) reject EVERYONE.
+# Identity comes from $ATHENA_AGENT: one of opus | gemini | composer.
+# OWNERLESS crates (e.g. components/athbridge) reject EVERYONE.
 #
-# Usage (manual):  RAEEN_AGENT=gemini scripts/ownership-lock.sh
+# Usage (manual):  ATHENA_AGENT=gemini scripts/ownership-lock.sh
 set -uo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 MANIFEST="$REPO_ROOT/agents/OWNERSHIP.toml"
-AGENT="${RAEEN_AGENT:-}"
+AGENT="${ATHENA_AGENT:-}"
 
 red()   { printf '\033[31m%s\033[0m\n' "$*"; }
 green() { printf '\033[32m%s\033[0m\n' "$*"; }
@@ -23,15 +23,15 @@ if [ ! -f "$MANIFEST" ]; then
 fi
 
 if [ -z "$AGENT" ]; then
-  red "ownership-lock: RAEEN_AGENT is not set."
+  red "ownership-lock: ATHENA_AGENT is not set."
   yellow "  Set it to your slice before committing, e.g.:"
-  yellow "    export RAEEN_AGENT=gemini   # or opus / composer"
+  yellow "    export ATHENA_AGENT=gemini   # or opus / composer"
   exit 1
 fi
 
 case "$AGENT" in
   opus|gemini|composer) ;;
-  *) red "ownership-lock: RAEEN_AGENT='$AGENT' is not a known agent (opus|gemini|composer)."; exit 1;;
+  *) red "ownership-lock: ATHENA_AGENT='$AGENT' is not a known agent (opus|gemini|composer)."; exit 1;;
 esac
 
 # ── Lead-developer full access ───────────────────────────────────────────────
@@ -139,7 +139,7 @@ while IFS= read -r f; do
       ;;
     OWNERLESS)
       red "  DENY  $f"
-      yellow "        → crate is OWNERLESS (e.g. raebridge): requires human assignment."
+      yellow "        → crate is OWNERLESS (e.g. athbridge): requires human assignment."
       violations=$((violations+1))
       ;;
     unclassified)

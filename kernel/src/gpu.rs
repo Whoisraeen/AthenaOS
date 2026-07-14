@@ -1767,7 +1767,7 @@ pub fn present_gpu_scanout() {
 /// per-frame copy. Returns true iff the scanout was attached to the compositor.
 ///
 /// Phase 6 (AthGFX): the seam from the userspace KMS path (amdgpud →
-/// `raeen_drm::kms::atomic_commit` → `SYS_LINUXKPI_REGISTER_SCANOUT`) to the
+/// `ath_drm::kms::atomic_commit` → `SYS_LINUXKPI_REGISTER_SCANOUT`) to the
 /// compositor's `ScanoutBackend::GpuFb`. SAFE FALLBACK: invalid geometry or no
 /// physical-memory direct map returns false WITHOUT touching `GPU_SCANOUT`, so a
 /// malformed driver request can never disturb the working GOP/virtio desktop.

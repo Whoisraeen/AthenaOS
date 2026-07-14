@@ -16,7 +16,7 @@ pub struct HidInterruptEndpoint {
     pub protocol: u8,
     /// bInterfaceSubClass: 1 = Boot Interface Subclass, 0 = none. A device that
     /// is NOT boot-subclass must be driven in REPORT protocol (decode via the
-    /// report descriptor — see `raehid`), not the fixed boot layout.
+    /// report descriptor — see `athhid`), not the fixed boot layout.
     pub subclass: u8,
     /// wDescriptorLength from the HID class descriptor (0x21): the size of the
     /// REPORT descriptor (type 0x22) to fetch for report-protocol decoding. 0 if

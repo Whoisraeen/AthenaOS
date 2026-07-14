@@ -30,7 +30,7 @@ on certified hardware (two buffers + scheduling jitter).
 ## Surface sketch
 
 ```rust
-let stream = raeaudio::OutputStream::builder()
+let stream = athaudio::OutputStream::builder()
     .format(Format::F32, 48_000, 2)
     .frames_per_buffer(64)
     .build(|out, info| {

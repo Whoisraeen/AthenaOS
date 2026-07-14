@@ -5,7 +5,7 @@
  * Page-cache / address-space helpers. TTM's ttm_tt pulls it for shmem-backed BO
  * pages — TTM is out of the MES bring-up subset (SCOPE.md), so this provides the
  * minimal mapping-flag + page-size surface the type graph needs; the page-cache
- * ops are backed by raeen_linuxkpi at M4 if TTM is brought into scope. License
+ * ops are backed by ath_linuxkpi at M4 if TTM is brought into scope. License
  * boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_PAGEMAP_H
@@ -20,7 +20,7 @@ struct file;
 
 static inline unsigned long page_size_helper(void) { return PAGE_SIZE; }
 
-/* page-cache ops — backed by raeen_linuxkpi (M4) if TTM is brought into scope */
+/* page-cache ops — backed by ath_linuxkpi (M4) if TTM is brought into scope */
 void mapping_set_gfp_mask(struct address_space *m, gfp_t mask);
 
 #endif /* _LINUXKPI_LINUX_PAGEMAP_H */

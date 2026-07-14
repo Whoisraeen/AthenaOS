@@ -108,11 +108,11 @@ pub fn run_boot_smoketest() {
     // utility can read a bundled file through ld.so + the VFS (openat(O_RDONLY)
     // on an initramfs path → read() → write(stdout)). Simpler than `ls` (no
     // directory/ioctl), so it isolates the file-read path from the directory
-    // path. Expected output: `raeen-cat-ok`. (Subsumes the old toy /bin/dh as
+    // path. Expected output: `athena-cat-ok`. (Subsumes the old toy /bin/dh as
     // the ld.so canary; dh stays bundled for manual use.)
     match linux_exec("/bin/cat", &["/bin/cat", "/etc/motd"]) {
         Ok(tid) => crate::serial_println!(
-            "[ld.so] stock /bin/cat /etc/motd spawned (task {:?}) -> expect `raeen-cat-ok` below",
+            "[ld.so] stock /bin/cat /etc/motd spawned (task {:?}) -> expect `athena-cat-ok` below",
             tid,
         ),
         Err(e) => crate::serial_println!("[ld.so] stock /bin/cat spawn FAILED: {:?}", e),
@@ -136,12 +136,12 @@ pub fn run_boot_smoketest() {
     // pthread_mutex/futex + pthread_join via CLONE_CHILD_CLEARTID) end to end on
     // a genuine glibc threading runtime, not just our raw-syscall probe. It
     // spawns 4 threads that each mutex-increment a shared counter 1000×, joins
-    // all four, and prints `raeen-pthread-ok` iff the total is exactly 4000.
+    // all four, and prints `athena-pthread-ok` iff the total is exactly 4000.
     // This is the payoff of the threading work: stock multithreaded Linux
     // software (the Proton/Wine class) runs on AthenaOS.
     match linux_exec("/bin/pthreadtest", &["/bin/pthreadtest"]) {
         Ok(tid) => crate::serial_println!(
-            "[ld.so] glibc pthread test spawned (task {:?}) -> expect `raeen-pthread-ok` below",
+            "[ld.so] glibc pthread test spawned (task {:?}) -> expect `athena-pthread-ok` below",
             tid,
         ),
         Err(e) => crate::serial_println!("[ld.so] glibc pthread test spawn FAILED: {:?}", e),

@@ -1,21 +1,21 @@
-//! In-kernel SSH server (`raessh`) — remote administration of AthenaOS.
+//! In-kernel SSH server (`athssh`) — remote administration of AthenaOS.
 //!
 //! Concept §"The user owns the machine": you can reach a shell on your own OS
 //! over the network, on your terms — no cloud broker, no telemetry, an SSH-2.0
-//! server built from scratch (`components/raessh`, `#![forbid(unsafe_code)]`) on
-//! AthenaOS's own KAT-proven crypto (`rae_crypto`: curve25519, ed25519,
+//! server built from scratch (`components/athssh`, `#![forbid(unsafe_code)]`) on
+//! AthenaOS's own KAT-proven crypto (`ath_crypto`: curve25519, ed25519,
 //! chacha20-poly1305). This module is the kernel binding: it owns the ed25519
 //! host key + the `authorized_keys` allow-list, proves the whole stack at boot
 //! with a loopback self-test, and (next increment) drives a TCP `:22` listener
 //! from the net poll loop, binding an authenticated shell channel to AthShell.
 //!
 //! R10 contract: [`init`] (called from `kernel_main`) + [`run_boot_smoketest`]
-//! (FAIL-able) + [`dump_text`] (`/proc/raeen/ssh`) + this docstring.
+//! (FAIL-able) + [`dump_text`] (`/proc/athena/ssh`) + this docstring.
 
 use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
-use raessh::userauth::AuthorizedKey;
+use athssh::userauth::AuthorizedKey;
 use smoltcp::iface::SocketHandle;
 use smoltcp::socket::tcp;
 use spin::Mutex;
@@ -53,7 +53,7 @@ pub fn init() {
         host_seed = *b"RaeSSH-dev-fallback-hostkey-seed"; // exactly 32 bytes
         crate::serial_println!("[ssh] WARN: RNG unavailable, using dev host key");
     }
-    let host_pub = rae_crypto::ed25519::derive_public_key(&host_seed);
+    let host_pub = ath_crypto::ed25519::derive_public_key(&host_seed);
     *SSH.lock() = Some(SshServer {
         host_seed,
         host_pub,
@@ -62,7 +62,7 @@ pub fn init() {
         listen_handle: None,
     });
     crate::serial_println!(
-        "[ssh] host key ready: ed25519 fp={} (raessh SSH-2.0 server)",
+        "[ssh] host key ready: ed25519 fp={} (athssh SSH-2.0 server)",
         fingerprint(&host_pub)
     );
 }
@@ -70,7 +70,7 @@ pub fn init() {
 /// A short SHA-256 fingerprint of the host public key (first 8 bytes, hex) —
 /// enough to eyeball key identity in the bootlog / procfs.
 fn fingerprint(host_pub: &[u8; 32]) -> String {
-    let d = rae_crypto::sha256::sha256(host_pub);
+    let d = ath_crypto::sha256::sha256(host_pub);
     let mut s = String::with_capacity(23);
     for (i, b) in d[..8].iter().enumerate() {
         if i != 0 {
@@ -81,9 +81,9 @@ fn fingerprint(host_pub: &[u8; 32]) -> String {
     s
 }
 
-/// R10 boot smoketest: run the raessh loopback (a full handshake → publickey
+/// R10 boot smoketest: run the athssh loopback (a full handshake → publickey
 /// auth → shell channel against a simulated client) IN the kernel, proving the
-/// whole SSH stack + `rae_crypto` work under the kernel's build-std/soft-float
+/// whole SSH stack + `ath_crypto` work under the kernel's build-std/soft-float
 /// config. FAIL-able: a regression prints `FAIL` with the failing stage.
 pub fn run_boot_smoketest() {
     // Copy the real host key out, then release the lock BEFORE running the
@@ -93,7 +93,7 @@ pub fn run_boot_smoketest() {
         crate::serial_println!("[ssh] loopback self-test -> FAIL (not initialized)");
         return;
     };
-    match raessh::selftest::loopback(&host_seed, &host_pub) {
+    match athssh::selftest::loopback(&host_seed, &host_pub) {
         Ok(()) => {
             if let Some(s) = SSH.lock().as_mut() {
                 s.self_test_ok = true;
@@ -144,13 +144,13 @@ pub fn start_listener() {
     }
 }
 
-/// `/proc/raeen/ssh` — server identity + readiness (the R10 procfs line).
+/// `/proc/athena/ssh` — server identity + readiness (the R10 procfs line).
 pub fn dump_text() -> String {
     let guard = SSH.lock();
     match guard.as_ref() {
         None => String::from("ssh: not initialized\n"),
         Some(s) => format!(
-            "ssh: raessh SSH-2.0 server\n\
+            "ssh: athssh SSH-2.0 server\n\
              host_key: ssh-ed25519 fp={}\n\
              self_test: {}\n\
              authorized_keys: {}\n\

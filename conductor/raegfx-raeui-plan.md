@@ -14,8 +14,8 @@ This does *not* cover:
 - Complex input routing (keyboard/mouse will be integrated into the event loop, but advanced game controller support is deferred).
 
 ## Proposed Solution
-- **AthGFX (`components/raegfx`)**: Implement a userspace library that takes a framebuffer memory map (provided via the `SYS_MMIO_MAP` syscall) and provides a 2D rendering canvas. It will include basic primitives: `clear`, `draw_pixel`, `draw_rect`, and `draw_line`.
-- **AthUI (`components/raeui`)**: Implement an event-driven UI framework on top of AthGFX. It will introduce a `Window` struct, a `Widget` trait, and an `EventLoop` that polls for user input (via IPC channels from the keyboard driver) and triggers `render` passes.
+- **AthGFX (`components/athgfx`)**: Implement a userspace library that takes a framebuffer memory map (provided via the `SYS_MMIO_MAP` syscall) and provides a 2D rendering canvas. It will include basic primitives: `clear`, `draw_pixel`, `draw_rect`, and `draw_line`.
+- **AthUI (`components/athui`)**: Implement an event-driven UI framework on top of AthGFX. It will introduce a `Window` struct, a `Widget` trait, and an `EventLoop` that polls for user input (via IPC channels from the keyboard driver) and triggers `render` passes.
 
 ## Alternatives Considered
 - **Porting an existing UI library (e.g., Slint, Iced)**: While faster, this violates the AthenaOS core principle of a deeply integrated, proprietary native stack optimized for specific latency and architectural goals. We will build the foundational abstractions ourselves, potentially leveraging Skia/wgpu *under the hood* later as per the architecture doc, but the immediate goal is raw pixel manipulation to prove the IPC/Framebuffer pipeline.
@@ -23,18 +23,18 @@ This does *not* cover:
 ## Implementation Plan
 
 ### Phase 1: AthGFX 2D Rasterizer
-1. **Framebuffer Mapping**: Update `driver_supervisor` (or a dedicated display driver) to pass the framebuffer capability to the `raegfx` component.
-2. **Canvas Abstraction**: Create `Canvas` in `raegfx/src/lib.rs` that wraps the raw pixel buffer.
+1. **Framebuffer Mapping**: Update `driver_supervisor` (or a dedicated display driver) to pass the framebuffer capability to the `athgfx` component.
+2. **Canvas Abstraction**: Create `Canvas` in `athgfx/src/lib.rs` that wraps the raw pixel buffer.
 3. **Drawing Primitives**: Implement `draw_pixel`, `draw_line` (Bresenham's algorithm), and `fill_rect` in `Canvas`.
 
 ### Phase 2: AthUI Window & Event Loop
-1. **Widget Trait**: Define a `Widget` trait in `raeui/src/lib.rs` with `render(&mut Canvas)` and `on_event(Event)`.
+1. **Widget Trait**: Define a `Widget` trait in `athui/src/lib.rs` with `render(&mut Canvas)` and `on_event(Event)`.
 2. **Window Abstraction**: Create a `Window` struct that holds a root `Widget` and manages a backbuffer.
 3. **Event Loop**: Implement an `EventLoop` that waits for IPC messages (keyboard/mouse events) and calls the window's render/event methods.
 4. **Button Widget**: Implement a `Button` struct implementing the `Widget` trait.
 
 ### Phase 3: Integration & Demo
-1. **Demo App**: Create a simple userspace application (e.g., `user_init`) that links `raegfx` and `raeui`.
+1. **Demo App**: Create a simple userspace application (e.g., `user_init`) that links `athgfx` and `athui`.
 2. **Execution**: The app will initialize a window, add a button, and enter the event loop, rendering to the screen.
 
 ## Verification

@@ -12,14 +12,14 @@
 extern crate alloc;
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 use alloc::vec;
 use alloc::vec::Vec;
 
-use rae_tokens::{DARK, RAEBLUE};
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
+use ath_tokens::{DARK, RAEBLUE};
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
 
 trait StrSlice {
     fn as_str(&self) -> &str;
@@ -42,9 +42,9 @@ const HEADER_H: usize = 56;
 const ROW_H: usize = 56;
 const STATUS_H: usize = 22;
 
-// ── Palette (rae_tokens, docs/design/design-language.md) ──────────────────
+// ── Palette (ath_tokens, docs/design/design-language.md) ──────────────────
 //
-// Generic chrome pulled onto `rae_tokens::DARK` + the RaeBlue accent ramp for
+// Generic chrome pulled onto `ath_tokens::DARK` + the RaeBlue accent ramp for
 // whole-OS cohesion. Accent shades are derived (non-const) so they live in
 // helpers. The toggle-ON green maps to `state_ok` (a real token); no
 // app-specific colors remain. Live Vibe accent = NEEDS-INTERFACE (see report).
@@ -65,20 +65,20 @@ const TOGGLE_OFF: u32 = DARK.bg_elevated; // neutral off track
 /// or RaeBlue when the theme syscall is unavailable. Read at launch so Settings
 /// re-skins to match the rest of the desktop (Concept §Customization Engine).
 fn theme_seed() -> u32 {
-    raekit::sys::theme_accent()
+    athkit::sys::theme_accent()
 }
 /// Accent base (live ramp) — labels, sliders, chevrons.
 fn accent() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).base
+    ath_tokens::derive_accent(theme_seed(), &DARK).base
 }
 /// Selected sidebar row / selection wash: the accent's active (pressed) shade.
 fn row_sel_bg() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).active
+    ath_tokens::derive_accent(theme_seed(), &DARK).active
 }
 /// Lower-emphasis accent fill (active section pill, dropdown well). Reuses the
 /// active shade for an opaque accent tint over the solid panel.
 fn accent_dim() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).active
+    ath_tokens::derive_accent(theme_seed(), &DARK).active
 }
 
 // ── Section model ───────────────────────────────────────────────────────
@@ -377,7 +377,7 @@ fn items_for(section: usize, app: &App) -> Vec<Item> {
 
 fn cfg_bool(key: &str, default: bool) -> bool {
     let mut buf = [0u8; 16];
-    match raekit::sys::config_get(key, &mut buf) {
+    match athkit::sys::config_get(key, &mut buf) {
         Some(n) if n > 0 => buf[0] != 0 || buf.starts_with(b"true"),
         _ => default,
     }
@@ -385,7 +385,7 @@ fn cfg_bool(key: &str, default: bool) -> bool {
 
 fn cfg_int(key: &str, default: i64) -> i64 {
     let mut buf = [0u8; 16];
-    if let Some(n) = raekit::sys::config_get(key, &mut buf) {
+    if let Some(n) = athkit::sys::config_get(key, &mut buf) {
         if n == 8 {
             let mut b = [0u8; 8];
             b.copy_from_slice(&buf[..8]);
@@ -400,7 +400,7 @@ fn cfg_int(key: &str, default: i64) -> i64 {
 
 fn cfg_text_buf(key: &str, default: &str) -> Vec<u8> {
     let mut buf = [0u8; 64];
-    if let Some(n) = raekit::sys::config_get(key, &mut buf) {
+    if let Some(n) = athkit::sys::config_get(key, &mut buf) {
         if n > 0 {
             return buf[..n].to_vec();
         }
@@ -410,7 +410,7 @@ fn cfg_text_buf(key: &str, default: &str) -> Vec<u8> {
 
 fn cfg_text_choice(key: &str, options: &[&str], default: u8) -> u8 {
     let mut buf = [0u8; 32];
-    if let Some(n) = raekit::sys::config_get(key, &mut buf) {
+    if let Some(n) = athkit::sys::config_get(key, &mut buf) {
         if let Ok(s) = core::str::from_utf8(&buf[..n]) {
             if let Some(i) = options.iter().position(|o| *o == s) {
                 return i as u8;
@@ -574,8 +574,8 @@ impl App {
                 self.set_slider(it.title, next);
             }
             Control::Action("Sign out") => {
-                raekit::sys::session_logout();
-                raekit::sys::exit(0);
+                athkit::sys::session_logout();
+                athkit::sys::exit(0);
             }
             _ => {}
         }
@@ -585,56 +585,56 @@ impl App {
         match title {
             "HDR" => {
                 self.hdr = !self.hdr;
-                let _ = raekit::sys::config_set_bool("/display/hdr_enabled", self.hdr);
+                let _ = athkit::sys::config_set_bool("/display/hdr_enabled", self.hdr);
             }
             "Mute" => {
                 self.mute = !self.mute;
-                let _ = raekit::sys::config_set_bool("/audio/mute", self.mute);
+                let _ = athkit::sys::config_set_bool("/audio/mute", self.mute);
             }
             "Spatial audio" => {
                 self.spatial = !self.spatial;
-                let _ = raekit::sys::config_set_bool("/audio/spatial_audio", self.spatial);
+                let _ = athkit::sys::config_set_bool("/audio/spatial_audio", self.spatial);
             }
             "Glassmorphism" => {
                 self.glass = !self.glass;
-                let _ = raekit::sys::config_set_bool("/personalization/glassmorphism", self.glass);
+                let _ = athkit::sys::config_set_bool("/personalization/glassmorphism", self.glass);
             }
             "Animations" => {
                 self.animations = !self.animations;
                 let _ =
-                    raekit::sys::config_set_bool("/personalization/animations", self.animations);
+                    athkit::sys::config_set_bool("/personalization/animations", self.animations);
             }
             "Telemetry" => {
                 self.telemetry = !self.telemetry;
-                let _ = raekit::sys::config_set_bool("/system/telemetry_enabled", self.telemetry);
+                let _ = athkit::sys::config_set_bool("/system/telemetry_enabled", self.telemetry);
             }
             "Location" => {
                 self.location = !self.location;
-                let _ = raekit::sys::config_set_bool("/privacy/location_enabled", self.location);
+                let _ = athkit::sys::config_set_bool("/privacy/location_enabled", self.location);
             }
             "Camera" => {
                 self.camera = !self.camera;
-                let _ = raekit::sys::config_set_bool("/privacy/camera_enabled", self.camera);
+                let _ = athkit::sys::config_set_bool("/privacy/camera_enabled", self.camera);
             }
             "Microphone" => {
                 self.mic = !self.mic;
-                let _ = raekit::sys::config_set_bool("/privacy/microphone_enabled", self.mic);
+                let _ = athkit::sys::config_set_bool("/privacy/microphone_enabled", self.mic);
             }
             "Wi-Fi radio" => {
                 self.wifi = !self.wifi;
-                let _ = raekit::sys::config_set_bool("/network/wifi_radio", self.wifi);
+                let _ = athkit::sys::config_set_bool("/network/wifi_radio", self.wifi);
             }
             "Game Mode" => {
                 self.game_mode = !self.game_mode;
-                let _ = raekit::sys::config_set_bool("/system/game_mode_default", self.game_mode);
+                let _ = athkit::sys::config_set_bool("/system/game_mode_default", self.game_mode);
             }
             "Fast boot" => {
                 self.fast_boot = !self.fast_boot;
-                let _ = raekit::sys::config_set_bool("/system/fast_boot", self.fast_boot);
+                let _ = athkit::sys::config_set_bool("/system/fast_boot", self.fast_boot);
             }
             "Kernel log" => {
                 self.klog = !self.klog;
-                let _ = raekit::sys::config_set_bool("/system/kernel_log", self.klog);
+                let _ = athkit::sys::config_set_bool("/system/kernel_log", self.klog);
             }
             _ => {}
         }
@@ -645,31 +645,31 @@ impl App {
         match title {
             "Theme" => {
                 self.theme = idx;
-                let _ = raekit::sys::config_set_text("/personalization/theme", label);
+                let _ = athkit::sys::config_set_text("/personalization/theme", label);
             }
             "Vibe Mode" => {
                 self.vibe = idx;
-                let _ = raekit::sys::config_set_text("/personalization/vibe_mode", label);
+                let _ = athkit::sys::config_set_text("/personalization/vibe_mode", label);
             }
             "Firewall" => {
                 self.firewall = idx;
-                let _ = raekit::sys::config_set_text("/network/firewall_profile", label);
+                let _ = athkit::sys::config_set_text("/network/firewall_profile", label);
             }
             "Power profile" => {
                 self.power_profile = idx;
-                let _ = raekit::sys::config_set_text("/power/profile", label);
+                let _ = athkit::sys::config_set_text("/power/profile", label);
             }
             "Update channel" => {
                 self.channel = idx;
-                let _ = raekit::sys::config_set_text("/system/channel", label);
+                let _ = athkit::sys::config_set_text("/system/channel", label);
             }
             "Resolution" => {
                 self.resolution = idx;
-                let _ = raekit::sys::config_set_text("/display/resolution", label);
+                let _ = athkit::sys::config_set_text("/display/resolution", label);
             }
             "Refresh rate" => {
                 self.refresh = idx;
-                let _ = raekit::sys::config_set_text("/display/refresh_hz_str", label);
+                let _ = athkit::sys::config_set_text("/display/refresh_hz_str", label);
             }
             _ => {}
         }
@@ -679,16 +679,16 @@ impl App {
         match title {
             "Master volume" => {
                 self.volume = value as i64;
-                let _ = raekit::sys::config_set_int("/audio/master_volume", self.volume);
+                let _ = athkit::sys::config_set_int("/audio/master_volume", self.volume);
             }
             "Sleep after idle" => {
                 self.sleep_minutes = value as i64;
                 let _ =
-                    raekit::sys::config_set_int("/power/sleep_idle_minutes", self.sleep_minutes);
+                    athkit::sys::config_set_int("/power/sleep_idle_minutes", self.sleep_minutes);
             }
             "Scale" => {
                 self.scale_pct = value as i64;
-                let _ = raekit::sys::config_set_int("/display/scale_pct", self.scale_pct);
+                let _ = athkit::sys::config_set_int("/display/scale_pct", self.scale_pct);
             }
             _ => {}
         }
@@ -718,19 +718,19 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect(0, 0, WIN_W, TITLE_H, TITLE_BG);
     canvas.draw_text_aa(
         12,
-        ((TITLE_H - rae_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
+        ((TITLE_H - ath_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
         "Settings",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
     canvas.fill_rect(WIN_W - 28, 4, 20, 20, DARK.state_danger);
-    let x_w = canvas.measure_text_aa("X", rae_tokens::TYPE_LABEL, FontFamily::Sans);
+    let x_w = canvas.measure_text_aa("X", ath_tokens::TYPE_LABEL, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 18) as i32 - x_w / 2,
-        (4 + (20 - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
+        (4 + (20 - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
         "X",
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         0xFF_FF_FF_FF,
         FontFamily::Sans,
     );
@@ -744,7 +744,7 @@ fn render(app: &App, canvas: &mut Canvas) {
         16,
         (sb_y + 12) as i32,
         "Settings",
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         accent(),
         FontFamily::Sans,
     );
@@ -752,7 +752,7 @@ fn render(app: &App, canvas: &mut Canvas) {
         16,
         (sb_y + 30) as i32,
         "Find:  /  to search",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_DIM,
         FontFamily::Sans,
     );
@@ -765,7 +765,7 @@ fn render(app: &App, canvas: &mut Canvas) {
         } else if app.focus_sidebar && i == app.section {
             canvas.fill_rect(8, y, SIDEBAR_W - 16, 30, accent_dim());
         }
-        let row_ty = (y + (30 - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32;
+        let row_ty = (y + (30 - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32;
         let mut g = [0u8; 1];
         g[0] = sec.glyph as u8;
         if let Ok(gs) = core::str::from_utf8(&g) {
@@ -773,7 +773,7 @@ fn render(app: &App, canvas: &mut Canvas) {
                 20,
                 row_ty,
                 gs,
-                rae_tokens::TYPE_LABEL,
+                ath_tokens::TYPE_LABEL,
                 accent(),
                 FontFamily::Sans,
             );
@@ -782,7 +782,7 @@ fn render(app: &App, canvas: &mut Canvas) {
             40,
             row_ty,
             sec.name,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             TEXT_FG,
             FontFamily::Sans,
         );
@@ -798,7 +798,7 @@ fn render(app: &App, canvas: &mut Canvas) {
         (panel_x + 16) as i32,
         (sb_y + 10) as i32,
         title,
-        rae_tokens::TYPE_TITLE,
+        ath_tokens::TYPE_TITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -806,7 +806,7 @@ fn render(app: &App, canvas: &mut Canvas) {
         (panel_x + 16) as i32,
         (sb_y + 36) as i32,
         panel_subtitle(app.section),
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_DIM,
         FontFamily::Sans,
     );
@@ -834,7 +834,7 @@ fn render(app: &App, canvas: &mut Canvas) {
             (panel_x + 20) as i32,
             (row_y + 10) as i32,
             item.title,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_FG,
             FontFamily::Sans,
         );
@@ -842,7 +842,7 @@ fn render(app: &App, canvas: &mut Canvas) {
             (panel_x + 20) as i32,
             (row_y + 30) as i32,
             item.detail,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_DIM,
             FontFamily::Sans,
         );
@@ -862,9 +862,9 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect(0, st_y, WIN_W, STATUS_H, STATUS_BG);
     canvas.draw_text_aa(
         12,
-        (st_y + (STATUS_H - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
+        (st_y + (STATUS_H - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
         "Tab: switch pane   Up/Down: move   Enter: toggle   Esc: close",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_DIM,
         FontFamily::Sans,
     );
@@ -905,17 +905,17 @@ fn draw_control(canvas: &mut Canvas, x: usize, y: usize, w: usize, h: usize, ctr
         }
         Control::Choice { selected, options } => {
             if let Some(label) = options.get(selected as usize) {
-                let text_w = canvas.measure_text_aa(label, rae_tokens::TYPE_BODY, FontFamily::Sans);
+                let text_w = canvas.measure_text_aa(label, ath_tokens::TYPE_BODY, FontFamily::Sans);
                 let lw = text_w as usize + 32;
                 let bx = x + w - lw - 8;
                 canvas.fill_rect(bx, y + 2, lw, h - 8, ROW_BG);
                 let cty =
-                    (y + (h.saturating_sub(rae_tokens::TYPE_BODY.line_height as usize)) / 2) as i32;
+                    (y + (h.saturating_sub(ath_tokens::TYPE_BODY.line_height as usize)) / 2) as i32;
                 canvas.draw_text_aa(
                     (bx + 8) as i32,
                     cty,
                     label,
-                    rae_tokens::TYPE_BODY,
+                    ath_tokens::TYPE_BODY,
                     TEXT_FG,
                     FontFamily::Sans,
                 );
@@ -923,45 +923,45 @@ fn draw_control(canvas: &mut Canvas, x: usize, y: usize, w: usize, h: usize, ctr
                     (bx + lw - 12) as i32,
                     cty,
                     "v",
-                    rae_tokens::TYPE_BODY,
+                    ath_tokens::TYPE_BODY,
                     accent(),
                     FontFamily::Sans,
                 );
             }
         }
         Control::Action(label) => {
-            let text_w = canvas.measure_text_aa(label, rae_tokens::TYPE_BODY, FontFamily::Sans);
+            let text_w = canvas.measure_text_aa(label, ath_tokens::TYPE_BODY, FontFamily::Sans);
             let lw = text_w as usize + 24;
             let bx = x + w - lw - 8;
             canvas.fill_rect(bx, y + 2, lw, h - 8, accent_dim());
             canvas.draw_text_aa(
                 (bx + 12) as i32,
-                (y + (h.saturating_sub(rae_tokens::TYPE_BODY.line_height as usize)) / 2) as i32,
+                (y + (h.saturating_sub(ath_tokens::TYPE_BODY.line_height as usize)) / 2) as i32,
                 label,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 TEXT_FG,
                 FontFamily::Sans,
             );
         }
         Control::Label(text) => {
-            let lw = canvas.measure_text_aa(text, rae_tokens::TYPE_BODY, FontFamily::Sans);
+            let lw = canvas.measure_text_aa(text, ath_tokens::TYPE_BODY, FontFamily::Sans);
             canvas.draw_text_aa(
                 (x + w) as i32 - lw - 16,
-                (y + (h.saturating_sub(rae_tokens::TYPE_BODY.line_height as usize)) / 2) as i32,
+                (y + (h.saturating_sub(ath_tokens::TYPE_BODY.line_height as usize)) / 2) as i32,
                 text,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 TEXT_DIM,
                 FontFamily::Sans,
             );
         }
         Control::DynLabel { ref buf, len } => {
             if let Ok(text) = core::str::from_utf8(&buf[..len as usize]) {
-                let lw = canvas.measure_text_aa(text, rae_tokens::TYPE_BODY, FontFamily::Sans);
+                let lw = canvas.measure_text_aa(text, ath_tokens::TYPE_BODY, FontFamily::Sans);
                 canvas.draw_text_aa(
                     (x + w) as i32 - lw - 16,
-                    (y + (h.saturating_sub(rae_tokens::TYPE_BODY.line_height as usize)) / 2) as i32,
+                    (y + (h.saturating_sub(ath_tokens::TYPE_BODY.line_height as usize)) / 2) as i32,
                     text,
-                    rae_tokens::TYPE_BODY,
+                    ath_tokens::TYPE_BODY,
                     TEXT_DIM,
                     FontFamily::Sans,
                 );
@@ -973,16 +973,16 @@ fn draw_control(canvas: &mut Canvas, x: usize, y: usize, w: usize, h: usize, ctr
 // ── Design proof (R10: a fail-able check the token wiring is correct) ─────
 //
 // `cargo test` can't run a libtest harness inside this `#![no_main]` bin
-// (raekit's `#[panic_handler]` + std's = duplicate lang item). This pure
-// `rae_tokens` proof is the fail-able authority instead; the same
-// `derive_accent` ramp is host-KAT'd by `cargo test -p rae_tokens`.
+// (athkit's `#[panic_handler]` + std's = duplicate lang item). This pure
+// `ath_tokens` proof is the fail-able authority instead; the same
+// `derive_accent` ramp is host-KAT'd by `cargo test -p ath_tokens`.
 
 /// True iff Settings' generic chrome is wired to the shared design tokens.
 #[must_use]
 pub fn design_proof() -> bool {
     // Chrome derives from the LIVE theme seed (Vibe Mode), not a hardcoded
     // accent; the fallback when no theme is active is RaeBlue.
-    let ramp = rae_tokens::derive_accent(theme_seed(), &DARK);
+    let ramp = ath_tokens::derive_accent(theme_seed(), &DARK);
     accent() == ramp.base
         && row_sel_bg() == ramp.active
         && accent_dim() == ramp.active
@@ -994,7 +994,7 @@ pub fn design_proof() -> bool {
         && TEXT_DIM == DARK.text_secondary
         && TOGGLE_ON == DARK.state_ok
         && TOGGLE_OFF == DARK.bg_elevated
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE
 }
 
 // ── Entry point ─────────────────────────────────────────────────────────
@@ -1002,24 +1002,24 @@ pub fn design_proof() -> bool {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     if !design_proof() {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
 
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
     let mut app = App::new();
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, 220, 80);
+    athkit::sys::surface_present(sid, 220, 80);
 
     let mut extended = false;
     loop {
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
 
@@ -1074,14 +1074,14 @@ pub extern "C" fn _start() -> ! {
                 dirty = true;
             } // Enter
             (false, 0x01) => {
-                raekit::sys::exit(0);
+                athkit::sys::exit(0);
             } // Esc
             _ => {}
         }
 
         if dirty {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, 220, 80);
+            athkit::sys::surface_present(sid, 220, 80);
         }
     }
 }

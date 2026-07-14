@@ -1,0 +1,35 @@
+[package]
+name = "ath_mail"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# RaeMail client protocol core — "mail just works" (LEGACY_GAMING_CONCEPT.md
+# §"the common apps people rely on, available and just work" / charter app #5).
+# A daily driver has to send and read email. This crate is the protocol core a
+# RaeMail app sits on: the SMTP (RFC 5321) send dialog, the IMAP (RFC 3501)
+# fetch/read dialog, and a minimal POP3 (RFC 1939) state machine, plus an
+# envelope/message model. Every state machine runs against a `MailTransport`
+# trait (a byte pipe) so the WHOLE protocol layer is host-KAT-able against canned
+# scripted servers with NO live TCP/TLS — the actual TLS/TCP wiring over `athnet`
+# is a documented LATER integration step and is deliberately not a runtime dep.
+#
+# REUSE, not reinvention: `ath_encode` provides the base64 codec (AUTH, IMAP
+# literals, MIME body transfer-encoding); `ath_mime` classifies attachment parts
+# by Content-Type / filename once a body is fetched. The MIME *message-structure*
+# parse (headers, multipart split, transfer-decoding) lives here because
+# `ath_mime` is a file-association resolver, not an RFC 2045 message parser — see
+# the module docs. No reimplemented base64.
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_docx / ath_mime pattern): `no_std` +
+# `alloc` in every shipped build, `std` only under `cfg(test)` for the host KATs.
+# `#![forbid(unsafe_code)]`, never-panic / never-infinite-loop on hostile server
+# bytes (a malicious mail server is untrusted input): every line, literal, and
+# response count is bounded before allocation. Run the FAIL-able proof with
+# `cargo test -p ath_mail` — no QEMU, no image build.
+
+[dependencies]
+ath_encode = { path = "../ath_encode" }
+ath_mime = { path = "../ath_mime" }

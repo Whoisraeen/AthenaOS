@@ -491,7 +491,7 @@ pub fn create_new_pml4() -> x86_64::structures::paging::PhysFrame {
                 // shared, a child mapping its text at base 0 REPLACES the
                 // running parent's pages and the parent then executes the
                 // child's bytes (proven 2026-06-10: user_init #UD at 0x1947
-                // fetching raebridge_host .rodata "SteamInstallPath"). So we
+                // fetching athbridge_host .rodata "SteamInstallPath"). So we
                 // give PD[0] a private PT per address space.
                 //
                 // CRITICAL: do NOT privatize the KERNEL range (PD[8]+ = the
@@ -1703,7 +1703,7 @@ pub fn pinned_page_count() -> usize {
 /// Sums every NUMA node's buddy allocator `total_frames` (the usable-RAM
 /// frames carved from the UEFI/e820 map at boot) and multiplies by the 4 KiB
 /// frame size. Returns `None` if no allocator is initialized yet or the lock
-/// is contended — callers (e.g. the `/proc/raeen/memory` snapshot) must not
+/// is contended — callers (e.g. the `/proc/athena/memory` snapshot) must not
 /// block the boot dump on a held buddy lock. Read-only: never mutates state.
 pub fn physical_total_bytes() -> Option<u64> {
     let g = BUDDY_ALLOCATORS.try_lock()?;

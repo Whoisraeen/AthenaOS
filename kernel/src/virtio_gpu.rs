@@ -19,7 +19,7 @@
 //! the primary stdvga) is never disturbed; this driver proves the GPU command
 //! path independently before the compositor is repointed at it.
 //!
-//! R10: `init()` + `run_boot_smoketest()` + `/proc/raeen/virtio_gpu`
+//! R10: `init()` + `run_boot_smoketest()` + `/proc/athena/virtio_gpu`
 //! (`dump_text`) + this Concept docstring.
 
 #![allow(dead_code)]
@@ -1202,7 +1202,7 @@ pub fn run_boot_smoketest() {
     }
 }
 
-/// `/proc/raeen/virtio_gpu` body.
+/// `/proc/athena/virtio_gpu` body.
 pub fn dump_text() -> String {
     format!(
         "# virtio-gpu (Phase 6 CPU→GPU on-ramp, modern virtio-pci)\n\

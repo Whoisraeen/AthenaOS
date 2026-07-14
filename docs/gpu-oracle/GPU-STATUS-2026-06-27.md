@@ -280,7 +280,7 @@ placed it and point IC_BASE there, THEN enable + `udelay(500)` → expect
 needed.)
 
 1. **START the MES engine** — ⏳ rung 1 wired + iron-tested, not yet activating:
-   `components/raeen_amdgpu/src/mes.rs`
+   `components/ath_amdgpu/src/mes.rs`
    `build_mes_enable_sequence` (the pure `mes_v11_0_enable` register sequence: pulse
    pipe reset → `CP_MES_PRGRM_CNTR_START` from the MES ucode entry, me=3 via
    GRBM_GFX_CNTL → `CP_MES_CNTL` PIPE0_ACTIVE [+PIPE1 for KIQ]). Host-KAT'd 3/3 (100
@@ -369,10 +369,10 @@ First light unblocked the hardest, longest-standing link; the rest is a known,
 ordered sequence.
 
 ## The iron loop (reproducible, no flashing)
-- Build on the dev box → `scp kernel.uefi.img` to Athena `~/raeen-vm/kernel.uefi.fix.img`
-- `~/raeen-vm/runfix.sh` (absolute paths) boots it in KVM with the GPU VFIO-passed cold
+- Build on the dev box → `scp kernel.uefi.img` to Athena `~/athena-vm/kernel.uefi.fix.img`
+- `~/athena-vm/runfix.sh` (absolute paths) boots it in KVM with the GPU VFIO-passed cold
 - **Reset between cold tests = REBOOT** (FLR doesn't clear APU state)
 - amdgpu-XOR-vfio: toggle by reboot (revert cmdline for umr; re-add to test)
 - To capture serial through an APU wedge: stream over TCP via the existing SSH channel
-  (a file on the wedging host loses unsynced page cache; `~/raeen-vm/capture-C.sh`)
+  (a file on the wedging host loses unsynced page cache; `~/athena-vm/capture-C.sh`)
 - Full handoff + all register targets: memory `amdgpu-iron-hang-uc-firmware-read`

@@ -6,29 +6,29 @@ use crate::crypto::{ChaCha20Poly1305, HashAlgorithm};
 use alloc::{boxed::Box, string::String, vec, vec::Vec};
 use spin::Mutex;
 
-// ─── Real TLS 1.3 crypto, backed by the shared `rae_crypto` crate ────────────
+// ─── Real TLS 1.3 crypto, backed by the shared `ath_crypto` crate ────────────
 //
 // These were XOR-toy stubs until 2026-06-11 (the key schedule produced
 // meaningless secrets, so the "handshake" couldn't agree keys with any real
 // peer — Audit.md / codebase_review "compiled but inert"). They now delegate
-// to `rae_crypto`'s KAT-proven SHA-256 (RFC 6234), HKDF (RFC 5869), and
+// to `ath_crypto`'s KAT-proven SHA-256 (RFC 6234), HKDF (RFC 5869), and
 // X25519 (RFC 7748). The record-layer AEAD already used real
 // ChaCha20-Poly1305 via `crate::crypto`.
 
 /// Streaming SHA-256 for the handshake transcript hash.
 #[derive(Clone)]
 pub struct Sha256 {
-    ctx: rae_crypto::sha256::Sha256,
+    ctx: ath_crypto::sha256::Sha256,
 }
 
 impl Sha256 {
     pub fn new() -> Self {
         Self {
-            ctx: rae_crypto::sha256::Sha256::new(),
+            ctx: ath_crypto::sha256::Sha256::new(),
         }
     }
     pub fn init(&mut self) {
-        self.ctx = rae_crypto::sha256::Sha256::new();
+        self.ctx = ath_crypto::sha256::Sha256::new();
     }
     pub fn update(&mut self, data: &[u8]) {
         self.ctx.update(data);
@@ -58,11 +58,11 @@ pub fn verify_certificate(_cert: &X509Certificate, _issuer: &X509Certificate) ->
     false
 }
 
-/// HKDF (RFC 5869) over SHA-256, via rae_crypto.
+/// HKDF (RFC 5869) over SHA-256, via ath_crypto.
 pub struct Hkdf;
 impl Hkdf {
     pub fn extract(salt: &[u8], ikm: &[u8], _hash: &mut Sha256) -> Vec<u8> {
-        rae_crypto::sha256::hkdf_extract(salt, ikm).to_vec()
+        ath_crypto::sha256::hkdf_extract(salt, ikm).to_vec()
     }
     pub fn expand(secret: &[u8], info: &[u8], length: usize, _hash: &mut Sha256) -> Vec<u8> {
         // HKDF-Expand requires a 32-byte PRK; TLS 1.3 secrets are exactly the
@@ -71,23 +71,23 @@ impl Hkdf {
         let n = secret.len().min(32);
         prk[..n].copy_from_slice(&secret[..n]);
         let mut okm = vec![0u8; length];
-        rae_crypto::sha256::hkdf_expand(&prk, info, &mut okm);
+        ath_crypto::sha256::hkdf_expand(&prk, info, &mut okm);
         okm
     }
 }
 
-/// X25519 ECDHE (RFC 7748), via rae_crypto.
+/// X25519 ECDHE (RFC 7748), via ath_crypto.
 pub struct X25519;
 impl X25519 {
     pub fn generate_keypair() -> ([u8; 32], [u8; 32]) {
         let mut secret = [0u8; 32];
         getrandom(&mut secret);
-        // RFC 7748 clamping is applied inside rae_crypto::x25519.
-        let public = rae_crypto::x25519::public_key(&secret);
+        // RFC 7748 clamping is applied inside ath_crypto::x25519.
+        let public = ath_crypto::x25519::public_key(&secret);
         (secret, public)
     }
     pub fn shared_secret(private: &[u8; 32], public: &[u8; 32]) -> [u8; 32] {
-        rae_crypto::x25519::diffie_hellman(private, public)
+        ath_crypto::x25519::diffie_hellman(private, public)
     }
 }
 
@@ -612,7 +612,7 @@ pub struct TlsConnection {
     /// silently accept any peer (a textbook MITM). Only the in-kernel loopback
     /// self-test (which is its own server) opts out, since it is exercising the
     /// record/key-agreement layer, not PKI. Real outbound TLS must route through
-    /// the verifying `raenet` `tls13` path before this can be relaxed.
+    /// the verifying `athnet` `tls13` path before this can be relaxed.
     pub allow_unverified: bool,
     pub stats: TlsStats,
 }
@@ -1275,11 +1275,11 @@ impl TlsConnection {
         // X.509 chain or verify this CertificateVerify signature, so accepting it
         // (the old `Ok(())`) silently trusts ANY peer — a MITM. Refuse unless the
         // caller explicitly opted out (the loopback self-test, which is its own
-        // server). Real outbound TLS must move to the verifying raenet tls13 path.
+        // server). Real outbound TLS must move to the verifying athnet tls13 path.
         if self.role == TlsRole::Client && !self.allow_unverified {
             crate::serial_println!(
                 "[tls] CertificateVerify REJECTED: in-kernel cert validation not implemented; \
-                 failing closed (no silent MITM). Route outbound TLS via raenet tls13."
+                 failing closed (no silent MITM). Route outbound TLS via athnet tls13."
             );
             return Err(TlsError::CertificateError(
                 "server certificate not validated (kernel TLS fails closed)",
@@ -1399,7 +1399,7 @@ impl TlsConnection {
     /// SHA-256("") — the transcript-hash context for Derive-Secret labels
     /// taken before any handshake message is hashed (RFC 8446 §7.1 "derived").
     fn empty_transcript_hash() -> Vec<u8> {
-        rae_crypto::sha256::sha256(&[]).to_vec()
+        ath_crypto::sha256::sha256(&[]).to_vec()
     }
 
     fn key_schedule_derive(secret: &[u8], label: &str, context: &[u8], length: usize) -> Vec<u8> {
@@ -1653,7 +1653,7 @@ pub fn connection_state(conn_id: usize) -> Option<TlsState> {
 // connected by a loopback (no socket): ClientHello → ServerHello (real
 // X25519 ECDHE) → key schedule → both sides derive APPLICATION traffic
 // keys, then the client encrypts an app record the server decrypts back to
-// the original plaintext. This proves the real (rae_crypto) key schedule
+// the original plaintext. This proves the real (ath_crypto) key schedule
 // agrees keys end-to-end and the ChaCha20-Poly1305 record layer round-trips
 // — i.e. the handshake is no longer a ClientHello-only stub.
 //
@@ -1739,7 +1739,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-// ── /proc/raeen/tls ────────────────────────────────────────────────────
+// ── /proc/athena/tls ────────────────────────────────────────────────────
 
 pub fn dump_text() -> alloc::string::String {
     use alloc::string::String;

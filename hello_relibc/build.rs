@@ -6,7 +6,7 @@ fn main() {
     let root = manifest_dir.parent().expect("workspace root");
     let relibc_out = root
         .join("components")
-        .join("raebridge")
+        .join("athbridge")
         .join("relibc")
         .join("target")
         .join("x86_64-unknown-none")

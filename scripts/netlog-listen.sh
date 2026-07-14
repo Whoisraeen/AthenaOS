@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# netlog-listen.sh - receive RaeenOS's end-of-boot UDP bootlog broadcast (Linux).
+# netlog-listen.sh - receive AthenaOS's end-of-boot UDP bootlog broadcast (Linux).
 #
 # The kernel broadcasts the in-RAM boot-log ring to 255.255.255.255:51514 as
 # chunked datagrams (kernel/src/netlog.rs). This binds that port, reassembles

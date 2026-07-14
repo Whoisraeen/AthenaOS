@@ -203,7 +203,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/netlog` — counters for the broadcast log channel.
+/// `/proc/athena/netlog` — counters for the broadcast log channel.
 pub fn dump_text() -> String {
     alloc::format!(
         "# netlog (UDP-broadcast bootlog, port {})\nboot_id: {:#010x}\nframes_sent: {}\nsnapshots_sent: {}\nlast_snapshot_bytes: {}\n",

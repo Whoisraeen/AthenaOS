@@ -1,6 +1,6 @@
 # Visual-QA Critique — Desktop/Shell iteration — 2026-06-17
 
-> raeen-visual-qa. Boots it, screenshots it, compares it to the spec and to the
+> athena-visual-qa. Boots it, screenshots it, compares it to the spec and to the
 > best desktops in the world, says precisely what's wrong. No UI code written —
 > see, compare, report.
 
@@ -11,7 +11,7 @@
   in, confirmed) did NOT bring the desktop up: its auto-advance thread produced
   **zero serial output** (not even its unconditional log line). So the
   taskbar / Start / tray / window-chrome critique the brief asked for is
-  **BLOCKED** and handed to raeen-verifier + raeen-debugger.
+  **BLOCKED** and handed to athena-verifier + athena-debugger.
 - I captured the furthest clean frame (the OOBE card) and critiqued every chrome
   surface it shares with the desktop: AA Inter type, glass card material, accent
   button, input fields, drop shadow, corner radius, accent usage.
@@ -75,8 +75,8 @@ be screenshotted headlessly today:
   `[PAGE FAULT] Killing faulting task T1` — user_init — in the same boot;
   unclear if related.)
 
-**Owner: raeen-verifier (reproduce: feature compiled, thread silent) +
-raeen-debugger (root-cause why the BSP-pinned auto-advance thread never executes
+**Owner: athena-verifier (reproduce: feature compiled, thread silent) +
+athena-debugger (root-cause why the BSP-pinned auto-advance thread never executes
 while the HID thread does).** Until this is fixed, no desktop-shell screenshot
 exists and the taskbar/Start/tray polish cannot be visually verified — only the
 boot-log smoketests assert it.
@@ -102,7 +102,7 @@ boot-log smoketests assert it.
 
 ## Findings (ranked by visual impact — each actionable)
 
-### 1. Drop shadow is a hard opaque offset block, not a soft shadow — owner: raeen-gfx
+### 1. Drop shadow is a hard opaque offset block, not a soft shadow — owner: athena-gfx
 - **Surface:** OOBE card (and, by shared code, every `elev.*` surface — windows,
   flyouts, Start, toasts).
 - **Observed:** below the card bottom edge (y=647) the pixel snaps to a flat
@@ -123,7 +123,7 @@ boot-log smoketests assert it.
   reads as a flat sticker with a colored ledge — the dominant "not premium"
   signal now that type is fixed.
 
-### 2. Headings/labels rendered in blue instead of neutral text tokens — owner: raeen-ui (+ raeen-shell-apps for the surface)
+### 2. Headings/labels rendered in blue instead of neutral text tokens — owner: athena-ui (+ athena-shell-apps for the surface)
 - **Surface:** OOBE card title, subtitle, and field labels (shared chrome
   pattern — likely affects Settings group headers and other labels too).
 - **Observed:** title "Welcome to AthenaOS" stems measure `(115,134,167)` — a
@@ -135,9 +135,9 @@ boot-log smoketests assert it.
   (design-language §1 "restraint in chrome color", §4.3). Coloring static labels
   with the accent is exactly the macOS/Win11 lesson the spec warns against, and
   it also risks the AA `text.secondary` ≥4.5:1 contrast target
-  (flag raeen-accessibility).
+  (flag athena-accessibility).
 
-### 3. Focused field has a ring but no focus glow — owner: raeen-gfx (glow) / raeen-ui (token wiring)
+### 3. Focused field has a ring but no focus glow — owner: athena-gfx (glow) / athena-ui (token wiring)
 - **Surface:** focused username field (and every focusable control by extension).
 - **Observed:** the focused field shows a ~1px accent border only.
 - **Should be:** `elev.focus` = additive `accent.glow` (`0x66_4E_9C_FF`, radius
@@ -145,7 +145,7 @@ boot-log smoketests assert it.
   a glow + ring, never a bare 1px color change — this is both a premium cue and an
   a11y requirement. Currently indistinguishable-at-a-glance from a plain border.
 
-### 4. Title weight reads heavy and letter-spacing is uneven — owner: raeen-ui
+### 4. Title weight reads heavy and letter-spacing is uneven — owner: athena-ui
 - **Surface:** title "Welcome to AthenaOS" (`type.title` = 22px / weight 600).
 - **Observed (3× zoom):** stems look a touch bold/dark for 600 at 22px, and the
   caps run "AthenaOS" shows uneven inter-letter spacing; the word "to" sits a hair
@@ -153,10 +153,10 @@ boot-log smoketests assert it.
   the wrong static weight instance / missing kerning pair application.
 - **Should be:** gamma-correct grayscale blend (typography-rendering spec), the
   600 instance (not a faux-bolded 500), and `kern`-table pair kerning applied
-  (raefont parses `kern`). Letter-spacing 0 for titles (design-language §6).
+  (athfont parses `kern`). Letter-spacing 0 for titles (design-language §6).
   Verify the AA gamma constant and that the shaper is applying kerning.
 
-### 5. Card corner radius slightly tight + reads faintly polygonal — owner: raeen-gfx
+### 5. Card corner radius slightly tight + reads faintly polygonal — owner: athena-gfx
 - **Surface:** OOBE card corners.
 - **Observed:** top-left corner curve spans ~18px (x 364→346 over y 152→170);
   the curve is acceptable but a touch faceted at 3× and below the spec value.

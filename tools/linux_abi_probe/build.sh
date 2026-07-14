@@ -10,9 +10,9 @@
 # Usage (on a Linux host, from this directory):
 #   ./build.sh
 # Or remotely from the dev box:
-#   scp probe.c whoisraeen@192.168.1.244:/tmp/ && \
-#   ssh whoisraeen@192.168.1.244 'cd /tmp && bash -s' < build.sh && \
-#   scp whoisraeen@192.168.1.244:/tmp/linux_abi_probe.elf .
+#   scp probe.c whoisathena@192.168.1.244:/tmp/ && \
+#   ssh whoisathena@192.168.1.244 'cd /tmp && bash -s' < build.sh && \
+#   scp whoisathena@192.168.1.244:/tmp/linux_abi_probe.elf .
 set -euo pipefail
 
 SRC="${1:-probe.c}"

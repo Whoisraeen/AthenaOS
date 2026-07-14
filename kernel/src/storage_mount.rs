@@ -6,7 +6,7 @@
 //! Also provides `discover_boot_disk()` / `get_boot_disk()` — a one-time scan
 //! that records device type, partition table type, sector count, and whether an
 //! ESP and/or a AthFS partition are present. The result is cached in
-//! `BOOT_DISK_INFO` and surfaced in `/proc/raeen/storage`.
+//! `BOOT_DISK_INFO` and surfaced in `/proc/athena/storage`.
 
 #![allow(dead_code)]
 
@@ -23,14 +23,14 @@ use alloc::string::String;
 pub struct BootDiskInfo {
     /// Human-readable driver name: "nvme", "ahci", "virtio-blk", or "unknown".
     pub device_type: &'static str,
-    /// Partition layout: "gpt", "mbr", "raefs-raw", or "unknown".
+    /// Partition layout: "gpt", "mbr", "athfs-raw", or "unknown".
     pub table_type: &'static str,
     /// Total 512-byte sector count reported by the device.
     pub sector_count: u64,
     /// Whether an EFI System Partition (GUID C12A7328-...) was found.
     pub has_esp: bool,
-    /// Whether a AthFS partition (type 0xDA / RAEFS GUID) was found.
-    pub has_raefs: bool,
+    /// Whether a AthFS partition (type 0xDA / ATHFS GUID) was found.
+    pub has_athfs: bool,
 }
 
 /// Cached result of the most recent `discover_boot_disk()` call.
@@ -73,11 +73,11 @@ fn infer_device_type() -> &'static str {
 
 /// Check whether the first 8 bytes of a sector carry the AthFS magic
 /// 0x526165465321 ("AthFS!"), stored as a little-endian u64.
-fn has_raefs_magic(sector_buf: &[u8]) -> bool {
+fn has_athfs_magic(sector_buf: &[u8]) -> bool {
     if sector_buf.len() < 8 {
         return false;
     }
-    const RAEFS_MAGIC: u64 = 0x526165465321;
+    const ATHFS_MAGIC: u64 = 0x526165465321;
     let v = u64::from_le_bytes([
         sector_buf[0],
         sector_buf[1],
@@ -88,7 +88,7 @@ fn has_raefs_magic(sector_buf: &[u8]) -> bool {
         sector_buf[6],
         sector_buf[7],
     ]);
-    v == RAEFS_MAGIC
+    v == ATHFS_MAGIC
 }
 
 // ─── discover_boot_disk ───────────────────────────────────────────────────────
@@ -118,18 +118,18 @@ pub fn discover_boot_disk() -> Option<BootDiskInfo> {
 
     // ── Check for a bare AthFS volume (no partition table) ──────────────────
     if matches!(pt, PartitionTableType::None | PartitionTableType::Unknown) {
-        if has_raefs_magic(&lba0) {
+        if has_athfs_magic(&lba0) {
             let info = BootDiskInfo {
                 device_type,
-                table_type: "raefs-raw",
+                table_type: "athfs-raw",
                 sector_count,
                 has_esp: false,
-                has_raefs: true,
+                has_athfs: true,
             };
             crate::serial_println!(
-                "[storage] boot disk: {} {} sectors={} esp=false raefs=true",
+                "[storage] boot disk: {} {} sectors={} esp=false athfs=true",
                 device_type,
-                "raefs-raw",
+                "athfs-raw",
                 sector_count
             );
             *BOOT_DISK_INFO.lock() = Some(info);
@@ -140,7 +140,7 @@ pub fn discover_boot_disk() -> Option<BootDiskInfo> {
     // ── Parse partitions ─────────────────────────────────────────────────────
     let table_type: &'static str;
     let mut has_esp = false;
-    let mut has_raefs = false;
+    let mut has_athfs = false;
 
     match pt {
         PartitionTableType::Gpt => {
@@ -179,7 +179,7 @@ pub fn discover_boot_disk() -> Option<BootDiskInfo> {
                     for p in &parts {
                         match p.partition_type {
                             PartitionType::Efi => has_esp = true,
-                            PartitionType::RaeFs => has_raefs = true,
+                            PartitionType::RaeFs => has_athfs = true,
                             _ => {}
                         }
                     }
@@ -195,7 +195,7 @@ pub fn discover_boot_disk() -> Option<BootDiskInfo> {
                 for p in &parts {
                     match p.partition_type {
                         PartitionType::Efi => has_esp = true,
-                        PartitionType::RaeFs => has_raefs = true,
+                        PartitionType::RaeFs => has_athfs = true,
                         _ => {}
                     }
                 }
@@ -212,16 +212,16 @@ pub fn discover_boot_disk() -> Option<BootDiskInfo> {
         table_type,
         sector_count,
         has_esp,
-        has_raefs,
+        has_athfs,
     };
 
     crate::serial_println!(
-        "[storage] boot disk: {} {} sectors={} esp={} raefs={}",
+        "[storage] boot disk: {} {} sectors={} esp={} athfs={}",
         device_type,
         table_type,
         sector_count,
         has_esp,
-        has_raefs
+        has_athfs
     );
 
     *BOOT_DISK_INFO.lock() = Some(info);
@@ -233,11 +233,11 @@ pub fn get_boot_disk() -> Option<BootDiskInfo> {
     *BOOT_DISK_INFO.lock()
 }
 
-// ─── try_mount_raefs_root ─────────────────────────────────────────────────────
+// ─── try_mount_athfs_root ─────────────────────────────────────────────────────
 
 /// Scan sector 0 of the active block device, find a AthFS partition, and mount.
 /// Returns `true` if AthFS mounted from a partition.
-pub fn try_mount_raefs_root() -> bool {
+pub fn try_mount_athfs_root() -> bool {
     crate::serial_println!("[storage] scanning active block device for AthFS partition...");
     let active = block_io::ACTIVE_BLOCK_DEVICE.lock();
     let dev = match active.as_ref() {
@@ -312,8 +312,8 @@ pub fn try_mount_raefs_root() -> bool {
     drop(active);
 
     for part in &partitions {
-        let is_raefs = part.partition_type == PartitionType::RaeFs;
-        if !is_raefs {
+        let is_athfs = part.partition_type == PartitionType::RaeFs;
+        if !is_athfs {
             continue;
         }
         crate::serial_println!(
@@ -326,7 +326,7 @@ pub fn try_mount_raefs_root() -> bool {
 
         *block_io::ROOT_PARTITION_LBA.lock() = part.start_sector;
 
-        if let Some(fs) = crate::raefs::AthFS::mount() {
+        if let Some(fs) = crate::athfs::AthFS::mount() {
             crate::serial_println!(
                 "[storage] AthFS mounted from partition {} @ LBA {}",
                 part.number,
@@ -359,12 +359,12 @@ pub fn run_boot_smoketest() {
     match get_boot_disk() {
         Some(info) => {
             crate::serial_println!(
-                "[storage] smoketest: device={} table={} sectors={} esp={} raefs={}",
+                "[storage] smoketest: device={} table={} sectors={} esp={} athfs={}",
                 info.device_type,
                 info.table_type,
                 info.sector_count,
                 info.has_esp,
-                info.has_raefs
+                info.has_athfs
             );
         }
         None => {
@@ -373,7 +373,7 @@ pub fn run_boot_smoketest() {
     }
 }
 
-/// Render boot-disk info as text for `/proc/raeen/storage`.
+/// Render boot-disk info as text for `/proc/athena/storage`.
 pub fn dump_text() -> String {
     let mut out = String::new();
     match get_boot_disk() {
@@ -385,7 +385,7 @@ pub fn dump_text() -> String {
             let size_mb = info.sector_count / 2048;
             out.push_str(&alloc::format!("  Size:         {} MiB\n", size_mb));
             out.push_str(&alloc::format!("  Has ESP:      {}\n", info.has_esp));
-            out.push_str(&alloc::format!("  Has AthFS:    {}\n", info.has_raefs));
+            out.push_str(&alloc::format!("  Has AthFS:    {}\n", info.has_athfs));
         }
         None => {
             out.push_str("Boot Disk Info: <not yet discovered>\n");

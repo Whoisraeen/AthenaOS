@@ -7,7 +7,7 @@ authors.workspace = true
 repository.workspace = true
 
 # Library target: the app's state + draw path + the syscall-free PIM MODEL
-# (`PimModel`) so a host KAT can link the LIVE engine (rae_pim) with no kernel.
+# (`PimModel`) so a host KAT can link the LIVE engine (ath_pim) with no kernel.
 # This is the structure `apps/files` and `apps/passwords` use.
 [lib]
 name = "calendar"
@@ -25,18 +25,18 @@ path = "src/main.rs"
 test = false
 
 [features]
-# Forwards to `raekit/host`: lets the std `cargo test` harness link `calendar`
-# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# Forwards to `athkit/host`: lets the std `cargo test` harness link `calendar`
+# (-> `athkit`) without athkit's bare-ELF lang items colliding with std (E0152
 # duplicate panic_impl). The normal `cargo build -p calendar --target
 # x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
 # with `cargo test -p calendar --features host`.
-host = ["raekit/host"]
+host = ["athkit/host"]
 
 [dependencies]
-raegfx = { path = "../../components/raegfx" }
-raekit = { path = "../../components/raekit" }
-rae_tokens = { path = "../../components/rae_tokens" }
+athgfx = { path = "../../components/athgfx" }
+athkit = { path = "../../components/athkit" }
+ath_tokens = { path = "../../components/ath_tokens" }
 # The LIVE, already-host-KAT'd PIM engine: iCalendar (.ics) + vCard (.vcf)
 # parsers, the RRULE recurrence expander, civil date math, and the POSIX
 # timezone engine. This app is the clickable shell over it.
-rae_pim = { path = "../../components/rae_pim" }
+ath_pim = { path = "../../components/ath_pim" }

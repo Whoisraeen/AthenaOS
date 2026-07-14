@@ -593,7 +593,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// Freelist-guard status snapshot for `/proc/raeen/heap_guard`. Never exposes
+/// Freelist-guard status snapshot for `/proc/athena/heap_guard`. Never exposes
 /// the cookie value.
 pub fn freelist_guard_stats() -> linked_list_allocator::GuardStats {
     linked_list_allocator::guard_stats()

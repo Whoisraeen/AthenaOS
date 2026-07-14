@@ -1,15 +1,15 @@
 # Real amdgpu on AthenaOS — two walls broken, PSP is a passthrough limit (2026-07-08)
 
-**Session result:** the real upstream amdgpu C (Strategy B, `RAEEN_AMDGPU_REAL=1`),
+**Session result:** the real upstream amdgpu C (Strategy B, `ATHENA_AMDGPU_REAL=1`),
 running under the LinuxKPI shim in a VFIO GPU-passthrough KVM guest on Athena
 (Phoenix1 `1002:15bf`), was driven **from "dies at device claim" all the way to
 PSP `hw_init`** — the deepest the real driver has ever run on AthenaOS. Two walls
 were broken; the third (PSP) is proven to be a VFIO-APU-passthrough limitation,
 not a code bug.
 
-Harness: `~/raeen-vm/run-vfio.sh` on Athena (Arch host, GPU cold-bound to
-vfio-pci via the `arch-linux-vfio` UKI), auto-run by the `raeen-vfio-test`
-systemd oneshot, serial captured to `/tmp/raeen-serial.log`. Iron transcripts:
+Harness: `~/athena-vm/run-vfio.sh` on Athena (Arch host, GPU cold-bound to
+vfio-pci via the `arch-linux-vfio` UKI), auto-run by the `athena-vfio-test`
+systemd oneshot, serial captured to `/tmp/athena-serial.log`. Iron transcripts:
 `logs/` (`serial-vfio-cap4` = the furthest run).
 
 ## Wall 1 — capability gate (BROKEN)
@@ -60,9 +60,9 @@ Two attempts, one decisive result:
 **Proof:** `[drm] ATOM BIOS: 113-PHXGENERIC-001` (the oracle value) — amdgpu
 accepted the ATOMBIOS.
 
-Fix files: `components/raeen_linuxkpi/src/lib.rs` (`vfct_native_bdf`),
+Fix files: `components/ath_linuxkpi/src/lib.rs` (`vfct_native_bdf`),
 `amdgpud/src/main.rs` (pass native BDF to bring-up),
-`components/raeen_linuxkpi/src/drm_bringup.rs` (served-copy alignment +
+`components/ath_linuxkpi/src/drm_bringup.rs` (served-copy alignment +
 `set_vfct_bdf` belt-and-suspenders).
 
 ## How far cap4 reached (deepest ever)
@@ -109,7 +109,7 @@ limitation, independent of AthenaOS.
 
 ## Next step — bare-metal AthenaOS (the real PSP test)
 
-Boot the same `--safe` `RAEEN_AMDGPU_REAL=1` image on Athena **bare metal** (USB
+Boot the same `--safe` `ATHENA_AMDGPU_REAL=1` image on Athena **bare metal** (USB
 per §9): AthenaOS then owns the whole SoC, the firmware cold-inits the PSP (SOS
 loaded), and amdgpu inits its rings against a PSP it fully controls — the same
 ownership the working host driver has. The cap-gate and VBIOS fixes carry over

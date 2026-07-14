@@ -84,7 +84,7 @@ Every row maps to a submodule of the boundary from the prior spec. "Seam exists?
 | GIC version | `-M virt` defaults to **GICv3**; force with `gic-version=3` (or `=2` if v3 init is harder to bring up first) | recommend pinning `gic-version=3` for determinism |
 | Firmware (UEFI path) | **`edk2-aarch64-code.fd`** mapped `if=pflash,readonly=on` (+ a writable `vars` pflash) | present in QEMU share dir; mirrors the existing x86 OVMF `if=pflash` handling (main.rs:696) |
 | First-light boot (Stage 1–3) | **`-kernel target/aarch64-unknown-none-softfloat/release/kernel`** — QEMU loads the ELF and jumps to `_start` at EL1, no firmware needed | the shortest path to a serial marker; defer UEFI to Stage 4 |
-| Serial | PL011 → `-serial file:$TEMP/raeen-serial.log` (the SAME path the x86 CI loop reads) | xtask already writes there (main.rs:810) |
+| Serial | PL011 → `-serial file:$TEMP/athena-serial.log` (the SAME path the x86 CI loop reads) | xtask already writes there (main.rs:810) |
 | CI exit | poll the serial log for the success/PANIC marker and kill QEMU (no isa-debug-exit on virt) | the existing `--ci` loop already does marker-polling; ARM just lacks the *extra* hard-exit device |
 
 ### Exact xtask changes (Phase 1 of the prior spec, made concrete)
@@ -111,14 +111,14 @@ Each stage names the exact serial line that proves it. **x86_64 stays GREEN at e
 
 | Stage | Goal | Implementer | The boot-log line that proves it |
 |---|---|---|---|
-| **S0** | Land the `arch/` boundary (re-export shells → body moves); **x86_64 boots byte-identically**. | raeen-architect (mod.rs surface) + raeen-kernel (moves) | x86 QEMU still prints `[ OS ] System successfully booted.`, all PASS lines unchanged, `[BOOT-BENCH]` not regressed. *(This is Phase 0 of the prior spec — its gate is the prerequisite for everything below.)* |
-| **S0.1** | xtask `--arch` + per-arch target/QEMU/firmware wiring; default stays x86_64. | raeen-architect | `xtask build` (no flag) unchanged; `xtask build --arch=aarch64` invokes the right triple (may fail-to-link until S1 — acceptable). |
-| **S1** | **First light.** `_start` (EL1) → `arch::aarch64::serial::init` (PL011 @ 0x0900_0000) → one marker → `wfi` loop. No MMU, no exceptions, no heap. Built `--target aarch64-unknown-none-softfloat`, run with `-kernel`. | **raeen-arch** | `qemu-system-aarch64 -M virt` serial shows **`[arch:aarch64] PL011 up — AthKernel first light (EL1)`** then idles — no repeating fault, no reset. |
-| **S2** | **MMU + heap.** Build EL1 translation tables (identity-map the PL011 + RAM, set TCR_EL1/MAIR_EL1/TTBR1_EL1, enable SCTLR_EL1.M), then init the existing linked-list heap on the ARM memory map. | raeen-arch | serial shows **`[arch:aarch64] MMU on (TTBR1_EL1, 4KiB/48-bit) — heap up`** and a post-MMU `alloc` test line (`[arch:aarch64] heap alloc/free -> PASS`). |
-| **S3** | **Exceptions + timer + GIC.** Install VBAR_EL1 vector table; init GICv3 (distributor + redistributor + ICC sysregs); program the generic timer (CNTP_TVAL_EL0) for a periodic tick; take + EOI ≥3 ticks. | raeen-arch | serial shows **`[arch:aarch64] VBAR+GICv3+generic-timer online -> PASS (ticks=3)`** and survives without an exception loop (no repeating `ESR_EL1`/`FAR_EL1`). |
-| **S4** | **Arch-neutral smoketests + boot marker.** Build via UEFI (edk2-aarch64-code.fd → `BootHandoff` from GOP + UEFI memmap + ACPI RSDP). Run the generic R10 smoketests that are silicon-independent (crypto KAT, scheduler spawn, vfs, raefs in-memory) and reach the success marker. | raeen-arch + raeen-kernel | serial shows **`[ OS ] System successfully booted.`** plus the SAME generic-module PASS lines x86 prints (`[crypto] … -> PASS`, `[sched] … -> PASS`). `--ci` exits 0 via marker-poll. |
-| **S5** | **Install on aarch64** (Goal #3's third verb). GPT + ESP + AthFS mkfs on a QEMU virtio-blk disk, write→readback under the safe-mode guard, reach the installer marker. | raeen-arch + raeen-fs | serial shows the existing installer proof line on aarch64 (`[installer] AthFS mkfs + ESP written -> PASS`) — proving boot+run+**install** all three on ARM. |
-| **S6** *(stretch)* | **SMP + desktop.** PSCI `CPU_ON` for secondaries; reach the compositor/desktop. (Deferred — see Risks; not required for the Goal #3 "boot+run+install" bar.) | raeen-arch | `[smp] aarch64 N CPUs online via PSCI -> PASS`; later a composited frame. |
+| **S0** | Land the `arch/` boundary (re-export shells → body moves); **x86_64 boots byte-identically**. | athena-architect (mod.rs surface) + athena-kernel (moves) | x86 QEMU still prints `[ OS ] System successfully booted.`, all PASS lines unchanged, `[BOOT-BENCH]` not regressed. *(This is Phase 0 of the prior spec — its gate is the prerequisite for everything below.)* |
+| **S0.1** | xtask `--arch` + per-arch target/QEMU/firmware wiring; default stays x86_64. | athena-architect | `xtask build` (no flag) unchanged; `xtask build --arch=aarch64` invokes the right triple (may fail-to-link until S1 — acceptable). |
+| **S1** | **First light.** `_start` (EL1) → `arch::aarch64::serial::init` (PL011 @ 0x0900_0000) → one marker → `wfi` loop. No MMU, no exceptions, no heap. Built `--target aarch64-unknown-none-softfloat`, run with `-kernel`. | **athena-arch** | `qemu-system-aarch64 -M virt` serial shows **`[arch:aarch64] PL011 up — AthKernel first light (EL1)`** then idles — no repeating fault, no reset. |
+| **S2** | **MMU + heap.** Build EL1 translation tables (identity-map the PL011 + RAM, set TCR_EL1/MAIR_EL1/TTBR1_EL1, enable SCTLR_EL1.M), then init the existing linked-list heap on the ARM memory map. | athena-arch | serial shows **`[arch:aarch64] MMU on (TTBR1_EL1, 4KiB/48-bit) — heap up`** and a post-MMU `alloc` test line (`[arch:aarch64] heap alloc/free -> PASS`). |
+| **S3** | **Exceptions + timer + GIC.** Install VBAR_EL1 vector table; init GICv3 (distributor + redistributor + ICC sysregs); program the generic timer (CNTP_TVAL_EL0) for a periodic tick; take + EOI ≥3 ticks. | athena-arch | serial shows **`[arch:aarch64] VBAR+GICv3+generic-timer online -> PASS (ticks=3)`** and survives without an exception loop (no repeating `ESR_EL1`/`FAR_EL1`). |
+| **S4** | **Arch-neutral smoketests + boot marker.** Build via UEFI (edk2-aarch64-code.fd → `BootHandoff` from GOP + UEFI memmap + ACPI RSDP). Run the generic R10 smoketests that are silicon-independent (crypto KAT, scheduler spawn, vfs, athfs in-memory) and reach the success marker. | athena-arch + athena-kernel | serial shows **`[ OS ] System successfully booted.`** plus the SAME generic-module PASS lines x86 prints (`[crypto] … -> PASS`, `[sched] … -> PASS`). `--ci` exits 0 via marker-poll. |
+| **S5** | **Install on aarch64** (Goal #3's third verb). GPT + ESP + AthFS mkfs on a QEMU virtio-blk disk, write→readback under the safe-mode guard, reach the installer marker. | athena-arch + athena-fs | serial shows the existing installer proof line on aarch64 (`[installer] AthFS mkfs + ESP written -> PASS`) — proving boot+run+**install** all three on ARM. |
+| **S6** *(stretch)* | **SMP + desktop.** PSCI `CPU_ON` for secondaries; reach the compositor/desktop. (Deferred — see Risks; not required for the Goal #3 "boot+run+install" bar.) | athena-arch | `[smp] aarch64 N CPUs online via PSCI -> PASS`; later a composited frame. |
 
 **Sequencing:** S0 gates everything. S1→S2→S3 are strictly serial (each needs the prior). S4 needs S3 (timer/interrupts for the scheduler) + the UEFI entry. S5 needs S4. S6 is independent stretch after S4.
 
@@ -133,7 +133,7 @@ This restates the prior spec's mechanism only where it bears on the aarch64 migr
 - **Migration order that never breaks x86 (the critical constraint):**
   1. **Boundary lands as re-export shells** — `arch/x86_64/*.rs` initially just `pub use crate::<oldmod>::*;`. Zero code motion, zero behavior change, x86 boots byte-identically. *(prior spec, first commit.)*
   2. **Bodies move one module at a time**, each re-verified against the S0 gate (x86 boot unchanged, ≥5 boots SMP=1 and SMP=2 per CLAUDE.md §10.17).
-  3. **aarch64 backend is purely additive** — it lives in `arch/aarch64/` and only compiles under `cfg(target_arch="aarch64")`. **It can never regress an x86 build** because the x86 build never compiles it. This is the safety property that lets raeen-arch iterate freely on ARM while x86 iron work continues in parallel.
+  3. **aarch64 backend is purely additive** — it lives in `arch/aarch64/` and only compiles under `cfg(target_arch="aarch64")`. **It can never regress an x86 build** because the x86 build never compiles it. This is the safety property that lets athena-arch iterate freely on ARM while x86 iron work continues in parallel.
 - **The `arch::io` addition** (new vs prior spec): port-I/O call sites (`x86_64::instructions::port::Port`) that are NOT inside an already-moved backend module need either an `arch::io` shim (x86 = real PIO, aarch64 = `unreachable!()`/MMIO ECAM) or a `#[cfg(target_arch="x86_64")]` guard. Inventory the residual `Port` uses during S0 body-moves and route them; this is the one place the boundary surface grows.
 
 ---
@@ -165,10 +165,10 @@ This restates the prior spec's mechanism only where it bears on the aarch64 migr
 
 ## Interface needs (NEEDS-INTERFACE)
 
-For **raeen-architect**:
+For **athena-architect**:
 
-- **None in `rae_abi` for any of S0–S5.** The arch boundary is an internal kernel module surface; syscall *numbers* are arch-neutral. (Per the prior spec, revisit `rae_abi` only if the aarch64 *userspace* syscall calling convention diverges — not relevant until userspace runs on ARM, post-S5.)
-- raeen-architect owns the **xtask `--arch` flag** + per-arch target/QEMU/firmware wiring (Section 2). Structural commit, not `[interface]`.
+- **None in `ath_abi` for any of S0–S5.** The arch boundary is an internal kernel module surface; syscall *numbers* are arch-neutral. (Per the prior spec, revisit `ath_abi` only if the aarch64 *userspace* syscall calling convention diverges — not relevant until userspace runs on ARM, post-S5.)
+- athena-architect owns the **xtask `--arch` flag** + per-arch target/QEMU/firmware wiring (Section 2). Structural commit, not `[interface]`.
 - New (vs prior spec): the **`arch::io` shim** signature (x86 PIO / aarch64 no-op) — internal `arch` surface, architect to fold into `arch/mod.rs`.
 
 ---
@@ -192,7 +192,7 @@ For **raeen-architect**:
 - **S3:** serial MUST show `[arch:aarch64] VBAR+GICv3+generic-timer online -> PASS (ticks=3)` asserting ≥3 timer IRQs taken + EOI'd.
 - **S4:** serial MUST show `[ OS ] System successfully booted.` plus the arch-neutral KAT PASS lines (`[crypto] … -> PASS`, `[sched] … -> PASS`); `--ci` MUST exit 0.
 - **S5:** serial MUST show `[installer] AthFS mkfs + ESP written -> PASS` on aarch64 (boot+run+install, all three, proving Goal #3 on ARM).
-- **`/proc/raeen/arch` MUST report** (new arch-neutral procfs line in `vfs.rs`, populated from `arch::cpu`/`arch::time`): `arch: aarch64`, `cpus_online: <n>`, `page_size: 4096`, `interrupt_controller: GICv3`, `timer: generic`.
+- **`/proc/athena/arch` MUST report** (new arch-neutral procfs line in `vfs.rs`, populated from `arch::cpu`/`arch::time`): `arch: aarch64`, `cpus_online: <n>`, `page_size: 4096`, `interrupt_controller: GICv3`, `timer: generic`.
 - **x86 no-regression at every stage:** the x86 CI boot MUST be byte-identical (S0 gate) — aarch64 stages cannot change it because the x86 build never compiles `arch/aarch64`.
 - **Docstring:** `arch/aarch64/mod.rs` MUST quote the §Thesis "third path / locked behind Apple silicon" promise.
 
@@ -200,9 +200,9 @@ For **raeen-architect**:
 
 ## Handoff
 
-- **Named hand-off — who starts Stage 1:** the **raeen-arch** agent (new identity, ARM/i686 bring-up), **after** raeen-architect + raeen-kernel land S0 (the `arch/` boundary) and S0.1 (xtask `--arch`). raeen-arch cannot start S1 until `xtask build --arch=aarch64` produces an ELF.
-- **First raeen-arch commit (S1):** `arch(aarch64): PL011 first-light — _start, serial, wfi idle (no regression to x86)`. Purely additive under `cfg(target_arch="aarch64")`.
-- **Implementers per stage:** S0 = raeen-architect + raeen-kernel; S0.1 = raeen-architect; S1–S3 = raeen-arch; S4 = raeen-arch + raeen-kernel; S5 = raeen-arch + raeen-fs; S6 = raeen-arch.
+- **Named hand-off — who starts Stage 1:** the **athena-arch** agent (new identity, ARM/i686 bring-up), **after** athena-architect + athena-kernel land S0 (the `arch/` boundary) and S0.1 (xtask `--arch`). athena-arch cannot start S1 until `xtask build --arch=aarch64` produces an ELF.
+- **First athena-arch commit (S1):** `arch(aarch64): PL011 first-light — _start, serial, wfi idle (no regression to x86)`. Purely additive under `cfg(target_arch="aarch64")`.
+- **Implementers per stage:** S0 = athena-architect + athena-kernel; S0.1 = athena-architect; S1–S3 = athena-arch; S4 = athena-arch + athena-kernel; S5 = athena-arch + athena-fs; S6 = athena-arch.
 - **MasterChecklist lines to add — Phase 20 (Multi-arch reach):** 20.0 `arch/` boundary (x86 no-regression) · 20.1 xtask `--arch` · 20.2 aarch64 first light (S1) · 20.3 aarch64 MMU+heap (S2) · 20.4 aarch64 VBAR+GIC+timer (S3) · 20.5 aarch64 boot marker (S4) · 20.6 aarch64 install (S5) · 20.7 i686 boot marker · 20.8 aarch64 SMP/desktop (S6, stretch). Also unblocks the deferred MTE line (MTE needs an aarch64 backend first).
 
 ### The precise Stage 1 proof
@@ -225,7 +225,7 @@ Stage 1 passes iff the serial output contains:
 
 ```
 cargo run -p xtask --release -- run --arch=aarch64 --ci
-# → $TEMP/raeen-serial.log contains the line above; no "PANIC".
+# → $TEMP/athena-serial.log contains the line above; no "PANIC".
 ```
 
 ---

@@ -8,7 +8,7 @@
 > with an in-flow markup toolbar, not a round-trip to an editor.
 
 **All tokens below are defined in [`design-language.md`](./design-language.md)**
-and live in `rae_tokens` (ADR 0003). This spec only *assigns* them. No new magic
+and live in `ath_tokens` (ADR 0003). This spec only *assigns* them. No new magic
 numbers; surface-specific layout dimensions are local constants from `space.*`.
 
 ---
@@ -35,11 +35,11 @@ not to build capture or markup from scratch.
 | Piece | Where | Today | This spec adds |
 |---|---|---|---|
 | **Compositor capture engine** | `kernel/src/compositor.rs::start_capture(rx,ry,rw,rh,format,continuous)->u64`, `read_capture(id)->Option<(Vec<u32>,w,h)>`, `stop_capture(id)`, `CaptureSession`, `CaptureFormat` | **LIVE** — region capture reads real composited pixels off the front buffer | the overlay calls `start_capture` for the selected region and `read_capture` to get the pixels (**wire to this; do not rebuild**) |
-| Screenshot tool (mode + flow) | `components/raeshell/src/screenshot.rs::ScreenshotTool` | LIVE data model, **unwired** (`allow(unused)`): `CaptureMode` (FullScreen/ActiveWindow/Rect/Freeform/Scrolling/Delayed), `start_capture`/`finish_capture`/`cancel`, `SelectionRegion` (drag + resize handles + state machine), `SnippingToolbar`, history, pin, keybindings | the dimmed overlay + action bar rendered over it, fed by the compositor pixels |
+| Screenshot tool (mode + flow) | `components/athshell/src/screenshot.rs::ScreenshotTool` | LIVE data model, **unwired** (`allow(unused)`): `CaptureMode` (FullScreen/ActiveWindow/Rect/Freeform/Scrolling/Delayed), `start_capture`/`finish_capture`/`cancel`, `SelectionRegion` (drag + resize handles + state machine), `SnippingToolbar`, history, pin, keybindings | the dimmed overlay + action bar rendered over it, fed by the compositor pixels |
 | Selection state machine | `screenshot.rs::SelectionRegion { state, x, y, width, height, anchor }` + `SelectionState` (Selecting/Selected/Moving/Resizing*) | LIVE | drives the §3 rectangle visuals + handles |
 | Markup model | `screenshot.rs::Annotation` + `AnnotationKind` (Pen/Arrow/Rectangle/Ellipse/Text/Blur/Pixelate/Highlight/NumberMarker), `AnnotationProperties` (line width, color, fill, opacity), undo | LIVE | the §5 markup toolbar drives these; rendering them onto the captured image |
 | Post-capture actions | `save_current` (→ history), `pin_current` (→ `PinnedScreenshot`, always-on-top), clipboard via `OutputSettings.auto_copy_clipboard` | LIVE | the §4 action bar buttons map to these |
-| Userspace `CaptureEngine` (recording/stream) | `components/raeshell/src/capture.rs` | LIVE (recording/stream + on-screen REC indicator) | **separate concern** — that's video capture; this spec is *still-image* capture. They share the compositor source but are distinct surfaces. |
+| Userspace `CaptureEngine` (recording/stream) | `components/athshell/src/capture.rs` | LIVE (recording/stream + on-screen REC indicator) | **separate concern** — that's video capture; this spec is *still-image* capture. They share the compositor source but are distinct surfaces. |
 | Glass / shadow / dim | `compositor::set_surface_blur`, `SurfaceEffect::DropShadow` | LIVE | action bar = `material.glass` + `elev.3`; overlay dim = a scrim |
 
 **This is a wire-up, not a rebuild.** The compositor already hands back real
@@ -81,7 +81,7 @@ compositor pixels and the live accent.
 
 ## AthenaOS design tokens this surface uses
 
-Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
+Pulled verbatim from `design-language.md` / `ath_tokens`. No new magic numbers.
 
 - **spacing:** `space.1` (tool-button gaps), `space.2` (toolbar/action-bar inset,
   handle offset), `space.3` (button padding), `space.4` (bar internal padding).
@@ -257,12 +257,12 @@ A vertical (or horizontal, screen-fit) `material.glass` toolbar (`radius.lg`,
 
 | Concern | Rule | Owner |
 |---|---|---|
-| Contrast | dimensions readout `accent.text` ≥4.5:1 on the glass pill; tool labels ≥4.5:1; the selection border must stay visible over *any* captured content (1px accent + a 1px `stroke.strong` inner line for contrast on bright regions) | raeen-accessibility |
-| Focus visibility | active tool + focused button = `accent.subtle`/`accent.base` ring + `elev.focus`, never color-only | raeen-accessibility |
-| Reduced-motion | bars appear instantly; no toolbar slide; the live readout still updates (functional) | raeen-accessibility |
-| Hit targets | tool + action buttons 32px (pointer) / 48px (couch); resize handles ≥16px grab area | raeen-visual-qa |
-| Keyboard-complete | full capture → markup → copy/save reachable with no pointer (arrow-nudge selection + tool shortcuts) | raeen-accessibility |
-| Redaction trust | the **Blur/Pixelate** redaction must be applied to the saved pixels, not just visually overlaid — flag so a "blurred" secret can't be recovered from the file | raeen-accessibility + AthGuard |
+| Contrast | dimensions readout `accent.text` ≥4.5:1 on the glass pill; tool labels ≥4.5:1; the selection border must stay visible over *any* captured content (1px accent + a 1px `stroke.strong` inner line for contrast on bright regions) | athena-accessibility |
+| Focus visibility | active tool + focused button = `accent.subtle`/`accent.base` ring + `elev.focus`, never color-only | athena-accessibility |
+| Reduced-motion | bars appear instantly; no toolbar slide; the live readout still updates (functional) | athena-accessibility |
+| Hit targets | tool + action buttons 32px (pointer) / 48px (couch); resize handles ≥16px grab area | athena-visual-qa |
+| Keyboard-complete | full capture → markup → copy/save reachable with no pointer (arrow-nudge selection + tool shortcuts) | athena-accessibility |
+| Redaction trust | the **Blur/Pixelate** redaction must be applied to the saved pixels, not just visually overlaid — flag so a "blurred" secret can't be recovered from the file | athena-accessibility + AthGuard |
 
 ---
 
@@ -283,7 +283,7 @@ Ships only when:
 ## Handoff
 
 ### Implementers (two-part — the capture wire-up then the UI)
-- **raeen-gfx** — the **capture wire-up**. Connect `ScreenshotTool`'s resolved
+- **athena-gfx** — the **capture wire-up**. Connect `ScreenshotTool`'s resolved
   region/mode to the compositor's real pixels: call
   `compositor::start_capture(rx,ry,rw,rh, CaptureFormat::*, /*continuous=*/false)`
   for the selection, `read_capture(id)` to get `(Vec<u32>, w, h)`, feed it to
@@ -291,16 +291,16 @@ Ships only when:
   Confirm `CaptureFormat` covers the ARGB/BGRA the markup expects; render the
   selection rectangle, handles, crosshair, and the un-dimmed region punch on the
   overlay via `Canvas`.
-- **raeen-shell-apps** — the **UI surface**. Bind the global hotkeys to
+- **athena-shell-apps** — the **UI surface**. Bind the global hotkeys to
   `ScreenshotTool::handle_key` (driving the **real** capture above, not the stub),
   render the §3 dimmed overlay, the §4 action bar, and the §5 markup toolbar +
   property strip; map the action buttons to `save_current` / `pin_current` /
   clipboard; **delete the hardcoded color consts** in `screenshot.rs`
   (`SELECTION_BORDER`, `HANDLE_COLOR`, `OVERLAY_DIM`, `TOOLBAR_*`) and consume
-  `rae_tokens` + the proposed `scrim.capture`.
-- **raeen-design-researcher (me)** — add `scrim.capture` to
+  `ath_tokens` + the proposed `scrim.capture`.
+- **athena-design-researcher (me)** — add `scrim.capture` to
   `design-language.md` §4 (the one new token) — see DESIGN_LANGUAGE update note.
-- **raeen-accessibility + AthGuard** (flagged) — redaction-applied-to-pixels
+- **athena-accessibility + AthGuard** (flagged) — redaction-applied-to-pixels
   guarantee; contrast of the border/readout over arbitrary content.
 
 ### FAIL-able boot-log proof line
@@ -317,7 +317,7 @@ redaction is not baked into the saved pixels, or if copy/save returns an error.)
 Plus cohesion:
 `[screenshot] accent=0x.. == derive_accent(seed).base (no hardcoded border) -> PASS`.
 
-### Visual-QA verification list (raeen-visual-qa)
+### Visual-QA verification list (athena-visual-qa)
 - QEMU screenshot: region-capture overlay mid-drag — screen dimmed to
   `scrim.capture`, the selected region un-dimmed, **1px accent border**, 8 handles,
   and the **live dimensions pill** ("`W × H`") in the accent.
@@ -335,4 +335,4 @@ Plus cohesion:
   pixels → image).
 - Phase 8 (AthUI/AthKit): the glass-toolbar + tool-button widgets.
 - Phase 14 (AthShell + apps): the screenshot/markup surface; activates the dead
-  `raeshell::screenshot` tool and connects it to live capture.
+  `athshell::screenshot` tool and connects it to live capture.

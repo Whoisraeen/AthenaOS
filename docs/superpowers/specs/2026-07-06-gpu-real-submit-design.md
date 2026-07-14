@@ -46,9 +46,9 @@ Boot `-1` (Jul 05 01:07) ran the vfio/blacklisted UKI — GPU dark all boot. Boo
 
 **Route A — Strategy B KMD + Mesa-under-Linux-ABI UMD.** Chosen because it has the shortest path through already-proven AthenaOS assets:
 
-- Real amdgpu C already **links** into a bare-metal `amdgpud` (M5, `df8c4b3`/`ad7b1de`, `RAEEN_AMDGPU_REAL=1`).
+- Real amdgpu C already **links** into a bare-metal `amdgpud` (M5, `df8c4b3`/`ad7b1de`, `ATHENA_AMDGPU_REAL=1`).
 - Dynamically-linked multithreaded glibc Linux ELFs already run on iron (`[x]`: ld.so, clone, futex, prlimit64).
-- The DRM uAPI seam is already started (`raeen_amdgpu::uapi`: `AMDGPU_INFO` done; GEM/CS/WAIT_CS named next).
+- The DRM uAPI seam is already started (`ath_amdgpu::uapi`: `AMDGPU_INFO` done; GEM/CS/WAIT_CS named next).
 - The DCN scanout path (display) is already `[x]` iron (2026-07-02 milestone) — rendered frames have a proven road to the panel.
 
 **Route B — driver-VM (thin SVM/NPT hypervisor + pinned Linux guest owning the GPU via VFIO + virtio-gpu-class transport): the pre-agreed fallback**, triggered per §8. Route C (continue native-Rust MES register archaeology) is folded into Route A as diagnostics, not a standalone plan; the native driver remains the DCN scanout owner and the halt-dump tooling.
@@ -60,11 +60,11 @@ Boot `-1` (Jul 05 01:07) ran the vfio/blacklisted UKI — GPU dark all boot. Boo
 │ vkQuake (Linux glibc ELF) under the Linux-ABI layer.           │
 │ SDL2 video/input via RaeWSI shim: swapchain = N shared BOs,    │
 │ present → compositor surface → DCN scanout (already [x] iron). │
-│ Input: xHCI HID → raeshell events → SDL2 event shim.           │
+│ Input: xHCI HID → athshell events → SDL2 event shim.           │
 ├─ L2: UMD ──────────────────────────────────────────────────────┤
 │ Mesa RADV compiled for Linux, run as a glibc ELF.              │
 │ Seam: libdrm /dev/dri/renderD* ioctls → IPC → amdgpud.         │
-│ Build out raeen_amdgpu::uapi: GEM_CREATE, GEM_MMAP, VM_OP,     │
+│ Build out ath_amdgpu::uapi: GEM_CREATE, GEM_MMAP, VM_OP,     │
 │ CTX, CS, WAIT_CS, INFO (done), plus DRM core (version, auth).  │
 ├─ L1: KMD ──────────────────────────────────────────────────────┤
 │ Strategy B: real upstream amdgpu C against the LinuxKPI shim,  │
@@ -100,7 +100,7 @@ BO sharing uses the same physical-carveout + `memory::map_phys_wb` machinery the
 
 ## 7. Proof ladder (per docs/TESTING_STRATEGY.md)
 
-1. **Host KATs:** uapi struct layouts vs libdrm headers; CS marshal round-trip; RaeWSI geometry/acquire-present state machine. `cargo test -p raeen_amdgpu` (115 KATs today) grows with each seam.
+1. **Host KATs:** uapi struct layouts vs libdrm headers; CS marshal round-trip; RaeWSI geometry/acquire-present state machine. `cargo test -p ath_amdgpu` (115 KATs today) grows with each seam.
 2. **QEMU CI green every slice:** no Radeon in QEMU → real-amdgpu path self-skips (existing behavior). Linux-ABI syscall additions get QEMU smoketests.
 3. **Iron loop:** existing no-flash deploy (ESP `kernel-x86_64`, netlog UDP 51514, `scripts/athena-kvm.sh` for the KVM variants). FAIL-able serial/netlog markers per milestone.
 4. **Fresh oracle:** today's captured stock-driver state (dmesg init sequence, ring roster, firmware table) is committed as `docs/gpu-oracle/stock-init-20260706.txt` and every iron run diffs against it.
@@ -109,7 +109,7 @@ BO sharing uses the same physical-carveout + `memory::map_phys_wb` machinery the
 
 | # | Milestone | Proof | Closes |
 |---|---|---|---|
-| **M1** | Real amdgpu init clears MES on iron (`RAEEN_AMDGPU_REAL=1` image, one deploy) | `set_hw_resources ACK` + gfx ring alive in netlog | the wall |
+| **M1** | Real amdgpu init clears MES on iron (`ATHENA_AMDGPU_REAL=1` image, one deploy) | `set_hw_resources ACK` + gfx ring alive in netlog | the wall |
 | **M2** | DRM seam: GEM/CS/WAIT_CS/CTX over IPC — built under the §10 constraints (multi-client, ring-agnostic, export/syncobj surfaces reserved) | host KATs + hand-built PM4 triangle submitted via CS from a native test client, pixels verified in a readback BO | 6.3 "Submits to GPU" |
 | **M3** | RADV renders: vkcube-class triangle on the Athena panel | screenshot + frame-fence markers | 6.3 complete + Year-1 Vulkan demo |
 | **M4** | vkQuake playable: renders, takes input, ≥30 fps sustained through the demo loop | timing marker + owner plays it | campaign DONE |

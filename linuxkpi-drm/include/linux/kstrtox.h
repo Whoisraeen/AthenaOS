@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MPL-2.0 */
 /* <linux/kstrtox.h> shim (MPL-2.0): string-to-number parsing. amdgpu parses sysfs
- * writes with these. Backed by raeen_linuxkpi at M4 (real parse; a fake that
+ * writes with these. Backed by ath_linuxkpi at M4 (real parse; a fake that
  * always returned 0 would mis-read user input -- rule 9). License boundary: surface. */
 #ifndef _LINUXKPI_LINUX_KSTRTOX_H
 #define _LINUXKPI_LINUX_KSTRTOX_H

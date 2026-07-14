@@ -29,7 +29,7 @@
 //!     by the auto-repeat generator via [`A11yKeyFilter::repeat_due`].
 //!
 //! R10: `init()` from `kernel_main`, `run_boot_smoketest()` (FAIL-able, drives
-//! the pure state machine with synthetic timestamps), `/proc/raeen/a11y_keys`
+//! the pure state machine with synthetic timestamps), `/proc/athena/a11y_keys`
 //! via `vfs.rs`, and this docstring.
 
 #![allow(dead_code)]
@@ -417,7 +417,7 @@ pub fn init() {
     );
 }
 
-/// `/proc/raeen/a11y_keys` — current accessibility key-filter config + counters.
+/// `/proc/athena/a11y_keys` — current accessibility key-filter config + counters.
 pub fn dump_text() -> alloc::string::String {
     let f = FILTER.lock();
     let cfg = f.config();

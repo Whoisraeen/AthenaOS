@@ -4,7 +4,7 @@
  *
  * GPIO bit-banged I2C algorithm — amdgpu drives DDC/EDID over the connector's
  * I2C lines with it. Display-path; reached via amdgpu_mode.h for type layout. The
- * algorithm (clocking SDA/SCL) is backed by raeen_linuxkpi at M4 when the display
+ * algorithm (clocking SDA/SCL) is backed by ath_linuxkpi at M4 when the display
  * path is actually exercised; here it is the struct + registration surface.
  * License boundary (../../README.md): API surface.
  */

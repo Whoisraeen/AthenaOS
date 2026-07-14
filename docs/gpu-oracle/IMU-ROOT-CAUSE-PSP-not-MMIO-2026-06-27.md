@@ -7,9 +7,9 @@ amdgpu (Athena Arch host, Phoenix1 `1002:15bf`).** This invalidates the entire
 ## Method (reproducible)
 1. Toggle Athena to **amdgpu-reference mode**: `/etc/kernel/cmdline` drop
    `module_blacklist=amdgpu vfio-pci.ids=1002:15bf`; add modprobe.d `blacklist amdgpu`
-   (SOFT — unbound at boot, still `modprobe`-able); disable `raeen-vfio.conf`;
+   (SOFT — unbound at boot, still `modprobe`-able); disable `athena-vfio.conf`;
    `mkinitcpio -p linux`; reboot. (Backed up as `cmdline.vfio.bak` +
-   `raeen-vfio.conf.disabled`; restore = reverse + reboot.)
+   `athena-vfio.conf.disabled`; restore = reverse + reboot.)
    **NEVER `modprobe -r/-modprobe` rebind the APU — it wedges. Soft-blacklist + a
    single cold `modprobe amdgpu` gives a TRUE cold init without the wedge.**
 2. Arm a deferred kprobe on every MMIO write, then cold-bind:

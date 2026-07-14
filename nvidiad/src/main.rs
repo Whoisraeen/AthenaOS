@@ -4,7 +4,7 @@
 //! an IOMMU-sandboxed userspace daemon that claims the GPU and walks the
 //! bring-up. Stage 1 is chip identification — map BAR0, read `NV_PMC_BOOT_0`,
 //! and decode the architecture / chipset / revision with the host-tested
-//! [`raeen_nvidia::chip`] logic. It then reports the part's *firmware-requirement
+//! [`ath_nvidia::chip`] logic. It then reports the part's *firmware-requirement
 //! tier* so the wall is stated up front:
 //!
 //! * Fermi — no external firmware; a native driver can go all the way.
@@ -23,20 +23,20 @@
 extern crate alloc;
 
 use core::panic::PanicInfo;
-use rae_abi::syscall as abi;
-use raeen_nvidia::chip::{self, GpuOps};
-use raeen_nvidia::regs;
+use ath_abi::syscall as abi;
+use ath_nvidia::chip::{self, GpuOps};
+use ath_nvidia::regs;
 
-const _: () = assert!(rae_abi::ABI_VERSION == 4);
+const _: () = assert!(ath_abi::ABI_VERSION == 4);
 
 struct LkpiAllocator;
 
 unsafe impl core::alloc::GlobalAlloc for LkpiAllocator {
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-        raeen_linuxkpi::kmalloc(layout.size(), 0)
+        ath_linuxkpi::kmalloc(layout.size(), 0)
     }
     unsafe fn dealloc(&self, ptr: *mut u8, _layout: core::alloc::Layout) {
-        raeen_linuxkpi::kfree(ptr);
+        ath_linuxkpi::kfree(ptr);
     }
 }
 
@@ -68,12 +68,12 @@ fn klog(msg: &str) {
     let n = msg.len().min(199);
     buf[..n].copy_from_slice(&msg.as_bytes()[..n]);
     buf[n] = 0;
-    raeen_linuxkpi::raeen_printk(buf.as_ptr());
+    ath_linuxkpi::athena_printk(buf.as_ptr());
 }
 
 /// A claimed NVIDIA GPU: its LinuxKPI device handle and BAR0 (MMIO register)
 /// mapping. `Nv` implements [`GpuOps`] over the BAR0 pointer so the shared
-/// `raeen_nvidia` decode runs against real MMIO.
+/// `ath_nvidia` decode runs against real MMIO.
 struct Nv {
     lkpi_dev: u64,
     mmio: *mut u8,
@@ -84,34 +84,34 @@ impl GpuOps for Nv {
         // Safety: `off` is a bring-up register offset within the mapped BAR0
         // register aperture (16 MiB); the daemon only reads the PMC block at the
         // bottom of that space.
-        unsafe { raeen_linuxkpi::pci::readl(self.mmio.add(off as usize) as *const u32) }
+        unsafe { ath_linuxkpi::pci::readl(self.mmio.add(off as usize) as *const u32) }
     }
     fn reg_write(&mut self, off: u32, val: u32) {
         // Safety: same bounded BAR0 aperture as `reg_read`.
-        unsafe { raeen_linuxkpi::pci::writel(val, self.mmio.add(off as usize) as *mut u32) }
+        unsafe { ath_linuxkpi::pci::writel(val, self.mmio.add(off as usize) as *mut u32) }
     }
 }
 
 /// Id-table match (base-class `0x03` display + NVIDIA vendor) — finds the GPU
 /// wherever firmware placed it, then verifies the claim and maps BAR0.
 fn probe_match() -> Option<Nv> {
-    let lkpi_dev = raeen_linuxkpi::pci_enable_match(regs::PCI_CLASS_DISPLAY, regs::NVIDIA_VENDOR)?;
+    let lkpi_dev = ath_linuxkpi::pci_enable_match(regs::PCI_CLASS_DISPLAY, regs::NVIDIA_VENDOR)?;
     verify_claimed(lkpi_dev)
 }
 
 fn verify_claimed(lkpi_dev: u64) -> Option<Nv> {
-    let id = raeen_linuxkpi::pci::read_config_dword(lkpi_dev, 0x00);
+    let id = ath_linuxkpi::pci::read_config_dword(lkpi_dev, 0x00);
     let vendor = (id & 0xFFFF) as u16;
     if vendor != regs::NVIDIA_VENDOR {
         return None;
     }
-    let class = raeen_linuxkpi::pci::read_config_dword(lkpi_dev, 0x08);
+    let class = ath_linuxkpi::pci::read_config_dword(lkpi_dev, 0x08);
     let base_class = ((class >> 24) & 0xFF) as u8;
     if base_class != regs::PCI_CLASS_DISPLAY {
         klog("[nvidia] NVIDIA device is not display class; skipping");
         return None;
     }
-    let mmio = raeen_linuxkpi::pci::ioremap(lkpi_dev, regs::BAR0_MMIO);
+    let mmio = ath_linuxkpi::pci::ioremap(lkpi_dev, regs::BAR0_MMIO);
     if mmio.is_null() {
         klog("[nvidia] ioremap(BAR0) failed");
         return None;
@@ -134,8 +134,8 @@ pub extern "C" fn _start() -> ! {
         }
     };
 
-    let _ = raeen_linuxkpi::lkpi_supervisor_register(gpu.lkpi_dev);
-    raeen_linuxkpi::lkpi_supervisor_heartbeat(gpu.lkpi_dev);
+    let _ = ath_linuxkpi::lkpi_supervisor_register(gpu.lkpi_dev);
+    ath_linuxkpi::lkpi_supervisor_heartbeat(gpu.lkpi_dev);
 
     // Stage 1: identify the chip from NV_PMC_BOOT_0 (host-tested decode).
     let ident = match chip::identify(&mut gpu) {

@@ -4,7 +4,7 @@
  *
  * Device-memory remapping (ZONE_DEVICE / device-private pages for SVM). Not on
  * the MES bring-up path (SVM is out of subset); reached via amdgpu_amdkfd.h for
- * type/decl layout. Backed by raeen_linuxkpi at M4 if SVM is brought into scope.
+ * type/decl layout. Backed by ath_linuxkpi at M4 if SVM is brought into scope.
  * License boundary (../../README.md): API surface, no GPL source.
  */
 #ifndef _LINUXKPI_LINUX_MEMREMAP_H
@@ -43,7 +43,7 @@ struct dev_pagemap {
 	struct range     range;
 };
 
-/* backed by raeen_linuxkpi (M4) */
+/* backed by ath_linuxkpi (M4) */
 void *devm_memremap_pages(struct device *dev, struct dev_pagemap *pgmap);
 void  memunmap_pages(struct dev_pagemap *pgmap);
 void *memremap(resource_size_t offset, size_t size, unsigned long flags);

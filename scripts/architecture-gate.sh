@@ -6,14 +6,14 @@
 #   (b) a deleted or bypassed AthGuard capability check.
 #   (c) a new kernel module missing the R10 4-artifact contract
 #       (init + run_boot_smoketest + procfs/dump_text + Concept docstring).
-#   (d) a changed signature in the shared-interface crate (rae_abi / rae_driver_api)
-#       without an Opus sign-off marker ([interface] tag + RAEEN_AGENT=opus).
+#   (d) a changed signature in the shared-interface crate (ath_abi / ath_driver_api)
+#       without an Opus sign-off marker ([interface] tag + ATHENA_AGENT=opus).
 #
 # Concept doc (LEGACY_GAMING_CONCEPT.md) and docs/LINUX_DRIVER_STRATEGY.md §R7 win.
 set -uo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-AGENT="${RAEEN_AGENT:-}"
+AGENT="${ATHENA_AGENT:-}"
 fail=0
 
 red()   { printf '\033[31m%s\033[0m\n' "$*"; }
@@ -29,7 +29,7 @@ removed_lines() { git diff --cached -U0 -- "$1" | grep -E '^-' | grep -vE '^---'
 
 # ── (a) §R7: no std-isms / Linux clones in no_std (kernel + components) ───────
 # Linux-clone module/identifier names that must never enter the native stack.
-# (Our own shim `raeen_drm` is allowed; bare `drm`/`kms`/`wayland` etc. are not.)
+# (Our own shim `ath_drm` is allowed; bare `drm`/`kms`/`wayland` etc. are not.)
 LINUX_CLONE_RE='\b(ext4|ext2|btrfs_clone|wayland|netfilter|iptables|seccomp|epoll_clone|io_uring|pulseaudio|alsa|systemd|rustysd|cgroup_v[12]|sysfs_linux)\b'
 for f in $STAGED; do
   case "$f" in
@@ -81,7 +81,7 @@ fi
 CAP_CALL_RE='(capability::|cap_check|check_cap|require_cap|assert_system_authority|with_current_task.*cap_table)'
 for f in $STAGED; do
   case "$f" in
-    kernel/src/*.rs|components/raeshield/*.rs)
+    kernel/src/*.rs|components/athshield/*.rs)
       removed=$(removed_lines "$f")
       added=$(added_lines "$f")
       r_count=$(echo "$removed" | grep -cE "$CAP_CALL_RE")
@@ -108,7 +108,7 @@ for f in $(git diff --cached --name-only --diff-filter=A); do
     # arch:: backend seam sub-modules (kernel/src/arch/**) fulfil the R10
     # 4-artifact contract through the PARENT arch:: module: there is one
     # arch::init(), one arch::run_boot_smoketest() (which exercises every seam),
-    # and one /proc/raeen/arch dump_text() that reports them all. Per-seam files
+    # and one /proc/athena/arch dump_text() that reports them all. Per-seam files
     # (addr.rs, future mmu.rs, …) are sub-modules of that single contract, not
     # standalone modules — exactly as the in-`mod.rs` seam sub-modules
     # (interrupts, cpu, interrupt_controller, timer) already are. Exempt them.
@@ -123,7 +123,7 @@ for f in $(git diff --cached --name-only --diff-filter=A); do
       echo "$content" | grep -qE '^//!' || miss="$miss docstring"
       echo "$content" | grep -qE 'pub fn init' || miss="$miss init()"
       echo "$content" | grep -qE 'run_boot_smoketest' || miss="$miss run_boot_smoketest()"
-      echo "$content" | grep -qE 'dump_text|proc_dump|/proc/raeen' || miss="$miss procfs"
+      echo "$content" | grep -qE 'dump_text|proc_dump|/proc/athena' || miss="$miss procfs"
       if [ -n "$miss" ]; then
         red "  R10 FAIL  new kernel module $f missing:$miss"
         yellow "            Every kernel module that counts ships init + smoketest + procfs + Concept docstring."
@@ -137,9 +137,9 @@ done
 # The `[interface]` commit-message sign-off is enforced in the commit-msg hook
 # (scripts/git-hooks/commit-msg) because the message does not exist yet at
 # pre-commit time. Here we enforce the identity half, which needs no message.
-if echo "$STAGED" | grep -qE '^components/rae_abi/|^components/rae_driver_api/'; then
+if echo "$STAGED" | grep -qE '^components/ath_abi/|^components/ath_driver_api/'; then
   if [ "$AGENT" != "opus" ]; then
-    red "  IFACE FAIL  interface crate changed by '$AGENT'. Only Opus edits rae_abi / rae_driver_api."
+    red "  IFACE FAIL  interface crate changed by '$AGENT'. Only Opus edits ath_abi / ath_driver_api."
     fail=1
   else
     green "  IFACE OK    Opus interface change (commit-msg hook will check the [interface] tag)."

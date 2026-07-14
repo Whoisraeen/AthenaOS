@@ -1,0 +1,17 @@
+[package]
+name = "athupdate"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaeUpdate — system update manager for AthenaOS"
+
+[dependencies]
+spin = "0.9"
+# Delta-update + integrity + signature primitives. All three are zero-dep,
+# #![no_std]+alloc, host-KAT-able leaf crates — consumed read-only here to make
+# an OS update atomic, verified, and rollback-able (LEGACY_GAMING_CONCEPT.md
+# §"atomic CoW updates + one-click rollback; the user owns the machine").
+ath_diff = { path = "../ath_diff" }
+ath_hash = { path = "../ath_hash" }
+ath_crypto = { path = "../ath_crypto" }

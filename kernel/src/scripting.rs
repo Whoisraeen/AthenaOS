@@ -11,8 +11,8 @@
 //! capability set, and you can invoke it from the shell, the Settings UI,
 //! a keyboard shortcut, or a calendar trigger.
 //!
-//! The interpreter is `components/raelang` — a Swift-flavored, no_std,
-//! fuel-limited tree-walker shared with the userspace `raelangd` daemon.
+//! The interpreter is `components/athlang` — a Swift-flavored, no_std,
+//! fuel-limited tree-walker shared with the userspace `athlangd` daemon.
 //! Scripts up to 64 KiB run INLINE at submit (fuel-capped: a runaway loop
 //! ends in `Timeout`, never a hang); larger sources stay queued for the
 //! daemon. The kernel also owns the **lifecycle**: registering a script,
@@ -84,7 +84,7 @@ struct Script {
     /// Captured `print(...)` output (truncated to [`MAX_OUTPUT_BYTES`]).
     output: String,
     /// Retained source for daemon-run scripts (too large for inline);
-    /// handed to `raelangd` by SCRIPT_FETCH, dropped once claimed.
+    /// handed to `athlangd` by SCRIPT_FETCH, dropped once claimed.
     source: Option<Vec<u8>>,
 }
 
@@ -137,7 +137,7 @@ pub const SCRIPT_CAP_WALLPAPER: u64 = 1 << 4;
 pub const SCRIPT_CAP_LAUNCH: u64 = 1 << 5;
 pub const SCRIPT_CAP_ALL: u64 = (1 << 6) - 1;
 
-/// The kernel's [`raelang::Host`]: the system-API surface automation
+/// The kernel's [`athlang::Host`]: the system-API surface automation
 /// scripts see, each name gated on the user-authorized `cap_mask`.
 /// Concept §Customization Engine — scripts drive the SYSTEM (theme,
 /// wallpaper, notifications, config), not just arithmetic.
@@ -146,11 +146,11 @@ struct KernelHost {
 }
 
 impl KernelHost {
-    fn require(&self, bit: u64, name: &str) -> Result<(), raelang::HostError> {
+    fn require(&self, bit: u64, name: &str) -> Result<(), athlang::HostError> {
         if self.cap_mask & bit != 0 {
             Ok(())
         } else {
-            Err(raelang::HostError::Denied(alloc::format!(
+            Err(athlang::HostError::Denied(alloc::format!(
                 "{}: capability not granted (cap_mask=0x{:x})",
                 name,
                 self.cap_mask
@@ -159,33 +159,33 @@ impl KernelHost {
     }
 }
 
-fn one_str_arg(name: &str, args: &[raelang::Value]) -> Result<String, raelang::HostError> {
+fn one_str_arg(name: &str, args: &[athlang::Value]) -> Result<String, athlang::HostError> {
     match args {
-        [raelang::Value::Str(s)] => Ok(s.clone()),
-        _ => Err(raelang::HostError::Failed(alloc::format!(
+        [athlang::Value::Str(s)] => Ok(s.clone()),
+        _ => Err(athlang::HostError::Failed(alloc::format!(
             "{} takes one String argument",
             name
         ))),
     }
 }
 
-fn one_int_arg(name: &str, args: &[raelang::Value]) -> Result<i64, raelang::HostError> {
+fn one_int_arg(name: &str, args: &[athlang::Value]) -> Result<i64, athlang::HostError> {
     match args {
-        [raelang::Value::Int(n)] => Ok(*n),
-        _ => Err(raelang::HostError::Failed(alloc::format!(
+        [athlang::Value::Int(n)] => Ok(*n),
+        _ => Err(athlang::HostError::Failed(alloc::format!(
             "{} takes one Int argument",
             name
         ))),
     }
 }
 
-impl raelang::Host for KernelHost {
+impl athlang::Host for KernelHost {
     fn call(
         &mut self,
         name: &str,
-        args: &[raelang::Value],
-    ) -> Result<raelang::Value, raelang::HostError> {
-        use raelang::{HostError, Value};
+        args: &[athlang::Value],
+    ) -> Result<athlang::Value, athlang::HostError> {
+        use athlang::{HostError, Value};
         match name {
             // ── sysinfo ──
             "uptimeMs" => {
@@ -297,7 +297,7 @@ fn fingerprint(bytes: &[u8]) -> [u8; 8] {
 
 // ── Public APIs ────────────────────────────────────────────────────────
 
-/// Scripts up to this size run INLINE through the in-kernel `raelang`
+/// Scripts up to this size run INLINE through the in-kernel `athlang`
 /// interpreter at submit time (fuel-capped, so a runaway terminates
 /// deterministically). Larger sources stay Queued for the userspace
 /// interpreter daemon.
@@ -332,18 +332,18 @@ pub fn submit(source: &[u8], cap_mask: u64) -> u64 {
 
     if inline {
         // Rae script actually RUNS (Concept §Customization Engine): the
-        // shared `raelang` interpreter, fuel-limited so `while true {}`
+        // shared `athlang` interpreter, fuel-limited so `while true {}`
         // ends in Timeout instead of wedging the kernel, with the
         // cap_mask-gated KernelHost as its system-API surface.
         let mut host = KernelHost { cap_mask };
         let result = core::str::from_utf8(source)
-            .map_err(|_| raelang::RaeError::Lex(String::from("source is not UTF-8")))
-            .and_then(|src| raelang::run_with_host(src, INLINE_FUEL, &mut host));
+            .map_err(|_| athlang::RaeError::Lex(String::from("source is not UTF-8")))
+            .and_then(|src| athlang::run_with_host(src, INLINE_FUEL, &mut host));
 
         let mut g = ENGINE.lock();
         if let Some(e) = g.as_mut() {
             let failed = !matches!(result, Ok(_));
-            let timed_out = matches!(result, Err(raelang::RaeError::OutOfFuel));
+            let timed_out = matches!(result, Err(athlang::RaeError::OutOfFuel));
             if let Some(s) = e.scripts.get_mut(&id) {
                 s.finished_tsc = rdtsc();
                 match result {
@@ -368,7 +368,7 @@ pub fn submit(source: &[u8], cap_mask: u64) -> u64 {
             }
         }
     }
-    // else: stays Queued with retained source until raelangd fetches it.
+    // else: stays Queued with retained source until athlangd fetches it.
     id
 }
 
@@ -579,7 +579,7 @@ pub fn sys_kill(id: u64) -> u64 {
     kill(id)
 }
 
-/// SCRIPT_FETCH: `raelangd` claims the next queued (>64 KiB) script.
+/// SCRIPT_FETCH: `athlangd` claims the next queued (>64 KiB) script.
 /// Returns bytes written (ScriptJobAbi + source), 0 when nothing is
 /// queued, or an `ERR_*` code.
 pub fn sys_fetch(out_ptr: u64, out_cap: u64, validate_w: impl Fn(u64, u64, bool) -> bool) -> u64 {
@@ -631,7 +631,7 @@ pub fn sys_fetch(out_ptr: u64, out_cap: u64, validate_w: impl Fn(u64, u64, bool)
     header + src.len() as u64
 }
 
-/// SCRIPT_COMPLETE: `raelangd` reports a finished script (exit_code is
+/// SCRIPT_COMPLETE: `athlangd` reports a finished script (exit_code is
 /// signed via two's complement; negative marks Failed).
 pub fn sys_complete(
     id: u64,
@@ -656,7 +656,7 @@ pub fn sys_complete(
     complete(id, exit_code as i64, &buf)
 }
 
-// ── /proc/raeen/scripts ────────────────────────────────────────────────
+// ── /proc/athena/scripts ────────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let g = ENGINE.lock();
@@ -780,7 +780,7 @@ pub fn run_boot_smoketest() {
 
     // 8. Daemon lifecycle: a queued >64 KiB script is fetchable (Queued →
     // Running, source handed over) and completable — the exact protocol
-    // raelangd speaks via SCRIPT_FETCH/SCRIPT_COMPLETE.
+    // athlangd speaks via SCRIPT_FETCH/SCRIPT_COMPLETE.
     let mut big2 = alloc::vec![b' '; INLINE_MAX_BYTES + 1];
     big2.extend_from_slice(b"return 7");
     let daemon_id = submit(&big2, 0);

@@ -249,7 +249,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/wm` — window-manager policy state.
+/// `/proc/athena/wm` — window-manager policy state.
 pub fn dump_text() -> String {
     alloc::format!(
         "# window-manager policy (swappable: float/tile/stack)\nmode: {}\napplies: {}\nmanaged_windows: {}\n",

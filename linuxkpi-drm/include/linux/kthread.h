@@ -3,7 +3,7 @@
  * <linux/kthread.h> shim (MPL-2.0, original work).
  *
  * Kernel threads. amdgpu/KFD run worker kthreads (the GPU scheduler's run-queue
- * thread, reset worker). Backed by raeen_linuxkpi's thread model at M4 — a fake
+ * thread, reset worker). Backed by ath_linuxkpi's thread model at M4 — a fake
  * kthread_run that spawned nothing would mean the scheduler never drains
  * (SCOPE.md rule 9). License boundary (../../README.md): API surface.
  */
@@ -14,7 +14,7 @@
 
 struct task_struct;
 
-/* thread lifecycle — backed by raeen_linuxkpi (M4) */
+/* thread lifecycle — backed by ath_linuxkpi (M4) */
 struct task_struct *kthread_create_on_node(int (*threadfn)(void *data), void *data, int node,
 					   const char *namefmt, ...);
 struct task_struct *kthread_create(int (*threadfn)(void *data), void *data, const char *namefmt, ...);

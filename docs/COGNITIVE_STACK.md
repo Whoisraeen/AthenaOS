@@ -52,7 +52,7 @@ Persistence lands on AthFS; encryption and snapshots inherit CoW FS properties.
 
 ### LLM / tool runtime
 
-- Inherit and retarget `components/raeai/` as the language/tool substrate under AthMind.
+- Inherit and retarget `components/athai/` as the language/tool substrate under AthMind.
 - **On-device preferred** for continuous autonomy; cloud optional and capability-gated.
 - Model output is proposal-only: no direct motor path.
 

@@ -83,7 +83,7 @@ Bar to clear, per surface:
 
 ## AthenaOS design tokens (the canonical set this surface uses)
 
-All names are from `docs/design/design-language.md` / `rae_tokens`. This surface
+All names are from `docs/design/design-language.md` / `ath_tokens`. This surface
 introduces **no new color/spacing/radius/motion values**.
 
 - **spacing:** grid gutter between thumbnails = `space.4` (16); overview outer
@@ -158,7 +158,7 @@ Two ways, in preference order:
    `recomposite` already composites every surface into `comp_buf` each frame.
    When overview is active, the compositor composites each surface **scaled into
    its cell rect** instead of at its native rect — same per-pixel blend path,
-   just a scaled source walk (nearest or 2x2-box; `raegfx::Canvas` already has
+   just a scaled source walk (nearest or 2x2-box; `athgfx::Canvas` already has
    scaled-AA sampling per DESIGN_LANGUAGE §0). No extra allocation, no extra
    pass: the thumbnail *is* the composite. This is the macOS-grade "the same
    windows are moving" effect for free.
@@ -185,7 +185,7 @@ no re-layout — pure compositor geometry.
 3-finger swipe up = open overview, swipe down = close, swipe left/right while in
 overview = scrub spaces. Flagged as **blocked on trackpad gesture support**
 (PARITY matrix O "Trackpad gestures" is `[ ]`); ship hotkey first, wire the
-gesture when raeen-input lands the gesture stream. Do not block overview on it.
+gesture when athena-input lands the gesture stream. Do not block overview on it.
 
 ---
 
@@ -270,7 +270,7 @@ layouts" `[~]`). Spec the group format to store the cell **rect** (origin+size)
 now, so when resize negotiation arrives, restore fills the cell with zero format
 change. Flag: **client-resize is the one piece Snap Groups cannot fully honor
 until the surface-resize protocol exists** — that protocol is a separate
-raeen-ui/raeen-kernel item, not this surface's to build.
+athena-ui/athena-kernel item, not this surface's to build.
 
 ### Snap Layouts (hover-to-zone, the discoverable entry)
 On hover over a window's maximize button (chrome lives in `window_chrome.rs`), a
@@ -350,7 +350,7 @@ display — replacing the current opaque `0xE0_1A_1D_28` rectangle at
 Every hover affordance above has a keyboard + controller equivalent
 (DESIGN_LANGUAGE §8 hover-independence). Focus is always `accent.base` ring +
 `elev.focus` glow, never color-only — flag any deviation to
-**raeen-accessibility**.
+**athena-accessibility**.
 
 ---
 
@@ -382,10 +382,10 @@ Verified by reading the source — wire these, do not rebuild:
   (`shell_runner.rs:1986`) with `derive_accent(...).base`.
 - **Glass + shadow + scrim — EXIST.** `set_surface_blur` / `BlurRegion`
   (`compositor.rs:2552`), `SurfaceEffect::DropShadow`, and the `elev.*` ladder in
-  `rae_tokens` (`elev_focus(glow)` at `rae_tokens/src/lib.rs:394`). **Delta:**
+  `ath_tokens` (`elev_focus(glow)` at `ath_tokens/src/lib.rs:394`). **Delta:**
   none — apply the tokens.
 - **Tokens — EXIST.** `SPACE_*`, `RADIUS_*`, `ELEV_*`, `TYPE_*`, `MOTION_*`,
-  `derive_accent` all in `rae_tokens` (`lib.rs:29–504,241`). **Delta:** none — no
+  `derive_accent` all in `ath_tokens` (`lib.rs:29–504,241`). **Delta:** none — no
   new tokens needed for this surface.
 
 **Net delta to build:** (1) compositor overview-mode scaled-composite +
@@ -399,10 +399,10 @@ interpolates destination rects. Everything else is wiring.
 
 ### Implementer split (this surface crosses the compositor/shell line)
 
-**raeen-kernel / raeen-gfx (compositor side — the mechanism):**
+**athena-kernel / athena-gfx (compositor side — the mechanism):**
 - `compositor.rs`: add `overview_set_mode(on: bool)` + a per-surface
   `overview_dst: Option<Rect>` so the existing composite loop scales each surface
-  into its cell rect (reuse `raegfx::Canvas` scaled-AA sampling). Animate by
+  into its cell rect (reuse `athgfx::Canvas` scaled-AA sampling). Animate by
   advancing `overview_dst` toward `rect_cell` on the frame clock.
 - `compositor.rs`: add `snapshot_surface(id, dst: *mut u8, dst_w, dst_h)` — a
   one-shot box-downscale of `Surface.kernel_ptr`, capability-gated, reads only
@@ -414,7 +414,7 @@ interpolates destination rects. Everything else is wiring.
   per-frame allocations (DESIGN_LANGUAGE compositor-latency doctrine + memory
   `compositor-IF=0`).
 
-**raeen-shell-apps (shell side — the policy + chrome):**
+**athena-shell-apps (shell side — the policy + chrome):**
 - `Space`/`Vec<Space>` per-display state + current index + space-switch driver
   (toggle `visible`, `set_surface_origin` slide, wallpaper cross-fade).
 - Overview grid chrome (call `wm_policy::compute_layout(Tile,…)` for cells),
@@ -425,15 +425,15 @@ interpolates destination rects. Everything else is wiring.
 - Upgrade `cycle_alt_tab`/`render_alt_tab_overlay`: live preview tiles via
   `snapshot_surface`, tokenized selection via `derive_accent`.
 
-**raeen-ui:** confirm `raeui::tokens`/`rae_tokens` expose `elev_focus`,
+**athena-ui:** confirm `athui::tokens`/`ath_tokens` expose `elev_focus`,
 `derive_accent`, and the `MOTION_*` curves to the shell (they do). No new tokens.
 
-**raeen-accessibility (flag now):** focus-ring legibility in overview at couch
+**athena-accessibility (flag now):** focus-ring legibility in overview at couch
 distance; reduced-motion paths for all four animations; the 48px couch hit-target
 floor for thumbnails/tiles; confirm `accent.base`-ring contrast ≥3:1 against the
 busiest wallpaper a thumbnail might sit on.
 
-**raeen-input (blocked dependency):** 3-finger trackpad gestures for
+**athena-input (blocked dependency):** 3-finger trackpad gestures for
 overview/spaces — PARITY §O is `[ ]`; ship hotkeys first, wire gestures when the
 gesture stream lands.
 
@@ -490,7 +490,7 @@ boot; downgrade any to `[~]` until its compositor delta lands.
 
 ---
 
-## Visual-QA checklist (raeen-visual-qa)
+## Visual-QA checklist (athena-visual-qa)
 
 Screenshot and verify on iron / host-render / QEMU window (per memory
 `ui-glass-design-system`: headless QEMU screendump striping is a capture

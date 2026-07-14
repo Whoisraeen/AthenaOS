@@ -6,7 +6,7 @@
 //! >  config with snapshots."
 //!
 //! This module is the kernel-side store for that. Every config key lives at
-//! a slash-delimited path (`/system/display/scale`, `/apps/raeplay/last_steam_id`,
+//! a slash-delimited path (`/system/display/scale`, `/apps/athplay/last_steam_id`,
 //! `/users/alice/desktop/wallpaper`) and resolves to a typed value. Mutations
 //! bump a monotonically increasing generation number; userspace can snapshot
 //! the current generation (cheap — no copy) and roll back to it later
@@ -27,7 +27,7 @@
 //!
 //! For now, values written through CONFIG_SET are stored as raw bytes;
 //! callers are responsible for picking a serialization (most natural is
-//! `String` or a single u64 in LE bytes). When `raesettings` and `raestore`
+//! `String` or a single u64 in LE bytes). When `athsettings` and `athstore`
 //! start using this, a typed wrapper crate `raeconfig` will sit on top.
 
 #![allow(dead_code)]
@@ -100,7 +100,7 @@ impl Registry {
         reg
     }
 
-    /// Populate factory defaults so the first `cat /proc/raeen/config`
+    /// Populate factory defaults so the first `cat /proc/athena/config`
     /// after boot shows something useful. Mirrors §Customization Engine.
     fn seed_defaults(&mut self) {
         let defaults: &[(&str, Value)] = &[
@@ -244,7 +244,7 @@ impl Registry {
     }
 
     /// Serialize the whole tree as a deterministic, human-readable dump.
-    /// `/proc/raeen/config` calls this.
+    /// `/proc/athena/config` calls this.
     pub fn dump(&self) -> String {
         let mut out = String::new();
         out.push_str("# AthenaOS config registry (generation ");
@@ -481,7 +481,7 @@ pub fn sys_config_set(
     let bytes = read_user_bytes(val_ptr, val_len);
     // Heuristic typing: try valid UTF-8 → Text, else Bytes. Tiny payloads
     // that are 1/8 byte and look numeric get promoted to Int/Bool, mirroring
-    // raesettings' expectations.
+    // athsettings' expectations.
     let value = if val_len == 1 {
         Value::Bool(bytes.first().copied().unwrap_or(0) != 0)
     } else if val_len == 8 {
@@ -524,7 +524,7 @@ pub fn sys_config_rollback(snapshot_id: u64) -> u64 {
 /// held at `generation`, leaving every other key at its current value. Returns
 /// `0` on success, `u64::MAX` on failure (unknown key / registry uninitialized).
 /// Backs the userspace `sys_config_restore(key, version)` surface and a
-/// `/proc/raeen/config` restore action. `generation` is a value previously
+/// `/proc/athena/config` restore action. `generation` is a value previously
 /// returned by `sys_config_set` (or a snapshot generation).
 pub fn restore_key(key: &str, generation: u64) -> u64 {
     let mut g = REGISTRY.lock();

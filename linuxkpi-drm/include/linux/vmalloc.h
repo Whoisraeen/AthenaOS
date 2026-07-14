@@ -4,7 +4,7 @@
  *
  * Virtually-contiguous allocations + page-array mapping. amdgpu uses vmalloc for
  * large firmware/IP-discovery buffers and vmap to make a BO's pages CPU-visible.
- * Backed by raeen_linuxkpi at M4 (declaration-only — a fake vmap returning NULL
+ * Backed by ath_linuxkpi at M4 (declaration-only — a fake vmap returning NULL
  * would break firmware load; SCOPE.md rule 9). Signatures match <linux/mm.h>'s
  * (identical redeclarations are legal C). License boundary: API surface.
  */

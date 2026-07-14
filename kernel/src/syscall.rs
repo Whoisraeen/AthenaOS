@@ -4,19 +4,19 @@ use core::sync::atomic::{AtomicU64, Ordering};
 use x86_64::registers::model_specific::{Efer, EferFlags, LStar, SFMask, Star};
 
 // ── Interface contract guard ─────────────────────────────────────────────────
-// The syscall dispatch below MUST agree with the frozen ABI in `rae_abi`. These
+// The syscall dispatch below MUST agree with the frozen ABI in `ath_abi`. These
 // compile-time assertions make any drift a build failure, so a subsystem agent
 // can never quietly fork a syscall number. Changing these requires an Opus
-// `[interface]` commit that edits rae_abi and this dispatch together.
+// `[interface]` commit that edits ath_abi and this dispatch together.
 const _: () = {
-    use rae_abi::syscall as abi;
+    use ath_abi::syscall as abi;
     assert!(abi::SYS_DRIVER_CLAIM_DEVICE == 111);
     assert!(abi::SYS_DRIVER_DMA_UNMAP == 118);
-    assert!(abi::SYS_RAEEN_SHUTDOWN == 120);
+    assert!(abi::SYS_ATHENA_SHUTDOWN == 120);
     assert!(abi::SYS_OOM_SUBSCRIBE == 100);
-    assert!(abi::SYS_RAEFS_SNAPSHOT_CREATE == 101);
-    assert!(abi::SYS_RAEFS_SNAPSHOT_RESTORE == 102);
-    assert!(abi::SYS_RAEFS_SNAPSHOT_DELETE == 103);
+    assert!(abi::SYS_ATHFS_SNAPSHOT_CREATE == 101);
+    assert!(abi::SYS_ATHFS_SNAPSHOT_RESTORE == 102);
+    assert!(abi::SYS_ATHFS_SNAPSHOT_DELETE == 103);
     assert!(abi::SYS_LINUXKPI_VERSION == 127);
     assert!(abi::SYS_LINUXKPI_SUPERVISOR == 140);
     assert!(abi::SYS_DEBUG_PRINT == 141);
@@ -28,7 +28,7 @@ const _: () = {
     // dispatch range arm below MUST match these.
     assert!(abi::SYS_AC_REQUEST_ATTESTATION == 284);
     assert!(abi::SYS_AC_HEARTBEAT == 290);
-    assert!(rae_abi::ABI_VERSION == 4);
+    assert!(ath_abi::ABI_VERSION == 4);
 };
 
 pub fn init() {
@@ -1238,7 +1238,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         // (Legacy SYS_DRIVER_REGISTER arm removed — collided with the
         // canonical Path-C userspace driver framework arm at 109 further
         // below. The userspace_driver::sys_register arm wins by the
-        // rae_abi contract; this scaffold path was dead code. See
+        // ath_abi contract; this scaffold path was dead code. See
         // docs/SYSCALL_TABLE.md.)
         // SYS_SPAWN — spawn a child process from an ELF binary in the VFS
         //   rdi = pointer to path string
@@ -1643,7 +1643,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 regs.rax = u64::MAX;
             }
         }
-        // SYS_DEBUG_PRINT (rae_abi v2 = 141) — Print a string from userspace
+        // SYS_DEBUG_PRINT (ath_abi v2 = 141) — Print a string from userspace
         // to kernel serial (for debugging only).
         //   rdi = ptr, rsi = len
         //
@@ -1651,7 +1651,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         // compositor close-surface arm further down), and because Rust match
         // dispatches on first-arm-wins, SYS_SURFACE_CLOSE was dead code while
         // every relibc printf hit this arm with a string. Moved to 141 in v2
-        // (components/rae_abi/src/lib.rs::syscall::SYS_DEBUG_PRINT); relibc
+        // (components/ath_abi/src/lib.rs::syscall::SYS_DEBUG_PRINT); relibc
         // was updated in the same commit.
         141 => {
             let ptr = regs.rdi;
@@ -2516,7 +2516,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 _ => regs.rax = u64::MAX,
             }
         }
-        // SYS_RAEFS_GAME_INSTALL_HINT — rdi=path_ptr, rsi=path_len, rdx=expected_size
+        // SYS_ATHFS_GAME_INSTALL_HINT — rdi=path_ptr, rsi=path_len, rdx=expected_size
         99 => {
             if !has_filesystem_write_cap_if_declared() {
                 note_guard_fs_cap_reject();
@@ -2525,10 +2525,10 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             }
             if regs.rsi == 0 || regs.rsi > MAX_SYSCALL_PATH_BYTES {
                 note_guard_bounds_reject();
-                regs.rax = crate::raefs::E_RAEFS_BAD_PATH;
+                regs.rax = crate::athfs::E_ATHFS_BAD_PATH;
                 return;
             }
-            regs.rax = crate::raefs::sys_raefs_game_install_hint(
+            regs.rax = crate::athfs::sys_athfs_game_install_hint(
                 regs.rdi,
                 regs.rsi,
                 regs.rdx,
@@ -2546,8 +2546,8 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             crate::oom::register_oom_subscriber(pid, chan_id);
             regs.rax = 0;
         }
-        // SYS_RAEFS_SNAPSHOT_CREATE — rdi=name_ptr, rsi=name_len.
-        // Returns the new snapshot id (>0) or an E_RAEFS_* sentinel. Requires
+        // SYS_ATHFS_SNAPSHOT_CREATE — rdi=name_ptr, rsi=name_len.
+        // Returns the new snapshot id (>0) or an E_ATHFS_* sentinel. Requires
         // the filesystem write capability (mutates live FS metadata). (5.1)
         101 => {
             if !has_filesystem_write_cap_if_declared() {
@@ -2557,7 +2557,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             }
             if regs.rsi > MAX_SYSCALL_PATH_BYTES {
                 note_guard_bounds_reject();
-                regs.rax = crate::raefs::E_RAEFS_BAD_PATH;
+                regs.rax = crate::athfs::E_ATHFS_BAD_PATH;
                 return;
             }
             // Empty name is allowed (-> recorded as the given empty label).
@@ -2565,29 +2565,29 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 Ok(bytes) => alloc::string::String::from_utf8_lossy(&bytes).into_owned(),
                 Err(()) => {
                     note_guard_ptr_reject();
-                    regs.rax = crate::raefs::E_RAEFS_BAD_PATH;
+                    regs.rax = crate::athfs::E_ATHFS_BAD_PATH;
                     return;
                 }
             };
-            regs.rax = crate::raefs::snapshot_create(&name);
+            regs.rax = crate::athfs::snapshot_create(&name);
         }
-        // SYS_RAEFS_SNAPSHOT_RESTORE — rdi=snap_id. Returns 0 or E_RAEFS_*.
+        // SYS_ATHFS_SNAPSHOT_RESTORE — rdi=snap_id. Returns 0 or E_ATHFS_*.
         102 => {
             if !has_filesystem_write_cap_if_declared() {
                 note_guard_fs_cap_reject();
                 regs.rax = crate::capability::E_RIGHTS;
                 return;
             }
-            regs.rax = crate::raefs::snapshot_restore(regs.rdi as u32);
+            regs.rax = crate::athfs::snapshot_restore(regs.rdi as u32);
         }
-        // SYS_RAEFS_SNAPSHOT_DELETE — rdi=snap_id. Returns 0 or E_RAEFS_*.
+        // SYS_ATHFS_SNAPSHOT_DELETE — rdi=snap_id. Returns 0 or E_ATHFS_*.
         103 => {
             if !has_filesystem_write_cap_if_declared() {
                 note_guard_fs_cap_reject();
                 regs.rax = crate::capability::E_RIGHTS;
                 return;
             }
-            regs.rax = crate::raefs::snapshot_delete(regs.rdi as u32);
+            regs.rax = crate::athfs::snapshot_delete(regs.rdi as u32);
         }
         // SYS_CLIPBOARD_GET — rdi=buf_ptr, rsi=buf_len
         107 => {
@@ -2736,12 +2736,12 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         // Anti-cheat attestation (284–290). RENUMBERED from 100–106, which
         // collided with SYS_OOM_SUBSCRIBE (100) + AthFS snapshot (101–103) above
         // — first-match-wins meant SYS_AC_REGISTER_GAME (102) ran the destructive
-        // raefs::snapshot_restore. See rae_abi Block 34 + docs/SYSCALL_TABLE.md.
+        // athfs::snapshot_restore. See ath_abi Block 34 + docs/SYSCALL_TABLE.md.
         284..=290 => {
             let args = [regs.rdi, regs.rsi, regs.rdx, regs.r10, regs.r8, regs.r9];
             regs.rax = crate::anticheat::handle_anticheat_syscall(regs.rax, &args);
         }
-        // SYS_RAEEN_SHUTDOWN (120) — ACPI power-off
+        // SYS_ATHENA_SHUTDOWN (120) — ACPI power-off
         120 => {
             use crate::capability::{Cap, Rights};
             let mut allowed = false;
@@ -2870,7 +2870,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             };
         }
         // SYS_THEME_GET (266): live desktop theme for separate-process apps.
-        //   rdi = out ptr (rae_abi::ThemeInfo), rsi = out capacity (bytes).
+        //   rdi = out ptr (ath_abi::ThemeInfo), rsi = out capacity (bytes).
         // The 6 bundled apps are distinct ELFs that cannot call
         // theme_engine::active_accent() directly; this hands them the SAME live
         // accent + palette the in-kernel surfaces read, so Vibe Mode re-skins
@@ -2881,13 +2881,13 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         266 => {
             let out_ptr = regs.rdi;
             let out_cap = regs.rsi;
-            let need = core::mem::size_of::<rae_abi::ThemeInfo>() as u64;
+            let need = core::mem::size_of::<ath_abi::ThemeInfo>() as u64;
             if out_cap < need {
                 regs.rax = u64::MAX;
             } else {
                 let (accent, bg, fg, is_dark, blur, pid) = crate::theme_engine::theme_info();
-                let info = rae_abi::ThemeInfo {
-                    version: rae_abi::ThemeInfo::VERSION,
+                let info = ath_abi::ThemeInfo {
+                    version: ath_abi::ThemeInfo::VERSION,
                     accent_argb: accent,
                     bg_argb: bg,
                     fg_argb: fg,
@@ -2900,7 +2900,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 // viewing it as its raw bytes for copy_to_user is sound.
                 let bytes: &[u8] = unsafe {
                     core::slice::from_raw_parts(
-                        (&info as *const rae_abi::ThemeInfo) as *const u8,
+                        (&info as *const ath_abi::ThemeInfo) as *const u8,
                         need as usize,
                     )
                 };
@@ -2927,11 +2927,11 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             let format_flags = regs.rdx;
             if format_flags != 0
                 || frame_count == 0
-                || frame_count > rae_abi::syscall::AUDIO_SUBMIT_MAX_FRAMES
+                || frame_count > ath_abi::syscall::AUDIO_SUBMIT_MAX_FRAMES
             {
-                regs.rax = rae_abi::syscall::AUDIO_SUBMIT_ERR;
+                regs.rax = ath_abi::syscall::AUDIO_SUBMIT_ERR;
             } else {
-                let byte_len = frame_count * rae_abi::syscall::AUDIO_SUBMIT_BYTES_PER_FRAME;
+                let byte_len = frame_count * ath_abi::syscall::AUDIO_SUBMIT_BYTES_PER_FRAME;
                 match copy_from_user(samples_ptr, byte_len) {
                     Ok(bytes) => {
                         // Reinterpret the validated byte buffer as i16 samples.
@@ -2946,10 +2946,10 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                         }
                         regs.rax = match crate::audio::submit_samples(&pcm, pid) {
                             Some(frames) => frames as u64,
-                            None => rae_abi::syscall::AUDIO_SUBMIT_ERR,
+                            None => ath_abi::syscall::AUDIO_SUBMIT_ERR,
                         };
                     }
-                    Err(()) => regs.rax = rae_abi::syscall::AUDIO_SUBMIT_ERR,
+                    Err(()) => regs.rax = ath_abi::syscall::AUDIO_SUBMIT_ERR,
                 }
             }
         }
@@ -2976,15 +2976,15 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 Some(bytes) if bytes.len() <= out_cap => {
                     if validate_user_range(out_ptr, bytes.len() as u64, true).is_err() {
                         note_guard_ptr_reject();
-                        regs.rax = rae_abi::syscall::CLIP_ERR;
+                        regs.rax = ath_abi::syscall::CLIP_ERR;
                     } else {
                         regs.rax = match copy_to_user(out_ptr, &bytes) {
                             Ok(()) => bytes.len() as u64,
-                            Err(()) => rae_abi::syscall::CLIP_ERR,
+                            Err(()) => ath_abi::syscall::CLIP_ERR,
                         };
                     }
                 }
-                _ => regs.rax = rae_abi::syscall::CLIP_ERR,
+                _ => regs.rax = ath_abi::syscall::CLIP_ERR,
             }
         }
         // SYS_CLIP_HIST_PIN (270): rdi=index, rsi=pin(1)/unpin(0) -> 0/CLIP_ERR.
@@ -2994,7 +2994,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             regs.rax = if crate::clipboard::history_pin(index, pinned) {
                 0
             } else {
-                rae_abi::syscall::CLIP_ERR
+                ath_abi::syscall::CLIP_ERR
             };
         }
         // SYS_CLIP_HIST_DELETE (271): rdi=index -> 0/CLIP_ERR (refuses pinned).
@@ -3003,7 +3003,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             regs.rax = if crate::clipboard::history_delete(index) {
                 0
             } else {
-                rae_abi::syscall::CLIP_ERR
+                ath_abi::syscall::CLIP_ERR
             };
         }
         // SYS_CLIP_HIST_CLEAR (272): clear unpinned, keep pinned -> # removed.
@@ -3016,7 +3016,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             regs.rax = if crate::clipboard::history_promote(index) {
                 0
             } else {
-                rae_abi::syscall::CLIP_ERR
+                ath_abi::syscall::CLIP_ERR
             };
         }
         // ── Screen capture (274-276) — Concept §creators: "capture & stream at
@@ -3034,23 +3034,23 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         //   -> capture_id / CAPTURE_ERR.
         274 => {
             if !has_screen_capture_cap() {
-                regs.rax = rae_abi::syscall::CAPTURE_ERR;
+                regs.rax = ath_abi::syscall::CAPTURE_ERR;
             } else if crate::block_io::safe_mode_enabled() {
                 // Privacy-sensitive: no screen reads in safe mode.
-                regs.rax = rae_abi::syscall::CAPTURE_ERR;
+                regs.rax = ath_abi::syscall::CAPTURE_ERR;
             } else {
                 let rx = (regs.rdi & 0xFFFF_FFFF) as u32;
                 let ry = ((regs.rdi >> 32) & 0xFFFF_FFFF) as u32;
                 let rw = (regs.rsi & 0xFFFF_FFFF) as u32;
                 let rh = ((regs.rsi >> 32) & 0xFFFF_FFFF) as u32;
-                let fmt = if regs.rdx == rae_abi::syscall::CAPTURE_FMT_BGRA32 as u64 {
+                let fmt = if regs.rdx == ath_abi::syscall::CAPTURE_FMT_BGRA32 as u64 {
                     crate::compositor::CaptureFormat::Bgra32
                 } else {
                     crate::compositor::CaptureFormat::Argb32
                 };
-                let continuous = regs.r10 & rae_abi::syscall::CAPTURE_FLAG_CONTINUOUS != 0;
+                let continuous = regs.r10 & ath_abi::syscall::CAPTURE_FLAG_CONTINUOUS != 0;
                 if rw == 0 || rh == 0 {
-                    regs.rax = rae_abi::syscall::CAPTURE_ERR;
+                    regs.rax = ath_abi::syscall::CAPTURE_ERR;
                 } else {
                     let owner = crate::scheduler::current_task_id()
                         .map(|t| t.raw())
@@ -3066,7 +3066,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         //   CAPTURE_ERR. Validated copy_to_user; no raw deref.
         275 => {
             if !has_screen_capture_cap() {
-                regs.rax = rae_abi::syscall::CAPTURE_ERR;
+                regs.rax = ath_abi::syscall::CAPTURE_ERR;
             } else {
                 let id = regs.rdi;
                 let out_ptr = regs.rsi;
@@ -3074,22 +3074,22 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 match crate::compositor::read_capture_fmt(id) {
                     Some((pixels, w, h, fmt)) => {
                         let payload_len = pixels.len().saturating_mul(4);
-                        let total = core::mem::size_of::<rae_abi::CaptureHeader>() + payload_len;
+                        let total = core::mem::size_of::<ath_abi::CaptureHeader>() + payload_len;
                         if out_cap < total {
-                            regs.rax = rae_abi::syscall::CAPTURE_ERR;
+                            regs.rax = ath_abi::syscall::CAPTURE_ERR;
                         } else {
                             // Build the header + pixel bytes in a kernel buffer,
                             // then copy_to_user (validated) in one shot.
                             let mut buf = alloc::vec::Vec::with_capacity(total);
                             let fmt_tag = match fmt {
                                 crate::compositor::CaptureFormat::Bgra32 => {
-                                    rae_abi::syscall::CAPTURE_FMT_BGRA32
+                                    ath_abi::syscall::CAPTURE_FMT_BGRA32
                                 }
                                 crate::compositor::CaptureFormat::Argb32 => {
-                                    rae_abi::syscall::CAPTURE_FMT_ARGB32
+                                    ath_abi::syscall::CAPTURE_FMT_ARGB32
                                 }
                             };
-                            let hdr = rae_abi::CaptureHeader {
+                            let hdr = ath_abi::CaptureHeader {
                                 width: w,
                                 height: h,
                                 format: fmt_tag,
@@ -3108,19 +3108,19 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                                 Ok(()) => total as u64,
                                 Err(()) => {
                                     note_guard_ptr_reject();
-                                    rae_abi::syscall::CAPTURE_ERR
+                                    ath_abi::syscall::CAPTURE_ERR
                                 }
                             };
                         }
                     }
-                    None => regs.rax = rae_abi::syscall::CAPTURE_ERR,
+                    None => regs.rax = ath_abi::syscall::CAPTURE_ERR,
                 }
             }
         }
         // SYS_CAPTURE_STOP (276): rdi=capture_id -> 0 / CAPTURE_ERR.
         276 => {
             if !has_screen_capture_cap() {
-                regs.rax = rae_abi::syscall::CAPTURE_ERR;
+                regs.rax = ath_abi::syscall::CAPTURE_ERR;
             } else {
                 crate::compositor::stop_capture(regs.rdi);
                 regs.rax = 0;
@@ -3138,7 +3138,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         277 => {
             use crate::capability::Rights;
             if !has_accessibility_cap(Rights::READ) {
-                regs.rax = rae_abi::syscall::A11Y_ERR;
+                regs.rax = ath_abi::syscall::A11Y_ERR;
             } else {
                 let out_ptr = regs.rdi;
                 let out_cap = regs.rsi as usize;
@@ -3147,18 +3147,18 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                         let focused = crate::a11y::focused_node_id();
                         let buf = crate::a11y::serialize_snapshot(&nodes, focused);
                         if out_cap < buf.len() {
-                            regs.rax = rae_abi::syscall::A11Y_ERR;
+                            regs.rax = ath_abi::syscall::A11Y_ERR;
                         } else {
                             regs.rax = match copy_to_user(out_ptr, &buf) {
                                 Ok(()) => buf.len() as u64,
                                 Err(()) => {
                                     note_guard_ptr_reject();
-                                    rae_abi::syscall::A11Y_ERR
+                                    ath_abi::syscall::A11Y_ERR
                                 }
                             };
                         }
                     }
-                    Err(_) => regs.rax = rae_abi::syscall::A11Y_ERR,
+                    Err(_) => regs.rax = ath_abi::syscall::A11Y_ERR,
                 }
             }
         }
@@ -3167,7 +3167,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         278 => {
             use crate::capability::Rights;
             if !has_accessibility_cap(Rights::WRITE) {
-                regs.rax = rae_abi::syscall::A11Y_ERR;
+                regs.rax = ath_abi::syscall::A11Y_ERR;
             } else {
                 let node_id = regs.rdi;
                 let action = regs.rsi;
@@ -3175,7 +3175,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 regs.rax = if crate::a11y::dispatch_action(node_id, action, arg, true) {
                     0
                 } else {
-                    rae_abi::syscall::A11Y_ERR
+                    ath_abi::syscall::A11Y_ERR
                 };
             }
         }
@@ -3201,7 +3201,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             let sid = regs.rdi;
             regs.rax = match crate::compositor::surface_origin(sid) {
                 Some((x, y)) => (x as u64 & 0xFFFF) | ((y as u64 & 0xFFFF) << 16),
-                None => rae_abi::syscall::SURFACE_ORIGIN_ERR,
+                None => ath_abi::syscall::SURFACE_ORIGIN_ERR,
             };
         }
         // ── SYS_SEARCH_QUERY_RESOLVED (281) ── Concept §"Search is broken".
@@ -3209,7 +3209,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         // opaque (id, kind) 16-byte records; this serializes the RESOLVED hits
         // (name + path + kind + folder flag) so the Files app / command palette
         // can render clickable rows. Variable-length records — a 24-byte header
-        // (rae_abi::SearchResolvedHeader) + name + path bytes each. The kernel
+        // (ath_abi::SearchResolvedHeader) + name + path bytes each. The kernel
         // serializes into a kernel-owned buffer (search_index::serialize_resolved,
         // which acquires INDEX via lock_index → IF=0-safe, no deadlock) then
         // copy_to_user's it (validated, no raw deref). Ungated + safe-mode-OK,
@@ -3272,9 +3272,9 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                     // Distinguish "no request pending" (0) from "unknown id"
                     // (u64::MAX): the origin poll proves the surface exists.
                     if crate::compositor::surface_origin(sid).is_some() {
-                        rae_abi::syscall::SURFACE_RESIZE_NONE
+                        ath_abi::syscall::SURFACE_RESIZE_NONE
                     } else {
-                        rae_abi::syscall::SURFACE_RESIZE_ERR
+                        ath_abi::syscall::SURFACE_RESIZE_ERR
                     }
                 }
             };
@@ -3297,10 +3297,10 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
                 Some(caller) => {
                     match crate::compositor::resize_user_surface(sid, w, h, new_buf, caller) {
                         Ok(()) => 0,
-                        Err(()) => rae_abi::syscall::SURFACE_RESIZE_ERR,
+                        Err(()) => ath_abi::syscall::SURFACE_RESIZE_ERR,
                     }
                 }
-                None => rae_abi::syscall::SURFACE_RESIZE_ERR,
+                None => ath_abi::syscall::SURFACE_RESIZE_ERR,
             };
         }
         // SYS_FUTEX (258): native futex for relibc sync (mutex/once/rwlock).
@@ -3360,11 +3360,11 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             }
             regs.rax = 0;
         }
-        // SYS_SET_GS_BASE (282, rae_abi): set the user-visible GS base to the
+        // SYS_SET_GS_BASE (282, ath_abi): set the user-visible GS base to the
         // Win32 TEB pointer for a AthBridge guest (MSVC CRT reads gs:[0x30]).
         // rdi = TEB virtual address. Mirrors SYS_SET_FS_BASE (126).
         //
-        // WHICH MSR — the load-bearing subtlety. The spec (raebridge-real-crt-
+        // WHICH MSR — the load-bearing subtlety. The spec (athbridge-real-crt-
         // abi.md §2) prescribes KernelGsBase on the assumption of a SINGLE
         // trailing swapgs before sysretq. AthenaOS's `syscall_handler` actually
         // does an EVEN number of swapgs between this Rust arm and sysret: the
@@ -3394,14 +3394,14 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
             }
             regs.rax = 0;
         }
-        // SYS_MPROTECT (283, rae_abi): flip protection flags on already-mapped
+        // SYS_MPROTECT (283, ath_abi): flip protection flags on already-mapped
         // 4 KiB user pages. rdi=addr, rsi=len, rdx=prot (PROT_READ=1/WRITE=2/
         // EXEC=4). AthBridge's loader uses this to flip relocated .text RW->RX.
         // The AthGuard W^X gate (refuse W+X) lives in sys_mprotect.
         283 => {
             regs.rax = crate::memory::sys_mprotect(regs.rdi, regs.rsi, regs.rdx);
         }
-        // ── Rae scripting daemon half (294-295) — raelangd drains >64 KiB
+        // ── Rae scripting daemon half (294-295) — athlangd drains >64 KiB
         // scripts the kernel won't run inline (Concept §Customization
         // Engine; scripting.rs owns the lifecycle). 284-290 are anti-cheat
         // (first-match-wins — see the renumbering note above them).
@@ -3540,7 +3540,7 @@ pub extern "C" fn syscall_handler_inner(regs: &mut SyscallRegisters) {
         }
         // SYS_INSTALL_RUN (256) — MasterChecklist Phase 3: run the installer onto
         // the active block device. Returns a stage bitmask (5 bits = full install).
-        // Requires Cap::System{WRITE} (same gate as SYS_RAEEN_SHUTDOWN).
+        // Requires Cap::System{WRITE} (same gate as SYS_ATHENA_SHUTDOWN).
         256 => {
             use crate::capability::{Cap, Rights};
             let mut allowed = false;

@@ -64,7 +64,7 @@ pub fn candidates(vendor,u16, device,u16, class,u8, subclass,u8) -> Vec<DriverCa
 ```
 
 `DriverKind::Builtin` is just `Native + InKernel` in the new taxonomy — the change is
-additive and backward-mappable, so the existing `/proc/raeen/drivers` +
+additive and backward-mappable, so the existing `/proc/athena/drivers` +
 `required_linuxkpi_packages()` keep working.
 
 ### 2.3 The policy (how you choose)
@@ -78,7 +78,7 @@ A `DriverPolicy` resolved at boot/install, in priority order:
 4. **Fallback chain** — if the chosen candidate's `attach()` fails, fall to the next
    in rank (native experimental fails → LinuxKPI stable picks up), logged loudly.
 
-Surfaced read-only at `/proc/raeen/drivers` (current pick + alternatives + why) and
+Surfaced read-only at `/proc/athena/drivers` (current pick + alternatives + why) and
 settable via the config registry / installer UI later. This is the inspectable
 "choose your driver" control.
 
@@ -139,7 +139,7 @@ This is what makes "write a driver from scratch" safe to iterate.
 
 The hardest part of a from-scratch driver is the **bring-up register sequence**, and
 you can validate most of it **without QEMU or iron** using the pattern already proven
-in `tools/linuxkpi_harness` (mock-GPU) and the rae_crypto/amdgpu host KATs:
+in `tools/linuxkpi_harness` (mock-GPU) and the ath_crypto/amdgpu host KATs:
 
 1. Put the driver's pure logic (register offsets, init state machine, ring/queue
    math, descriptor formats) in a `#![no_std]` module with **no direct hardware
@@ -169,7 +169,7 @@ For each driver, in order:
 4. **Lifecycle** — implement `RaeDriver` + the right data-plane trait
    (`BlockDevice`/`NetDriver`/`CharDevice`/…); declare `capabilities()`.
 5. **Residence** — userspace ELF daemon (default, sandboxed) or in-kernel (hot path).
-6. **R10** — `init()` wired, `run_boot_smoketest()`, `/proc/raeen/<driver>`, Concept
+6. **R10** — `init()` wired, `run_boot_smoketest()`, `/proc/athena/<driver>`, Concept
    docstring.
 7. **QEMU** — if QEMU emulates the device, prove a real transaction in the serial log.
 8. **Iron** — the final `[x]`; everything before is `[~]`.
@@ -214,7 +214,7 @@ are public and QEMU/ACPI exercise them.
 ## 8. First concrete step when you say "go"
 
 1. Land the **selection layer** (§2): extend `driver_manifest` to ranked candidates +
-   `DriverPolicy` + the `/proc/raeen/drivers` "current pick + alternatives" view +
+   `DriverPolicy` + the `/proc/athena/drivers` "current pick + alternatives" view +
    a pin/fallback boot smoketest. This is the "choose your driver" mechanism and is
    pure-QEMU-provable.
 2. Then pick driver #2 or #3 (RTC or PS/2) as the **reference native driver** that

@@ -1,15 +1,15 @@
 # Spec: Slice 1 — arch-neutral memory-address newtypes (`arch::PhysAddr` / `VirtAddr` / `Frame`)
 
 Status: RESEARCH / executable plan. **SPEC ONLY — this document touches no kernel code, no
-`Cargo.toml`, no `xtask`, no `rae_abi`.** It is the concrete, sub-sliced implementation plan for
+`Cargo.toml`, no `xtask`, no `ath_abi`.** It is the concrete, sub-sliced implementation plan for
 the "Slice 1" the multi-arch spec defined as *"arch-neutral PhysAddr/VirtAddr + the paging trait"*
 (`docs/research/aarch64-bringup-spec.md` §"Slice 1"). It **extends, does not re-derive**,
 `docs/research/multi-arch-abstraction.md` and ADR 0007 — and it follows on from the four landed,
 verifier-confirmed `arch::` seam relocations (0b-1 IDT-install, 0b-2 BSP-GDT, 0b-3 EOI,
 0b-4 timer-arm).
 
-Owner of the seam contract: **raeen-architect** (this is an internal kernel HAL type contract,
-NOT `rae_abi` — `ABI_VERSION` unchanged, §6 below). Implementer: **raeen-kernel**.
+Owner of the seam contract: **athena-architect** (this is an internal kernel HAL type contract,
+NOT `ath_abi` — `ABI_VERSION` unchanged, §6 below). Implementer: **athena-kernel**.
 
 ---
 
@@ -179,7 +179,7 @@ that keeps x86 booting 7/7. Proof line for EVERY sub-slice below is the same x86
 > `[ OS ] System successfully booted.` + `boot health: 6/6 critical PASS -> HEALTHY`, **no
 > `[PANIC]`**, `[BOOT-BENCH]` not regressed, and the **arch smoketest line** (see §5) still prints
 > `… -> PASS`. SMP-touching sub-slices (1f smp.rs, 1g task/scheduler) get **≥5 boots at
-> `RAEEN_SMP=1` and `=2`** (CLAUDE.md §17).
+> `ATHENA_SMP=1` and `=2`** (CLAUDE.md §17).
 
 Sub-slices are ordered **lightest-and-most-isolated first**, with the concurrently-dirty
 `memory.rs` / `syscall.rs` / `posix.rs` files sequenced **last** so they wait for a clear lane
@@ -226,13 +226,13 @@ Sub-slices are ordered **lightest-and-most-isolated first**, with the concurrent
 - **Keystone watch:** the AP per-CPU syscall/exception-stack rule (§10.6) — this sub-slice only
   rewrites the *address type name*, it must NOT alter any `set_syscall_kernel_stack`/`rsp0` logic.
   Pure import rewrite only.
-- **Proof line:** baseline **+ ≥5 boots at `RAEEN_SMP=1` and `=2`** (SMP path).
+- **Proof line:** baseline **+ ≥5 boots at `ATHENA_SMP=1` and `=2`** (SMP path).
 
 ### Sub-slice 1g — `task.rs` + `scheduler.rs` (task entry/stack addresses — ≥5 boots)
 - **Files:** `task.rs` (16), `scheduler.rs` (11). Task entry points + per-task stack addresses.
 - **Keystone watch:** the yield-path lock-drop + block-path syscall-stack rule (§10.6) — again,
   type-name rewrite ONLY; no scheduler control-flow change.
-- **Proof line:** baseline **+ ≥5 boots `RAEEN_SMP=1`/`=2`**.
+- **Proof line:** baseline **+ ≥5 boots `ATHENA_SMP=1`/`=2`**.
 
 ### Sub-slice 1h — `memory.rs` public signatures (LATE — waits for the clear MM lane)
 - **Files:** `memory.rs` (41 address hits). Convert the public signatures
@@ -247,7 +247,7 @@ Sub-slices are ordered **lightest-and-most-isolated first**, with the concurrent
 - **Scope discipline:** convert ONLY the `PhysAddr`/`VirtAddr`/(Frame-as-handle) value types. Do
   NOT touch `OffsetPageTable`/`PageTableFlags`/`Mapper`/`Cr3` here — that is §4's paging-trait
   slice. The 134 Cluster-B hits in `memory.rs` stay `x86_64::` until then.
-- **Proof line:** baseline **+ ≥5 boots `RAEEN_SMP=1`/`=2`** (MM core touches every path).
+- **Proof line:** baseline **+ ≥5 boots `ATHENA_SMP=1`/`=2`** (MM core touches every path).
 
 ### Sub-slice 1i — `syscall.rs` + `posix.rs` (LATEST — the concurrent's lane)
 - **Files:** `syscall.rs` (21 address hits), `posix.rs` (7 address hits). mmap/mprotect/brk addr
@@ -257,7 +257,7 @@ Sub-slices are ordered **lightest-and-most-isolated first**, with the concurrent
   cleanup tail, not a blocker for 1a–1h.
 - **Scope discipline:** address value types only — the page-table flag/`Mapper` Cluster-B hits in
   these files stay for §4.
-- **Proof line:** baseline **+ ≥5 boots `RAEEN_SMP=1`/`=2`**.
+- **Proof line:** baseline **+ ≥5 boots `ATHENA_SMP=1`/`=2`**.
 
 ### Completion check for Slice 1
 After 1a–1i: **no shared kernel file names `x86_64::PhysAddr` or `x86_64::VirtAddr`** (grep returns
@@ -302,7 +302,7 @@ gets its own design doc (it is large enough to warrant one, like the aarch64 boo
 
 Sub-slice 1a extends the existing `arch::run_boot_smoketest()` (the same function the four landed
 seams report through) with an **address-type round-trip assertion**, and `arch::dump_text()`
-(`/proc/raeen/arch`) with the seam's status. The assertion (pure arithmetic, also host-KAT-able
+(`/proc/athena/arch`) with the seam's status. The assertion (pure arithmetic, also host-KAT-able
 per CLAUDE.md §15 *before* boot):
 
 - **Identity-map round-trip:** take a known kernel phys address `p`, compute its higher-half virt
@@ -343,27 +343,27 @@ the four landed seam modules do.
 
 ---
 
-## 6. Interface note — internal HAL types, NOT `rae_abi`
+## 6. Interface note — internal HAL types, NOT `ath_abi`
 
 These are **internal kernel HAL types**. Confirm and record:
 - **`ABI_VERSION` is UNCHANGED.** Per ADR 0009 (and ADR 0007 §2: "the user/syscall ABI stays
-  arch-neutral — NO `rae_abi`/`ABI_VERSION` change"), the `arch::` address newtypes never cross the
-  syscall boundary. No `rae_abi` / `rae_driver_api` edit. The architecture-gate's `[interface]`
-  sign-off requirement does NOT apply (it gates `rae_abi`/`rae_driver_api`, not internal `arch::`).
+  arch-neutral — NO `ath_abi`/`ABI_VERSION` change"), the `arch::` address newtypes never cross the
+  syscall boundary. No `ath_abi` / `ath_driver_api` edit. The architecture-gate's `[interface]`
+  sign-off requirement does NOT apply (it gates `ath_abi`/`ath_driver_api`, not internal `arch::`).
 - **Syscall ABI surfaces raw integers, never the newtype.** Any syscall that takes/returns an
   address (mmap, mprotect, brk, `sys_claim_device` packing) MUST keep its ABI-level type a **plain
   `u64`/`usize` integer**. The newtype is constructed *inside* the kernel handler from the raw
-  integer arg and never appears in a `rae_abi` constant or struct. The migration sub-slices 1h/1i
+  integer arg and never appears in a `ath_abi` constant or struct. The migration sub-slices 1h/1i
   must preserve this: the `arch::VirtAddr` lives in the handler body, the syscall *signature* stays
   integer. (This is already true today — `x86_64::VirtAddr` is constructed inside handlers, not in
-  `rae_abi`; the alias preserves it.)
+  `ath_abi`; the alias preserves it.)
 - The widened `arch::` surface (three type names + the `addr::roundtrip_ok()` predicate) is the
-  internal seam contract raeen-architect owns as documentation — consistent with how the four
+  internal seam contract athena-architect owns as documentation — consistent with how the four
   landed seams' `pub fn` surfaces are owned.
 
 ---
 
-## 7. HAND-OFF — the named first sub-slice for raeen-kernel
+## 7. HAND-OFF — the named first sub-slice for athena-kernel
 
 **Execute FIRST: Sub-slice 1a — define the `arch::` address types + extend the smoketest, x86
 unchanged.**

@@ -12,7 +12,7 @@
 //! `/var/crash/`, and clears the magic.
 //!
 //! R10 contract: [`init`] is called from `kernel_main`; [`run_boot_smoketest`]
-//! proves the reserved region; [`dump_text`] backs `/proc/raeen/crash`; and the
+//! proves the reserved region; [`dump_text`] backs `/proc/athena/crash`; and the
 //! panic handler calls [`write_crash_dump`].
 
 #![allow(dead_code)]
@@ -908,7 +908,7 @@ pub fn check_boot_tombstone() -> bool {
             }
             let msg = alloc::string::String::from_utf8_lossy(&msg_bytes[..len]).into_owned();
             crate::serial_println!(
-                "[crash] previous crash dump found! Queued for /var/crash/raeen-{:#x}.dump (rip={:#x}, msg_len={})",
+                "[crash] previous crash dump found! Queued for /var/crash/athena-{:#x}.dump (rip={:#x}, msg_len={})",
                 tsc,
                 rip,
                 len,
@@ -985,7 +985,7 @@ pub fn flush_pending_crash_dump() {
     }
     let body = format_dump_text(&p);
     let name = crash_dump_filename(p.timestamp_tsc);
-    let ok = crate::raefs::write_flat_file(&name, body.as_bytes());
+    let ok = crate::athfs::write_flat_file(&name, body.as_bytes());
     crate::serial_println!(
         "[crash] persisted prior crash to /var/crash/{} ({} bytes) ok={}",
         name,
@@ -997,7 +997,7 @@ pub fn flush_pending_crash_dump() {
     // crash, not discover a hex file by accident. A plain-language report
     // lands next to the raw dump, and a critical toast points at it.
     let report = format_user_report(&p, &name);
-    let report_ok = crate::raefs::write_flat_file("crash-report.txt", report.as_bytes());
+    let report_ok = crate::athfs::write_flat_file("crash-report.txt", report.as_bytes());
     let _ = crate::notify::post(
         "Crash Reporter",
         "AthenaOS recovered from a crash - report saved",
@@ -1032,7 +1032,7 @@ fn format_user_report(p: &PendingCrash, dump_name: &str) -> String {
     let _ = writeln!(out, "When (TSC): {:#x}", p.timestamp_tsc);
     let _ = writeln!(out);
     let _ = writeln!(out, "Full technical dump: /var/crash/{}", dump_name);
-    let _ = writeln!(out, "Live diagnostics:    /proc/raeen/crash");
+    let _ = writeln!(out, "Live diagnostics:    /proc/athena/crash");
     let _ = writeln!(
         out,
         "If this repeats, file a report with both files attached."
@@ -1058,19 +1058,19 @@ pub fn run_persist_smoketest() {
     let name = "varcrash-selftest.dump";
 
     let exercise = || {
-        let wrote = crate::raefs::write_flat_file(name, body.as_bytes());
-        let read_back = crate::raefs::read_flat_file(name);
+        let wrote = crate::athfs::write_flat_file(name, body.as_bytes());
+        let read_back = crate::athfs::read_flat_file(name);
         let matches = read_back.as_deref() == Some(body.as_bytes());
         (wrote, matches)
     };
 
     let live_writable =
-        { crate::raefs::RAEFS.lock().is_some() } && !crate::block_io::safe_mode_enabled();
+        { crate::athfs::ATHFS.lock().is_some() } && !crate::block_io::safe_mode_enabled();
     let (wrote, matches, volume) = if live_writable {
         let (w, m) = exercise();
         (w, m, "live")
     } else {
-        match crate::raefs::with_ram_raefs(exercise) {
+        match crate::athfs::with_ram_athfs(exercise) {
             Some((w, m)) => (w, m, "ram-volume"),
             None => (false, false, "ram-volume setup failed"),
         }
@@ -1093,13 +1093,13 @@ pub fn run_persist_smoketest() {
     let report_ok = report.contains("synthetic selftest panic")
         && report.contains("0xdeadbeef")
         && report.contains("/var/crash/varcrash-selftest.dump")
-        && report.contains("/proc/raeen/crash");
+        && report.contains("/proc/athena/crash");
     crate::serial_println!(
         "[crash] report smoketest: msg={} rip_hex={} dump_path={} proc_path={} -> {}",
         report.contains("synthetic selftest panic"),
         report.contains("0xdeadbeef"),
         report.contains("/var/crash/varcrash-selftest.dump"),
-        report.contains("/proc/raeen/crash"),
+        report.contains("/proc/athena/crash"),
         if report_ok { "PASS" } else { "FAIL" }
     );
 }
@@ -1393,7 +1393,7 @@ pub fn run_boot_smoketest() {
     }
 }
 
-/// /proc/raeen/crash — reserved-region address, tombstone magic, and whether a
+/// /proc/athena/crash — reserved-region address, tombstone magic, and whether a
 /// previous crash dump was detected this boot.
 /// MasterChecklist Phase 4.5: Crash dump.
 pub fn dump_text() -> String {

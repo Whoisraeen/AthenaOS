@@ -10,7 +10,7 @@
  *
  * The SIGNALLING MACHINERY (init/signal/add_callback/wait) has real ordering and
  * wakeup obligations — a fake "always signalled" or a no-op wait would silently
- * break every GPU sync — so those are declaration-only, backed by raeen_linuxkpi's
+ * break every GPU sync — so those are declaration-only, backed by ath_linuxkpi's
  * fence facade at M4 (SCOPE.md rule 9). Only the genuinely-pure accessors
  * (set_error, seqno comparison) are inlined here.
  *
@@ -83,7 +83,7 @@ struct dma_fence_ops {
 /* sentinel timeout: wait "forever" */
 #define MAX_SCHEDULE_TIMEOUT ((long)(~0UL >> 1))
 
-/* ---- lifecycle + signalling: real machinery, backed by raeen_linuxkpi (M4) ---- */
+/* ---- lifecycle + signalling: real machinery, backed by ath_linuxkpi (M4) ---- */
 void dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
 		    spinlock_t *lock, u64 context, u64 seqno);
 struct dma_fence *dma_fence_get(struct dma_fence *fence);

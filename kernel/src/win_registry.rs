@@ -4,7 +4,7 @@
 //! every other setting"). MasterChecklist Phase 11.2 — "Registry shim
 //! backed by versioned config".
 //!
-//! The hive emulator (`raebridge::registry::RegistryHive` — handles,
+//! The hive emulator (`athbridge::registry::RegistryHive` — handles,
 //! HKLM/HKCU roots, Windows-10 default keys) existed in-memory only: every
 //! reboot lost whatever a Windows app wrote. This module owns the live
 //! hive and BACKS it with `config_registry`: every `set_value` mirrors
@@ -26,9 +26,9 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 use spin::Mutex;
 
-use raebridge::registry::{RegistryHive, RegistryValue};
+use athbridge::registry::{RegistryHive, RegistryValue};
 
-pub use raebridge::registry::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
+pub use athbridge::registry::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
 
 static HIVE: Mutex<Option<RegistryHive>> = Mutex::new(None);
 static SETS_PERSISTED: AtomicU64 = AtomicU64::new(0);
@@ -152,11 +152,11 @@ fn restore_from_config(hive: &mut RegistryHive) -> u64 {
         // Stored paths use the hive's native short prefixes (handle paths
         // resolve to "HKCU\..."); long forms accepted for forward-compat.
         let root_hkey = match root {
-            "HKCU" | "HKEY_CURRENT_USER" => raebridge::registry::HKEY_CURRENT_USER,
-            "HKLM" | "HKEY_LOCAL_MACHINE" => raebridge::registry::HKEY_LOCAL_MACHINE,
-            "HKCR" | "HKEY_CLASSES_ROOT" => raebridge::registry::HKEY_CLASSES_ROOT,
-            "HKU" | "HKEY_USERS" => raebridge::registry::HKEY_USERS,
-            "HKCC" | "HKEY_CURRENT_CONFIG" => raebridge::registry::HKEY_CURRENT_CONFIG,
+            "HKCU" | "HKEY_CURRENT_USER" => athbridge::registry::HKEY_CURRENT_USER,
+            "HKLM" | "HKEY_LOCAL_MACHINE" => athbridge::registry::HKEY_LOCAL_MACHINE,
+            "HKCR" | "HKEY_CLASSES_ROOT" => athbridge::registry::HKEY_CLASSES_ROOT,
+            "HKU" | "HKEY_USERS" => athbridge::registry::HKEY_USERS,
+            "HKCC" | "HKEY_CURRENT_CONFIG" => athbridge::registry::HKEY_CURRENT_CONFIG,
             _ => continue,
         };
         let Some(value) = parse_value(&text) else {
@@ -188,7 +188,7 @@ pub fn init() {
 /// missing keys fail with the right Win32 error.
 pub fn run_boot_smoketest() {
     // 1. Write through the shim.
-    let set_ok = match create_key(HKEY_CURRENT_USER, "Software\\RaeenSelftest") {
+    let set_ok = match create_key(HKEY_CURRENT_USER, "Software\\AthenaSelftest") {
         Ok((h, _)) => {
             let r = set_value(
                 h,
@@ -206,20 +206,20 @@ pub fn run_boot_smoketest() {
     // 2. The mirror landed in versioned config (handle paths resolve to the
     // hive's short root prefixes, so the key starts with HKCU).
     let mirrored =
-        crate::config_registry::get_text("/bridge/registry/HKCU/Software/RaeenSelftest/InstallDir")
+        crate::config_registry::get_text("/bridge/registry/HKCU/Software/AthenaSelftest/InstallDir")
             .as_deref()
             == Some("1:C:\\Games\\Rae");
 
     // 3. Cold restart: a brand-new hive replays the value from config.
     *HIVE.lock() = None;
     init();
-    let resurrected = match open_key(HKEY_CURRENT_USER, "Software\\RaeenSelftest") {
+    let resurrected = match open_key(HKEY_CURRENT_USER, "Software\\AthenaSelftest") {
         Ok(h) => {
             let s = query_value(h, "InstallDir")
-                .map(|(t, b)| t == raebridge::registry::REG_SZ && !b.is_empty())
+                .map(|(t, b)| t == athbridge::registry::REG_SZ && !b.is_empty())
                 .unwrap_or(false);
             let d = query_value(h, "Launches")
-                .map(|(t, b)| t == raebridge::registry::REG_DWORD && b == 42u32.to_le_bytes())
+                .map(|(t, b)| t == athbridge::registry::REG_DWORD && b == 42u32.to_le_bytes())
                 .unwrap_or(false);
             close_key(h);
             s && d
@@ -254,7 +254,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/winreg` — registry shim state.
+/// `/proc/athena/winreg` — registry shim state.
 pub fn dump_text() -> String {
     alloc::format!(
         "# Win32 registry shim (backed by versioned config under /bridge/registry)\nsets_persisted: {}\nrestored_at_boot: {}\nhive_loaded: {}\n",

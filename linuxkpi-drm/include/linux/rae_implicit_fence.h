@@ -62,7 +62,7 @@ void *vmemdup_array_user(const void *src, size_t n, size_t size);
 void *radix_tree_iter_delete(void *root, struct radix_tree_iter *iter, void **slot);
 
 /* ── atomic_long_*: 64-bit long returns (TTM page accounting, fence counters).
- * Backed by REAL SeqCst ops in raeen_linuxkpi (drm_bringup.rs). ── */
+ * Backed by REAL SeqCst ops in ath_linuxkpi (drm_bringup.rs). ── */
 long atomic_long_read(const long *v);
 void atomic_long_set(long *v, long i);
 void atomic_long_add(long i, long *v);

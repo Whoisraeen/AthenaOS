@@ -99,15 +99,15 @@ Windows = File Explorer; macOS = Finder.
 | Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | File manager app | Explorer | Finder | `Files` (basic) | `[~]` | 14.2 |
-| Tabs / split panes | ✓ | ✓ (tabs) | `apps/files` tabs LIVE (`rae_files::TabSet`); no split yet | `[~]` | 14.2 |
+| Tabs / split panes | ✓ | ✓ (tabs) | `apps/files` tabs LIVE (`ath_files::TabSet`); no split yet | `[~]` | 14.2 |
 | Fuzzy search in-folder | ✓ | ✓ | kernel `search_index.rs` live (syscalls wired); NOT populated/queried | `[~]` | 14.1 |
-| Batch rename | (PowerToys) | ✓ | `apps/files` batch-rename (host-KAT'd `rae_files`) | `[~]` | 14.2 |
+| Batch rename | (PowerToys) | ✓ | `apps/files` batch-rename (host-KAT'd `ath_files`) | `[~]` | 14.2 |
 | Trash / Recycle Bin | ✓ | ✓ | `apps/files` Trash = CoW move to `.Trash` + restore/empty | `[~]` | 14.2 |
 | Removable media mount/eject | ✓ | ✓ | USB-MSC enumerate still blocked on iron | `[~]` | 2.1 |
 | Network shares (SMB) | ✓ | ✓ | not planned for 1.0 | `[ ]` | 10 |
-| Cloud drive integration | OneDrive | iCloud Drive | `raesync` E2E core (device enroll, wrapped group key, AEAD SyncBlob, LWW-CRDT convergence) host-KAT'd; server + drive UX + iron pending | `[~]` | 15.3 |
-| Quick preview | Preview pane | Quick Look | Files Quick Look renders real PNG pixels (`8550989`); BMP/GIF/PNG/JPEG/WebP decoders + `rae_image` dispatcher host-KAT'd, broader-format Quick Look wiring pending | `[~]` | 14.2 |
-| Zip / unzip | ✓ | ✓ | lz4/zstd in kernel; `rae_zip` reader+ZipWriter + `rae_tar` .tar.gz writer host-KAT'd; UI wiring pending | `[~]` | 5.4 |
+| Cloud drive integration | OneDrive | iCloud Drive | `athsync` E2E core (device enroll, wrapped group key, AEAD SyncBlob, LWW-CRDT convergence) host-KAT'd; server + drive UX + iron pending | `[~]` | 15.3 |
+| Quick preview | Preview pane | Quick Look | Files Quick Look renders real PNG pixels (`8550989`); BMP/GIF/PNG/JPEG/WebP decoders + `ath_image` dispatcher host-KAT'd, broader-format Quick Look wiring pending | `[~]` | 14.2 |
+| Zip / unzip | ✓ | ✓ | lz4/zstd in kernel; `ath_zip` reader+ZipWriter + `ath_tar` .tar.gz writer host-KAT'd; UI wiring pending | `[~]` | 5.4 |
 | File associations / default apps | ✓ | ✓ | not yet | `[ ]` | 14.2 |
 | Per-app data isolation | (none) | (containers) | AthFS per-app buckets (Concept §AthFS) | `[~]` | 5.6 |
 
@@ -136,7 +136,7 @@ Windows = Settings + (legacy) Control Panel; macOS = System Settings. Concept §
 | Privacy & per-app permissions | ✓ | ✓ | capability syscalls `[x]`; permission UI `[~]` | `[~]` | 9.2 |
 | Update settings + history | ✓ | ✓ | atomic A/B slots `[~]`; no UI | `[~]` | 3.6 |
 | Storage management | ✓ | ✓ | AthFS exists; no UI | `[~]` | 5 |
-| About / system info | ✓ | ✓ | `/proc/raeen/*` exists; no UI | `[~]` | 0 |
+| About / system info | ✓ | ✓ | `/proc/athena/*` exists; no UI | `[~]` | 0 |
 | Backup & restore | Windows Backup | Time Machine | AthFS snapshots + one-click rollback iron-proven | `[~]` | 5.1 |
 | Recovery / reset | Reset PC / WinRE | Recovery | safe mode exists; recovery env `[ ]` | `[~]` | 4.10 / 16 |
 | RGB / fan / overclock unified | (vendor sprawl) | (none) | one RGB API + fan curves (Concept §Customization) | `[~]` | 13.3 |
@@ -150,22 +150,22 @@ What ships in the box. Concept §Windows Pain Points: "Default install is OS onl
 
 | App | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
-| Web browser | Edge | Safari | raeweb HTML/CSS + a from-scratch JS engine (`rae_js`: parse+execute+collections+RegExp+Promise/event-loop) host-KAT'd; layout/render + DOM bindings + app-wiring pending | `[~]` | 14.2 |
+| Web browser | Edge | Safari | athweb HTML/CSS + a from-scratch JS engine (`ath_js`: parse+execute+collections+RegExp+Promise/event-loop) host-KAT'd; layout/render + DOM bindings + app-wiring pending | `[~]` | 14.2 |
 | File manager | Explorer | Finder | Files (basic) | `[~]` | 14.2 |
 | Settings | Settings | System Settings | Settings (basic) | `[~]` | 14.2 |
 | Terminal | Terminal / PowerShell | Terminal.app | full VT100/xterm emulator, SGR-color fixed | `[~]` | 14.2 |
 | Text editor | Notepad | TextEdit | exists (basic) | `[~]` | 14.2 |
-| Calculator | ✓ | ✓ | `apps/calculator` over `rae_calc` (17 KATs) | `[~]` | 14.2 |
-| Photos / viewer | Photos | Photos | `apps/photos`; full decode stack BMP/GIF/PNG/JPEG/WebP-VP8L + PNG/JPEG encode + `rae_image` dispatcher, all host-KAT'd; app-wiring (beyond PNG-in-Files) + iron pending | `[~]` | 14.2 |
-| Media player | Media Player | Music / QuickTime | `apps/music`; WAV/FLAC/MP3/AAC/Opus decoders host-KAT'd (MP3+AAC audible on host), rae_mp4 demux; player open/decode path done; SCHED_BODY GameMixer; iron HDA + app-wiring pending | `[~]` | 7 / 14.2 |
+| Calculator | ✓ | ✓ | `apps/calculator` over `ath_calc` (17 KATs) | `[~]` | 14.2 |
+| Photos / viewer | Photos | Photos | `apps/photos`; full decode stack BMP/GIF/PNG/JPEG/WebP-VP8L + PNG/JPEG encode + `ath_image` dispatcher, all host-KAT'd; app-wiring (beyond PNG-in-Files) + iron pending | `[~]` | 14.2 |
+| Media player | Media Player | Music / QuickTime | `apps/music`; WAV/FLAC/MP3/AAC/Opus decoders host-KAT'd (MP3+AAC audible on host), ath_mp4 demux; player open/decode path done; SCHED_BODY GameMixer; iron HDA + app-wiring pending | `[~]` | 7 / 14.2 |
 | Screenshot / screen record | Snipping Tool | Screenshot | compositor capture (Concept §Gaming) | `[ ]` | 12.2 |
-| System monitor | Task Manager | Activity Monitor | `/proc/raeen/*` data exists; no app | `[~]` | 14.2 |
+| System monitor | Task Manager | Activity Monitor | `/proc/athena/*` data exists; no app | `[~]` | 14.2 |
 | Disk utility | Disk Management | Disk Utility | installer GPT/AthFS logic exists; no app | `[~]` | 3 |
 | App store client | Microsoft Store | App Store | AthStore (shell only) | `[~]` | 15.1 |
 | Clock / alarms | ✓ | ✓ | `apps/clock` (clock/alarms/timer/stopwatch/calendar) | `[~]` | 14.2 |
-| Notes | ✓ | Notes | `apps/notes` (md edit + live rae_markdown preview) | `[~]` | 14.2 |
-| Office docs (Word/Excel/PDF) | Office / WordPad | Pages/Numbers/Preview | `rae_docx`/`rae_xlsx`/`rae_pdf` read + DOCX/XLSX write + XLSX formula compute + `rae_print` PDF-1.7 generator, all host-KAT'd; app UI + iron pending | `[~]` | 14.2 |
-| Mail / Calendar | ✓ | ✓ | `rae_mail` (SMTP/IMAP/POP3 + RFC822/MIME) + `rae_pim` (iCal/vCard parse + RRULE + POSIX TZ) host-KAT'd; live TLS/TCP wiring + app UI + iron pending | `[~]` | 14.2 |
+| Notes | ✓ | Notes | `apps/notes` (md edit + live ath_markdown preview) | `[~]` | 14.2 |
+| Office docs (Word/Excel/PDF) | Office / WordPad | Pages/Numbers/Preview | `ath_docx`/`ath_xlsx`/`ath_pdf` read + DOCX/XLSX write + XLSX formula compute + `rae_print` PDF-1.7 generator, all host-KAT'd; app UI + iron pending | `[~]` | 14.2 |
+| Mail / Calendar | ✓ | ✓ | `ath_mail` (SMTP/IMAP/POP3 + RFC822/MIME) + `ath_pim` (iCal/vCard parse + RRULE + POSIX TZ) host-KAT'd; live TLS/TCP wiring + app UI + iron pending | `[~]` | 14.2 |
 | Camera | ✓ | Photo Booth | no webcam stack | `[ ]` | — |
 
 ---
@@ -260,8 +260,8 @@ Windows = Defender + BitLocker + SmartScreen + Hello; macOS = Gatekeeper + FileV
 | Per-app permission prompts | ✓ | ✓ | permission UI `[~]` | `[~]` | 9.2 |
 | Code signing / notarization | SmartScreen | Gatekeeper | Ed25519 bundle signing; "unverified dev" UX | `[~]` | 9.3 |
 | Malware protection | Defender | XProtect | structural (caps) vs scanner; design choice | `[~]` | 9 |
-| Credential / password manager | Credential Mgr | Keychain | `rae_keychain` (argon2id master-key KDF + chacha20poly1305 AEAD, fail-closed, zeroized) host-KAT'd; OS-integration + UI + iron pending | `[~]` | 15.2 |
-| Passkeys / 2FA | Windows Hello / Authenticator | Passkeys | `raeid` WebAuthn (EdDSA + ES256) + `rae_otp` HOTP/TOTP host-KAT'd vs RFC vectors; authenticator UX + iron pending | `[~]` | 15.2 |
+| Credential / password manager | Credential Mgr | Keychain | `ath_keychain` (argon2id master-key KDF + chacha20poly1305 AEAD, fail-closed, zeroized) host-KAT'd; OS-integration + UI + iron pending | `[~]` | 15.2 |
+| Passkeys / 2FA | Windows Hello / Authenticator | Passkeys | `athid` WebAuthn (EdDSA + ES256) + `ath_otp` HOTP/TOTP host-KAT'd vs RFC vectors; authenticator UX + iron pending | `[~]` | 15.2 |
 | Ransomware resistance | (partial) | (partial) | per-app FS buckets (Concept §Security) | `[~]` | 5.6 |
 | Driver sandboxing (IOMMU) | (partial) | (DriverKit) | IOMMU tables iron; **enforcement** pending | `[~]` | 4.2 |
 | Parental controls / screen time | ✓ | ✓ | out of 1.0 scope | `[ ]` | — |
@@ -294,7 +294,7 @@ The actual moat. Concept §Compatibility Strategy: this is "how to actually win.
 | Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Native app SDK | Win32/WinUI | Cocoa/SwiftUI | AthKit (Rust, declarative) | `[~]` | 8.2 |
-| App package format | MSIX/exe | .app/.pkg | `.raepkg` bounds-checked TLV codec + fail-closed Ed25519 `parse_and_verify` host-KAT'd; hashed deps | `[~]` | 15.1 |
+| App package format | MSIX/exe | .app/.pkg | `.athpkg` bounds-checked TLV codec + fail-closed Ed25519 `parse_and_verify` host-KAT'd; hashed deps | `[~]` | 15.1 |
 | App store | Microsoft Store | App Store | AthStore (12% share, sideload OK); transactional dependency-correct install/uninstall+GC host-KAT'd; client UI + iron pending | `[~]` | 15.1 |
 | Sideloading | ✓ | (Gatekeeper) | allowed + supported (Concept) | `[ ]` | 15.1 |
 | **Windows app compatibility** | (native) | (none) | **AthBridge** (Wine/Proton lineage) | `[~]` | 11 |
@@ -302,7 +302,7 @@ The actual moat. Concept §Compatibility Strategy: this is "how to actually win.
 | DirectX → native translation | ✓ | — | DXVK/VKD3D lineage → AthGFX | `[ ]` | 11.2 |
 | **Steam day one** | ✓ | (limited) | **non-negotiable** (Concept §Gaming); not yet | `[ ]` | 11.3 |
 | Linux app support | WSL | (none) | POSIX layer; relibc native apps run | `[~]` | 0 / 11 |
-| Web apps / PWA | ✓ | ✓ | `rae_pwa` W3C manifest parse + URL resolution + InstallDescriptor host-KAT'd; render through AthUI + launch wiring pending | `[~]` | — |
+| Web apps / PWA | ✓ | ✓ | `ath_pwa` W3C manifest parse + URL resolution + InstallDescriptor host-KAT'd; render through AthUI + launch wiring pending | `[~]` | — |
 | Default-app / uninstall mgmt | ✓ | ✓ | not built | `[ ]` | 14.2 |
 
 ---
@@ -329,7 +329,7 @@ This is where AthenaOS must *beat* Windows/macOS, not match them. Concept §Gami
 | Capability | Windows | macOS | AthenaOS answer | Status | Phase |
 |---|---|---|---|---|---|
 | Boot < 6s on NVMe (target 3s) | (slow) | ✓ | iron T0→userspace ~3.1s; **total ~11s, over budget — open** | `[~]` | 1 |
-| Real-time game scheduling | Game Mode (weak) | (none) | **SCHED_BODY** hard deadlines; EDF + deadline-miss telemetry (`/proc/raeen/perf`, verifier-PASS); iron game-thread proof pending | `[~]` | 12.1 |
+| Real-time game scheduling | Game Mode (weak) | (none) | **SCHED_BODY** hard deadlines; EDF + deadline-miss telemetry (`/proc/athena/perf`, verifier-PASS); iron game-thread proof pending | `[~]` | 12.1 |
 | Background throttling in-game | (weak) | (n/a) | "nothing else gets meaningful CPU" (Concept) | `[ ]` | 12.1 |
 | Sub-frame input latency | (varies) | (varies) | OS adds <1 frame; not yet instrumented | `[ ]` | 12.1 |
 | Game bar / overlay | Xbox Game Bar | (none) | native overlay: FPS, frametime, temps | `[ ]` | 12.2 |
@@ -355,7 +355,7 @@ A consumer OS survives a year of abuse. Windows = WinRE/SFC/Reliability Monitor;
 | Safe mode | ✓ | ✓ | `--safe` boot path | `[~]` | 4.10 |
 | Recovery environment | WinRE | Recovery | not built | `[ ]` | 16 |
 | System restore points | ✓ | Time Machine | AthFS snapshots | `[~]` | 5.1 |
-| Event / log viewer | Event Viewer | Console | `/proc/raeen/*` + bootlog | `[~]` | 0 |
+| Event / log viewer | Event Viewer | Console | `/proc/athena/*` + bootlog | `[~]` | 0 |
 | 24h soak stability | (assumed) | (assumed) | not run | `[ ]` | 4.9 |
 | Machine-check / hardware-error handling | ✓ | ✓ | AER caps + SMCA banks iron; real handlers `[ ]` | `[~]` | 4.3 / 4.4 |
 | Watchdog | ✓ | ✓ | AMD-EFCH watchdog proven iron | `[~]` | 4.6 |

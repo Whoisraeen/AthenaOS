@@ -616,12 +616,12 @@ pub fn dispatch_boot_mouse(device_id: InputDeviceId, raw: &[u8]) {
 }
 
 /// Dispatch a FULL-RESOLUTION pointer update (i32 deltas) — for report-protocol
-/// mice decoded by `raehid` from a HID report descriptor. A gaming mouse (the
+/// mice decoded by `athhid` from a HID report descriptor. A gaming mouse (the
 /// Athena Razer) sends 16-bit X/Y; routing it through the 4-byte BOOT report
 /// would clamp each delta to ±127 and the cursor crawls (observed on iron). This
 /// path preserves the native resolution end-to-end (the cursor consumer,
 /// `compositor::move_cursor`, takes i32). `buttons` is the boot-layout bitmap
-/// (bit0=left, bit1=right, bit2=middle), which is exactly raehid's low button bits.
+/// (bit0=left, bit1=right, bit2=middle), which is exactly athhid's low button bits.
 pub fn dispatch_mouse_delta(device_id: InputDeviceId, dx: i32, dy: i32, wheel: i32, buttons: u8) {
     dispatch_mouse_core(device_id, buttons, dx, dy, wheel);
 }
@@ -669,7 +669,7 @@ fn dispatch_mouse_core(device_id: InputDeviceId, buttons: u8, dx: i32, dy: i32, 
         // input→photon telemetry: a pointer move/click is user input that
         // should reach the screen (cursor/UI). Arm the latency clock. Idle
         // (zero-delta, no-button) reports are skipped so the metric only times
-        // input that actually produces a visible change. /proc/raeen/perf.
+        // input that actually produces a visible change. /proc/athena/perf.
         crate::perf::record_input_event();
     }
 

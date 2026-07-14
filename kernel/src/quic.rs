@@ -882,7 +882,7 @@ impl QuicConnection {
     /// Derive initial keys from connection ID (simplified).
     pub fn derive_initial_keys(&mut self) {
         use crate::crypto::{HashAlgorithm, HmacContext, Sha256Context};
-        let salt = b"quic-raenet-v1-initial-salt-2026";
+        let salt = b"quic-athnet-v1-initial-salt-2026";
         let hmac = HmacContext::new_sha256(salt);
         let mut secret = [0u8; 32];
         hmac.compute(self.dst_cid.as_bytes(), &mut secret);
@@ -1039,7 +1039,7 @@ pub fn run_boot_smoketest() {
     }
 }
 
-/// `/proc/raeen/quic` — QUIC subsystem state. MasterChecklist Phase 10.2.
+/// `/proc/athena/quic` — QUIC subsystem state. MasterChecklist Phase 10.2.
 pub fn dump_text() -> String {
     let qs = QUIC_SUBSYSTEM.lock();
     let mut out = String::new();

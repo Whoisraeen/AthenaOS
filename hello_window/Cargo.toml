@@ -7,5 +7,5 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
-raegfx = { path = "../components/raegfx" }
-raekit = { path = "../components/raekit" }
+athgfx = { path = "../components/athgfx" }
+athkit = { path = "../components/athkit" }

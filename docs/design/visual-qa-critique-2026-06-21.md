@@ -1,6 +1,6 @@
 # Visual-QA Pixel Critique — 2026-06-21
 
-> raeen-visual-qa, judging the host-rendered shipped UI (the EXACT SW rasterizer
+> athena-visual-qa, judging the host-rendered shipped UI (the EXACT SW rasterizer
 > the kernel composites with) against current macOS Sequoia/Tahoe 26 + Windows 11
 > 24H2. Source PNGs: `docs/design/screenshots/` (regenerate:
 > `cd tools/ui_screenshot && cargo run --release`). Specs judged against:
@@ -18,7 +18,7 @@ are genuinely close to world-class — the rendering primitives are there. The
 *surfaces* that compose them range from "promising but unfinished" (Control
 Center) to "1995 terminal" (Files, Notifications). The gap is NOT the renderer —
 it's that two of the three shipped surfaces are still drawn with the **8×8 bitmap
-block font and hard rects**, bypassing the raefont AA engine and the glass/shadow
+block font and hard rects**, bypassing the athfont AA engine and the glass/shadow
 ladder the atoms prove exist.
 
 - **Atoms: ~85% of world-class.** Shadow ramp is soft and premium. Type AA is
@@ -29,12 +29,12 @@ ladder the atoms prove exist.
 - **Files: ~20%.** Entirely 8×8 block font, hard rects, letter "icons." This is
   the single worst-looking shipped surface and it's a flagship app.
 - **Notifications: ~20%** — but this is the *unpolished twin*
-  (`raeshell::notifications_daemon`), NOT the polished kernel `notify.rs`. Flagged
+  (`athshell::notifications_daemon`), NOT the polished kernel `notify.rs`. Flagged
   as a renderer-selection bug in the harness, not the real toast UX. Still: it
   ships, so it counts until the harness points at `notify.rs`.
 
 **Bottom line:** the foundation is world-class-capable; the surface composition is
-not yet shipped through it. Closing this is mostly "route surfaces through raefont
+not yet shipped through it. Closing this is mostly "route surfaces through athfont
 + the glass/shadow path the atoms already use," not new rendering work.
 
 ---
@@ -43,16 +43,16 @@ not yet shipped through it. Closing this is mostly "route surfaces through raefo
 
 | # | Surface | Defect | Severity | Owner |
 |---|---|---|---|---|
-| 1 | Files | Whole window is 8×8 block font + hard rects + letter "icons" — looks 30 years old | **CRITICAL** | raeen-shell-apps |
-| 2 | Control Center | Tile "icons" are stray single letters (W/B/F/N/A/X/G/R/P); not glyphs | **CRITICAL** | raeen-shell-apps |
-| 3 | Control Center | "Off" sublabel clips/overlaps into the tile row below (vertical rhythm broken) | **HIGH** | raeen-shell-apps |
-| 4 | Control Center | Panel casts NO drop shadow against the dark desktop — floats with no `elev.3` | **HIGH** | raeen-gfx |
-| 5 | Control Center | Panel top is clipped at the screen edge (no `space.4` top inset / off-screen) | **HIGH** | raeen-shell-apps |
-| 6 | Notifications | Unpolished twin renders (8×8 font, hard rects, literal "?" glyphs) | **HIGH** | raeen-shell-apps (renderer selection) |
-| 7 | Glass panel | Tint too opaque/dark — reads as smoked-solid, not translucent blur | **MEDIUM** | raeen-gfx |
-| 8 | Type ramp / CC | Chrome text colored accent-blue (RaeMono header, CC labels) — violates chrome-restraint rule | **MEDIUM** | raeen-ui |
-| 9 | Drop shadow | Soft ramp is correct but reads slightly over-wide/under-dense vs macOS at `elev.4` | **LOW** | raeen-gfx |
-| 10 | Files | No glass, no `material.mica` titlebar, no row hover/selection styling, no file-type color chips | **MEDIUM** | raeen-shell-apps |
+| 1 | Files | Whole window is 8×8 block font + hard rects + letter "icons" — looks 30 years old | **CRITICAL** | athena-shell-apps |
+| 2 | Control Center | Tile "icons" are stray single letters (W/B/F/N/A/X/G/R/P); not glyphs | **CRITICAL** | athena-shell-apps |
+| 3 | Control Center | "Off" sublabel clips/overlaps into the tile row below (vertical rhythm broken) | **HIGH** | athena-shell-apps |
+| 4 | Control Center | Panel casts NO drop shadow against the dark desktop — floats with no `elev.3` | **HIGH** | athena-gfx |
+| 5 | Control Center | Panel top is clipped at the screen edge (no `space.4` top inset / off-screen) | **HIGH** | athena-shell-apps |
+| 6 | Notifications | Unpolished twin renders (8×8 font, hard rects, literal "?" glyphs) | **HIGH** | athena-shell-apps (renderer selection) |
+| 7 | Glass panel | Tint too opaque/dark — reads as smoked-solid, not translucent blur | **MEDIUM** | athena-gfx |
+| 8 | Type ramp / CC | Chrome text colored accent-blue (RaeMono header, CC labels) — violates chrome-restraint rule | **MEDIUM** | athena-ui |
+| 9 | Drop shadow | Soft ramp is correct but reads slightly over-wide/under-dense vs macOS at `elev.4` | **LOW** | athena-gfx |
+| 10 | Files | No glass, no `material.mica` titlebar, no row hover/selection styling, no file-type color chips | **MEDIUM** | athena-shell-apps |
 
 ---
 
@@ -65,7 +65,7 @@ right "Old offset block" with its tight hard dark band. The harness even prints
 `near=176 < far=214 <= field=244 -> SOFT RAMP`, and the pixels back it up. The
 `material-and-shadow.md` #1 defect is **fixed**. This is the headline win.
 
-- **LOW — owner: raeen-gfx.** Against macOS Sequoia `elev.4` card shadows, ours is
+- **LOW — owner: athena-gfx.** Against macOS Sequoia `elev.4` card shadows, ours is
   a touch *too diffuse and too light* — macOS holds a slightly denser core near the
   card edge then decays. Consider nudging the core alpha up (~`0x66`→core) while
   keeping the long tail, so the lift reads more confident. Not a blocker.
@@ -79,7 +79,7 @@ border hairline read correctly. **But the glass tint is too opaque** — over a
 bright blue backdrop the panel reads as a *dark smoked-glass solid*, not a
 translucent blurred material. The backdrop blobs are barely perceptible through it.
 
-- **MEDIUM — owner: raeen-gfx.** `material.glass` dark tint is `0x9E_1A_1E_2E`
+- **MEDIUM — owner: athena-gfx.** `material.glass` dark tint is `0x9E_1A_1E_2E`
   (~62% alpha). At this alpha over a bright backdrop the blur is invisible —
   macOS/Win11 Acrylic let significantly more backdrop luminance and color bleed
   through. Either lower tint alpha toward ~45–50% on bright backdrops or strengthen
@@ -97,7 +97,7 @@ correctly (`Display — RaeSans`). Weight differentiation between Display/Title 
 Body/Caption reads. RaeMono renders cleanly with code ligature-free monospace. This
 is world-class text rendering for a software raster.
 
-- **MEDIUM — owner: raeen-ui.** The `RaeMono — JetBrains Mono` *section header* is
+- **MEDIUM — owner: athena-ui.** The `RaeMono — JetBrains Mono` *section header* is
   rendered in accent-blue. Per `material-and-shadow.md` §"Chrome color restraint"
   and `design-language.md` §4.3, static labels/headings use `text.*`, never
   `accent.*`. This header should be `text.secondary` neutral. Same rule the CC
@@ -117,7 +117,7 @@ The accent focus ring (left) shows the **glow halo + ring** contract from
 border. The high-contrast forced-colors variant (right) auto-swaps to cyan and is
 unmistakable. This clears the a11y focus-visibility requirement.
 
-- **LOW — coordinate raeen-accessibility.** Confirm the ring is the full 2px
+- **LOW — coordinate athena-accessibility.** Confirm the ring is the full 2px
   `accent.base` ring *plus* the glow (spec says never glow-only or ring-only). It
   looks like both are present; verify thickness measures 2px at 1x.
 
@@ -125,19 +125,19 @@ unmistakable. This clears the a11y focus-visibility requirement.
 This is supposed to be the highest-bar glassmorphic surface. Right now it's a
 recognizable Quick-Settings *skeleton* with several disqualifying defects:
 
-- **CRITICAL #2 — owner: raeen-shell-apps.** Every tile's icon slot is a **stray
+- **CRITICAL #2 — owner: athena-shell-apps.** Every tile's icon slot is a **stray
   single letter** in tiny block font (`W` Wi-Fi, `B` Bluetooth, `F` Focus, `N`
   Night Light, `A` Airplane, `X` High Contrast, `G` Game Mode, `R` RGB, `P`
   Performance). macOS/Win11 use crisp filled glyphs. These read as placeholder
   mnemonics, not icons. The Wi-Fi list rows and the footer also show stray
   glyphs (`#`, `*`, `S`, `P`). Needs a real icon set (or at minimum a consistent
   monochrome glyph font), not ASCII keycaps.
-- **HIGH #3 — owner: raeen-shell-apps.** The tile label + "Off" sublabel **collide
+- **HIGH #3 — owner: athena-shell-apps.** The tile label + "Off" sublabel **collide
   with the next row** — "Off" sits flush against / overlapping the tile boundary
   below it. Vertical rhythm is broken; the spec's `space.2`/`space.3` tile internal
   padding isn't being honored. Tiles need fixed internal padding and the grid needs
   consistent row gaps.
-- **HIGH #4 — owner: raeen-gfx.** The panel casts **no drop shadow** against the
+- **HIGH #4 — owner: athena-gfx.** The panel casts **no drop shadow** against the
   dark desktop. Per `control-center.md` §1 it's `elev.3` (offset 8, radius 28).
   Against `bg.base` the dark-on-dark shadow is invisible — but `elev.3` at
   `0x55_00_00_00` over a near-black desktop genuinely produces almost nothing, so
@@ -145,12 +145,12 @@ recognizable Quick-Settings *skeleton* with several disqualifying defects:
   applied to this surface, or `elev.3` needs a subtle light/stroke edge-lift on dark
   desktops so glass panels read as floating. macOS solves this with a bright 1px
   rim + faint shadow; ours has the rim spec'd but the panel edge here is faint.
-- **HIGH #5 — owner: raeen-shell-apps.** The panel **top is clipped at the screen
+- **HIGH #5 — owner: athena-shell-apps.** The panel **top is clipped at the screen
   edge** (the first tile row is jammed against y=0). Spec anchors bottom-right with
   `space.4` insets and sizes to content; here it's overflowing the top of an
   800px-tall frame. Either content overflows the panel max-height (needs scroll) or
   the anchor math is wrong.
-- **MEDIUM #8 — owner: raeen-ui.** Tile labels and section text appear desaturated
+- **MEDIUM #8 — owner: athena-ui.** Tile labels and section text appear desaturated
   but the "on" Game Mode tile and the Wi-Fi selected row use accent fills correctly;
   confirm *off* tile labels read `text.primary`/`text.secondary` and not a dim
   accent. The "Gaming" section header is correctly neutral — good.
@@ -168,17 +168,17 @@ recognizable Quick-Settings *skeleton* with several disqualifying defects:
 ### surface-files.png — CRITICAL (worst shipped surface)
 This is a flagship app and it currently looks like a **DOS file manager**:
 
-- **CRITICAL #1 — owner: raeen-shell-apps.** The entire window — tab "user", path
+- **CRITICAL #1 — owner: athena-shell-apps.** The entire window — tab "user", path
   bar `/home/user`, sidebar (Home/Desktop/Documents/Downloads/Music/Pictures/
   Videos/Trash), column headers (Name/Size/Type), and the "0 items" status bar — is
-  rendered in the **8×8 bitmap block font**, NOT raefont. The atoms prove crisp AA
+  rendered in the **8×8 bitmap block font**, NOT athfont. The atoms prove crisp AA
   text exists; Files doesn't use it. This alone disqualifies it from "world-class."
-- **HIGH — owner: raeen-shell-apps.** Sidebar "icons" are single letters
+- **HIGH — owner: athena-shell-apps.** Sidebar "icons" are single letters
   (`H`/`D`/`d`/`L`/`M`/`P`/`V`/`T`) — same placeholder-glyph problem as CC. macOS
   Finder / Win11 Explorer use crisp filled folder/media glyphs with `ftype.*` color
   semantics (`design-language.md` §4.4, `files.md` §4). None of that color coding is
   present.
-- **MEDIUM #10 — owner: raeen-shell-apps.** No glass, no `material.mica` titlebar,
+- **MEDIUM #10 — owner: athena-shell-apps.** No glass, no `material.mica` titlebar,
   no row hover/selection elevation, no concentric corner radii, no drop shadow. The
   window is a flat dark rect with hairline dividers. It needs the full chrome
   treatment the atoms enable.
@@ -188,7 +188,7 @@ This is a flagship app and it currently looks like a **DOS file manager**:
 
 ### surface-notifications.png — HIGH, but it's the wrong renderer
 Flagged context confirmed in the pixels: this renders
-`raeshell::notifications_daemon` (the **unpolished twin**), not the polished kernel
+`athshell::notifications_daemon` (the **unpolished twin**), not the polished kernel
 `notify.rs`. What's on screen:
 
 - Hard rectangular cards with **1px flat blue borders** (no glass, no soft shadow,
@@ -199,7 +199,7 @@ Flagged context confirmed in the pixels: this renders
   violation again.
 - Buttons (Install / Reply / Mute) are block-font text in 1px-bordered boxes.
 
-- **HIGH #6 — owner: raeen-shell-apps.** The fix is a **renderer-selection** bug:
+- **HIGH #6 — owner: athena-shell-apps.** The fix is a **renderer-selection** bug:
   the screenshot harness (and presumably the running shell) points at the
   daemon-side `notifications_daemon` renderer instead of the kernel `notify.rs`
   (which per `notifications.md` §49 already has glass tokens, `RADIUS_MD`,
@@ -214,20 +214,20 @@ Flagged context confirmed in the pixels: this renders
 
 ## Cross-surface consistency issues
 
-- **Two text renderers ship simultaneously.** Atoms + (some) CC text use raefont AA;
+- **Two text renderers ship simultaneously.** Atoms + (some) CC text use athfont AA;
   Files, Notifications, and CC tile/icon glyphs use the 8×8 block font. This is the
   single biggest *incoherence* — the same OS renders text two completely different
-  ways. **Owner: raeen-shell-apps** (route every surface through raefont);
-  **raeen-ui** owns the shared `raeui::tokens`/text path.
+  ways. **Owner: athena-shell-apps** (route every surface through athfont);
+  **athena-ui** owns the shared `athui::tokens`/text path.
 - **Placeholder letter-glyphs as icons** across CC and Files (W/B/F/H/D/…). No icon
-  system is wired. **Owner: raeen-ui** (define an icon token set) + raeen-shell-apps
+  system is wired. **Owner: athena-ui** (define an icon token set) + athena-shell-apps
   (consume it).
 - **Accent-colored chrome text** recurs (RaeMono header, notification titles,
   possibly CC labels) — violates the chrome-restraint rule in three places. **Owner:
-  raeen-ui** (enforce `text.*` at label call sites).
+  athena-ui** (enforce `text.*` at label call sites).
 - **Drop shadow not applied to live surfaces.** The atom proves a great soft shadow,
   but the Control Center panel shows none. The `elev.*` ladder is built but not
-  *routed* to shell surfaces. **Owner: raeen-gfx** (confirm `SurfaceEffect::
+  *routed* to shell surfaces. **Owner: athena-gfx** (confirm `SurfaceEffect::
   DropShadow` is attached to CC/Files/window chrome).
 - **Radii inconsistency:** atoms use the full `radius.*` scale; Files/Notifications
   twin use ~0px hard corners. Once surfaces route through the primitive path this
@@ -283,7 +283,7 @@ the rim is faint and only really reads along the very top; the left/right vertic
 edges of the panel are nearly invisible against the dark desktop. macOS keeps a
 continuous ~1px bright rim around the *whole* glass perimeter (not just the top) plus
 a faint ambient shadow. Nudge the side/bottom edge stroke up a touch so the panel has
-a complete floating outline, not just a top lip. Owner: raeen-gfx. (Down from
+a complete floating outline, not just a top lip. Owner: athena-gfx. (Down from
 HIGH to LOW.)
 
 **(b) Frosted glass with backdrop bleed-through (not smoked-opaque) - LANDED.**
@@ -295,7 +295,7 @@ the LEFT of the panel in this capture, so there is no busy backdrop *directly be
 the panel to prove color bleed-through conclusively - the frost reads correctly but
 the true backdrop-bleed test still wants a capture with wallpaper detail behind the
 panel body (same follow-up the shadow atom needs). Treat as landed; verify bleed over
-a busy wallpaper next capture. Owner: raeen-gfx. (Down from MEDIUM to LOW.)
+a busy wallpaper next capture. Owner: athena-gfx. (Down from MEDIUM to LOW.)
 
 **(c) On/Off sublabels separated + inside each tile (no overlap) - LANDED, clean.**
 This is the cleanest fix of the four. Every tile now shows its label and the "Off" /
@@ -314,7 +314,7 @@ Panel top: STILL OFF (improved). The first tile row (Wi-Fi/Bluetooth) is no long
 space.4 top inset is not there - the panel starts almost at the screen edge with no
 breathing room above the first row. macOS/Win11 float the panel down from the top edge
 with a clear margin. Add the top inset so the panel does not kiss the screen edge.
-Owner: raeen-shell-apps. (Down from HIGH to MEDIUM - no longer clipping, just no
+Owner: athena-shell-apps. (Down from HIGH to MEDIUM - no longer clipping, just no
 top margin.)
 
 **Fix scorecard: (a) landed-light - (b) landed - (c) landed-clean - (d) footer landed /
@@ -358,19 +358,19 @@ remains is consumption.
 
 | # | Surface | Defect | Severity | Owner |
 |---|---|---|---|---|
-| 1 | CC + Files | Wire the new icon set into the surfaces - CC tiles still show letter placeholders (W/B/F/N/A/X/G/R/P); Files sidebar still H/D/L/M/P/V/T. Icons EXIST now; consume them. | CRITICAL | raeen-shell-apps |
-| 2 | Files | Whole window still 8x8 block font + hard rects - route through raefont + glass/shadow path. Untouched this round; now the worst shipped surface. | CRITICAL | raeen-shell-apps |
-| 3 | Notifications | Unpolished daemon twin still renders (8x8 font, flat blue borders, ? glyphs) instead of kernel notify.rs - renderer-selection / dead-twin fix. | HIGH | raeen-shell-apps |
-| 4 | CC | Panel top has no space.4 inset - first row kisses the screen edge (no longer clipped, just no margin). | MEDIUM | raeen-shell-apps |
-| 5 | CC panel | Rim-lift is top-only - extend the bright 1px rim around the full perimeter (side/bottom edges vanish on dark). | LOW | raeen-gfx |
-| 6 | Glass / CC | Backdrop bleed-through unproven over a busy wallpaper - capture with wallpaper detail directly behind the panel to confirm frost reads as color-bled, not just gradient-tinted. | LOW | raeen-gfx (capture) |
-| 7 | Icon set | Optical stroke-weight evenness at 16px (sparse glyphs lighter than dense) + no folder-open variant for Files. | LOW | raeen-ui |
-| 8 | Type ramp / chrome | Accent-blue chrome text (RaeMono header) - chrome-restraint nit, unchanged from R1. | LOW | raeen-ui |
+| 1 | CC + Files | Wire the new icon set into the surfaces - CC tiles still show letter placeholders (W/B/F/N/A/X/G/R/P); Files sidebar still H/D/L/M/P/V/T. Icons EXIST now; consume them. | CRITICAL | athena-shell-apps |
+| 2 | Files | Whole window still 8x8 block font + hard rects - route through athfont + glass/shadow path. Untouched this round; now the worst shipped surface. | CRITICAL | athena-shell-apps |
+| 3 | Notifications | Unpolished daemon twin still renders (8x8 font, flat blue borders, ? glyphs) instead of kernel notify.rs - renderer-selection / dead-twin fix. | HIGH | athena-shell-apps |
+| 4 | CC | Panel top has no space.4 inset - first row kisses the screen edge (no longer clipped, just no margin). | MEDIUM | athena-shell-apps |
+| 5 | CC panel | Rim-lift is top-only - extend the bright 1px rim around the full perimeter (side/bottom edges vanish on dark). | LOW | athena-gfx |
+| 6 | Glass / CC | Backdrop bleed-through unproven over a busy wallpaper - capture with wallpaper detail directly behind the panel to confirm frost reads as color-bled, not just gradient-tinted. | LOW | athena-gfx (capture) |
+| 7 | Icon set | Optical stroke-weight evenness at 16px (sparse glyphs lighter than dense) + no folder-open variant for Files. | LOW | athena-ui |
+| 8 | Type ramp / chrome | Accent-blue chrome text (RaeMono header) - chrome-restraint nit, unchanged from R1. | LOW | athena-ui |
 
 **The dead-twin issue (Files/Notifications):** unchanged from Round 1 and now the
 limiting factor on two of three shipped surfaces. Files was not touched this round
 (still DOS-grade), and Notifications still routes to the unpolished daemon twin. Once
-items #1-#3 land - icons wired into CC tiles + Files, Files routed through raefont/
+items #1-#3 land - icons wired into CC tiles + Files, Files routed through athfont/
 glass, and the notification renderer pointed at notify.rs - the UI crosses from
 "world-class atoms + one good surface" to "world-class throughout." That is the next
 round whole job, and it is overwhelmingly *wiring/routing* work, not new design.

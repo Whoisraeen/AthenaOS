@@ -14,7 +14,7 @@ A driver asks for the same name Linux uses, e.g. amdgpu calls
 ## Status
 
 The plumbing is DONE and tested (the C shim `request_firmware` in
-`components/raeen_linuxkpi/src/lib.rs` → syscall 142 → host loader). The amdgpu
+`components/ath_linuxkpi/src/lib.rs` → syscall 142 → host loader). The amdgpu
 Phoenix blobs are **vendored in-tree** (2026-06-12) at `firmware/amdgpu/`
 together with `LICENSE.amdgpu`, whose redistribution grant covers exactly this
 (binary-form copies). Source of truth for refreshes:
@@ -22,7 +22,7 @@ together with `LICENSE.amdgpu`, whose redistribution grant covers exactly this
 frontend bot-blocks automated downloads — use the GitLab mirror). Ledger entry:
 `docs/THIRD_PARTY_LICENSES.md`.
 
-`firmware/raeen-selftest.bin` is a tiny in-tree test blob proving the path
+`firmware/athena-selftest.bin` is a tiny in-tree test blob proving the path
 end-to-end; keep it.
 
 ## Athena target: AMD Radeon 780M (Phoenix, GC 11.0.1) — `firmware/amdgpu/`

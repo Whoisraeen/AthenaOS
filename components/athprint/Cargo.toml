@@ -1,0 +1,11 @@
+[package]
+name = "athprint"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaePrint — CUPS-equivalent printing subsystem for AthenaOS."
+
+[dependencies]
+spin = "0.9"
+ath_deflate = { path = "../ath_deflate" }

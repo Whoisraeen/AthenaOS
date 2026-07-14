@@ -420,7 +420,7 @@ impl AesContext {
         if aesni_ok() {
             let mut fx = FxBuf([0u8; 512]);
             unsafe {
-                raeen_aesni_encrypt_block(
+                athena_aesni_encrypt_block(
                     self.round_keys.as_ptr() as *const u8,
                     self.nr,
                     input.as_ptr(),
@@ -448,7 +448,7 @@ impl AesContext {
         if aesni_ok() {
             let mut fx = FxBuf([0u8; 512]);
             unsafe {
-                raeen_aesni_decrypt_block(
+                athena_aesni_decrypt_block(
                     self.round_keys.as_ptr() as *const u8,
                     self.nr,
                     input.as_ptr(),
@@ -574,8 +574,8 @@ struct FxBuf([u8; 512]);
 //   rdx = input[16]   rcx = output[16]   r8 = fxbuf (512 B, 16-aligned)
 // Preserves ALL FPU/SSE state (fxsave/fxrstor); result stored before fxrstor.
 core::arch::global_asm!(
-    ".global raeen_aesni_encrypt_block",
-    "raeen_aesni_encrypt_block:",
+    ".global athena_aesni_encrypt_block",
+    "athena_aesni_encrypt_block:",
     "fxsave64 [r8]",
     "movdqu xmm0, [rdx]", // state = input
     "movdqu xmm1, [rdi]", // rk[0]
@@ -605,8 +605,8 @@ core::arch::global_asm!(
 // AES-NI block decrypt (Equivalent Inverse Cipher, keys transformed on the fly
 // with AESIMC so we reuse the same forward `round_keys`). Same ABI as encrypt.
 core::arch::global_asm!(
-    ".global raeen_aesni_decrypt_block",
-    "raeen_aesni_decrypt_block:",
+    ".global athena_aesni_decrypt_block",
+    "athena_aesni_decrypt_block:",
     "fxsave64 [r8]",
     "movdqu xmm0, [rdx]", // state = input
     "mov r9, rsi",
@@ -637,33 +637,33 @@ core::arch::global_asm!(
 
 // Test helpers for the XMM-preservation check: write/read xmm0 directly.
 core::arch::global_asm!(
-    ".global raeen_set_xmm0",
-    "raeen_set_xmm0:", // rdi = *const u8[16]
+    ".global athena_set_xmm0",
+    "athena_set_xmm0:", // rdi = *const u8[16]
     "movdqu xmm0, [rdi]",
     "ret",
-    ".global raeen_get_xmm0",
-    "raeen_get_xmm0:", // rdi = *mut u8[16]
+    ".global athena_get_xmm0",
+    "athena_get_xmm0:", // rdi = *mut u8[16]
     "movdqu [rdi], xmm0",
     "ret",
 );
 
 extern "C" {
-    fn raeen_aesni_encrypt_block(
+    fn athena_aesni_encrypt_block(
         round_keys: *const u8,
         nr: usize,
         input: *const u8,
         output: *mut u8,
         fxbuf: *mut u8,
     );
-    fn raeen_aesni_decrypt_block(
+    fn athena_aesni_decrypt_block(
         round_keys: *const u8,
         nr: usize,
         input: *const u8,
         output: *mut u8,
         fxbuf: *mut u8,
     );
-    fn raeen_set_xmm0(src: *const u8);
-    fn raeen_get_xmm0(dst: *mut u8);
+    fn athena_set_xmm0(src: *const u8);
+    fn athena_get_xmm0(dst: *mut u8);
 }
 
 /// R10 FAIL-able boot smoketest: validate the AES-NI fast path against the
@@ -707,14 +707,14 @@ pub fn run_aesni_boot_smoketest() {
     let mut ni_ct = [0u8; 16];
     let mut ni_pt = [0u8; 16];
     unsafe {
-        raeen_aesni_encrypt_block(
+        athena_aesni_encrypt_block(
             rk,
             ctx.nr,
             pt.as_ptr(),
             ni_ct.as_mut_ptr(),
             fx.0.as_mut_ptr(),
         );
-        raeen_aesni_decrypt_block(
+        athena_aesni_decrypt_block(
             rk,
             ctx.nr,
             ni_ct.as_ptr(),
@@ -728,15 +728,15 @@ pub fn run_aesni_boot_smoketest() {
     let mut xmm_after = [0u8; 16];
     let mut scratch = [0u8; 16];
     unsafe {
-        raeen_set_xmm0(sentinel.as_ptr());
-        raeen_aesni_encrypt_block(
+        athena_set_xmm0(sentinel.as_ptr());
+        athena_aesni_encrypt_block(
             rk,
             ctx.nr,
             pt.as_ptr(),
             scratch.as_mut_ptr(),
             fx.0.as_mut_ptr(),
         );
-        raeen_get_xmm0(xmm_after.as_mut_ptr());
+        athena_get_xmm0(xmm_after.as_mut_ptr());
     }
 
     let enc_ok = ni_ct == want_ct && sw_ct == want_ct;
@@ -3032,10 +3032,10 @@ const SHA512_DIGESTINFO: [u8; 19] = [
 /// `n.len()` bytes. Serves the Concept "security by default" line: real
 /// in-kernel RSA authentication for DNSSEC (RFC 5702) and X.509 cert chains.
 ///
-/// The bignum + EM compare live once in `rae_crypto::rsa` (the shared verify-only
-/// RSA), so this and `raeid::webauthn`'s COSE RS256 run the identical code.
+/// The bignum + EM compare live once in `ath_crypto::rsa` (the shared verify-only
+/// RSA), so this and `athid::webauthn`'s COSE RS256 run the identical code.
 pub fn rsa_pkcs1_sha256_verify(n: &[u8], e: &[u8], msg: &[u8], sig: &[u8]) -> bool {
-    rae_crypto::rsa::verify_pkcs1_sha256(n, e, msg, sig)
+    ath_crypto::rsa::verify_pkcs1_sha256(n, e, msg, sig)
 }
 
 /// RFC 8017 §8.2.2 `RSASSA-PKCS1-v1_5-VERIFY` with SHA-512 (RFC 5702 DNSSEC
@@ -3047,7 +3047,7 @@ pub fn rsa_pkcs1_sha512_verify(n: &[u8], e: &[u8], msg: &[u8], sig: &[u8]) -> bo
     let mut h = [0u8; 64];
     Sha512Context::new().digest(msg, &mut h);
     // Shared verify-only RSA core; only the SHA-512 hash + DigestInfo are local.
-    rae_crypto::rsa::verify_pkcs1_digest(n, e, sig, &SHA512_DIGESTINFO, &h)
+    ath_crypto::rsa::verify_pkcs1_digest(n, e, sig, &SHA512_DIGESTINFO, &h)
 }
 
 // ─── Elliptic Curve (ECDSA / Ed25519 / X25519 / ECDH) ──────────────────────

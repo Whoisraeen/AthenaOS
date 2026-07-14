@@ -36,10 +36,10 @@ pub const PAGE_SIZE: usize = 4096;
 /// `true` if this ISA is little-endian. x86_64 is always little-endian.
 pub const IS_LITTLE_ENDIAN: bool = true;
 
-/// Interrupt-controller family name (for `/proc/raeen/arch` reporting).
+/// Interrupt-controller family name (for `/proc/athena/arch` reporting).
 pub const INTERRUPT_CONTROLLER: &str = "APIC";
 
-/// Time-source family name (for `/proc/raeen/arch` reporting).
+/// Time-source family name (for `/proc/athena/arch` reporting).
 pub const TIMER_SOURCE: &str = "TSC+LAPIC";
 
 // ---------------------------------------------------------------------------

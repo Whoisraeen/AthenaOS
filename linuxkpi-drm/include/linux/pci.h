@@ -9,7 +9,7 @@
  * is what made `test_bit` conflict). `struct pci_dev` embeds `struct device` by
  * value and carries the fields amdgpu reads by name (vendor, device, revision,
  * subsystem ids, bus, devfn, the BAR resources, irq). The config/BAR/enable/MSI ops are backed
- * by raeen_linuxkpi's PCI facade (P2) at M4 — never faked (a config read that
+ * by ath_linuxkpi's PCI facade (P2) at M4 — never faked (a config read that
  * lied would mis-program the GPU; SCOPE.md rule 9). License boundary: API surface.
  */
 #ifndef _LINUXKPI_LINUX_PCI_H
@@ -172,7 +172,7 @@ struct pci_driver {
 static inline void *pci_get_drvdata(struct pci_dev *pdev) { return dev_get_drvdata(&pdev->dev); }
 static inline void  pci_set_drvdata(struct pci_dev *pdev, void *data) { dev_set_drvdata(&pdev->dev, data); }
 
-/* config space + enable + BAR map + MSI — backed by raeen_linuxkpi (M4) */
+/* config space + enable + BAR map + MSI — backed by ath_linuxkpi (M4) */
 int  pci_read_config_byte(struct pci_dev *dev, int where, u8 *val);
 int  pci_read_config_word(struct pci_dev *dev, int where, u16 *val);
 int  pci_read_config_dword(struct pci_dev *dev, int where, u32 *val);

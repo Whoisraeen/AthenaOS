@@ -7,7 +7,7 @@
 //! (see `docs/LINUX_DRIVER_STRATEGY.md`). Not a monolithic in-kernel Linux
 //! clone — DMA uses the frame allocator; IOMMU sandboxing is future work.
 //!
-//! R10: `init()` + `run_boot_smoketest()` + `/proc/raeen/linux_compat`.
+//! R10: `init()` + `run_boot_smoketest()` + `/proc/athena/linux_compat`.
 
 extern crate alloc;
 
@@ -2137,7 +2137,7 @@ pub fn run_boot_smoketest() {
     }
 }
 
-/// `/proc/raeen/linux_compat` — layer status (not GPL Linux code).
+/// `/proc/athena/linux_compat` — layer status (not GPL Linux code).
 pub fn dump_text() -> String {
     let devs = DEVICE_REGISTRY.lock().count();
     let drivers = DRIVER_REGISTRY.lock();

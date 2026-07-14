@@ -7,7 +7,7 @@
  * not to the host's /usr/include/linux/sched.h (which would mix host kernel ABI
  * into the build). amdgpu uses `current`, task comm/pid, TASK_* states, and the
  * yield/schedule helpers. The scheduling actions (schedule/cond_resched) are
- * backed by raeen_linuxkpi at M4; `current` resolves to the daemon's task. NOT a
+ * backed by ath_linuxkpi at M4; `current` resolves to the daemon's task. NOT a
  * no-op fake (rule 9). License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_SCHED_H
@@ -64,14 +64,14 @@ struct task_struct *pid_task(struct pid *pid, enum pid_type type);
 pid_t pid_nr(struct pid *pid);
 pid_t task_pid_nr(struct task_struct *task);
 
-/* the running task — backed by raeen_linuxkpi (M4) */
+/* the running task — backed by ath_linuxkpi (M4) */
 struct task_struct *get_current(void);
 #define current (get_current())
 
 /* copy a task's comm[] into a caller buffer (amdgpu records the VM owner). */
 char *get_task_comm(char *buf, struct task_struct *tsk);
 
-/* scheduling actions — backed by raeen_linuxkpi (M4) */
+/* scheduling actions — backed by ath_linuxkpi (M4) */
 void schedule(void);
 long schedule_timeout(long timeout);
 long io_schedule_timeout(long timeout);

@@ -1,7 +1,7 @@
 # M5 — running the compiled amdgpu against the real GPU (the device-backing seam)
 
 **Audience: whoever takes `linuxkpi-drm` from M4 (links) to M5 (runs on Athena).**
-Written by the agent that drove the *native* `components/raeen_amdgpu` reimplementation
+Written by the agent that drove the *native* `components/ath_amdgpu` reimplementation
 to the MES wall — so this is the device-side + MES knowledge that the header-shim grind
 doesn't surface. Cross-refs: `docs/gpu-oracle/` (register traces, firmware RE) and the
 `amdgpu-iron-hang-uc-firmware-read` memory.
@@ -10,11 +10,11 @@ doesn't surface. Cross-refs: `docs/gpu-oracle/` (register traces, firmware RE) a
 
 ## 0. M4 link target is ready (verified 2026-06-30)
 
-`raeen_linuxkpi` builds clean as a C-linkable staticlib — the `#[panic_handler]` is
+`ath_linuxkpi` builds clean as a C-linkable staticlib — the `#[panic_handler]` is
 wired behind the `clib` feature:
 
 ```bash
-cargo rustc -p raeen_linuxkpi --features clib --crate-type staticlib   # → libraeen_linuxkpi.a
+cargo rustc -p ath_linuxkpi --features clib --crate-type staticlib   # → libath_linuxkpi.a
 ```
 
 So the M4 link object exists today; the remaining M4 work is reconciling the shim struct
@@ -23,21 +23,21 @@ linking the amdgpu `.o`s against it.
 
 ## 1. The seam: a compiled `.o` is not a running driver
 
-Once `mes_v11_0.o` (+ its IP-block deps) links against `raeen_linuxkpi`, the real amdgpu
+Once `mes_v11_0.o` (+ its IP-block deps) links against `ath_linuxkpi`, the real amdgpu
 C still needs **a populated `struct amdgpu_device` and every LinuxKPI call backed by real
 device access.** AthenaOS already has all of that — in the **`amdgpud` daemon's `GpuOps`
-impl** and `raeen_linuxkpi`. Don't rebuild it; *wire to it.* The mapping:
+impl** and `ath_linuxkpi`. Don't rebuild it; *wire to it.* The mapping:
 
 | What amdgpu C calls | AthenaOS backing (already exists) |
 |---|---|
 | `request_firmware(&fw, name, dev)` | `amdgpud` `request_firmware_bytes()` — loads the blob set in `build_gfx_fw_blobs` |
-| `RREG32`/`WREG32` → `amdgpu_device_{r,w}reg` | BAR0 MMIO: `amdgpud` maps BAR0, `reg<<2` byte offset, `raeen_linuxkpi::pci::{readl,writel}` |
+| `RREG32`/`WREG32` → `amdgpu_device_{r,w}reg` | BAR0 MMIO: `amdgpud` maps BAR0, `reg<<2` byte offset, `ath_linuxkpi::pci::{readl,writel}` |
 | `WDOORBELL64` | BAR2 doorbell MMIO: `amdgpud` `doorbell_mmio` + `pci::writeq` |
 | `amdgpu_bo_create` + `amdgpu_bo_gpu_offset` | `amdgpud` `dma_alloc` → GART-mapped GPU VA (the `DmaBuf` path) |
-| `amdgpu_discovery_reg_base_init` → `adev->reg_offset[ip][inst][seg]` | parse the discovery blob via `raeen_amdgpu::discovery` (gc_base=[0x1260,0xa000,0x2402c00,0x2000029,0x10205], mmhub[1]=0x1a000) |
+| `amdgpu_discovery_reg_base_init` → `adev->reg_offset[ip][inst][seg]` | parse the discovery blob via `ath_amdgpu::discovery` (gc_base=[0x1260,0xa000,0x2402c00,0x2000029,0x10205], mmhub[1]=0x1a000) |
 | `pci_read_config_dword` | `amdgpud` `config_read_dword` |
 | `request_irq` / IRQ delivery | the capability-gated userspace-driver IRQ-via-IPC path (syscalls 109–118) |
-| `ioremap`/`memcpy_toio` | `raeen_linuxkpi` ioremap + the VRAM MM_INDEX/MM_DATA path (`vram_write`) |
+| `ioremap`/`memcpy_toio` | `ath_linuxkpi` ioremap + the VRAM MM_INDEX/MM_DATA path (`vram_write`) |
 
 **Entry point.** Drive amdgpu's `amdgpu_device_init` → per-IP-block `hw_init`, but only
 the **MES subset** of IP blocks: `gmc_v11_0` (GART) → `psp_v13_0` (firmware load) →

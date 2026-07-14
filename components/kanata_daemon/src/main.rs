@@ -24,7 +24,7 @@ use kanata_keyberon::key_code::KeyCode;
 use kanata_keyberon::layout::{Event, Layout};
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 // ── Syscall numbers (kept in sync with kernel/src/syscall.rs) ─────────
 const SYS_PRINT: u64 = 1;
@@ -212,4 +212,4 @@ pub extern "C" fn _start() -> ! {
     }
 }
 
-// Panic handler comes from `raekit` (the shared userspace runtime).
+// Panic handler comes from `athkit` (the shared userspace runtime).

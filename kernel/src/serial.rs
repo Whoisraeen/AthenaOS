@@ -68,7 +68,7 @@ pub fn _print(args: ::core::fmt::Arguments) {
     // and uses a best-effort try_lock (console::try_print). Nesting it inside the
     // SERIAL1 lock previously coupled SERIAL1→CONSOLE→FB and deadlocked under SMP
     // (an FB-holder logging, or IRQ-context re-entrancy) — a real hang observed
-    // during the raefs boot smoketest. Interrupts stay disabled so the brief FB
+    // during the athfs boot smoketest. Interrupts stay disabled so the brief FB
     // hold inside the glyph blit can't be re-entered by a logging interrupt.
     //
     // Suppressed once the desktop owns the screen (console_mirror_enabled() ->

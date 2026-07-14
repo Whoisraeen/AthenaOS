@@ -20,7 +20,7 @@ struct io_mapping {
 	unsigned long   prot;
 };
 
-/* map/unmap — backed by raeen_linuxkpi (M4) */
+/* map/unmap — backed by ath_linuxkpi (M4) */
 void *io_mapping_map_wc(struct io_mapping *mapping, unsigned long offset, unsigned long size);
 void  io_mapping_unmap(void *vaddr);
 void *io_mapping_map_local_wc(struct io_mapping *mapping, unsigned long offset);

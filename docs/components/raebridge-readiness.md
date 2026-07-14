@@ -11,7 +11,7 @@ exception handling*", and what remains for the GPU-gated Phase D.
 
 Two in-crate, no-ABI slices grounded in real Windows 10.0.26200 ground truth
 (gathered on this dev box with VS2022 `dumpbin`; reproducible tooling in
-`components/raebridge/tools/`, survey output to `$env:TEMP\raeen-winapi`):
+`components/athbridge/tools/`, survey output to `$env:TEMP\athena-winapi`):
 
 - **API Set schema redirection (`src/apiset.rs`) — the level-of-detail win.** A
   survey of 500 real System32 `.exe` import tables showed the ~40 most-imported
@@ -47,7 +47,7 @@ Two in-crate, no-ABI slices grounded in real Windows 10.0.26200 ground truth
   (OpBitReverse), `countbits` (OpBitCount), `firstbit_lo/hi/shi`
   (FindILsb/FindUMsb/FindSMsb, with the D3D `31 - pos` MSB flip + -1 sentinel).
   fxc fixture `intbit_ps.dxbc` + `spirv-val`-clean KAT.
-- **`raebridge_server` broker sign-off packet** (`raebridge-server-design.md` §7):
+- **`athbridge_server` broker sign-off packet** (`athbridge-server-design.md` §7):
   versioned `AthSyncObject` shared-page struct + the one binary ABI decision
   (Outcome A: zero ABI vs Outcome B: `SYS_RAEBRIDGE_SYNC_OPEN=259`) filed as
   `NEEDS-INTERFACE` for Opus.
@@ -69,8 +69,8 @@ single-page snapshot the campaign goal asks for at the GPU seam.
 | # | Item | Status | Evidence |
 |---|------|--------|----------|
 | 1 | notepad-class GUI .exe runs/types/SW-renders/saves-to-bucket/reaped | **`[~]` MET** | `gui-notepad` smoketest (below); "reaped" satisfied by the #2 process-isolation proof |
-| 2 | two .exes as separate processes w/ distinct reaped codes | **`[~]` MET** | QEMU `process-isolation` smoketest: `raebridge_run` pid 91 (`exit42`→42) + pid 92 (`cpp`→0), distinct PIDs + codes, reaped — via **option (b)** (existing `SYS_SPAWN` + `SYS_WAIT4`=61, NO scheduler.rs) |
-| 3 | cross-process named sync (A blocks `Global\E`, B SetEvents, A wakes), `uncontended_op_syscalls==0` | **host half `[~]`, kernel half gated** | `broker.rs`/`sync_engine.rs` Slice 2b host done (`uncontended_op_syscalls=0` live in `/proc/raeen/raebridge_syncbroker`); needs physical-futex re-key + real blocking |
+| 2 | two .exes as separate processes w/ distinct reaped codes | **`[~]` MET** | QEMU `process-isolation` smoketest: `athbridge_run` pid 91 (`exit42`→42) + pid 92 (`cpp`→0), distinct PIDs + codes, reaped — via **option (b)** (existing `SYS_SPAWN` + `SYS_WAIT4`=61, NO scheduler.rs) |
+| 3 | cross-process named sync (A blocks `Global\E`, B SetEvents, A wakes), `uncontended_op_syscalls==0` | **host half `[~]`, kernel half gated** | `broker.rs`/`sync_engine.rs` Slice 2b host done (`uncontended_op_syscalls=0` live in `/proc/athena/athbridge_syncbroker`); needs physical-futex re-key + real blocking |
 | 4 | guest `__try/__except` recovers a real fault | **engine `[~]`, delivery gated** | `seh.rs` host-KAT'd; needs live fault→handler kernel signal plumbing |
 | 5 | `dxbc_spirv` SM4/SM5 spirv-val-clean | **`[~]` MET** | dxbc KATs 31/0, spirv-val forced |
 | 6 | Phase 11 `[~]`, Phase D `[ ]` | **as stated** | items 1/2/5 `[~]`; D left `[ ]` (GPU-gated, OUT) |
@@ -119,20 +119,20 @@ isolated opcodes.
 ## Serial markers (QEMU boot, 0 real PANIC, `System successfully booted`)
 
 ```
-[raebridge] smoketest: gui-window exe -> RegisterClass+CreateWindow+UpdateWindow->WM_PAINT painted 2048 px (WndProc dispatch + reentrant gdi OK) PASS
-[raebridge] smoketest: gui-save exe -> typed 'HI' + CreateFileW/WriteFile -> C:\out.txt readback 'HI' PASS
-[raebridge] smoketest: edit-control -> CreateWindowEx("EDIT") + typed 'HI' via pump -> GetWindowTextW 'HI' + WM_PAINT rendered PASS
-[raebridge] smoketest: gui-notepad exe -> window+EDIT+menu File->Save (GetSaveFileNameW) -> C:\note.txt 'HI' PASS
-[raebridge_run] launched pid=91 target=bundled:exit42 -> running   (then guest ExitProcess(42) -> exit 42 PASS)
-[raebridge_run] launched pid=92 target=bundled:cpp -> running
-[raebridge] smoketest: process-isolation -> 2 PIDs (childA exit=42, childB exit=0) reaped PASS   (item #2)
-[raebridge] smoketest: real external .exe via VFS (pe:/home/raeen/rae-app.exe) -> executed + exit 0 PASS
-[raebridge] cross-process sync engine (fast-path/wake-elision) self-test -> PASS   (/proc/raeen/raebridge_syncbroker: uncontended_op_syscalls = 0)
+[athbridge] smoketest: gui-window exe -> RegisterClass+CreateWindow+UpdateWindow->WM_PAINT painted 2048 px (WndProc dispatch + reentrant gdi OK) PASS
+[athbridge] smoketest: gui-save exe -> typed 'HI' + CreateFileW/WriteFile -> C:\out.txt readback 'HI' PASS
+[athbridge] smoketest: edit-control -> CreateWindowEx("EDIT") + typed 'HI' via pump -> GetWindowTextW 'HI' + WM_PAINT rendered PASS
+[athbridge] smoketest: gui-notepad exe -> window+EDIT+menu File->Save (GetSaveFileNameW) -> C:\note.txt 'HI' PASS
+[athbridge_run] launched pid=91 target=bundled:exit42 -> running   (then guest ExitProcess(42) -> exit 42 PASS)
+[athbridge_run] launched pid=92 target=bundled:cpp -> running
+[athbridge] smoketest: process-isolation -> 2 PIDs (childA exit=42, childB exit=0) reaped PASS   (item #2)
+[athbridge] smoketest: real external .exe via VFS (pe:/home/athena/rae-app.exe) -> executed + exit 0 PASS
+[athbridge] cross-process sync engine (fast-path/wake-elision) self-test -> PASS   (/proc/athena/athbridge_syncbroker: uncontended_op_syscalls = 0)
 ```
 
 ## KAT tallies
-- `cargo test -p raebridge --lib`: **195 / 0** (incl. `sync_engine` 5: deterministic + two real-thread rendezvous + bounded-timeout)
-- `RAEEN_SPIRV_VAL=1 cargo test -p raebridge --test dxbc_spirv_kat`: **31 / 0** (spirv-val forced)
+- `cargo test -p athbridge --lib`: **195 / 0** (incl. `sync_engine` 5: deterministic + two real-thread rendezvous + bounded-timeout)
+- `RAEEN_SPIRV_VAL=1 cargo test -p athbridge --test dxbc_spirv_kat`: **31 / 0** (spirv-val forced)
 
 ---
 
@@ -169,7 +169,7 @@ D3D **runtime** ↔ **AthGFX submit**:
 
 1. **D3D runtime** (resource/state/command-list/pipeline/present — ~90% of DXVK/VKD3D):
    ratified to be a *source port* of DXVK/VKD3D via `zig cc`, not rewritten
-   (`raebridge-wine-strategy.md` §5). It consumes the translator's SPIR-V and issues
+   (`athbridge-wine-strategy.md` §5). It consumes the translator's SPIR-V and issues
    draw/dispatch.
 2. **AthGFX submit**: the runtime's `vkQueueSubmit`-equivalent must reach AthGFX's real
    GPU submit path — which is gated on the amdgpu bring-up (the MES `set_hw_resources`

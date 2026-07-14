@@ -1900,7 +1900,7 @@ unsafe impl Send for NvmeBlockDevice {}
 ///
 /// Detection rules:
 ///   - "AthFS"  → first 8 bytes match the AthFS superblock magic
-///                (raefs::RAEFS_MAGIC, "AthFS!" little-endian).
+///                (athfs::ATHFS_MAGIC, "AthFS!" little-endian).
 ///   - "GPT"    → byte[510..512] == 0x55AA AND the protective-MBR
 ///                partition entry 1 type byte (offset 450) == 0xEE.
 ///   - "MBR"    → byte[510..512] == 0x55AA, no GPT marker.
@@ -1911,11 +1911,11 @@ fn classify_boot_sector(sect: &[u8]) -> &'static str {
         return "short";
     }
     // AthFS superblock magic at the very start.
-    const RAEFS_MAGIC: u64 = 0x526165465321;
+    const ATHFS_MAGIC: u64 = 0x526165465321;
     let magic = u64::from_le_bytes([
         sect[0], sect[1], sect[2], sect[3], sect[4], sect[5], sect[6], sect[7],
     ]);
-    if magic == RAEFS_MAGIC {
+    if magic == ATHFS_MAGIC {
         return "AthFS";
     }
     // MBR-family signature at end of sector 0.
@@ -2223,7 +2223,7 @@ pub fn init() {
 // just reporting "read OK, N bytes" so we still know the driver is
 // alive.
 
-/// `/proc/raeen/nvme` — controller, namespace, and queue summary. REDOX_EXTRACTION_MAP R07.
+/// `/proc/athena/nvme` — controller, namespace, and queue summary. REDOX_EXTRACTION_MAP R07.
 pub fn dump_text() -> alloc::string::String {
     let ctrls = NVME_CONTROLLERS.lock();
     let mut out = alloc::string::String::from("# AthenaOS NVMe\n");

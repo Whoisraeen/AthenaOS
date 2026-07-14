@@ -5,7 +5,7 @@
  * Red-black tree. drm_mm (the GPU address-space allocator) and amdgpu's VM keep
  * their interval trees here. The node/root accessors + rb_link_node are pure
  * pointer setup (inlined); the BALANCING algorithm (insert_color/erase/iterate)
- * is backed by raeen_linuxkpi at M4 — a fake that skipped rebalancing would
+ * is backed by ath_linuxkpi at M4 — a fake that skipped rebalancing would
  * silently corrupt the allocator's ordering (SCOPE.md rule 9). The node layout
  * matches the upstream ABI (parent+color packed in __rb_parent_color). License
  * boundary (../../README.md): API surface only.
@@ -49,7 +49,7 @@ static inline void rb_link_node(struct rb_node *node, struct rb_node *parent, st
 	*rb_link = node;
 }
 
-/* balancing + iteration — backed by raeen_linuxkpi (M4) */
+/* balancing + iteration — backed by ath_linuxkpi (M4) */
 void rb_insert_color(struct rb_node *node, struct rb_root *root);
 void rb_erase(struct rb_node *node, struct rb_root *root);
 struct rb_node *rb_next(const struct rb_node *node);
@@ -66,7 +66,7 @@ struct rb_node *rb_first_cached(const struct rb_root_cached *root);
  * verbatim algorithm) — walks the tree with `less`, tracking whether the new
  * node became the leftmost, then defers to rb_link_node (pure pointer setup,
  * above) + rb_insert_color_cached (the real rebalance, backed by
- * raeen_linuxkpi). drm/scheduler's rq uses this to keep entities ordered by
+ * ath_linuxkpi). drm/scheduler's rq uses this to keep entities ordered by
  * priority/vruntime; no new Rust surface needed — this IS how upstream
  * implements it, not a reimplementation. */
 static inline struct rb_node *
@@ -96,7 +96,7 @@ rb_add_cached(struct rb_node *node, struct rb_root_cached *tree,
 /* rb_add: the non-cached comparator-driven insert (upstream <linux/rbtree.h>
  * inline, verbatim algorithm). drm_buddy keeps its per-order free-block trees
  * ordered by offset with this; same pattern as rb_add_cached — pure walk +
- * rb_link_node + the real rb_insert_color rebalance (backed by raeen_linuxkpi). */
+ * rb_link_node + the real rb_insert_color rebalance (backed by ath_linuxkpi). */
 static inline void
 rb_add(struct rb_node *node, struct rb_root *tree,
        bool (*less)(struct rb_node *, const struct rb_node *))

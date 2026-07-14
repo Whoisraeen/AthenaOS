@@ -7,7 +7,7 @@ boot teaches"). Pairs with `docs/SAFE_ATHENA_BOOT.md` (full safety procedure).
 
 ## PREREQUISITE — clear the boot blocker (one revert, ~30s)
 The main working tree currently livelocks the boot. **PROVEN** (clean-worktree
-raeen-verifier PASS, 2026-06-22) that the sole cause is a concurrent session's
+athena-verifier PASS, 2026-06-22) that the sole cause is a concurrent session's
 UNCOMMITTED `sched_proof` WIP — committed `HEAD` boots clean 7/7 HEALTHY.
 
 To get a clean buildable tree, EITHER:
@@ -20,8 +20,8 @@ To get a clean buildable tree, EITHER:
   ```
   Safer (no stash, no disturbing the concurrent agent):
   ```sh
-  git worktree add --detach /c/raeen-flash <current-main-sha>   # outside the repo
-  cd /c/raeen-flash
+  git worktree add --detach /c/athena-flash <current-main-sha>   # outside the repo
+  cd /c/athena-flash
   ```
   (committed HEAD has 0 `sched_proof` refs → boots clean.)
 
@@ -63,7 +63,7 @@ All 9 cars are bundled + registered + QEMU-PASS. On iron:
 - Quick functional checks: Files→open a PDF/DOCX/image; Passwords→unlock+TOTP;
   Calendar→agenda; Video→open a baseline .mp4 (real keyframe); Browser→about:home
   + a local .html with a clickable button; Mail/VPN/Sync→the UI + host-proven flows.
-- (raeen-beta-tester can drive this via QMP once the desktop is up.)
+- (athena-beta-tester can drive this via QMP once the desktop is up.)
 
 ### 3. GPU (blocker #1 — owner's lane)
 While flashed, capture the amdgpu bring-up state for the owner's debug:

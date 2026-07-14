@@ -1,0 +1,12 @@
+[package]
+name = "athbridge_host"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+# athkit provides the userspace #[global_allocator] (mmap-backed).
+athkit = { path = "../components/athkit" }
+athbridge = { path = "../components/athbridge" }

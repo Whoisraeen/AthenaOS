@@ -4,7 +4,7 @@
  *
  * tmpfs/shmem backing for swappable pages. TTM's `ttm_tt` swaps BO backing store
  * to a shmem file under memory pressure — OUT of the MES bring-up subset (no
- * eviction during init). Declarations only; backed by raeen_linuxkpi at M4 (or
+ * eviction during init). Declarations only; backed by ath_linuxkpi at M4 (or
  * left as an off-path link stub). License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_SHMEM_FS_H

@@ -4,7 +4,7 @@
  *
  * Runtime power management. amdgpu wraps register access + submit in
  * pm_runtime_get/put to keep the GPU powered while in use. Backed by
- * raeen_linuxkpi at M4 (a fake get that didn't actually power-up could let the
+ * ath_linuxkpi at M4 (a fake get that didn't actually power-up could let the
  * driver poke an unpowered block; SCOPE.md rule 9). The base get/put live in
  * pm.h; this adds the fuller runtime-PM surface amdgpu uses. License boundary
  * (../../README.md): API surface.
@@ -17,7 +17,7 @@
 
 struct device;
 
-/* backed by raeen_linuxkpi (M4) */
+/* backed by ath_linuxkpi (M4) */
 int  pm_runtime_get(struct device *dev);
 int  pm_runtime_get_if_in_use(struct device *dev);
 int  pm_runtime_get_if_active(struct device *dev);

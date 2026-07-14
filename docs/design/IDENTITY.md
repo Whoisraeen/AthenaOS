@@ -10,8 +10,8 @@
 > This is the **identity layer**. It sits above `design-language.md` (the full
 > token catalog) and `material-and-shadow.md` (the shadow rendering contract). On
 > any conflict about *what AthenaOS looks like*, this file wins; on token plumbing
-> mechanics, `design-language.md` + `rae_tokens` win. New tokens proposed here are
-> collected in the **Token Diff** at the end so `rae_tokens` can implement them
+> mechanics, `design-language.md` + `ath_tokens` win. New tokens proposed here are
+> collected in the **Token Diff** at the end so `ath_tokens` can implement them
 > mechanically.
 
 ---
@@ -71,7 +71,7 @@ this reason. The fix is a **luminance-add term**: a low-alpha **WHITE**
 (`0xFFFFFF`) composited as a frost sheen, token `GLASS_FROST_LIGHTEN` (≈8% white,
 the reference magnitude).
 
-Compositing order inside `draw_glass_surface` (raegfx) is therefore:
+Compositing order inside `draw_glass_surface` (athgfx) is therefore:
 
 > blurred backdrop → slate **tint** → **frost** white-add → iridescent rim
 
@@ -165,7 +165,7 @@ effective luminance:
   deliberately flattens the tiers to the ceiling — text wins over tier distinction).
 
 Tokens: `GLASS_INTERIOR_LUMA_CEIL = 0.40`. Applied inside
-`rae_tokens::glass_tier_interior` (the dark, capped interior); the raw ladder is
+`ath_tokens::glass_tier_interior` (the dark, capped interior); the raw ladder is
 `glass_tier_interior_raw`.
 
 ### 2.4 The iridescent / chromatic edge — THE signature
@@ -210,7 +210,7 @@ decorative; legibility wins — see §9).
 
 The flat void is half the problem: glass has nothing to refract. The default
 AthenaOS wallpaper is a **procedural aurora mesh** — no asset file, rendered by
-raeen-gfx as a `LiveWallpaper` engine (the trait already exists; today's seed is a
+athena-gfx as a `LiveWallpaper` engine (the trait already exists; today's seed is a
 two-color navy `GradientWallpaper`, which is the void).
 
 ### 3.1 Concept
@@ -220,14 +220,14 @@ they overlap into smooth color fields — the flowing-ribbon energy of
 `reference/download (1).jpg` and the dreamy mesh of the UI Kit backdrop, but darker
 and more premium so chrome and text stay legible.
 
-### 3.2 Procedural recipe (raeen-gfx implements as `AuroraWallpaper: LiveWallpaper`)
+### 3.2 Procedural recipe (athena-gfx implements as `AuroraWallpaper: LiveWallpaper`)
 - **Base:** deep blue-violet `0x0B_0F_1E` (slightly warmer/bluer than today's
   `0x0A0E1A`, so it's a night sky, not pure black).
 - **Three drifting radial blobs**, each a soft `1/(1+d²)`-falloff radial:
   1. **RaeBlue** `0x4E_9C_FF`, large, drifts top-left↔center.
   2. **Violet** `0x9B_5CFF`, medium, drifts bottom-right.
   3. **Teal/cyan** `0x3F_C8E0`, smaller, drifts mid-left.
-- **ANISOTROPY (spec pin — raegfx implements):** the blobs are NOT isotropic
+- **ANISOTROPY (spec pin — athgfx implements):** the blobs are NOT isotropic
   circles. The aurora is a **sheared ribbon** flowing **NW→SE**, with the falloff
   stretched ~**2.5:1** along that diagonal axis (apply an anisotropic scale to `d`
   before the radial falloff, oriented NW→SE). This gives the flowing-ribbon energy
@@ -262,7 +262,7 @@ backdrop re-tints with Vibe Mode automatically.
 
 AthenaOS has ONE signature hue, the way macOS owns its blue and Windows owns its
 blue. Ours is **RaeBlue `0xFF_4E_9C_FF`** — a bright, slightly electric azure
-(already the `rae_tokens` seed and `ThemeAbi.accent_argb` default). It is:
+(already the `ath_tokens` seed and `ThemeAbi.accent_argb` default). It is:
 
 - the **accent** for interactive fills, selection, focus glow, links, toggles-on;
 - the **primary aurora blob** in the default wallpaper (so the hue is *everywhere*,
@@ -298,7 +298,7 @@ only the primary blob tracks the seed.
 
 ## 5. Rounding, shadow, motion (identity-level summary)
 
-These are already in `rae_tokens`; this section pins the *identity intent* so they
+These are already in `ath_tokens`; this section pins the *identity intent* so they
 aren't drifted. **No changes to the corner/motion tokens** — they are correct.
 
 ### 5.1 Rounding — generous, concentric
@@ -327,7 +327,7 @@ wired); the iridescent rim and shadows are static, unaffected.
 
 ## 6. Type — the identity face
 
-Type ramp is set (`design/typography-rendering.md` + `rae_tokens` §6:
+Type ramp is set (`design/typography-rendering.md` + `ath_tokens` §6:
 display 32/600 · title 22/600 · subtitle 17/500 · body 14/400 · label 13/500 ·
 caption 11/400). Identity intent: a **clean, slightly tight grotesque** —
 weights 400/500/600 only (no thins, no blacks; the reference "elegant typeface"
@@ -362,9 +362,9 @@ Three tiers. Every surface placed. **No fourth glass anywhere.**
 
 ---
 
-## 8. Token Diff — exactly what `rae_tokens` needs (for raeen-ui)
+## 8. Token Diff — exactly what `ath_tokens` needs (for athena-ui)
 
-New / changed entries in `components/rae_tokens/src/lib.rs`. Names are final; values
+New / changed entries in `components/ath_tokens/src/lib.rs`. Names are final; values
 above. All are pure consts/structs → host-KAT'able in the existing test harness.
 
 ### 8.1 New: tiered glass (replaces the single `GLASS_TINT_*` pair)
@@ -389,7 +389,7 @@ pub fn glass_tier_interior(tier: GlassTier, backdrop: u32) -> u32;  // backdrop�
   `GLASS_TINT_DARK/LIGHT` (leave them aliased to the panel tier for one cycle so no
   call site breaks, then remove). The contrast audit's flatten pairs switch to the
   panel tier surfaces.
-- **`frost`** is a NEW field on `GlassTier` (white RGB, per-tier alpha). raegfx
+- **`frost`** is a NEW field on `GlassTier` (white RGB, per-tier alpha). athgfx
   applies it as a sheen ON TOP of the tint inside `draw_glass_surface` (order in
   §2.0); the fixed per-tier step makes interior luminance monotonic across tiers.
 
@@ -471,12 +471,12 @@ ramp, ftype, the whole WCAG audit. The identity is achieved by the glass + backd
 
 ---
 
-## 9. Accessibility (in scope from the start — flag for raeen-accessibility)
+## 9. Accessibility (in scope from the start — flag for athena-accessibility)
 
 - **Contrast over the new glass:** §8.7 extends the WCAG audit to flatten over the
   aurora base AND the brightest aurora region (blob + peak), not just `bg_base`. The
   brighter/thinner glass is the risk. **RESOLVED (SHIP-GATE a11y):** the
-  raeen-accessibility audit found `text.primary` over panel/popover sitting on a
+  athena-accessibility audit found `text.primary` over panel/popover sitting on a
   bright aurora blob measured 3.36–3.87:1 (and worse over the peak) — the §2.3
   alpha-adjust alone could not fix it (it tweaks alpha, not the frost white-add that
   was fighting the white text), and the old `GLASS_LUMA_HI = 0.6` sat *above* the
@@ -485,7 +485,7 @@ ramp, ftype, the whole WCAG audit. The identity is achieved by the glass + backd
   `GLASS_LUMA_HI` to `0.38`: glass over a bright backdrop is capped in effective
   luminance so white `text.primary` always clears AA (≈4.9–5.1:1 over the peak), while
   the dark-region frostiness is untouched. The WCAG KAT now covers the bright-aurora
-  region (24 pairs) and is the permanent guard. **NOTE (route to raeen-shell-apps):**
+  region (24 pairs) and is the permanent guard. **NOTE (route to athena-shell-apps):**
   `text.secondary` (mid-grey) over a bright popover cannot reach 4.5:1 by design even
   with the cap (the cap targets the white-text 4.5:1 line, and darkening
   `text.secondary` further would fail it elsewhere) — surfaces that paint
@@ -514,8 +514,8 @@ ramp, ftype, the whole WCAG audit. The identity is achieved by the glass + backd
 | Glass tint compositing | `compositor` glass path + `GLASS_TINT_*` | LIVE but **single tier, too dark** | **replace with 3 tiers + brighter/thinner + luma auto-adjust** |
 | `LiveWallpaper` trait + engine swap | `compositor::set_live_wallpaper`, `GradientWallpaper`, `PlasmaWallpaper` | LIVE | **add `AuroraWallpaper` engine; make it the default seed** (today's default is the navy `GradientWallpaper(0x0A0E1A,0x1A2844)` = the void) |
 | Top-edge highlight | surface-drawn `stroke.strong` | spec'd (material-and-shadow.md) | unchanged; rim layers under it |
-| Iridescent edge | — | **does not exist** | **new per-surface perimeter draw** (raeen-gfx) |
-| Accent ramp + Vibe seed flow | `rae_tokens::derive_accent`, `ThemeAbi.accent_argb` | LIVE | extend the seed to also drive the aurora primary blob + rim warm-stop |
+| Iridescent edge | — | **does not exist** | **new per-surface perimeter draw** (athena-gfx) |
+| Accent ramp + Vibe seed flow | `ath_tokens::derive_accent`, `ThemeAbi.accent_argb` | LIVE | extend the seed to also drive the aurora primary blob + rim warm-stop |
 | HDR tone-map | `compositor::HdrPipeline` | LIVE | unchanged |
 
 **This is a delta, not a rebuild.** The two genuinely new draw primitives are the
@@ -530,18 +530,18 @@ Ordered by leverage — each step is independently shippable and visibly improve
 build. The host-render screenshot is the cheap proof (no QEMU/iron needed; renders
 the surface to a buffer → PNG on the dev box, per the existing screenshot pipeline).
 
-### Step 1 — raeen-ui: land the tokens (1 file, mechanical)
-Implement §8.1–§8.5 in `rae_tokens` + §8.7 host KATs. No rendering yet.
-**Proof:** `cargo test -p rae_tokens` green incl. the 4 new FAIL-able KATs.
+### Step 1 — athena-ui: land the tokens (1 file, mechanical)
+Implement §8.1–§8.5 in `ath_tokens` + §8.7 host KATs. No rendering yet.
+**Proof:** `cargo test -p ath_tokens` green incl. the 4 new FAIL-able KATs.
 *Unblocks everything below.*
 
-### Step 2 — raeen-gfx: Aurora wallpaper engine (kills the void — highest visible impact)
+### Step 2 — athena-gfx: Aurora wallpaper engine (kills the void — highest visible impact)
 Add `AuroraWallpaper: LiveWallpaper` (§3.2), make it the default in compositor init
 (replace the `GradientWallpaper(0x0A0E1A,0x1A2844)` seed at `compositor.rs:3257`).
 **Proof screenshot:** `screenshots/wallpaper-aurora-dark.png` — full desktop, no
 windows: a living blue-violet-teal mesh, NOT a flat navy void. (And `-light.png`.)
 
-### Step 3 — raeen-gfx: brighter tiered glass + luma auto-adjust
+### Step 3 — athena-gfx: brighter tiered glass + luma auto-adjust
 Switch the glass compositing path from the single `GLASS_TINT_*` to the three
 `GlassTier`s (surface declares its tier), apply §2.3 luma adjust off the blurred
 backdrop mean.
@@ -549,13 +549,13 @@ backdrop mean.
 (chrome/panel/popover) over the aurora, the backdrop visibly reading through each,
 increasing opacity left→right.
 
-### Step 4 — raeen-gfx: the iridescent edge (the signature)
+### Step 4 — athena-gfx: the iridescent edge (the signature)
 Add the perimeter rim draw (§2.4): hairline → iridescent rim → top highlight.
 **Proof screenshot:** `screenshots/glass-iridescent-edge-3x.png` — a 3× zoom of a
 panel corner showing the cyan→violet→warm rim sweep + bright top edge, low-alpha,
 over the aurora. This is the "instantly recognizable" shot.
 
-### Step 5 — raeen-shell-apps: re-skin the surfaces to the §7 table
+### Step 5 — athena-shell-apps: re-skin the surfaces to the §7 table
 Repoint Control Center, taskbar, Start, Files, notifications, context menus, dialogs
 to their assigned tier + elevation + radius. Enforce the accent-restraint rule
 (labels in `text.*`, never accent).
@@ -564,13 +564,13 @@ before/after vs. the current `surface-control-center.png`: luminous panel glass,
 aurora reading through, iridescent edge, pill toggles with accent glow, soft wide
 shadow. Plus `surface-files-v2.png`, `surface-notifications-v2.png`.
 
-### Step 6 — raeen-ui / raeen-shell-apps: Vibe Mode wired to the seed
+### Step 6 — athena-ui / athena-shell-apps: Vibe Mode wired to the seed
 One-tap Vibe switch re-seeds accent → ramp + aurora primary blob + rim warm-stop,
 animated over `motion.emphasized`.
 **Proof screenshot:** `screenshots/vibe-5up.png` — the same desktop in all five
 Vibe presets, proving one seed coherently re-tints glass + aurora + controls.
 
-### raeen-visual-qa verification list (what to screenshot + assert)
+### athena-visual-qa verification list (what to screenshot + assert)
 1. **No void:** default desktop is the living aurora mesh, not flat navy.
 2. **Glass reads as glass:** backdrop visibly refracts through each tier; sample a
    line across a panel edge — backdrop color bleeds through (alpha < opaque).
@@ -579,7 +579,7 @@ Vibe presets, proving one seed coherently re-tints glass + aurora + controls.
 4. **Tier discipline:** chrome more see-through than panel more than popover —
    measurable in the composited alpha; no surface off-tier.
 5. **Legibility preserved:** text over the brightest aurora region still clears AA
-   (hand to raeen-accessibility for the measured ratio).
+   (hand to athena-accessibility for the measured ratio).
 6. **Vibe coherence:** switching Vibe moves the accent AND the aurora primary blob
    AND the rim warm-stop together — not just the buttons.
 7. **Reduced-transparency / high-contrast:** rim + blur + aurora drift all suppress

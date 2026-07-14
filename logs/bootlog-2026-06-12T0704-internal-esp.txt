@@ -508,14 +508,14 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Config registry: 29 default keys seeded (versioned, with snapshots)
 [ OK ] Per-app data buckets (/data/apps/self/)
 [buckets] run_boot_smoketest: store=true vfs_deny=true deny_foreign=true allow_owner=true self_needs_task=true -> PASS
-[session] AthID ready — default user 'raeen' (password: raeen)
+[session] AthID ready — default user 'athena' (password: athena)
 [session] persistence smoketest: records=1 hash_match=true reload_auth=true -> PASS
 [compositor] kernel surface 1 created: 1920x1080 (z=0, desktop)
 [shell_runner] safe-mode diag refresh thread spawned
 [shell_runner] safe-mode: live boot-diagnostic panel active (1920x1080, surface 1)
 [shell_runner] first-boot setup wizard ready (1920x1080, surface 1)
 [shell_runner] smoketest: single-click start-menu launch enabled (launches=0)
-[raeshell] terminal smoketest: text=true cup=true sgr=true erase=true -> PASS
+[athshell] terminal smoketest: text=true cup=true sgr=true erase=true -> PASS
 [ OK ] Workqueue system initialized
 [numa] Falling back to 1-node fake topology
 [ OK ] NUMA topology initialized
@@ -525,8 +525,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [msr-intel] smoketest features: intel=false hwp_sup=false hwp_en=false itd_sup=false itd_en=false cet_sup=false cet_en=false
 [msr-intel] smoketest -> PASS
 [config] smoketest: versioned save+rollback restore_ok=true versions_saved=2 per_key_restore=true (a Some(Int(200))->Some(Int(100)), b stays Some(Int(8))) -> PASS
-[session] user config seeded at /users/raeen/
-[session] user 'raeen' logged in
+[session] user config seeded at /users/athena/
+[session] user 'athena' logged in
 [session] workstation locked
 [session] workstation unlocked
 [session] logged out
@@ -1417,14 +1417,14 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Config registry: 29 default keys seeded (versioned, with snapshots)
 [ OK ] Per-app data buckets (/data/apps/self/)
 [buckets] run_boot_smoketest: store=true vfs_deny=true deny_foreign=true allow_owner=true self_needs_task=true -> PASS
-[session] AthID ready — default user 'raeen' (password: raeen)
+[session] AthID ready — default user 'athena' (password: athena)
 [session] persistence smoketest: records=1 hash_match=true reload_auth=true -> PASS
 [compositor] kernel surface 1 created: 1920x1080 (z=0, desktop)
 [shell_runner] safe-mode diag refresh thread spawned
 [shell_runner] safe-mode: live boot-diagnostic panel active (1920x1080, surface 1)
 [shell_runner] first-boot setup wizard ready (1920x1080, surface 1)
 [shell_runner] smoketest: single-click start-menu launch enabled (launches=0)
-[raeshell] terminal smoketest: text=true cup=true sgr=true erase=true -> PASS
+[athshell] terminal smoketest: text=true cup=true sgr=true erase=true -> PASS
 [ OK ] Workqueue system initialized
 [numa] Falling back to 1-node fake topology
 [ OK ] NUMA topology initialized
@@ -1434,8 +1434,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [msr-intel] smoketest features: intel=false hwp_sup=false hwp_en=false itd_sup=false itd_en=false cet_sup=false cet_en=false
 [msr-intel] smoketest -> PASS
 [config] smoketest: versioned save+rollback restore_ok=true versions_saved=2 per_key_restore=true (a Some(Int(200))->Some(Int(100)), b stays Some(Int(8))) -> PASS
-[session] user config seeded at /users/raeen/
-[session] user 'raeen' logged in
+[session] user config seeded at /users/athena/
+[session] user 'athena' logged in
 [session] workstation locked
 [session] workstation unlocked
 [session] logged out
@@ -1811,7 +1811,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [safe-mode] log carveout: 1 range(s), 2048 sectors total writable for bootlog flush
 [bootlog-persist] ready: BOOTLOG.TXT on active block device — 512 clusters, 1024 KiB capacity, first LBA 10252
 [bootlog-persist] flush OK (full, early region locked): 51417 log bytes + zero-pad -> 2048 sectors (1024 KiB file), cache_sync=OK
-[session] create_local_account: 'installtest' (Install Test) id=2 -> OK (password set, raefs_persisted=false)
+[session] create_local_account: 'installtest' (Install Test) id=2 -> OK (password set, athfs_persisted=false)
 [install] run_boot_smoketest: account_create=true password_auth=true -> PASS
 [install] payload smoketest: ramdisk_real=true ramdisk_bytes=22474752 tar_magic=true kernel_root_on_active_dev=0B (0=QEMU firmware-boot, resolves on Athena USB-MSC) -> PASS
 [ OK ] EDID parser ready (introspection only)
@@ -1819,9 +1819,9 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [edid] smoketest: gop=1920x1080 synthetic_block=true -> PASS
 [acpi-quirks] 6 known DSDT vendor quirk(s) registered
 [acpi-quirks] smoketest: entries=6 hp_match=1 lenovo_match=1 -> PASS
-[storage] boot disk: virtio-blk gpt sectors=2000409264 esp=true raefs=false
+[storage] boot disk: virtio-blk gpt sectors=2000409264 esp=true athfs=false
 [ OK ] Storage mount helper initialized
-[storage] smoketest: device=virtio-blk table=gpt sectors=2000409264 esp=true raefs=false
+[storage] smoketest: device=virtio-blk table=gpt sectors=2000409264 esp=true athfs=false
 [acpi] SCI wired to IRQ 9 -> vector 240
 [acpi] GPE dispatcher: 0 handler(s) in \_GPE (2 block(s) at GPE0=0x820)
 [ OK ] GPE dispatcher: 0 _Lxx/_Exx handler(s) registered
@@ -2043,14 +2043,14 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [storage_irq] smoketest OK: 1 device(s) — MSI-X=1 INTx=0
 [windows_gap] smoketest OK: 15 Concept-doc rows mapped
 [ OK ] AthBridge DLL registry: 158 DLLs, 16137 Win32 names reachable for PE imports
-[raebridge] minimal PE32+ parsed: machine=x86_64(true), entry=0x1000, 1 section(s), 0 import(s)
-[raebridge] reachability sample: 11/11 top-tier Win32 names resolved
-[raebridge] thunks Phase-B: 20/20 registered, 20/20 in name registry, 0 failure(s)
+[athbridge] minimal PE32+ parsed: machine=x86_64(true), entry=0x1000, 1 section(s), 0 import(s)
+[athbridge] reachability sample: 11/11 top-tier Win32 names resolved
+[athbridge] thunks Phase-B: 20/20 registered, 20/20 in name registry, 0 failure(s)
 [linux_kabi] smoketest: 10/10 symbols registered
 [linux_compat][INFO ] linux_compat: registered device 'linux_compat-smoke' id=1
 [linux_compat] smoketest PASS: 6 checks (jiffies=7475, devices=1)
-[linux_compat][INFO ] firmware: request 'raeen-selftest.bin'
-[linux_compat][INFO ] firmware: loaded 'raeen-selftest.bin' (334 bytes) from initramfs
+[linux_compat][INFO ] firmware: request 'athena-selftest.bin'
+[linux_compat][INFO ] firmware: loaded 'athena-selftest.bin' (334 bytes) from initramfs
 [linuxkpi] request_firmware probe: found 334 bytes
 [linuxkpi] firmware host call wired: syscall=142 fw_probe=found loads=0
 [linuxkpi] host smoketest: version=0x524b50490001 jiffies=7479 hz=1000 devices=0 irq_delivery=dispatch_msi+pending bridge=usdriver+caps -> PASS
@@ -2083,45 +2083,45 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [BOOT] All 9 tiers initialized successfully
 [storage] scanning active block device for AthFS partition...
 [storage] partition table: Gpt
-[raefs] no AthFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via raeinstaller)
-[raefs] tiered storage detected 0 distinct tier(s): NVMe=0 SATA(spinning)=0 Virtio=0 (4KiB blocks)
-[raefs] Registered NVMe tier with 16 blocks
-[raefs] Registered Sata tier with 16 blocks
-[raefs] Promoted block 0 to NVMe
-[raefs] Promoted block 1 to NVMe
-[raefs] Rebalance complete: promoted 2, demoted 0
-[raefs] Demoted block 1 to SATA
-[raefs] Demoted block 0 to SATA
-[raefs] Rebalance complete: promoted 0, demoted 2
-[raefs] tiered policy smoketest: promoted_to_nvme=2 demoted_to_sata=2
-[raefs] Extent manager initialized
-[raefs] Running boot smoketest...
-[raefs] Skipping smoketest: no mounted FS
-[raefs] format: wrote superblock magic=0x526165465321 blocks=256 dirs=[/System,/Apps,/Users,/Games,/Vaults] label="smoketest-vol" -> OK
-[raefs] format_smoketest: magic=true blocks=true free=true ibitmap=true bbitmap=true itable=true root_inode=true dirs=true apex_root=true -> PASS
-[raefs] run_format_smoketest -> PASS
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] Snapshot #1 created (ts=13968)
-[raefs] Deleted snapshot #1
-[raefs] snapshot syscall smoketest: create_ok=true id=1 listed=true name_ok=true delete_ok=true gone=true -> PASS
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: rollback.txt -> inode 2
-[raefs] Snapshot #1 created (ts=1)
-[raefs] Rolled back to snapshot #1
-[raefs] Mounted AthFS (CoW). root=0, free=244/256
-[raefs] on-disk persistence marker absent (first boot on this volume)
-[raefs] rollback round-trip: pre_rollback_v2=true rollback_ran=true inode_table_restored=true content_recovered=true -> PASS
-[raefs] encryption selftest: aes256_kat=true xts_changed=true xts_roundtrip=true tweak_sensitive=true kdf_deterministic=true aes_ni=true -> PASS
-[raefs] bucket-key selftest: distinct=true deterministic=true cross_app_unreadable=true own_key_recovers=true -> PASS
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] compression-flag smoketest: comp_decision_pos=true comp_decision_neg=true extent_flag_set=true extent_flag_clear=true -> PASS
+[athfs] no AthFS volume on the active device and the disk is NOT blank — refusing to auto-format (host data present; install explicitly via athinstaller)
+[athfs] tiered storage detected 0 distinct tier(s): NVMe=0 SATA(spinning)=0 Virtio=0 (4KiB blocks)
+[athfs] Registered NVMe tier with 16 blocks
+[athfs] Registered Sata tier with 16 blocks
+[athfs] Promoted block 0 to NVMe
+[athfs] Promoted block 1 to NVMe
+[athfs] Rebalance complete: promoted 2, demoted 0
+[athfs] Demoted block 1 to SATA
+[athfs] Demoted block 0 to SATA
+[athfs] Rebalance complete: promoted 0, demoted 2
+[athfs] tiered policy smoketest: promoted_to_nvme=2 demoted_to_sata=2
+[athfs] Extent manager initialized
+[athfs] Running boot smoketest...
+[athfs] Skipping smoketest: no mounted FS
+[athfs] format: wrote superblock magic=0x526165465321 blocks=256 dirs=[/System,/Apps,/Users,/Games,/Vaults] label="smoketest-vol" -> OK
+[athfs] format_smoketest: magic=true blocks=true free=true ibitmap=true bbitmap=true itable=true root_inode=true dirs=true apex_root=true -> PASS
+[athfs] run_format_smoketest -> PASS
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] Snapshot #1 created (ts=13968)
+[athfs] Deleted snapshot #1
+[athfs] snapshot syscall smoketest: create_ok=true id=1 listed=true name_ok=true delete_ok=true gone=true -> PASS
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: rollback.txt -> inode 2
+[athfs] Snapshot #1 created (ts=1)
+[athfs] Rolled back to snapshot #1
+[athfs] Mounted AthFS (CoW). root=0, free=244/256
+[athfs] on-disk persistence marker absent (first boot on this volume)
+[athfs] rollback round-trip: pre_rollback_v2=true rollback_ran=true inode_table_restored=true content_recovered=true -> PASS
+[athfs] encryption selftest: aes256_kat=true xts_changed=true xts_roundtrip=true tweak_sensitive=true kdf_deterministic=true aes_ni=true -> PASS
+[athfs] bucket-key selftest: distinct=true deterministic=true cross_app_unreadable=true own_key_recovers=true -> PASS
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] compression-flag smoketest: comp_decision_pos=true comp_decision_neg=true extent_flag_set=true extent_flag_clear=true -> PASS
 [session] load_persisted_accounts: no accounts.dat on AthFS (fresh system)
 [crash] persist smoketest: skipped (safe-mode, read-only)
 [virtio-net] device not present, skipping demo
 [virtio-net] rx-probe SKIP: no device
 [dhcp] kick_discovery -> emitted=true (DHCPDISCOVER on wire if true)
 [dhcp] after 64 poll_full() ticks: state=Some(Selecting)
-[post9-prof] raefs=89ms vnet_demo=2ms vnet_probe=2ms dhcp=55ms
+[post9-prof] athfs=89ms vnet_demo=2ms vnet_probe=2ms dhcp=55ms
 [ OK ] Loading INITRAMFS, size: 22474752 bytes
 [ OK ] Found user_init (13384 bytes)
 [ OK ] Seeded user_init caps: mmio=1 irq=2 port=3 system=4

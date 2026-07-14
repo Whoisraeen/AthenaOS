@@ -33,7 +33,7 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use spin::Mutex;
 
-/// The default seed accent — "RaeBlue" (matches `rae_tokens::RAEBLUE` and the
+/// The default seed accent — "RaeBlue" (matches `ath_tokens::RAEBLUE` and the
 /// "RaeBlue Default" builtin's `accent_argb`). Single source of truth for the
 /// fall-back when no theme is current.
 pub const RAEBLUE: u32 = 0xFF_4E_9C_FF;
@@ -368,7 +368,7 @@ pub fn apply(theme_id: u64) -> u64 {
     // Re-skin the userspace shell with the new theme's accent in the SAME call,
     // so a Vibe preset (which goes through apply()) recolours the taskbar/Start/
     // tray/Settings in lock-step with the kernel surfaces.
-    raeshell::set_active_accent(active_accent());
+    athshell::set_active_accent(active_accent());
     crate::serial_println!("[theme] applied #{} \"{}\"", theme_id, name);
     0
 }
@@ -401,7 +401,7 @@ pub fn current_abi() -> Option<ThemeAbi> {
 
 /// The LIVE accent seed — the single source of truth every re-skinned surface
 /// (window chrome, notification bars, the shell taskbar/Start, the Settings
-/// control kit) feeds into `rae_tokens::derive_accent`. This is what makes
+/// control kit) feeds into `ath_tokens::derive_accent`. This is what makes
 /// Vibe Mode's "one tap re-skins the whole desktop" real (Concept §Customization
 /// Engine): a single value flows to every surface from one home.
 ///
@@ -421,7 +421,7 @@ pub fn active_accent() -> u32 {
 /// Passing [`RAEBLUE`] is treated as "no override" so the default reverts to the
 /// current theme cleanly. After this, [`active_accent`] returns `argb`; the
 /// kernel re-propagates it to the userspace shell via
-/// `raeshell::set_active_accent` (see `shell_runner`).
+/// `athshell::set_active_accent` (see `shell_runner`).
 pub fn set_active_accent(argb: u32) {
     // `0` is our "no override" sentinel; an opaque accent always has a non-zero
     // alpha, so a real accent can never collide with it. Treat RAEBLUE as
@@ -432,7 +432,7 @@ pub fn set_active_accent(argb: u32) {
         ACCENT_OVERRIDE.store(argb, Ordering::Release);
     }
     // Keep the userspace shell's live seed in lock-step with the kernel surfaces.
-    raeshell::set_active_accent(active_accent());
+    athshell::set_active_accent(active_accent());
 }
 
 /// Clear any raw-accent override; [`active_accent`] reverts to the current
@@ -447,7 +447,7 @@ pub fn clear_active_accent() {
 /// blur / id come from the current [`ThemeAbi`] (defaults when none is current).
 /// `is_dark` is `1` when the background luminance is below mid-grey. This is the
 /// single home the kernel hands to separate-process apps so Vibe Mode reaches
-/// them — see `kernel/src/syscall.rs` arm 266 and `rae_abi::ThemeInfo`.
+/// them — see `kernel/src/syscall.rs` arm 266 and `ath_abi::ThemeInfo`.
 #[must_use]
 pub fn theme_info() -> (u32, u32, u32, u32, u32, u32) {
     let accent = active_accent();
@@ -625,7 +625,7 @@ pub fn install_theme_bundle(bundle: &[u8], publisher_pubkey: &[u8; 32]) -> u64 {
     let payload = &bundle[..THEME_PAYLOAD_LEN];
     let mut sig = [0u8; 64];
     sig.copy_from_slice(&bundle[THEME_PAYLOAD_LEN..]);
-    if !rae_crypto::ed25519::verify(publisher_pubkey, payload, &sig) {
+    if !ath_crypto::ed25519::verify(publisher_pubkey, payload, &sig) {
         return ERR_NOT_SIGNED;
     }
     match parse_theme_payload(payload) {
@@ -663,7 +663,7 @@ pub fn sys_register(
 /// private key): builds a theme payload, signs it, installs + applies it, then
 /// confirms a tampered signature and a wrong publisher key are both refused.
 pub fn run_register_smoketest() {
-    use rae_crypto::ed25519;
+    use ath_crypto::ed25519;
     let test_seed = [0x42u8; 32];
     let test_pub = ed25519::derive_public_key(&test_seed);
 
@@ -742,7 +742,7 @@ pub fn run_register_smoketest() {
     );
 }
 
-// ── /proc/raeen/themes ─────────────────────────────────────────────────
+// ── /proc/athena/themes ─────────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let g = REGISTRY.lock();
@@ -804,27 +804,27 @@ pub fn run_boot_smoketest() {
 ///
 /// It reads the default accent (all surfaces agree), sets a distinctive
 /// non-default accent through the live `set_active_accent` path (also pushed to
-/// the userspace shell via `raeshell::set_active_accent`), re-reads every
+/// the userspace shell via `athshell::set_active_accent`), re-reads every
 /// surface's proof accent, asserts they ALL now derive from the new seed, then
 /// restores RaeBlue and asserts they all revert. Prints PASS only if every
 /// surface tracked the change in lock-step.
 ///
 /// Run from `kernel_main` AFTER `theme_engine`, `vibe_mode`, the window-chrome
-/// + notify surfaces, and `raeshell` are initialized.
+/// + notify surfaces, and `athshell` are initialized.
 pub fn run_accent_cohesion_smoketest() {
     // A distinctive seed that is NOT any of the 8 signed builtins, so a stale
     // hardcoded surface can't accidentally match it.
     const ORANGE: u32 = 0xFF_FF_88_00;
-    let palette = &rae_tokens::DARK;
-    let want_orange = rae_tokens::derive_accent(ORANGE, palette).base;
+    let palette = &ath_tokens::DARK;
+    let want_orange = ath_tokens::derive_accent(ORANGE, palette).base;
 
     // Snapshot every surface's proof accent for the current live seed.
     let sample = || -> (u32, u32, u32, u32) {
         (
             crate::window_chrome::proof_accent(),
             crate::notify::proof_accent(),
-            raeshell::shell_design_proof().accent_base,
-            raeshell::control_panel::settings_design_proof().accent_base,
+            athshell::shell_design_proof().accent_base,
+            athshell::control_panel::settings_design_proof().accent_base,
         )
     };
 
@@ -836,7 +836,7 @@ pub fn run_accent_cohesion_smoketest() {
     // and remember it to restore at the end.
     push(RAEBLUE);
     let want_blue = active_accent(); // the live default seed, normally RaeBlue
-    let want_blue_base = rae_tokens::derive_accent(want_blue, palette).base;
+    let want_blue_base = ath_tokens::derive_accent(want_blue, palette).base;
 
     // ── Default: all four surfaces agree on the default-derived base. ──
     let (c0, n0, t0, s0) = sample();

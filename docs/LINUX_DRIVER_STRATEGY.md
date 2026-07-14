@@ -19,7 +19,7 @@ still depends on a small set of in-kernel drivers today; closing the gap to
 **The LinuxKPI-hosted upstream amdgpu daemon is AthenaOS's sole hardware
 acceleration path for Phoenix-class AMD GPUs.** It is the only path authorized
 to grow toward Mesa/RADV, Vulkan, DXVK/VKD3D, and game workloads. The native
-Rust `raeen_amdgpu` implementation remains supported only as the DCN scanout
+Rust `ath_amdgpu` implementation remains supported only as the DCN scanout
 path and hardware-forensics fallback while the upstream driver clears the
 bare-metal PSP to MES to fence gate.
 
@@ -69,7 +69,7 @@ required. Reject universal Linux-driver compat as a product claim.
 
 - `kernel/src/linux_kabi.rs`: ~50 canonical `EXPORT_SYMBOL` names, categories
   (Memory, PCI, IRQ, Device, DMA, Misc), status (Stub / Unimplemented / Planned).
-- `/proc/raeen/linux_kabi` introspection.
+- `/proc/athena/linux_kabi` introspection.
 - Boot smoketest: resolve probe names, log `N/M symbols registered`.
 - Tooling (future): parse `.ko` undefined symbols against registry.
 
@@ -93,7 +93,7 @@ required. Reject universal Linux-driver compat as a product claim.
 | `linux_compat.rs` | In-kernel driver API shim (DMA/IRQ/kmalloc scaffolding) |
 | `linux_syscall.rs` | Linux x86_64 syscall translation for ELFs |
 | `linux_kabi.rs` | Kernel module **symbol name** registry (this doc) |
-| `linuxkpi_host.rs` + `components/raeen_linuxkpi` | **LinuxKPI Phase 1-4** — C ABI + host syscalls 127–140: timing/log (P1), ioremap+PCI+IRQ doorbells (P2), zero-copy `dma_alloc_coherent` (P3), IOMMU sandbox + daemon supervisor (P4). See `docs/LINUXKPI_PHASE1.md`, `docs/LINUXKPI_PHASE2.md` |
+| `linuxkpi_host.rs` + `components/ath_linuxkpi` | **LinuxKPI Phase 1-4** — C ABI + host syscalls 127–140: timing/log (P1), ioremap+PCI+IRQ doorbells (P2), zero-copy `dma_alloc_coherent` (P3), IOMMU sandbox + daemon supervisor (P4). See `docs/LINUXKPI_PHASE1.md`, `docs/LINUXKPI_PHASE2.md` |
 | `linux_exec.rs` | Mark tasks as Linux ABI for syscall dispatch |
 | `userspace_driver.rs` | Capability-gated claim/DMA/IRQ (syscalls 109–118); Phase 2 bridge target |
 

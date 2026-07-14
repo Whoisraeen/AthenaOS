@@ -69,7 +69,7 @@ Three-tier priority (Deadline EDF → Game RR → Normal CFS) with per-CPU runqu
 >   unused types are no longer in `ipc.rs`; IPC perm checks go through
 >   `capability.rs` only.
 > - **No test infra (lower section):** partially addressed — 48 `#[test]` files
->   now exist (rae_crypto/raeid/raeen_amdgpu host KATs + per-subsystem boot
+>   now exist (ath_crypto/athid/ath_amdgpu host KATs + per-subsystem boot
 >   smoketests). #2 (task-lookup-after-enqueue) was part of the #1 resume fix.
 
 ### 1. Global Scheduler Lock — The `SCHEDULER` Bottleneck
@@ -143,7 +143,7 @@ These NOPs with `nomem` don't provide any ordering guarantee. If the intent is t
 ### 1. Kernel Binary Size / Monolith Creep
 
 152 source files in `kernel/src/` totaling **~5.5 MB** of Rust. Many modules are enormous:
-- `raefs.rs` — 117 KB
+- `athfs.rs` — 117 KB
 - `xhci.rs` — 115 KB  
 - `crypto.rs` — 109 KB
 - `tunnel.rs` — 95 KB
@@ -163,7 +163,7 @@ The concept doc says AthenaOS is a **hybrid kernel** with userspace drivers, but
 
 ### 2. Components Directory — 31 Crates, Unknown State
 
-The `components/` directory has 31 sub-crates (raefs, raenet, raeui, raeaudio, etc.), but only 5 are pulled in as kernel dependencies in [Cargo.toml](file:///c:/Users/woisr/Documents/AthenaOS/kernel/Cargo.toml#L39-L43): `pcid`, `raegfx`, `raeshell`, `raeid`, `raebridge`. The other 26 are likely stubs or aspirational.
+The `components/` directory has 31 sub-crates (athfs, athnet, athui, athaudio, etc.), but only 5 are pulled in as kernel dependencies in [Cargo.toml](file:///c:/Users/woisr/Documents/AthenaOS/kernel/Cargo.toml#L39-L43): `pcid`, `athgfx`, `athshell`, `athid`, `athbridge`. The other 26 are likely stubs or aspirational.
 
 ### 3. No Test Infrastructure
 
@@ -187,7 +187,7 @@ This creates an `OffsetPageTable` from the **current CR3** (which could be a use
 
 | Category | Modules | Maturity |
 |----------|---------|----------|
-| **Proven on boot path** | serial, gdt, interrupts, memory, allocator, acpi, apic, pci, virtio, virtio_net, scheduler, task, context, syscall, elf, tar, framebuffer, compositor, ipc, capability, smp, hpet, rtc, vfs, raefs, procfs | 🟢 Live code |
+| **Proven on boot path** | serial, gdt, interrupts, memory, allocator, acpi, apic, pci, virtio, virtio_net, scheduler, task, context, syscall, elf, tar, framebuffer, compositor, ipc, capability, smp, hpet, rtc, vfs, athfs, procfs | 🟢 Live code |
 | **Initialized but no real I/O** | nvme, ahci, net, dhcp, dns, xhci, usb_core, audio, gpu, tpm, firewall, thermal, cpufreq, tty, bluetooth, iommu | 🟡 Framework + stubs |
 | **Compiled but likely inert** | crypto, tls, quic, ipsec, tunnel, wireguard, virtualization, anticheat, overclock, dma_engine, numa, kmod, dynamic_linker, elf_loader, linux_compat, linux_syscall, posix, posix_ipc, locking, slab, workqueue, dbus_kernel, debug, etc. | 🔴 Dead weight |
 

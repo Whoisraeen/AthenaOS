@@ -3,7 +3,7 @@
  * <linux/dmi.h> shim (MPL-2.0, original work).
  *
  * DMI/SMBIOS table access. KFD topology reads the system manufacturer/product to
- * apply per-platform quirks. Backed by raeen_linuxkpi at M4 (the daemon can supply
+ * apply per-platform quirks. Backed by ath_linuxkpi at M4 (the daemon can supply
  * the real SMBIOS strings); declaration-only here. A NULL return is honest "field
  * not present", which callers already handle. License boundary: API surface.
  */

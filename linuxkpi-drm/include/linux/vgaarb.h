@@ -4,7 +4,7 @@
  *
  * VGA arbitration — coordinates which GPU owns the legacy VGA resources when
  * several are present. Athena is a single-APU system, so amdgpu's arbitration
- * calls are honest no-ops here (nothing to arbitrate); backed by raeen_linuxkpi at
+ * calls are honest no-ops here (nothing to arbitrate); backed by ath_linuxkpi at
  * M4 only if multi-GPU VGA routing is ever needed. License boundary: API surface.
  */
 #ifndef _LINUXKPI_LINUX_VGAARB_H

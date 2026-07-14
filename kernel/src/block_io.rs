@@ -17,7 +17,7 @@ use spin::Mutex;
 // `BlockDevice::write_sector` impl in the tree calls
 // `safe_mode_guard_write` first. The guard logs the rejected LBA + length
 // (first few times only, to avoid spamming serial when the installer or
-// raefs retries) and returns an error so the caller propagates the
+// athfs retries) and returns an error so the caller propagates the
 // failure without ever touching hardware.
 //
 // Read paths are completely unaffected, so the kernel still boots, mounts,
@@ -120,7 +120,7 @@ pub fn safe_mode_guard_write(lba: u64, len: usize, source: &str) -> Result<(), &
         );
         if prior + 1 == SAFE_MODE_LOG_LIMIT {
             crate::serial_println!(
-                "[safe-mode] further rejects will be silent; see /proc/raeen/safe_mode for the running total",
+                "[safe-mode] further rejects will be silent; see /proc/athena/safe_mode for the running total",
             );
         }
     }
@@ -691,7 +691,7 @@ pub fn writes_enabled() -> bool {
 /// Number of times the write window has been opened (`set_writes_enabled(true)`)
 /// this boot. 0 on a correctly-read-only standard boot on real hardware until an
 /// install is confirmed; non-zero in QEMU (boot enable) or after a confirmed
-/// install bracket. Surfaced for the install-safety smoketest + `/proc/raeen`.
+/// install bracket. Surfaced for the install-safety smoketest + `/proc/athena`.
 #[inline]
 pub fn write_window_opens() -> u64 {
     WRITE_WINDOW_OPENS.load(AtomicOrdering::Relaxed)
@@ -994,14 +994,14 @@ impl PartitionType {
             0x99, 0xC7,
         ];
         // AthFS (provisional): 52414546-534F-2147-5241-45454E4F5321  "AthFS!AthenaOS!"
-        const RAEFS_GUID: [u8; 16] = [
+        const ATHFS_GUID: [u8; 16] = [
             0x46, 0x45, 0x41, 0x52, 0x4F, 0x53, 0x47, 0x21, 0x41, 0x52, 0x45, 0x45, 0x4E, 0x4F,
             0x53, 0x21,
         ];
 
         if guid == &EFI_GUID {
             Self::Efi
-        } else if guid == &RAEFS_GUID {
+        } else if guid == &ATHFS_GUID {
             Self::RaeFs
         } else if guid == &LINUX_FS_GUID {
             Self::LinuxFs

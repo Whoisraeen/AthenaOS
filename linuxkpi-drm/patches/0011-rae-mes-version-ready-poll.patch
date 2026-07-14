@@ -23,7 +23,7 @@
 -	mutex_lock(&adev->srbm_mutex);
 +	/*
 +	 * Linux usually observes both firmware heartbeats after the fixed 500 us
-+	 * enable delay. RaeenOS MMIO runs from a userspace driver and Athena can
++	 * enable delay. AthenaOS MMIO runs from a userspace driver and Athena can
 +	 * take longer to leave reset. A one-shot zero read incorrectly selects the
 +	 * pre-MES legacy KCQ path, which wedges pipe1 in MAP_QUEUES. Poll the same
 +	 * version registers to the driver's bounded hardware timeout instead.

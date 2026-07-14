@@ -7,7 +7,7 @@ authors.workspace = true
 repository.workspace = true
 
 # Library target: the app's state + draw path + the syscall-free VPN MODEL
-# (`VpnModel`) so a host KAT can link the LIVE `raevpn` Noise_IKpsk2 WireGuard
+# (`VpnModel`) so a host KAT can link the LIVE `athvpn` Noise_IKpsk2 WireGuard
 # handshake with NO kernel and NO network — the same structure apps/mail,
 # apps/calendar and apps/browser use.
 [lib]
@@ -26,31 +26,31 @@ path = "src/main.rs"
 test = false
 
 [features]
-# Forwards to `raekit/host`: lets the std `cargo test` harness link `vpn`
-# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# Forwards to `athkit/host`: lets the std `cargo test` harness link `vpn`
+# (-> `athkit`) without athkit's bare-ELF lang items colliding with std (E0152
 # duplicate panic_impl). The normal `cargo build -p vpn --target
 # x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
 # with `cargo test -p vpn --features host`.
-host = ["raekit/host"]
+host = ["athkit/host"]
 
 [dependencies]
-raegfx = { path = "../../components/raegfx" }
-raekit = { path = "../../components/raekit" }
-rae_tokens = { path = "../../components/rae_tokens" }
+athgfx = { path = "../../components/athgfx" }
+athkit = { path = "../../components/athkit" }
+ath_tokens = { path = "../../components/ath_tokens" }
 # The LIVE, already-host-KAT'd WireGuard engine: the real Noise_IKpsk2 handshake
 # (HMAC-BLAKE2s/KDF, mix_hash, encrypted static/timestamp, MAC1, PSK,
 # direction-correct transport-key split) plus the ChaCha20-Poly1305
 # `TransportSession`. This app is the clickable shell over it. The crate opens NO
-# sockets and has NO raenet dep — the live UDP datapath is a `cfg(not(test))`
-# wrapper the host KAT never links, so the host proof needs no raenet (and avoids
+# sockets and has NO athnet dep — the live UDP datapath is a `cfg(not(test))`
+# wrapper the host KAT never links, so the host proof needs no athnet (and avoids
 # the known poly1305 SIMD bare-build issue entirely).
-raevpn = { path = "../../components/raevpn" }
+athvpn = { path = "../../components/athvpn" }
 
 [dev-dependencies]
 # Test-only: the mock peer (responder) needs to derive its OWN static *public*
-# key from its private key to hand to the app as the peer public key. raevpn does
-# not expose its internal `x25519_base`, and (per the task) raevpn is read-only,
-# so the host KAT derives the public key itself with the SAME crate raevpn uses
-# (no API change to raevpn). The live ELF never needs this — the user types the
+# key from its private key to hand to the app as the peer public key. athvpn does
+# not expose its internal `x25519_base`, and (per the task) athvpn is read-only,
+# so the host KAT derives the public key itself with the SAME crate athvpn uses
+# (no API change to athvpn). The live ELF never needs this — the user types the
 # peer public key in directly — so it stays a dev-dependency.
 x25519-dalek = { version = "2", default-features = false, features = ["static_secrets"] }

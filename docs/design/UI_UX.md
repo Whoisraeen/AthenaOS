@@ -2,7 +2,7 @@
 
 > *"Built for people who care about how things feel."* — `LEGACY_GAMING_CONCEPT.md`
 >
-> This is the **whole-OS layout + experience bible** for `raeen-ui` and `raeen-shell-apps`.
+> This is the **whole-OS layout + experience bible** for `athena-ui` and `athena-shell-apps`.
 > It is the north star: the single document that describes every surface of the OS and
 > the *why* behind it. It does **not** restate token-level detail — that lives in the
 > per-surface specs it indexes. When this doc and a per-surface spec disagree on a
@@ -94,7 +94,7 @@ Distilled from current (2025–26) community complaints. **Every row is a requir
 
 | Want | AthenaOS |
 |---|---|
-| App store: clean install/uninstall, trials, auto-update, gradated trust | **AthStore** (.raepkg, Wasm sandbox tiers) |
+| App store: clean install/uninstall, trials, auto-update, gradated trust | **AthStore** (.athpkg, Wasm sandbox tiers) |
 | Sandbox mode that makes malware infection impossible | **AthGuard** capabilities — sandbox-by-default, per-app manifests |
 | Central 3rd-party update management | AthStore unified updates; atomic + rollback |
 | Remote control through NAT/firewalls | AthSync / remote (Concept) |
@@ -230,7 +230,7 @@ Every surface. Each entry: **purpose → layout → the mashup decision → stat
   power. Fixes both "Explorer from 2007" and Finder gaps.
 - **Status:** `apps/files` is real (777 LOC, launchable) — audit against this spec + finish.
 
-### 4.12 First-party app suite — `raeen-shell-apps`
+### 4.12 First-party app suite — `athena-shell-apps`
 Coherent, all on AthUI tokens: **Files, Settings, Terminal, Text Editor, Calculator, Task
 Manager** (shipped + launchable today), plus planned **Media, Photos, Browser (PWA shell)**.
 Every app: same chrome, same shortcuts, same empty-states, same motion. *Cohesion is the
@@ -263,7 +263,7 @@ product* — this is how we beat Linux's inconsistency.
 - Screen reader (accessibility tree), magnifier, full keyboard-only navigation + visible
   focus order, high-contrast + reduced-motion themes, color-contrast compliance, hit
   targets ≥ spec. **Built in from the start, audited as a regression gate** — owned by
-  `raeen-accessibility`.
+  `athena-accessibility`.
 
 ---
 
@@ -278,7 +278,7 @@ product* — this is how we beat Linux's inconsistency.
 - **Touch:** larger hit targets, swipe gestures, on-screen keyboard — AthUI adapts.
 - **Controller:** full navigation in GameOS Mode and, optionally, the whole shell.
 - **Cursor:** hardware cursor plane (no lag); the input→photon budget is a perf gate
-  (`raeen-perf`).
+  (`athena-perf`).
 
 ---
 
@@ -326,8 +326,8 @@ the AA type system. (See `goal-userspace-apps-status` audit.)
 5. **File Manager** modernization (§4.11) to spec.
 6. **Multi-monitor** correctness (§4.16) and **Accessibility** (§4.17, ship gate).
 
-Each surface gets its own `docs/design/<surface>.md` (researched by `raeen-design-researcher`,
-checked by `raeen-visual-qa` against macOS/Windows reference quality) before/with build.
+Each surface gets its own `docs/design/<surface>.md` (researched by `athena-design-researcher`,
+checked by `athena-visual-qa` against macOS/Windows reference quality) before/with build.
 
 ---
 

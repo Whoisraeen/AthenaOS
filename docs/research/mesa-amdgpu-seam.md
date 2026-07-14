@@ -16,7 +16,7 @@ this is the *interface* that lets it link, built incrementally.
 ## The stack (who calls what)
 
 Mesa is a **userspace application's renderer**, NOT a kernel driver. It does not
-link `raeen_drm` (that's the kernel-side DRM core the amdgpu *kernel* driver
+link `ath_drm` (that's the kernel-side DRM core the amdgpu *kernel* driver
 uses). Mesa talks to the GPU through ioctls:
 
 ```
@@ -27,13 +27,13 @@ uses). Mesa talks to the GPU through ioctls:
                                       amdgpu_cs_submit, amdgpu_cs_query_fence_status…)
                    └─ DRM ioctls on a render node  (DRM_IOCTL_AMDGPU_*)
                         └─ AthenaOS: routed to amdgpud (the Path-C userspace driver)
-                             └─ raeen_amdgpu::bringup  (the ring submit + fence we built)
+                             └─ ath_amdgpu::bringup  (the ring submit + fence we built)
                                   └─ the GPU
 ```
 
 So the seam has two halves we own:
 1. **`libdrm_amdgpu` C-ABI shim** — the userspace lib Mesa links (a sibling of
-   `raeen_linuxkpi`, but the *amdgpu winsys* surface rather than the kernel KPI).
+   `ath_linuxkpi`, but the *amdgpu winsys* surface rather than the kernel KPI).
 2. **The DRM amdgpu ioctl surface** — what those lib calls turn into, routed to
    `amdgpud` and serviced by the bring-up primitives.
 
@@ -48,7 +48,7 @@ So the seam has two halves we own:
 | `CS` (0x04) | submit a command stream (IB) to a ring | `program_sdma_ring` / the CP submit (ring + WPTR) |
 | `WAIT_CS` (0x09) | wait for a submission to complete | `sdma_submit_and_wait` / the fence-poll |
 | `CTX` (0x02) | create a submission context (priority, reset) | a thin ctx table over the rings |
-| `FENCE_TO_HANDLE` (0x14) | turn a CS fence into a syncobj/fd | `raeen_drm::fence` + syncobj surface |
+| `FENCE_TO_HANDLE` (0x14) | turn a CS fence into a syncobj/fd | `ath_drm::fence` + syncobj surface |
 
 The encouraging part: **the four load-bearing ioctls already have primitives.**
 `GEM_CREATE`→`dma_alloc`, `CS`→the ring submit, `WAIT_CS`→the fence-poll, `INFO`→
@@ -58,17 +58,17 @@ fence-poll for both the GFX CP and SDMA engines) is *exactly* the substrate the
 
 ## Phase 1 — `AMDGPU_INFO` device query (landed)
 
-`raeen_amdgpu::uapi` — the byte-exact uapi surface Mesa's winsys reads first:
+`ath_amdgpu::uapi` — the byte-exact uapi surface Mesa's winsys reads first:
 the ioctl ids, the `AMDGPU_INFO` sub-queries, HW-IP / GEM-domain constants, and
 the `drm_amdgpu_info_device` struct (transcribed field-for-field from
 `amdgpu_drm.h`, ABI-guarded with `offset_of!` KATs). `query_dev_info(&Device)`
 fills the fields we know authoritatively (PCI device id, VBIOS bootup clocks,
 gfx11 wave/page constants) and leaves the rest 0 (never fabricated — the uapi's
-own "older chips set 0" rule). Host-KAT'd (`cargo test -p raeen_amdgpu`).
+own "older chips set 0" rule). Host-KAT'd (`cargo test -p ath_amdgpu`).
 
 ## Phase 2 — the DRM ioctl handlers (next, host-provable)
 
-Build the `amdgpu_*` ioctl dispatch in `amdgpud` (or `raeen_drm`), each handler a
+Build the `amdgpu_*` ioctl dispatch in `amdgpud` (or `ath_drm`), each handler a
 thin map onto an existing primitive, all host-testable over `GpuOps`:
 - `GEM_CREATE`/`GEM_MMAP` → `dma_alloc` + the CPU mapping; a BO handle table.
 - `INFO` (`DEV_INFO`/`MEMORY`/`HW_IP_INFO`/`FW_VERSION`) → `query_dev_info` +
@@ -80,10 +80,10 @@ the mock GPU and sees the fence post — the ioctl-level twin of today's bring-u
 
 ## Phase 3 — the `libdrm_amdgpu` C-ABI shim
 
-A `raeen_libdrm_amdgpu` crate exposing the C symbols Mesa's winsys links
+A `athena_libdrm_amdgpu` crate exposing the C symbols Mesa's winsys links
 (`amdgpu_device_initialize`, `amdgpu_query_info`, `amdgpu_bo_alloc`,
 `amdgpu_bo_cpu_map`, `amdgpu_cs_submit`, `amdgpu_cs_query_fence_status`, …), each
-forwarding to the Phase-2 ioctl surface. Sibling discipline to `raeen_linuxkpi`:
+forwarding to the Phase-2 ioctl surface. Sibling discipline to `ath_linuxkpi`:
 `#![no_std]`, host-KAT'd, no fabricated returns.
 
 ## Phase 4 — build Mesa (the big one, iron-gated)
@@ -105,6 +105,6 @@ the 780M). Until then, Phases 1–3 are the productive, host-provable work.
 
 ## Hand-off
 
-→ **Phase 2** (`raeen-gpu` / `raeen-drivers`): the DRM ioctl handlers over the
+→ **Phase 2** (`athena-gpu` / `athena-drivers`): the DRM ioctl handlers over the
 bring-up primitives. Proof line: a host harness logs
 `[drm] INFO dev_info: 1002:15bf` then `[drm] CS submitted -> WAIT_CS fence posted`.

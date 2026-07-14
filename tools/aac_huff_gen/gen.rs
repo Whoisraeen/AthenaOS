@@ -1,6 +1,6 @@
 // Generate + verify the 12 AAC-LC Huffman codebooks (11 spectral + scalefactor)
 // from docs/research/aac-lc-decoder.md §4.2 + Appendix, as Rust arrays for
-// components/raemedia/src/aac_tables.rs.
+// components/athmedia/src/aac_tables.rs.
 //
 // Input: per-book (codes[], bits[]) row-major over the index space; the value tuple
 // for each index is derived from the per-book index->tuple map (§A.11) so the runtime

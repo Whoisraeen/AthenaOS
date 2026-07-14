@@ -21,7 +21,7 @@ AthUI already has the logical pieces — but wired the wrong way for the feel:
 | `animation.rs` (626) | `EasingFunction`, `Animation`, `AnimatedProperty`, repeat modes | ticked app-side; animates widget content, not compositor layers |
 | `layout.rs` (635) | flexbox (`Display`/`FlexDirection`/`JustifyContent`/`Edges`) | hand-rolled; `taffy` is the drop-in upgrade |
 | `binding.rs` (445) | `Observable` reactive state | not wired to implicit animations |
-| render path | `raegfx::Canvas` (software), placeholder "rectangle" font raster | immediate-mode redraw; no GPU layers; no real text |
+| render path | `athgfx::Canvas` (software), placeholder "rectangle" font raster | immediate-mode redraw; no GPU layers; no real text |
 
 So content is redrawn every frame through a software canvas, and animation runs
 on the app thread — the exact opposite of the Core Animation model. The fix is

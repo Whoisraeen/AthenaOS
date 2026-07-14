@@ -339,7 +339,7 @@ pub fn init() {
     sb.measure_stage(BootStage::KernelCommandLine, tpm::sha256(b""), 0);
     sb.measure_stage(
         BootStage::AthGuardPolicy,
-        tpm::sha256(b"raeshield-policy-v1"),
+        tpm::sha256(b"athshield-policy-v1"),
         0,
     );
 

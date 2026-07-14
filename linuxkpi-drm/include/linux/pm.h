@@ -4,7 +4,7 @@
  *
  * Power-management types. amdgpu embeds `struct dev_pm_domain vga_pm_domain` by
  * value and tracks `suspend_state_t`. The actual runtime-PM transitions are
- * backed by raeen_linuxkpi at M4 (and S3 suspend/resume is a separate phase);
+ * backed by ath_linuxkpi at M4 (and S3 suspend/resume is a separate phase);
  * here it is the type + callback-struct surface for layout. License boundary
  * (../../README.md): API surface, no GPL source.
  */
@@ -43,7 +43,7 @@ struct dev_pm_domain {
 	void (*dismiss)(struct device *dev);
 };
 
-/* runtime-PM control — backed by raeen_linuxkpi (M4) */
+/* runtime-PM control — backed by ath_linuxkpi (M4) */
 int  pm_runtime_get_sync(struct device *dev);
 int  pm_runtime_put_sync(struct device *dev);
 int  pm_runtime_put_autosuspend(struct device *dev);

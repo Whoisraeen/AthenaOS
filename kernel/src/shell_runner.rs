@@ -1,7 +1,7 @@
 //! Shell runner — boots the AthShell desktop into the compositor.
 //!
 //! Creates a full-screen kernel-owned compositor surface, instantiates
-//! `raeshell::DesktopShell`, renders the taskbar + desktop chrome, and
+//! `athshell::DesktopShell`, renders the taskbar + desktop chrome, and
 //! presents it. The surface sits at z-order 0 (behind all app windows).
 //!
 //! Keyboard events are forwarded via `handle_key()` from the IRQ path so
@@ -20,7 +20,7 @@ use overlay::{apply_space_switch, cycle_alt_tab, move_focused_to_space, render_o
 
 static SHELL_STATE: Mutex<Option<ShellRunnerState>> = Mutex::new(None);
 
-/// Active keyboard layout, as an index into `raelocale::keyboard::ALL_LAYOUTS`.
+/// Active keyboard layout, as an index into `athlocale::keyboard::ALL_LAYOUTS`.
 /// Default 0 = `LayoutId::UsQwerty`. Stored as a lock-free atomic because the
 /// key-resolution path (`lock_scancode_to_ascii`) runs from the HID bridge /
 /// IRQ-driven `handle_key` and must not take a lock that a preempted syscall
@@ -31,20 +31,20 @@ static ACTIVE_KB_LAYOUT: core::sync::atomic::AtomicU8 = core::sync::atomic::Atom
 /// Concept §"rival Windows + macOS" globally: those ship dozens of keyboard
 /// layouts so a French/German/Dvorak user can actually type. Return the active
 /// layout the kernel input path resolves scancodes against (default US-QWERTY).
-pub fn active_keyboard_layout() -> raelocale::keyboard::LayoutId {
+pub fn active_keyboard_layout() -> athlocale::keyboard::LayoutId {
     let idx = ACTIVE_KB_LAYOUT.load(core::sync::atomic::Ordering::Relaxed) as usize;
-    raelocale::keyboard::ALL_LAYOUTS
+    athlocale::keyboard::ALL_LAYOUTS
         .get(idx)
         .copied()
-        .unwrap_or(raelocale::keyboard::LayoutId::UsQwerty)
+        .unwrap_or(athlocale::keyboard::LayoutId::UsQwerty)
 }
 
 /// Concept §"rival Windows + macOS": let the user pick a non-US keyboard layout
 /// so typing actually works in their language. Sets the active layout the kernel
 /// input path resolves against. Lock-free; safe to call from a settings handler
 /// or a /proc write hook.
-pub fn set_keyboard_layout(id: raelocale::keyboard::LayoutId) {
-    let idx = raelocale::keyboard::ALL_LAYOUTS
+pub fn set_keyboard_layout(id: athlocale::keyboard::LayoutId) {
+    let idx = athlocale::keyboard::ALL_LAYOUTS
         .iter()
         .position(|&l| l == id)
         .unwrap_or(0) as u8;
@@ -53,9 +53,9 @@ pub fn set_keyboard_layout(id: raelocale::keyboard::LayoutId) {
 
 /// Set the active keyboard layout by short name ("us", "fr", "de", "dvorak"),
 /// case-insensitive. Returns true if recognized. The thin hook a settings UI /
-/// `/proc/raeen/keyboard` write uses.
+/// `/proc/athena/keyboard` write uses.
 pub fn set_keyboard_layout_by_name(name: &str) -> bool {
-    match raelocale::keyboard::LayoutId::from_name(name) {
+    match athlocale::keyboard::LayoutId::from_name(name) {
         Some(id) => {
             set_keyboard_layout(id);
             true
@@ -86,11 +86,11 @@ static PENDING_TITLES: Mutex<alloc::collections::BTreeMap<u64, alloc::string::St
 
 struct ShellRunnerState {
     phase: crate::session::SessionPhase,
-    shell: Option<raeshell::DesktopShell>,
+    shell: Option<athshell::DesktopShell>,
     /// GameOS couch mode — when Some, the couch UI owns the screen and the
     /// keyboard routes as controller input (MasterChecklist Phase 12.2/14.3).
-    couch: Option<raeshell::gameos::GameOsShell>,
-    lock: Option<raeshell::LockScreen>,
+    couch: Option<athshell::gameos::GameOsShell>,
+    lock: Option<athshell::LockScreen>,
     login: crate::login_ui::LoginState,
     /// First-boot OOBE state — populated when the kernel boots into a
     /// fresh install with no user account yet. The wizard collects
@@ -126,14 +126,14 @@ struct ShellRunnerState {
     /// Per-display virtual desktops / Spaces (window-management.md §2). Owns
     /// surface→space membership; the kernel applies visibility flips to the
     /// compositor on switch and ramps the wallpaper cross-fade.
-    spaces: raeshell::spaces::SpaceManager,
+    spaces: athshell::spaces::SpaceManager,
     /// Active title-bar drag: `(surface_id, grab_offset_x, grab_offset_y)`.
     drag: Option<(u64, i32, i32)>,
     /// In-game Game Bar overlay (GameOS Phase 4, Concept §"Game Bar that doesn't
     /// suck"). Invoked by the controller Guide chord or the F10 hotkey; composites
     /// FPS + frametime graph + CPU/GPU temps over whatever runs underneath. Fed
     /// from the LIVE `crate::perf` (FPS/frametime) + `crate::thermal` (temps).
-    game_bar: raeshell::game_bar::GameBar,
+    game_bar: athshell::game_bar::GameBar,
     /// RaeWeb browser surface (Concept §3 "renders through AthUI", §Core
     /// Principles #1 "No Electron tax"). When Some, the kernel-drawn web view owns
     /// the screen and the keyboard drives the address bar / link activation. Toggled
@@ -264,9 +264,9 @@ pub fn init() {
         alt_tab_index: 0,
         overview_open: false,
         overview_sel: 0,
-        spaces: raeshell::spaces::SpaceManager::new(),
+        spaces: athshell::spaces::SpaceManager::new(),
         drag: None,
-        game_bar: raeshell::game_bar::GameBar::new(screen_w as usize, screen_h as usize),
+        game_bar: athshell::game_bar::GameBar::new(screen_w as usize, screen_h as usize),
         webview: None,
     });
 
@@ -467,183 +467,183 @@ fn activate_desktop(state: &mut ShellRunnerState) {
     // userspace shell so the taskbar/Start/tray/Settings re-skin coherently with
     // the kernel surfaces (Concept §Customization Engine: "the desktop becomes a
     // different place in one tap"). Done at desktop activation; the theme/Vibe
-    // apply path re-pushes on every later change (raeshell::set_active_accent).
-    raeshell::set_active_accent(crate::theme_engine::active_accent());
+    // apply path re-pushes on every later change (athshell::set_active_accent).
+    athshell::set_active_accent(crate::theme_engine::active_accent());
 
-    let mut shell = raeshell::DesktopShell::new(state.width as usize, state.height as usize);
+    let mut shell = athshell::DesktopShell::new(state.width as usize, state.height as usize);
     shell.system_tray.set_clock("00:00");
 
     let welcome = alloc::format!("Welcome, {}", crate::session::display_name());
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Hello Window"),
         exec_path: alloc::string::String::from("hello_window"),
         icon_char: 'H',
-        category: raeshell::AppCategory::System,
+        category: athshell::AppCategory::System,
         pinned: true,
         launch_count: 0,
     });
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Terminal"),
         exec_path: alloc::string::String::from("terminal"),
         icon_char: '>',
-        category: raeshell::AppCategory::System,
+        category: athshell::AppCategory::System,
         pinned: true,
         launch_count: 0,
     });
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("File Manager"),
         exec_path: alloc::string::String::from("files"),
         icon_char: 'F',
-        category: raeshell::AppCategory::Utility,
+        category: athshell::AppCategory::Utility,
         pinned: true,
         launch_count: 0,
     });
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Settings"),
         exec_path: alloc::string::String::from("settings"),
         icon_char: 'S',
-        category: raeshell::AppCategory::System,
+        category: athshell::AppCategory::System,
         pinned: true,
         launch_count: 0,
     });
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Calculator"),
         exec_path: alloc::string::String::from("calculator"),
         icon_char: '#',
-        category: raeshell::AppCategory::Utility,
+        category: athshell::AppCategory::Utility,
         pinned: true,
         launch_count: 0,
     });
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Task Manager"),
         exec_path: alloc::string::String::from("task_mgr"),
         icon_char: 'T',
-        category: raeshell::AppCategory::System,
+        category: athshell::AppCategory::System,
         pinned: true,
         launch_count: 0,
     });
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Text Editor"),
         exec_path: alloc::string::String::from("text_editor"),
         icon_char: 'E',
-        category: raeshell::AppCategory::Utility,
+        category: athshell::AppCategory::Utility,
         pinned: true,
         launch_count: 0,
     });
     // Bundled consumer apps (config/base.toml [packages]) — previously had no
     // Start-menu tile, so a user couldn't find/launch them. Exec names match the
     // bundled ELF names and flow through the existing spawn_app_from_vfs path.
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Photos"),
         exec_path: alloc::string::String::from("photos"),
         icon_char: 'P',
-        category: raeshell::AppCategory::Media,
+        category: athshell::AppCategory::Media,
         pinned: false,
         launch_count: 0,
     });
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Music"),
         exec_path: alloc::string::String::from("music"),
         icon_char: 'M',
-        category: raeshell::AppCategory::Media,
+        category: athshell::AppCategory::Media,
         pinned: false,
         launch_count: 0,
     });
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Notes"),
         exec_path: alloc::string::String::from("notes"),
         icon_char: 'N',
-        category: raeshell::AppCategory::Utility,
+        category: athshell::AppCategory::Utility,
         pinned: false,
         launch_count: 0,
     });
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Clock"),
         exec_path: alloc::string::String::from("clock"),
         icon_char: 'O',
-        category: raeshell::AppCategory::Utility,
+        category: athshell::AppCategory::Utility,
         pinned: false,
         launch_count: 0,
     });
-    // Weather + Contacts — the models were `raeshell::{weather_app,contacts_app}`
+    // Weather + Contacts — the models were `athshell::{weather_app,contacts_app}`
     // (unwired); now live standalone apps (apps/weather, apps/contacts).
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Weather"),
         exec_path: alloc::string::String::from("weather"),
         icon_char: 'W',
-        category: raeshell::AppCategory::Utility,
+        category: athshell::AppCategory::Utility,
         pinned: false,
         launch_count: 0,
     });
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Contacts"),
         exec_path: alloc::string::String::from("contacts"),
         icon_char: 'C',
-        category: raeshell::AppCategory::Utility,
+        category: athshell::AppCategory::Utility,
         pinned: false,
         launch_count: 0,
     });
-    // Passwords & Authenticator (rae_keychain vault + rae_otp TOTP) — fully
+    // Passwords & Authenticator (ath_keychain vault + ath_otp TOTP) — fully
     // local; nonce rotated per save (security review 2026-06-22).
-    shell.start_menu.add_app(raeshell::AppEntry {
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Passwords"),
         exec_path: alloc::string::String::from("passwords"),
         icon_char: 'K',
-        category: raeshell::AppCategory::System,
+        category: athshell::AppCategory::System,
         pinned: false,
         launch_count: 0,
     });
-    // Calendar & Contacts (rae_pim iCal/vCard/RRULE/timezone) — offline import.
-    shell.start_menu.add_app(raeshell::AppEntry {
+    // Calendar & Contacts (ath_pim iCal/vCard/RRULE/timezone) — offline import.
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Calendar"),
         exec_path: alloc::string::String::from("calendar"),
         icon_char: 'C',
-        category: raeshell::AppCategory::Utility,
+        category: athshell::AppCategory::Utility,
         pinned: false,
         launch_count: 0,
     });
-    // Video (rae_mp4 demux + raemedia H.264 baseline-I-frame + AAC) — local player.
-    shell.start_menu.add_app(raeshell::AppEntry {
+    // Video (ath_mp4 demux + athmedia H.264 baseline-I-frame + AAC) — local player.
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Video"),
         exec_path: alloc::string::String::from("video"),
         icon_char: 'V',
-        category: raeshell::AppCategory::Media,
+        category: athshell::AppCategory::Media,
         pinned: false,
         launch_count: 0,
     });
-    // Browser (raeweb HTML/CSS + rae_js: render + execute + DOM + http fetch + clicks).
-    shell.start_menu.add_app(raeshell::AppEntry {
+    // Browser (athweb HTML/CSS + ath_js: render + execute + DOM + http fetch + clicks).
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Browser"),
         exec_path: alloc::string::String::from("browser"),
         icon_char: 'W',
-        category: raeshell::AppCategory::Utility,
+        category: athshell::AppCategory::Utility,
         pinned: false,
         launch_count: 0,
     });
-    // Mail (rae_mail SMTP/IMAP/POP3 + rae_pim contacts + rae_kv mailbox).
-    shell.start_menu.add_app(raeshell::AppEntry {
+    // Mail (ath_mail SMTP/IMAP/POP3 + ath_pim contacts + ath_kv mailbox).
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Mail"),
         exec_path: alloc::string::String::from("mail"),
         icon_char: '@',
-        category: raeshell::AppCategory::Utility,
+        category: athshell::AppCategory::Utility,
         pinned: false,
         launch_count: 0,
     });
-    // VPN (raevpn built-in WireGuard Noise_IKpsk2).
-    shell.start_menu.add_app(raeshell::AppEntry {
+    // VPN (athvpn built-in WireGuard Noise_IKpsk2).
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("VPN"),
         exec_path: alloc::string::String::from("vpn"),
         icon_char: 'G',
-        category: raeshell::AppCategory::System,
+        category: athshell::AppCategory::System,
         pinned: false,
         launch_count: 0,
     });
-    // Sync (raesync zero-knowledge E2E cross-device sync).
-    shell.start_menu.add_app(raeshell::AppEntry {
+    // Sync (athsync zero-knowledge E2E cross-device sync).
+    shell.start_menu.add_app(athshell::AppEntry {
         name: alloc::string::String::from("Sync"),
         exec_path: alloc::string::String::from("sync"),
         icon_char: 'S',
-        category: raeshell::AppCategory::System,
+        category: athshell::AppCategory::System,
         pinned: false,
         launch_count: 0,
     });
@@ -706,7 +706,7 @@ fn activate_desktop(state: &mut ShellRunnerState) {
 /// start-menu registry (with search keywords keyed off the well-known execs);
 /// files come from a shallow walk of the session home so "report" finds your
 /// document. The settings-actions catalog is already seeded in `new()`.
-fn populate_command_palette(shell: &mut raeshell::DesktopShell) {
+fn populate_command_palette(shell: &mut athshell::DesktopShell) {
     // Per-exec search keywords so a fuzzy/keyword query (e.g. "calc", "notepad")
     // reaches the right bundled app, not just an exact name-substring.
     fn keywords_for(exec: &str) -> &'static [&'static str] {
@@ -752,10 +752,10 @@ fn populate_command_palette(shell: &mut raeshell::DesktopShell) {
     fn kernel_file_source(
         query: &str,
         max: usize,
-    ) -> alloc::vec::Vec<raeshell::command_palette::KernelFileHit> {
+    ) -> alloc::vec::Vec<athshell::command_palette::KernelFileHit> {
         crate::search_index::query_resolved(query, max)
             .into_iter()
-            .map(|info| raeshell::command_palette::KernelFileHit {
+            .map(|info| athshell::command_palette::KernelFileHit {
                 name: info.name,
                 path: info.path,
                 is_folder: info.is_folder,
@@ -808,9 +808,9 @@ fn populate_command_palette(shell: &mut raeshell::DesktopShell) {
 /// true if the desktop chrome should be repainted (the palette closed/changed).
 fn dispatch_palette(
     state: &mut ShellRunnerState,
-    intent: raeshell::command_palette::PaletteDispatch,
+    intent: athshell::command_palette::PaletteDispatch,
 ) -> bool {
-    use raeshell::command_palette::PaletteDispatch;
+    use athshell::command_palette::PaletteDispatch;
     match intent {
         PaletteDispatch::Launch(exec) | PaletteDispatch::Open(exec) => {
             // Open(file) and Launch(app) both route through the existing VFS
@@ -848,14 +848,14 @@ fn repaint_desktop(state: &mut ShellRunnerState) {
 
 /// Snapshot the LIVE clipboard history ring into the shell's clipboard panel.
 ///
-/// The panel widget (`raeshell::clipboard_panel`) is a pure view — it owns no
+/// The panel widget (`athshell::clipboard_panel`) is a pure view — it owns no
 /// syscalls — so the kernel reads `crate::clipboard::history_*` and pushes a
 /// `Vec<ClipRow>` (newest-first, exactly the ring order). The panel then groups
 /// pinned-above-recent for display via its shared `ClipboardManager` ordering.
 /// Called whenever the panel opens or the history changes (pin/delete/clear).
 fn refresh_clipboard_panel(state: &mut ShellRunnerState) {
     let (count, _pinned) = crate::clipboard::history_count();
-    let mut rows: alloc::vec::Vec<raeshell::clipboard_panel::ClipRow> =
+    let mut rows: alloc::vec::Vec<athshell::clipboard_panel::ClipRow> =
         alloc::vec::Vec::with_capacity(count);
     for i in 0..count {
         let Some(bytes) = crate::clipboard::history_entry_bytes(i) else {
@@ -872,13 +872,13 @@ fn refresh_clipboard_panel(state: &mut ShellRunnerState) {
         let format = u32_at(4);
         let flags = u32_at(8);
         let byte_len = u32_at(12) as usize;
-        let pinned = flags & rae_abi::syscall::CLIP_FLAG_PINNED != 0;
+        let pinned = flags & ath_abi::syscall::CLIP_FLAG_PINNED != 0;
         let end = (32 + byte_len).min(bytes.len());
         // Preview = first line, trimmed (the panel renders one line per row).
         let raw = alloc::string::String::from_utf8_lossy(&bytes[32..end]);
         let line = raw.lines().next().unwrap_or("").trim();
         let preview: alloc::string::String = line.chars().take(120).collect();
-        rows.push(raeshell::clipboard_panel::ClipRow {
+        rows.push(athshell::clipboard_panel::ClipRow {
             format,
             pinned,
             preview,
@@ -895,9 +895,9 @@ fn refresh_clipboard_panel(state: &mut ShellRunnerState) {
 /// reach. Returns true if the desktop chrome should repaint.
 fn apply_clip_panel_action(
     state: &mut ShellRunnerState,
-    action: raeshell::clipboard_panel::ClipPanelAction,
+    action: athshell::clipboard_panel::ClipPanelAction,
 ) -> bool {
-    use raeshell::clipboard_panel::ClipPanelAction;
+    use athshell::clipboard_panel::ClipPanelAction;
     match action {
         ClipPanelAction::Promote(index) => {
             // Paste-on-select: promote to the active clipboard so the focused
@@ -924,7 +924,7 @@ fn apply_clip_panel_action(
                 .filter(|b| b.len() >= 12)
                 .map(|b| {
                     let flags = u32::from_le_bytes([b[8], b[9], b[10], b[11]]);
-                    flags & rae_abi::syscall::CLIP_FLAG_PINNED != 0
+                    flags & ath_abi::syscall::CLIP_FLAG_PINNED != 0
                 })
                 .unwrap_or(false);
             crate::clipboard::history_pin(index, !was_pinned);
@@ -975,7 +975,7 @@ fn apply_clip_panel_action(
 /// closes, P toggles pin, Delete removes, Shift+Delete clears unpinned, digits
 /// 1-9 quick-paste, Esc closes.
 fn clipboard_panel_handle_key(state: &mut ShellRunnerState, extended: bool, code: u8) {
-    use raeshell::clipboard_panel::ClipPanelAction;
+    use athshell::clipboard_panel::ClipPanelAction;
 
     // Esc — close, no paste.
     if !extended && code == 0x01 {
@@ -1074,7 +1074,7 @@ fn palette_handle_key(state: &mut ShellRunnerState, extended: bool, code: u8) {
             .shell
             .as_mut()
             .map(|s| s.command_palette.fire_selected())
-            .unwrap_or(raeshell::command_palette::PaletteDispatch::None);
+            .unwrap_or(athshell::command_palette::PaletteDispatch::None);
         let repaint = dispatch_palette(state, intent);
         if repaint {
             repaint_desktop(state);
@@ -1120,7 +1120,7 @@ fn palette_handle_key(state: &mut ShellRunnerState, extended: bool, code: u8) {
 /// Route a palette Navigate target — either `settings:<page>` (open Settings to
 /// a page) or `action:<verb>` (run a real system action).
 fn navigate_palette_target(state: &mut ShellRunnerState, target: &str) {
-    use raeshell::SettingsPage;
+    use athshell::SettingsPage;
     if let Some(page) = target.strip_prefix("settings:") {
         let sp = match page {
             "display" => SettingsPage::Display,
@@ -1247,15 +1247,15 @@ fn next_vibe_theme() -> u64 {
 /// The library seeds from the start menu's app list so every installed app
 /// is launchable from the couch; real store aggregation (Steam/Epic/GOG)
 /// rides AthBridge.
-/// Bridge a raeshell `CouchProfile` (the couch editor's logical mirror) into
+/// Bridge a athshell `CouchProfile` (the couch editor's logical mirror) into
 /// the kernel's canonical `game_profile::GameProfileAbi` record — a 1:1
-/// field copy with no reinterpretation. raeshell can't depend on the kernel
+/// field copy with no reinterpretation. athshell can't depend on the kernel
 /// crate, so this is the single seam that maps the surface's record into the
 /// real syscall path (`set_profile`/`apply_profile`). The deadline fields ride
 /// through unchanged; `cpu_power_pct` is 0 (the couch UI exposes a GPU power
 /// slider but not yet a CPU cap, so couch profiles leave the system CPU default)
 /// (Phase 5 — Concept "per-game profiles, auto-applied").
-fn couch_profile_to_abi(p: &raeshell::gameos::CouchProfile) -> crate::game_profile::GameProfileAbi {
+fn couch_profile_to_abi(p: &athshell::gameos::CouchProfile) -> crate::game_profile::GameProfileAbi {
     crate::game_profile::GameProfileAbi {
         version: p.version,
         resolution_w: p.resolution_w,
@@ -1295,17 +1295,17 @@ fn game_profile_abi_eq(
         && a.deadline_runtime_us == b.deadline_runtime_us
 }
 
-fn build_couch(state: &ShellRunnerState) -> raeshell::gameos::GameOsShell {
-    let mut couch = raeshell::gameos::GameOsShell::new(state.width as usize, state.height as usize);
+fn build_couch(state: &ShellRunnerState) -> athshell::gameos::GameOsShell {
+    let mut couch = athshell::gameos::GameOsShell::new(state.width as usize, state.height as usize);
     couch.active = true;
     if let Some(ref shell) = state.shell {
         for (i, app) in shell.start_menu.apps.iter().enumerate() {
-            let entry = raeshell::gameos::GameEntry {
+            let entry = athshell::gameos::GameEntry {
                 id: i as u64 + 1,
                 title: app.name.clone(),
                 banner_color: 0xFF_2D_5A_9E,
                 icon_char: app.icon_char,
-                store: raeshell::gameos::GameStoreName::AthStore,
+                store: athshell::gameos::GameStoreName::AthStore,
                 installed: true,
                 last_played: 0,
                 playtime_hours: 0.0,
@@ -1324,7 +1324,7 @@ fn build_couch(state: &ShellRunnerState) -> raeshell::gameos::GameOsShell {
 fn render_couch(state: &ShellRunnerState) {
     let Some(ref couch) = state.couch else { return };
     let mut canvas = unsafe {
-        raegfx::Canvas::new(
+        athgfx::Canvas::new(
             state.surface_ptr,
             state.width as usize,
             state.height as usize,
@@ -1359,7 +1359,7 @@ fn toggle_gameos(state: &mut ShellRunnerState) {
         crate::serial_println!(
             "[gameos] couch mode ON ({} title(s) in library, crossfade {}ms)",
             state.couch.as_ref().map(|c| c.library.len()).unwrap_or(0),
-            raeshell::gameos::CROSSFADE_MS,
+            athshell::gameos::CROSSFADE_MS,
         );
     }
 }
@@ -1390,11 +1390,11 @@ fn animate_couch_crossfade(state: &mut ShellRunnerState) {
 /// (GameOS Phase 4). FPS + frametime come from `crate::perf` (the compositor's
 /// per-present telemetry); CPU/GPU temps from `crate::thermal::read_component_temps`
 /// — `None` on QEMU (no real sensor) → the overlay renders "(n/a)", never a lie.
-fn live_perf_feed() -> raeshell::game_bar::PerfFeed {
+fn live_perf_feed() -> athshell::game_bar::PerfFeed {
     let frametime_ms = crate::perf::last_frametime_us().map(|us| us as f32 / 1000.0);
     let fps = crate::perf::fps_estimate_x100().map(|x100| x100 as f32 / 100.0);
     let (cpu_c, gpu_c, _ssd_c) = crate::thermal::read_component_temps();
-    raeshell::game_bar::PerfFeed {
+    athshell::game_bar::PerfFeed {
         fps,
         frametime_ms,
         cpu_temp_c: cpu_c.map(|c| c as f32),
@@ -1412,7 +1412,7 @@ fn toggle_game_bar(state: &mut ShellRunnerState) {
         let feed = live_perf_feed();
         state.game_bar.ingest_perf(&feed);
         let mut canvas = unsafe {
-            raegfx::Canvas::new(
+            athgfx::Canvas::new(
                 state.surface_ptr,
                 state.width as usize,
                 state.height as usize,
@@ -1473,7 +1473,7 @@ fn render_webview(state: &mut ShellRunnerState) {
         state.surface_id,
     );
     if let Some(ref mut view) = state.webview {
-        let mut canvas = unsafe { raegfx::Canvas::new(ptr, w, h, 4) };
+        let mut canvas = unsafe { athgfx::Canvas::new(ptr, w, h, 4) };
         let _ = view.render(&mut canvas);
         let _ = crate::compositor::present_surface(id, 0, 0);
     }
@@ -1572,7 +1572,7 @@ fn webview_handle_key(state: &mut ShellRunnerState, extended: bool, code: u8) ->
 /// Keyboard → controller routing while couch mode owns the screen.
 /// Returns true when the key was consumed.
 fn couch_handle_key(state: &mut ShellRunnerState, extended: bool, code: u8) -> bool {
-    use raeshell::gameos::{GamepadButton, GamepadInput};
+    use athshell::gameos::{GamepadButton, GamepadInput};
     let Some(ref mut couch) = state.couch else {
         return false;
     };
@@ -1601,7 +1601,7 @@ fn couch_handle_key(state: &mut ShellRunnerState, extended: bool, code: u8) -> b
 
         // Phase 5: a confirmed profile edit latches a commit — push the EXACT
         // edited record through the REAL game_profile module (SYS_GAME_PROFILE_SET
-        // path) so it persists and `/proc/raeen/games` reflects it.
+        // path) so it persists and `/proc/athena/games` reflects it.
         if let Some((id, prof)) = couch.take_profile_commit() {
             let abi = couch_profile_to_abi(&prof);
             let rc = crate::game_profile::set_profile(&id, abi);
@@ -1621,9 +1621,9 @@ fn couch_handle_key(state: &mut ShellRunnerState, extended: bool, code: u8) -> b
         // default for the game, then APPLY — never block the launch.
         if let Some(idx) = couch.take_launch_request() {
             if let Some(game) = couch.library.get(idx) {
-                let id = raeshell::gameos::GameOsShell::profile_id_for(game);
+                let id = athshell::gameos::GameOsShell::profile_id_for(game);
                 if crate::game_profile::get_profile(&id).is_none() {
-                    let def = couch_profile_to_abi(&raeshell::gameos::CouchProfile::default());
+                    let def = couch_profile_to_abi(&athshell::gameos::CouchProfile::default());
                     let _ = crate::game_profile::set_profile(&id, def);
                 }
                 let rc = crate::game_profile::apply_profile(&id);
@@ -1675,7 +1675,7 @@ pub fn force_login_screen() {
 /// > instantly."* — LEGACY_GAMING_CONCEPT.md §Gaming-First Design.
 pub fn gamepad_bound(vid: u16, pid: u16) -> bool {
     // Only a real controller-family or generic HID pad is a valid signal.
-    if !raeshell::gameos::should_offer_gameos_on_padbind(vid, pid) {
+    if !athshell::gameos::should_offer_gameos_on_padbind(vid, pid) {
         return false;
     }
     let mut guard = SHELL_STATE.lock();
@@ -1693,7 +1693,7 @@ pub fn gamepad_bound(vid: u16, pid: u16) -> bool {
         return false;
     }
     let auto = crate::config_registry::get_bool("/gameos/auto_on_pad").unwrap_or(false);
-    let set_tag = raeshell::gameos::glyph_set_tag_for_vidpid(vid, pid);
+    let set_tag = athshell::gameos::glyph_set_tag_for_vidpid(vid, pid);
     if auto {
         // Setting-gated auto-enter: post a confirmation toast, then enter (the
         // offer + the enter, never a silent yank — the toast tells the user why
@@ -1908,7 +1908,7 @@ extern "C" fn installer_worker_entry() {
 
 fn enter_lock_screen(state: &mut ShellRunnerState) {
     crate::session::lock();
-    let mut lock = raeshell::LockScreen::new(state.width, state.height);
+    let mut lock = athshell::LockScreen::new(state.width, state.height);
     lock.set_display_name(&crate::session::display_name());
     lock.lock();
     state.lock = Some(lock);
@@ -1931,12 +1931,12 @@ fn render_lock(state: &ShellRunnerState) {
 ///
 /// Concept §"rival Windows + macOS" globally: those ship dozens of keyboard
 /// layouts so non-US users can type. This is the kernel consumer of the locale-
-/// owned table — it delegates to `raelocale::keyboard::resolve_key(active, code,
+/// owned table — it delegates to `athlocale::keyboard::resolve_key(active, code,
 /// mods)` so AZERTY/QWERTZ/Dvorak resolve correctly instead of the old
 /// hardcoded US array.
 ///
-/// US zero-regression: the raelocale US table was built to mirror the legacy
-/// 58-entry array exactly. The single legacy entry raelocale does not carry is
+/// US zero-regression: the athlocale US table was built to mirror the legacy
+/// 58-entry array exactly. The single legacy entry athlocale does not carry is
 /// the numpad-`*` key (Set 1 0x37 -> '*'); it is preserved here as a
 /// layout-independent fallback so no US (or any-layout) key that typed before
 /// goes silent.
@@ -1947,22 +1947,22 @@ fn render_lock(state: &ShellRunnerState) {
 /// currently resolve to `None` rather than truncating; widening the call sites
 /// to `char` is a documented follow-up (MasterChecklist parity gap #5).
 fn lock_scancode_to_ascii(code: u8, shift: bool) -> Option<u8> {
-    let mods = raelocale::keyboard::Modifiers {
+    let mods = athlocale::keyboard::Modifiers {
         shift,
         // Caps-lock is not yet tracked by the shell input state; false matches
         // the legacy behavior (the old table had no caps plane either).
         caps_lock: false,
-        // AltGr plane is a raelocale follow-up (see KeyPlanes docs).
+        // AltGr plane is a athlocale follow-up (see KeyPlanes docs).
         altgr: false,
     };
-    if let Some(ch) = raelocale::keyboard::resolve_key(active_keyboard_layout(), code, mods) {
+    if let Some(ch) = athlocale::keyboard::resolve_key(active_keyboard_layout(), code, mods) {
         // ASCII subset only on this u8 path; non-ASCII (é/ü/...) -> None for now.
         if (ch as u32) <= 0x7F {
             return Some(ch as u8);
         }
         return None;
     }
-    // Legacy-only fallback: numpad '*' (Set 1 0x37) is not in the raelocale
+    // Legacy-only fallback: numpad '*' (Set 1 0x37) is not in the athlocale
     // tables but the old US array typed '*' for it. '*' on every layout we ship,
     // so keep it layout-independent. This is the lone byte-identity gap vs the
     // legacy table — preserving it guarantees no key that typed before goes mute.
@@ -2021,14 +2021,14 @@ pub fn tray_clock_string() -> alloc::string::String {
     alloc::format!("{:02}:{:02}", (mins / 60) % 24, mins % 60)
 }
 
-fn render_shell(shell: &mut raeshell::DesktopShell, ptr: *mut u8, w: u32, h: u32, banner: &str) {
+fn render_shell(shell: &mut athshell::DesktopShell, ptr: *mut u8, w: u32, h: u32, banner: &str) {
     // Refresh the tray clock on every repaint: any interaction (or toast,
     // window event, ...) that redraws the desktop also brings the clock to
     // the current minute.
     shell.system_tray.set_clock(&tray_clock_string());
     // Toast TTL expiry rides the repaint cadence: any interaction that redraws
     // the desktop also dismisses toasts past their 5 s deadline, so an expired
-    // toast can't linger once the user touches the machine (raeen-reviewer
+    // toast can't linger once the user touches the machine (athena-reviewer
     // 2026-06-17). `expire_now` uses notify's own `now_ms()` (HPET) — the same
     // clock that stamps the deadlines. Same CPU0 IF=0 context as `post_at`, so
     // no new `TOASTS` lock hazard; the lazy-on-post path covers the no-render case.
@@ -2036,7 +2036,7 @@ fn render_shell(shell: &mut raeshell::DesktopShell, ptr: *mut u8, w: u32, h: u32
     // Desktop widgets ride the same repaint cadence (their surfaces float
     // above the desktop; refresh repaints feeds + reconciles enablement).
     let _ = crate::widgets::refresh();
-    let mut canvas = unsafe { raegfx::Canvas::new(ptr, w as usize, h as usize, 4) };
+    let mut canvas = unsafe { athgfx::Canvas::new(ptr, w as usize, h as usize, 4) };
 
     // Desktop wallpaper — the signature Aurora Mesh backdrop (IDENTITY §3),
     // identical to the compositor's live default so this fallback layer matches
@@ -2059,15 +2059,15 @@ fn render_shell(shell: &mut raeshell::DesktopShell, ptr: *mut u8, w: u32, h: u32
     // anyway, so it's effectively a first-look greeting). RaeSans AA —
     // this was the LAST 8x8-bitmap string on the live desktop (visual-QA
     // 2026-07-01: the blocky greeting over the aurora read hobby-OS).
-    let banner_style = rae_tokens::TYPE_LABEL;
-    let banner_w = canvas.measure_text_aa(banner, banner_style, raegfx::text::FontFamily::Sans);
+    let banner_style = ath_tokens::TYPE_LABEL;
+    let banner_w = canvas.measure_text_aa(banner, banner_style, athgfx::text::FontFamily::Sans);
     canvas.draw_text_aa(
         (w as i32 - banner_w) / 2,
         20,
         banner,
         banner_style,
         0xFF_C8_D8_F0,
-        raegfx::text::FontFamily::Sans,
+        athgfx::text::FontFamily::Sans,
     );
 
     shell.render(&mut canvas);
@@ -2089,7 +2089,7 @@ fn render_shell(shell: &mut raeshell::DesktopShell, ptr: *mut u8, w: u32, h: u32
 /// nudge the selection edge (precision). After any committing key the shell
 /// drives the capture engine via [`run_capture_if_confirmed`].
 fn capture_overlay_handle_key(state: &mut ShellRunnerState, extended: bool, code: u8) {
-    use raeshell::screenshot_overlay::CaptureAction;
+    use athshell::screenshot_overlay::CaptureAction;
     // Arrow nudges (precision selection): grow/shrink the selection by 1px
     // (10px with Shift). Extended 0x4B/0x4D/0x48/0x50 = ←/→/↑/↓.
     if extended && matches!(code, 0x4B | 0x4D | 0x48 | 0x50) {
@@ -2160,7 +2160,7 @@ fn capture_overlay_handle_key(state: &mut ShellRunnerState, extended: bool, code
 /// region, perform the chosen action (copy/save), toast the result, then
 /// dismiss the overlay and repaint. No-op if the overlay isn't confirmed.
 fn run_capture_if_confirmed(state: &mut ShellRunnerState) {
-    use raeshell::screenshot_overlay::{CaptureAction, OverlayPhase};
+    use athshell::screenshot_overlay::{CaptureAction, OverlayPhase};
     let (confirmed, action, region) = match state.shell.as_ref() {
         Some(s) => (
             s.capture_overlay.phase == OverlayPhase::Confirmed,
@@ -2282,7 +2282,7 @@ fn execute_capture(
 
 /// Write a captured ARGB frame to `~/Pictures/Screenshots/screenshot_<seq>.png`
 /// in the session VFS. Returns the path on success. The pixels are encoded to a
-/// real, spec-valid PNG via `raemedia::png_encode` (from-scratch encoder,
+/// real, spec-valid PNG via `athmedia::png_encode` (from-scratch encoder,
 /// round-trip-proven against the matching `png.rs` decoder) so the file opens in
 /// any image tool — not the old raw `.argb` blob. NEVER panics — a bad encode or
 /// any VFS error returns `Err` (the caller surfaces it as a toast).
@@ -2292,7 +2292,7 @@ fn save_capture_to_pictures(
     h: u32,
 ) -> Result<alloc::string::String, &'static str> {
     use crate::vfs::Inode;
-    use raemedia::png_encode::{encode_argb8888, ColorType};
+    use athmedia::png_encode::{encode_argb8888, ColorType};
     let home = crate::session::home_dir();
     let dir = alloc::format!("{}/Pictures", home);
     let shots = alloc::format!("{}/Pictures/Screenshots", home);
@@ -2762,7 +2762,7 @@ pub fn handle_key(scancode: u8) {
                 shell.capture_overlay.begin_full_screen(sw, sh);
                 shell
                     .capture_overlay
-                    .confirm(raeshell::screenshot_overlay::CaptureAction::Copy);
+                    .confirm(athshell::screenshot_overlay::CaptureAction::Copy);
             }
             run_capture_if_confirmed(state);
             return;
@@ -2797,7 +2797,7 @@ pub fn handle_key(scancode: u8) {
         // Super+Arrow (no Ctrl) — directional window snap (Win+Arrow parity,
         // window-management.md): ←/→ tile the focused window to a half, ↑
         // maximizes then grows to a quarter, ↓ restores then minimizes. The
-        // Win11 state machine lives in `raeshell::snap_directional` (host-KAT'd).
+        // Win11 state machine lives in `athshell::snap_directional` (host-KAT'd).
         // Skipped while Overview is open (arrows drive its thumbnail selection).
         if extended
             && state.super_held
@@ -2806,10 +2806,10 @@ pub fn handle_key(scancode: u8) {
             && matches!(code, 0x4B | 0x4D | 0x48 | 0x50)
         {
             let dir = match code {
-                0x4B => raeshell::snap_directional::SnapDir::Left,
-                0x4D => raeshell::snap_directional::SnapDir::Right,
-                0x48 => raeshell::snap_directional::SnapDir::Up,
-                _ => raeshell::snap_directional::SnapDir::Down,
+                0x4B => athshell::snap_directional::SnapDir::Left,
+                0x4D => athshell::snap_directional::SnapDir::Right,
+                0x48 => athshell::snap_directional::SnapDir::Up,
+                _ => athshell::snap_directional::SnapDir::Down,
             };
             if let Some(shell) = state.shell.as_mut() {
                 if let Some((sid, r, minimized)) = shell.snap_directional(dir) {
@@ -2930,7 +2930,7 @@ pub fn handle_key(scancode: u8) {
             return;
         }
         // F8 — toggle the Notification Center / Control Center pull-down
-        // (raeen-parity #1: the everyday panel a Windows/macOS switcher reaches
+        // (athena-parity #1: the everyday panel a Windows/macOS switcher reaches
         // for). It floats as its own compositor surface, so no desktop repaint
         // is needed here.
         (false, 0x42) => {
@@ -3409,8 +3409,8 @@ fn dispatch_click(state: &mut ShellRunnerState, mx: i32, my: i32) -> bool {
                 shell.control_center.toggle_expand(kind);
                 if matches!(
                     kind,
-                    raeshell::control_center::TileKind::WiFi
-                        | raeshell::control_center::TileKind::Bluetooth
+                    athshell::control_center::TileKind::WiFi
+                        | athshell::control_center::TileKind::Bluetooth
                 ) {
                     load_control_center_wifi_rows(shell);
                 }
@@ -3484,7 +3484,7 @@ fn dispatch_click(state: &mut ShellRunnerState, mx: i32, my: i32) -> bool {
 
 // ── Control Center backend bridge ──────────────────────────────────────────
 //
-// The Control Center surface (raeshell) owns the layout + state matrix; the
+// The Control Center surface (athshell) owns the layout + state matrix; the
 // kernel owns the real subsystems. These bridges sync the rendered tile state
 // FROM the live backend readers and push tile toggles INTO them, so a Wi-Fi /
 // Focus / Night Light tile changes real system state (not a faked label) and
@@ -3493,8 +3493,8 @@ fn dispatch_click(state: &mut ShellRunnerState, mx: i32, my: i32) -> bool {
 /// Sync every backed tile's ON-state from its LIVE kernel reader (called when
 /// the Control Center opens). Honest: tiles with no backend yet keep their local
 /// state; tiles wired to `notify::quick_settings` reflect the real flag.
-fn sync_control_center_backends(shell: &mut raeshell::DesktopShell) {
-    use raeshell::control_center::TileKind;
+fn sync_control_center_backends(shell: &mut athshell::DesktopShell) {
+    use athshell::control_center::TileKind;
     let cc = &mut shell.control_center;
     cc.set_tile_enabled(
         TileKind::WiFi,
@@ -3528,7 +3528,7 @@ fn sync_control_center_backends(shell: &mut raeshell::DesktopShell) {
 /// the desktop surface (Phase 19 audit P0 #1 — apps/chrome name their controls).
 ///
 /// This is the LIVE drive of the AthUI widget-provider seam: the kernel shell
-/// builds a `raeui::accessibility::AccessibilityTree` from the live tiles (AthUI
+/// builds a `athui::accessibility::AccessibilityTree` from the live tiles (AthUI
 /// does the role inference — a toggle tile is a `Switch`, a Wi-Fi/RGB row a
 /// `Button` because it expands), runs `provider_nodes_for_window`, and publishes
 /// the result through `a11y::publish_window_widgets_from_provider`. When focus is
@@ -3540,7 +3540,7 @@ fn sync_control_center_backends(shell: &mut raeshell::DesktopShell) {
 /// Concept §"Built for people who care about how things feel": a screen-reader
 /// user reaches the same quick-settings a sighted user does.
 fn publish_control_center_a11y(state: &mut ShellRunnerState) {
-    use raeui::accessibility::{
+    use athui::accessibility::{
         provider_nodes_for_window, AccessibilityNode, AccessibilityRole, Rect,
     };
     let win = state.surface_id;
@@ -3556,7 +3556,7 @@ fn publish_control_center_a11y(state: &mut ShellRunnerState) {
     }
 
     let (px, py, _pw, _ph) = cc.panel_rect();
-    let mut tree = raeui::accessibility::AccessibilityTree::new();
+    let mut tree = athui::accessibility::AccessibilityTree::new();
     // Stable per-tile ids (offset so they never collide with app widget ids).
     const CC_TILE_BASE: u32 = 0x00C0_0000;
     let mut focused_id: Option<u64> = None;
@@ -3611,7 +3611,7 @@ fn publish_control_center_a11y(state: &mut ShellRunnerState) {
 // system-tray cluster) is kernel-drawn and is NOT in the a11y `build_tree()` walk
 // (which enumerates app windows + provider widgets, not the bars). So the chrome
 // focus order is published here, into the kernel `a11y::FocusOrder` engine, which
-// both the Tab key handler and `/proc/raeen/a11y` read. Tab advances + wraps,
+// both the Tab key handler and `/proc/athena/a11y` read. Tab advances + wraps,
 // Shift+Tab reverses + wraps, and an open flyout (Control Center) installs a MODAL
 // trap so focus cannot leak to the chrome behind it. This is the keyboard-only
 // "no mouse required" traversal across the desktop chrome.
@@ -3643,7 +3643,7 @@ fn publish_chrome_focus_order(state: &ShellRunnerState) {
     let sr = shell.taskbar_start_rect();
     items.push(crate::a11y::FocusItem {
         id: FOCUS_ID_START,
-        role: rae_abi::syscall::A11Y_ROLE_BUTTON,
+        role: ath_abi::syscall::A11Y_ROLE_BUTTON,
         name: alloc::string::String::from("Start"),
         x: sr.x,
         y: sr.y,
@@ -3657,7 +3657,7 @@ fn publish_chrome_focus_order(state: &ShellRunnerState) {
         let r = shell.taskbar_item_rect(i);
         items.push(crate::a11y::FocusItem {
             id: FOCUS_ID_TASKBAR_BASE + i as u64,
-            role: rae_abi::syscall::A11Y_ROLE_BUTTON,
+            role: ath_abi::syscall::A11Y_ROLE_BUTTON,
             name: btn.label.clone(),
             x: r.x,
             y: r.y,
@@ -3670,7 +3670,7 @@ fn publish_chrome_focus_order(state: &ShellRunnerState) {
     let tray_x = shell.taskbar_tray_x() as i32;
     items.push(crate::a11y::FocusItem {
         id: FOCUS_ID_TRAY,
-        role: rae_abi::syscall::A11Y_ROLE_TOOLBAR,
+        role: ath_abi::syscall::A11Y_ROLE_TOOLBAR,
         name: alloc::string::String::from("System tray"),
         x: tray_x,
         y: tb.y,
@@ -3697,9 +3697,9 @@ fn open_control_center_focus_trap(state: &ShellRunnerState) {
             continue; // a disabled tile is not a focus stop
         }
         let role = if tile.expandable {
-            rae_abi::syscall::A11Y_ROLE_BUTTON
+            ath_abi::syscall::A11Y_ROLE_BUTTON
         } else {
-            rae_abi::syscall::A11Y_ROLE_SWITCH
+            ath_abi::syscall::A11Y_ROLE_SWITCH
         };
         let col = (i % 2) as i32;
         let row = (i / 2) as i32;
@@ -3811,10 +3811,10 @@ fn desktop_focus_activate(state: &mut ShellRunnerState) -> bool {
 }
 
 /// Draw the visible focus ring around the currently focused chrome item onto the
-/// shell's canvas. Reuses the shared raeui `draw_focus_ring` (HC-aware: the ring
+/// shell's canvas. Reuses the shared athui `draw_focus_ring` (HC-aware: the ring
 /// goes cyan under forced-colors automatically). A no-op when no chrome item is
 /// focused or a modal owns focus (the modal surface draws its own ring).
-fn draw_chrome_focus_ring(canvas: &mut raegfx::Canvas) {
+fn draw_chrome_focus_ring(canvas: &mut athgfx::Canvas) {
     if crate::a11y::focus_modal_open() {
         return;
     }
@@ -3824,8 +3824,8 @@ fn draw_chrome_focus_ring(canvas: &mut raegfx::Canvas) {
     if item.w == 0 || item.h == 0 {
         return;
     }
-    let normal_ring = rae_tokens::derive_accent(raeshell::active_accent(), &rae_tokens::DARK).base;
-    raeui::accessibility::draw_focus_ring(
+    let normal_ring = ath_tokens::derive_accent(athshell::active_accent(), &ath_tokens::DARK).base;
+    athui::accessibility::draw_focus_ring(
         canvas,
         item.x.max(0) as usize,
         item.y.max(0) as usize,
@@ -3840,11 +3840,11 @@ fn draw_chrome_focus_ring(canvas: &mut raegfx::Canvas) {
 /// tile's model state). Wi-Fi / Focus / Night Light drive `notify::quick_settings`
 /// (NetManager radio, DND flag, config registry); Game Mode drives the scheduler.
 fn apply_control_center_tile(
-    shell: &mut raeshell::DesktopShell,
-    kind: raeshell::control_center::TileKind,
+    shell: &mut athshell::DesktopShell,
+    kind: athshell::control_center::TileKind,
 ) {
     use crate::notify::quick_settings::{toggle, Control};
-    use raeshell::control_center::TileKind;
+    use athshell::control_center::TileKind;
     match kind {
         TileKind::WiFi => {
             let on = toggle(Control::Wifi);
@@ -3892,8 +3892,8 @@ fn apply_control_center_tile(
 /// Load the Wi-Fi expand sub-panel rows from the LIVE network state (spec §2.2).
 /// Honest: presents the real connected row (with IP) when networking is up; a
 /// "scanning" placeholder otherwise. Does NOT synthesize a fake AP list.
-fn load_control_center_wifi_rows(shell: &mut raeshell::DesktopShell) {
-    use raeshell::control_center::ExpandRow;
+fn load_control_center_wifi_rows(shell: &mut athshell::DesktopShell) {
+    use athshell::control_center::ExpandRow;
     let (radio_on, ip) = crate::netmanager::quick_net_status();
     let mut rows = alloc::vec::Vec::new();
     if radio_on {
@@ -3909,7 +3909,7 @@ fn load_control_center_wifi_rows(shell: &mut raeshell::DesktopShell) {
     shell.control_center.set_expand_rows(rows);
 }
 
-/// `/proc/raeen/palette` — command-palette index sizes + last query + the live
+/// `/proc/athena/palette` — command-palette index sizes + last query + the live
 /// settings-actions catalog size. Reads the live `DesktopShell` palette when one
 /// is up (post-login); falls back to a fresh scratch palette pre-login so the
 /// node always reports the static catalog count. Uses `try_lock` so a procfs
@@ -3942,14 +3942,14 @@ pub fn palette_dump_text() -> alloc::string::String {
         let _ = writeln!(out, "live: false (state busy)");
     }
     // Static fallback: report the built-in settings-actions catalog size.
-    let scratch = raeshell::command_palette::CommandPalette::new(1, 1);
+    let scratch = athshell::command_palette::CommandPalette::new(1, 1);
     let _ = writeln!(out, "settings_actions: {}", scratch.settings_actions());
     let _ = writeln!(out, "indexed_apps: 0");
     let _ = writeln!(out, "indexed_files: 0");
     out
 }
 
-/// `/proc/raeen/control_center` — the Control Center quick-settings flyout state
+/// `/proc/athena/control_center` — the Control Center quick-settings flyout state
 /// (docs/design/control-center.md). Reports the live panel (visible, per-tile
 /// on/off + backend class, slider levels, expand state, media card show/hide)
 /// when a desktop is up; otherwise the FAIL-able design proof. `try_lock` so a
@@ -3984,7 +3984,7 @@ pub fn control_center_dump_text() -> alloc::string::String {
         let _ = writeln!(out, "live: false (state busy)");
     }
     // Static fallback: the FAIL-able design proof (same as the boot smoketest).
-    let proof = raeshell::control_center::control_center_proof();
+    let proof = athshell::control_center::control_center_proof();
     let _ = writeln!(out, "proof_pass: {}", proof.pass);
     let _ = writeln!(out, "tiles: {}", proof.tiles);
     let _ = writeln!(out, "panel_width: {}", proof.panel_width);
@@ -3993,7 +3993,7 @@ pub fn control_center_dump_text() -> alloc::string::String {
     out
 }
 
-/// `/proc/raeen/keyboard` — the active keyboard layout + the registry of
+/// `/proc/athena/keyboard` — the active keyboard layout + the registry of
 /// available layouts. Concept §"rival Windows + macOS" globally: surfaces which
 /// layout the kernel input path resolves scancodes against so a settings UI (or
 /// an operator) can see/confirm it. Lock-free read of `ACTIVE_KB_LAYOUT`.
@@ -4001,7 +4001,7 @@ pub fn keyboard_dump_text() -> alloc::string::String {
     use core::fmt::Write;
     let active = active_keyboard_layout();
     let mut out = alloc::string::String::new();
-    let _ = writeln!(out, "# keyboard layout (raelocale)");
+    let _ = writeln!(out, "# keyboard layout (athlocale)");
     let _ = writeln!(
         out,
         "active: {} ({})",
@@ -4009,14 +4009,14 @@ pub fn keyboard_dump_text() -> alloc::string::String {
         active.display_name()
     );
     let _ = writeln!(out, "# available:");
-    for (id, short, display) in raelocale::keyboard::LayoutRegistry::new().list() {
+    for (id, short, display) in athlocale::keyboard::LayoutRegistry::new().list() {
         let mark = if id == active { "* " } else { "  " };
         let _ = writeln!(out, "{}{} ({})", mark, short, display);
     }
     out
 }
 
-/// `/proc/raeen/clipboard-panel` — the clipboard-history flyout's live state
+/// `/proc/athena/clipboard-panel` — the clipboard-history flyout's live state
 /// (visible, row/pinned counts, selected preview). Reads the live `DesktopShell`
 /// panel when one is up (post-login); reports the live history ring counts
 /// regardless so the node is informative pre-desktop too. Uses `try_lock` so a
@@ -4062,7 +4062,7 @@ pub fn run_boot_smoketest() {
 
     // Keyboard-layout wiring (MasterChecklist parity gap #5 / Concept §"rival
     // Windows + macOS" globally): prove the live kernel key path
-    // (`lock_scancode_to_ascii`) actually delegates to the active raelocale
+    // (`lock_scancode_to_ascii`) actually delegates to the active athlocale
     // layout, not the old hardcoded US array. We drive the SAME function the HID
     // bridge calls, flipping the active layout under it.
     //
@@ -4071,7 +4071,7 @@ pub fn run_boot_smoketest() {
     // AZERTY -> the `az == b'a'` assert FAILs. Likewise a layout-state leak would
     // make `us == b'q'` FAIL after restore.
     {
-        use raelocale::keyboard::LayoutId;
+        use athlocale::keyboard::LayoutId;
         let saved = active_keyboard_layout();
 
         set_keyboard_layout(LayoutId::FrenchAzerty);
@@ -4106,10 +4106,10 @@ pub fn run_boot_smoketest() {
     }
 
     // Shell design-token re-skin (MasterChecklist Phase 14 / design-language.md):
-    // prove the live taskbar consumes rae_tokens, not the retired hardcoded
+    // prove the live taskbar consumes ath_tokens, not the retired hardcoded
     // palette — taskbar is 44px, mica is the bg.base/bg.raised blend, and the
     // accent is derive_accent(seed).base. FAIL-able: any drift trips it.
-    let pr = raeshell::shell_design_proof();
+    let pr = athshell::shell_design_proof();
     crate::serial_println!(
         "[shell] taskbar: h={} mica={:#010X} accent={:#010X} (radius pill+xs) text=aa -> {}",
         pr.taskbar_height,
@@ -4120,11 +4120,11 @@ pub fn run_boot_smoketest() {
 
     // Settings control-panel re-skin (MasterChecklist Phase 14.2 /
     // docs/design/settings.md): prove the Settings two-pane surface + its
-    // reusable control kit consume rae_tokens, not the retired CP_* palette —
+    // reusable control kit consume ath_tokens, not the retired CP_* palette —
     // panes=2, accent == derive_accent(seed).base, toggle-on == accent.base (the
     // §6 cohesion link to the taskbar above), cards at RADIUS_MD/LG, and the
     // Vibe grid sized to the LIVE preset count. FAIL-able: any drift trips it.
-    let sp = raeshell::control_panel::settings_design_proof();
+    let sp = athshell::control_panel::settings_design_proof();
     crate::serial_println!(
         "[settings] panel: panes={} accent={:#010X} card=RADIUS_LG({}) toggle_on={:#010X} vibe_tiles={} text=aa -> {}",
         sp.panes,
@@ -4143,7 +4143,7 @@ pub fn run_boot_smoketest() {
     // IA is exactly the 10-category set. FAIL-able: a regression to the
     // case-sensitive search (0 hits for the lowercase query while a Colors/Accent
     // page exists) or a category count != 10 trips this.
-    let ss = raeshell::control_panel::settings_search_proof();
+    let ss = athshell::control_panel::settings_search_proof();
     crate::serial_println!(
         "[settings] search \"accent\" cats={} case_insensitive={} ranked={} hits={} -> {}",
         ss.categories,
@@ -4155,21 +4155,21 @@ pub fn run_boot_smoketest() {
 
     // Settings two-pane layout + About/Storage panels (MasterChecklist Phase
     // 14.2 / docs/design/settings-redesign.md §3-§5, Slices 2/3/4). Push the live
-    // `/proc/raeen/*` dumps into the Settings singleton (the shell runs in-kernel,
+    // `/proc/athena/*` dumps into the Settings singleton (the shell runs in-kernel,
     // so it reads procfs via the in-kernel accessors), then assert the layout:
     // panes=2, the 10-category sidebar, the About panel renders >0 live fields
     // (OS/kernel/CPU/SMP/RAM/board), and the Storage panel renders either a real
     // capacity bar (mounted) or the empty-state InfoBar (QEMU virtio = no AthFS).
-    raeshell::control_panel::init();
-    raeshell::control_panel::set_system_info_from_proc(
+    athshell::control_panel::init();
+    athshell::control_panel::set_system_info_from_proc(
         &crate::procfs::proc_version(),
-        &crate::procfs::proc_raeen_cpu(),
-        &crate::procfs::proc_raeen_smp(),
-        &crate::procfs::proc_raeen_hardware(),
-        &crate::procfs::proc_raeen_memory(),
-        &crate::procfs::proc_raeen_storage(),
+        &crate::procfs::proc_athena_cpu(),
+        &crate::procfs::proc_athena_smp(),
+        &crate::procfs::proc_athena_hardware(),
+        &crate::procfs::proc_athena_memory(),
+        &crate::procfs::proc_athena_storage(),
     );
-    let sl = raeshell::control_panel::settings_layout_proof();
+    let sl = athshell::control_panel::settings_layout_proof();
     crate::serial_println!(
         "[settings] layout: panes={} sidebar={} about_fields={} storage={} -> {}",
         sl.panes,
@@ -4213,17 +4213,17 @@ pub fn run_boot_smoketest() {
     // Search bar (Phase 14.1): typing filters the start-menu app list,
     // case-insensitively, and the selection resolves to the hit. Proven on
     // a scratch menu with the same code the live desktop uses.
-    let mut menu = raeshell::StartMenu::new(1024, 768);
+    let mut menu = athshell::StartMenu::new(1024, 768);
     for (name, exec) in [
         ("Terminal", "terminal"),
         ("Settings", "settings"),
         ("Files", "files"),
     ] {
-        menu.add_app(raeshell::AppEntry {
+        menu.add_app(athshell::AppEntry {
             name: alloc::string::String::from(name),
             exec_path: alloc::string::String::from(exec),
             icon_char: name.chars().next().unwrap_or('?'),
-            category: raeshell::AppCategory::System,
+            category: athshell::AppCategory::System,
             pinned: false,
             launch_count: 0,
         });
@@ -4252,13 +4252,13 @@ pub fn run_boot_smoketest() {
     // Control Center (docs/design/control-center.md): the bottom-right glass
     // quick-settings flyout. Drives the FULL design proof on a scratch panel
     // built with the SAME code the live desktop uses — asserts the tile set, that
-    // tiles resolve colours from rae_tokens (on=accent.subtle, off=bg.elevated,
+    // tiles resolve colours from ath_tokens (on=accent.subtle, off=bg.elevated,
     // slider=accent.base, not hardcoded), the media card show/hide matrix, the
     // expand-in-place sub-panel (Wi-Fi expands in the panel, not a new window),
     // the 9 RGB effect chips, and cohesion (panel accent == derive_accent(seed)).
     // FAIL-able by construction: any drift trips proof.pass.
     {
-        let proof = raeshell::control_center::control_center_proof();
+        let proof = athshell::control_center::control_center_proof();
         crate::serial_println!(
             "[control_center] smoketest: tiles={} panel_w={} on=accent.subtle({}) off=bg.elevated({}) slider=accent.base({}) media_show_hide({}) expand_inplace({}) rgb_chips={} real_backends={} accent_cohesion({}) -> {}",
             proof.tiles,
@@ -4279,7 +4279,7 @@ pub fn run_boot_smoketest() {
     // a scratch couch shell with a seeded library, a real render into an
     // offscreen canvas, and the boot-into flag read (default: desktop).
     {
-        use raeshell::gameos::{GameEntry, GameOsShell, GameOsState, GamepadButton, GamepadInput};
+        use athshell::gameos::{GameEntry, GameOsShell, GameOsState, GamepadButton, GamepadInput};
         let mut couch = GameOsShell::new(640, 480);
         couch.active = true;
         for i in 0..3u64 {
@@ -4288,7 +4288,7 @@ pub fn run_boot_smoketest() {
                 title: alloc::format!("Game {}", i + 1),
                 banner_color: 0xFF_2D_5A_9E,
                 icon_char: 'G',
-                store: raeshell::gameos::GameStoreName::AthStore,
+                store: athshell::gameos::GameStoreName::AthStore,
                 installed: true,
                 last_played: 0,
                 playtime_hours: 0.0,
@@ -4306,7 +4306,7 @@ pub fn run_boot_smoketest() {
         let launched = couch.launch_game(couch.selected_index).is_some()
             && matches!(couch.state, GameOsState::GameRunning);
         let mut buf = alloc::vec![0u8; 640 * 480 * 4];
-        let mut canvas = unsafe { raegfx::Canvas::new(buf.as_mut_ptr(), 640, 480, 4) };
+        let mut canvas = unsafe { athgfx::Canvas::new(buf.as_mut_ptr(), 640, 480, 4) };
         couch.render(&mut canvas);
         let painted = buf.iter().any(|&b| b != 0);
         let boot_flag_off =
@@ -4325,7 +4325,7 @@ pub fn run_boot_smoketest() {
         // the couch type ramp (AA RaeSans, not 8px block font) + 48px hit
         // targets. FAIL if the rendered accent != derive_accent(active_seed),
         // any focus target < 48px, or the text path is the block font.
-        let st = raeshell::gameos::run_couch_smoketest(&mut canvas, 640, 480);
+        let st = athshell::gameos::run_couch_smoketest(&mut canvas, 640, 480);
         let gameos_pass = st.passed();
         crate::serial_println!(
             "[gameos] couch smoketest: tiles={} focus_nav={} accent_matches_seed={} glyphs={} hit48={} -> {}",
@@ -4341,7 +4341,7 @@ pub fn run_boot_smoketest() {
         // selectable glyph set (Xbox A/B/X/Y vs PlayStation ✕/◯/□/△ vs generic).
         // FAIL if the rendered context shows 0 chips, the active set's "Select"
         // glyph is wrong / not per-set distinct, or the hint text is block font.
-        let gs = raeshell::gameos::run_glyph_smoketest(&mut canvas, 640, 480);
+        let gs = athshell::gameos::run_glyph_smoketest(&mut canvas, 640, 480);
         let glyph_pass = gs.passed();
         crate::serial_println!(
             "[gameos] glyph smoketest: set={} chips={} context_ok={} glyphs={} -> {}",
@@ -4375,9 +4375,9 @@ pub fn run_boot_smoketest() {
             let report = [0x80u8, 0x80, 0x80, 0x80, 0x02, 0b0000_0001, 0x00];
             if let Some(layout) = crate::hid_gamepad::parse_descriptor(DESC) {
                 let pad = crate::hid_gamepad::decode_report(&layout, &report);
-                // Mirror the kernel PadInput into the raeshell PadFrame (the same
-                // field set; raeshell can't depend on the kernel crate).
-                let _frame = raeshell::gameos::PadFrame {
+                // Mirror the kernel PadInput into the athshell PadFrame (the same
+                // field set; athshell can't depend on the kernel crate).
+                let _frame = athshell::gameos::PadFrame {
                     x: pad.x,
                     y: pad.y,
                     z: pad.z,
@@ -4394,7 +4394,7 @@ pub fn run_boot_smoketest() {
                 false
             }
         };
-        let pb = raeshell::gameos::run_padbind_smoketest();
+        let pb = athshell::gameos::run_padbind_smoketest();
         let padbind_pass = pad_decoded_ok && pb.passed();
         crate::serial_println!(
             "[gameos] padbind smoketest: decoded_pad={} dpad_right_moves_focus={} vidpid->set={} face_a={} -> {}",
@@ -4417,7 +4417,7 @@ pub fn run_boot_smoketest() {
         // and FPS reads ~60, render the live overlay, and check real ink landed.
         // FAIL if the overlay won't toggle, the frametime graph has 0 points,
         // the FPS read is garbage, the temps path panics, or nothing rendered.
-        let gb = raeshell::game_bar::run_gamebar_smoketest(&mut canvas, 640, 480);
+        let gb = athshell::game_bar::run_gamebar_smoketest(&mut canvas, 640, 480);
         let gamebar_pass = gb.passed();
         crate::serial_println!(
             "[gameos] gamebar smoketest: invoked={} fps_read={} frametime_pts={} temps={} panels={} -> {}",
@@ -4431,7 +4431,7 @@ pub fn run_boot_smoketest() {
 
         // Phase 5 GameOS per-game profile editor + auto-apply round-trip: the
         // Concept's "resolution, refresh rate, audio device, GPU power limit, all
-        // configured per game and auto-applied." The surface (raeshell) edits a
+        // configured per game and auto-applied." The surface (athshell) edits a
         // `CouchProfile`; this drives the EXACT edited record through the REAL
         // kernel `game_profile` syscall path end to end:
         //   1. SURFACE: open the editor, edit GPU power 100→95, confirm → the
@@ -4441,27 +4441,27 @@ pub fn run_boot_smoketest() {
         //   4. APPLY: `apply_profile(id)` must return 0 (auto-apply on launch).
         //   5. LIST:  `list_ids()` count includes our new id + the 3 presets.
         // FAIL if a SET→GET doesn't round-trip exact values, APPLY errors, or the
-        // LIST count is wrong. `/proc/raeen/games` reflects the SET afterwards.
+        // LIST count is wrong. `/proc/athena/games` reflects the SET afterwards.
         {
             // The profile store is seeded in kernel_main AFTER this smoketest
             // runs; init it idempotently so the real SET/GET/APPLY/LIST path is
             // exercisable now (the later init() re-seeds cleanly).
             crate::game_profile::ensure_init();
 
-            let sm = raeshell::gameos::run_profile_editor_smoketest();
+            let sm = athshell::gameos::run_profile_editor_smoketest();
             let surface_ok = sm.passed();
             let fields = sm.fields;
 
             // The committed record the surface would push through SYS_GAME_PROFILE_SET.
             let commit = {
-                let mut couch = raeshell::gameos::GameOsShell::new(640, 480);
+                let mut couch = athshell::gameos::GameOsShell::new(640, 480);
                 couch.active = true;
-                couch.library.push(raeshell::gameos::GameEntry {
+                couch.library.push(athshell::gameos::GameEntry {
                     id: 730,
                     title: alloc::string::String::from("CS"),
                     banner_color: 0,
                     icon_char: 'G',
-                    store: raeshell::gameos::GameStoreName::AthStore,
+                    store: athshell::gameos::GameStoreName::AthStore,
                     installed: true,
                     last_played: 0,
                     playtime_hours: 0.0,
@@ -4470,13 +4470,13 @@ pub fn run_boot_smoketest() {
                     favorited: false,
                     running: false,
                 });
-                couch.navigate(raeshell::gameos::GameOsPage::AllGames);
-                couch.controller_focus = raeshell::gameos::FocusTarget::GameGrid;
-                let mut seed = raeshell::gameos::CouchProfile::default();
+                couch.navigate(athshell::gameos::GameOsPage::AllGames);
+                couch.controller_focus = athshell::gameos::FocusTarget::GameGrid;
+                let mut seed = athshell::gameos::CouchProfile::default();
                 seed.gpu_power_pct = 100;
                 couch.open_profile_editor(0, seed);
                 // Edit GPU power down once (100 -> 95), then confirm.
-                couch.edit_profile_field(raeshell::gameos::ProfileField::GpuPowerPct, -1);
+                couch.edit_profile_field(athshell::gameos::ProfileField::GpuPowerPct, -1);
                 couch.request_profile_commit();
                 couch.take_profile_commit()
             };
@@ -4526,12 +4526,12 @@ pub fn run_boot_smoketest() {
         // doesn't produce "rae", backspace doesn't delete, the auto-enter trigger
         // doesn't fire on the pad-bind, or the cross-fade ramp is degenerate.
         {
-            let osk = raeshell::gameos::run_osk_smoketest();
+            let osk = athshell::gameos::run_osk_smoketest();
             // Close the loop on the live surface: open the OSK from the search
             // affordance, type a query through the button path, commit, and
             // confirm the field received it.
             let surface_loop_ok = {
-                use raeshell::gameos::{
+                use athshell::gameos::{
                     FocusTarget, GameEntry, GameOsPage, GameOsShell, GamepadButton, GamepadInput,
                     OskKey, OSK_ROWS,
                 };
@@ -4542,7 +4542,7 @@ pub fn run_boot_smoketest() {
                     title: alloc::string::String::from("operae"),
                     banner_color: 0,
                     icon_char: 'G',
-                    store: raeshell::gameos::GameStoreName::AthStore,
+                    store: athshell::gameos::GameStoreName::AthStore,
                     installed: true,
                     last_played: 0,
                     playtime_hours: 0.0,
@@ -4585,8 +4585,8 @@ pub fn run_boot_smoketest() {
                 opened && !couch.osk_open() && couch.search.query == "rae"
             };
             // Auto-enter policy fires for a real pad (the trigger predicate).
-            let autoenter_ok = raeshell::gameos::should_offer_gameos_on_padbind(
-                raeshell::gameos::VID_SONY,
+            let autoenter_ok = athshell::gameos::should_offer_gameos_on_padbind(
+                athshell::gameos::VID_SONY,
                 0x0CE6,
             );
             let osk_pass = osk.passed() && surface_loop_ok && autoenter_ok;
@@ -4602,12 +4602,12 @@ pub fn run_boot_smoketest() {
         }
     }
 
-    // Command palette (raeen-parity #2): the wired SearchEngine fuzzy-ranks apps
+    // Command palette (athena-parity #2): the wired SearchEngine fuzzy-ranks apps
     // + settings-actions + files together, the calculator tops an arithmetic
     // query, and Enter dispatches launch/navigate/copy through real handlers.
     // Driven on a scratch palette with the SAME code the live desktop uses.
     {
-        use raeshell::command_palette::{CommandPalette, PaletteDispatch};
+        use athshell::command_palette::{CommandPalette, PaletteDispatch};
         let mut pal = CommandPalette::new(1920, 1080);
         // 8 bundled apps (mirrors the desktop registry).
         for (name, exec) in [
@@ -4677,8 +4677,8 @@ pub fn run_boot_smoketest() {
 
         // Cohesion (spec §9): the palette reads the SAME live accent the taskbar
         // does — derive_accent(active_accent()).base. FAIL-able if it drifts.
-        let want = rae_tokens::derive_accent(raeshell::active_accent(), &rae_tokens::DARK).base;
-        let got = rae_tokens::derive_accent(raeshell::active_accent(), &rae_tokens::DARK).base;
+        let want = ath_tokens::derive_accent(athshell::active_accent(), &ath_tokens::DARK).base;
+        let got = ath_tokens::derive_accent(athshell::active_accent(), &ath_tokens::DARK).base;
         crate::serial_println!(
             "[palette] accent={:#010X} == derive_accent(seed).base -> {}",
             got,
@@ -4694,7 +4694,7 @@ pub fn run_boot_smoketest() {
     // taskbar. Driven on a scratch panel with the SAME widget code the desktop
     // uses; the design proof is FAIL-able (any drift trips it).
     {
-        use raeshell::clipboard_panel::ClipboardPanel;
+        use athshell::clipboard_panel::ClipboardPanel;
         let proof = ClipboardPanel::design_proof();
 
         // Independently exercise clear-keeps-pinned against the LIVE kernel ring
@@ -4702,8 +4702,8 @@ pub fn run_boot_smoketest() {
         // widget. We add our own test entries, pin one, clear (keeping pinned),
         // confirm the pinned one survived, then remove our test entry so the
         // user's clipboard is left as we found it.
-        crate::clipboard::push_history(b"raeshell-clip-smoketest-A", 0);
-        crate::clipboard::push_history(b"raeshell-clip-smoketest-B", 0);
+        crate::clipboard::push_history(b"athshell-clip-smoketest-A", 0);
+        crate::clipboard::push_history(b"athshell-clip-smoketest-B", 0);
         let pin_ok = crate::clipboard::history_pin(0, true);
         let pinned_before_clear = crate::clipboard::history_count().1;
         let _removed = crate::clipboard::history_clear_keep_pinned();
@@ -4731,11 +4731,11 @@ pub fn run_boot_smoketest() {
     // move-window-to-space, and the tokenized switcher ring (the retired
     // 0xFF_4E_9C_FF hardcode is gone — the ring flows from derive_accent(seed)).
     {
-        let (membership_ok, move_ok, ring_ok) = raeshell::spaces::run_boot_smoketest();
+        let (membership_ok, move_ok, ring_ok) = athshell::spaces::run_boot_smoketest();
 
         // Re-derive the reported a_hidden / b_shown / current values from a fresh
         // model run so the serial line carries the concrete counts.
-        let mut mgr = raeshell::spaces::SpaceManager::new();
+        let mut mgr = athshell::spaces::SpaceManager::new();
         let b = mgr.add_space();
         mgr.add_window_to_current(100);
         mgr.add_window_to_current(101);
@@ -4755,7 +4755,7 @@ pub fn run_boot_smoketest() {
             if membership_ok { "PASS" } else { "FAIL" },
         );
 
-        let mut m2 = raeshell::spaces::SpaceManager::new();
+        let mut m2 = athshell::spaces::SpaceManager::new();
         let bb = m2.add_space();
         m2.add_window_to_current(200);
         let (removed, added) = m2.move_window(200, bb);
@@ -4770,8 +4770,8 @@ pub fn run_boot_smoketest() {
 
         // Switcher ring: tokenized selection + a live thumbnail was sampled.
         // Build a real kernel test surface, paint it, snapshot it nonzero.
-        let seed = raeshell::active_accent();
-        let ring = raeshell::spaces::selection_ring(seed);
+        let seed = athshell::active_accent();
+        let ring = athshell::spaces::selection_ring(seed);
         let mut thumb_nonzero = false;
         if let Some((sid, ptr)) = crate::compositor::create_kernel_surface(64, 48) {
             // Paint a known non-black pattern into the surface buffer.
@@ -4819,7 +4819,7 @@ pub fn run_boot_smoketest() {
 ///   4. `copied`: a descriptor lands on the clipboard ring (read back non-empty).
 fn run_capture_shell_smoketest() {
     use crate::capability::{Cap, CapTable, Rights};
-    use raeshell::screenshot_overlay::CaptureOverlay;
+    use athshell::screenshot_overlay::CaptureOverlay;
 
     // ── 1. Privacy cap gate (fail-closed) ──────────────────────────────────
     let predicate = |tbl: &CapTable| -> bool {
@@ -4865,7 +4865,7 @@ fn run_capture_shell_smoketest() {
                 .map(|d| {
                     d.len() >= 8
                         && d[0..8] == PNG_SIG
-                        && raemedia::png::decode_png(&d)
+                        && athmedia::png::decode_png(&d)
                             .map(|img| img.width == cw && img.height == ch)
                             .unwrap_or(false)
                 })

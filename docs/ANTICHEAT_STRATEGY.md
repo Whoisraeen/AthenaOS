@@ -30,7 +30,7 @@ The kernel exposes an attestation API that EAC / BattlEye / Vanguard can query f
 - Kernel self-defense (syscall table, IDT, `.text` integrity).
 - A signed attestation (TPM-backed where present) the vendor's servers can trust:
   "this process is unmodified, the kernel is intact, secure boot held."
-- `SYS_AC_*` syscalls, `/proc/raeen/anticheat`, boot smoketest proving the
+- `SYS_AC_*` syscalls, `/proc/athena/anticheat`, boot smoketest proving the
   detection logic fires (`wx/clean/tamper/canary/hook/ban/attest -> PASS`).
 
 > **Concrete API reference:** [`ATTESTATION_API.md`](ATTESTATION_API.md) — the measured-boot
@@ -73,7 +73,7 @@ Windows kernel anti-cheat:
    (`MemoryProtectionEngine`: code hashing, hook/debugger detection, module
    enumeration) plus a secure channel to the vendor's userspace + servers.
 5. On game exit (or crash), the module is **unloaded** and its grant revoked. Every
-   action it took is in the audit log (`/proc/raeen/anticheat` + `audit`).
+   action it took is in the audit log (`/proc/athena/anticheat` + `audit`).
 
 ### Why publishers accept it
 A real kernel vantage point exists and the platform is certifiable — the thing Linux

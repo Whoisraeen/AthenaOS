@@ -7,8 +7,8 @@ authors.workspace = true
 repository.workspace = true
 
 # Library target: the app's state + draw path + the syscall-free vault MODEL
-# (`VaultModel`) so a host KAT can link the LIVE engines (rae_keychain +
-# rae_otp) with no kernel. This is the structure `apps/files` uses.
+# (`VaultModel`) so a host KAT can link the LIVE engines (ath_keychain +
+# ath_otp) with no kernel. This is the structure `apps/files` uses.
 [lib]
 name = "passwords"
 path = "src/lib.rs"
@@ -25,16 +25,16 @@ path = "src/main.rs"
 test = false
 
 [features]
-# Forwards to `raekit/host`: lets the std `cargo test` harness link `passwords`
-# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# Forwards to `athkit/host`: lets the std `cargo test` harness link `passwords`
+# (-> `athkit`) without athkit's bare-ELF lang items colliding with std (E0152
 # duplicate panic_impl). The normal `cargo build -p passwords --target
 # x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
 # with `cargo test -p passwords --features host`.
-host = ["raekit/host"]
+host = ["athkit/host"]
 
 [dependencies]
-raegfx = { path = "../../components/raegfx" }
-raekit = { path = "../../components/raekit" }
-rae_tokens = { path = "../../components/rae_tokens" }
-rae_keychain = { path = "../../components/rae_keychain" }
-rae_otp = { path = "../../components/rae_otp" }
+athgfx = { path = "../../components/athgfx" }
+athkit = { path = "../../components/athkit" }
+ath_tokens = { path = "../../components/ath_tokens" }
+ath_keychain = { path = "../../components/ath_keychain" }
+ath_otp = { path = "../../components/ath_otp" }

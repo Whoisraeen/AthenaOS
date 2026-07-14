@@ -1,0 +1,23 @@
+[package]
+name = "ath_toml"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS TOML value model, parser, and serializer (TOML v1.0 practical subset)
+# — the config foundation the OS itself uses (config/base.toml) and the format
+# app preferences / service config persist through (LEGACY_GAMING_CONCEPT.md §"The user
+# owns the machine": local config the user controls, read AND written robustly).
+# Foundational, zero-dep, never-panic infrastructure: settings/themes/app-data
+# buckets, "remember my settings".
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_json / ath_tokens pattern) so the lib
+# is `no_std` + `alloc` in every shipped build and toggles to `std` only under
+# `cfg(test)` for the host KAT harness. Run the FAIL-able proof with
+# `cargo test -p ath_toml` — no QEMU, no image build. Treats all input as hostile
+# (an untrusted-config parser): every error path returns `Err`, no
+# `unwrap`/`expect`/raw-index panic is reachable from `parse`.
+
+[dependencies]

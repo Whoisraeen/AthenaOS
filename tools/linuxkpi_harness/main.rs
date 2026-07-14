@@ -2,7 +2,7 @@
 //! dev host, no QEMU / no hardware.
 //!
 //! Two things this proves before Athena:
-//!   1. The REAL `raeen_linuxkpi` primitives a Linux driver leans on — atomics,
+//!   1. The REAL `ath_linuxkpi` primitives a Linux driver leans on — atomics,
 //!      bit ops (ring/IRQ flags), MMIO register accessors, allocators (DMA
 //!      descriptors) — behave correctly. Tested against the actual crate, not a
 //!      copy (same code amdgpud/i915d link).
@@ -17,11 +17,11 @@
 //! catches LOGIC/ORDERING bugs cheaply so the iron iteration is about hardware,
 //! not software mistakes.
 
-use raeen_amdgpu::{
+use ath_amdgpu::{
     bringup::{self, DmaBuf, GpuOps},
     gc11,
 };
-use raeen_linuxkpi::{atomic, kalloc, mm, pci};
+use ath_linuxkpi::{atomic, kalloc, mm, pci};
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
@@ -262,35 +262,35 @@ fn test_locks(h: &mut Harness) {
     let mut w: u32 = 0;
     let p = &mut w as *mut u32;
     // mutex_lock must actually hold the word (was a non-atomic read-then-write).
-    raeen_linuxkpi::mutex_lock(p);
+    ath_linuxkpi::mutex_lock(p);
     h.check(
         "lock: mutex_lock holds (trylock fails while held)",
-        raeen_linuxkpi::sync::_raw_spin_trylock(p) == 0,
+        ath_linuxkpi::sync::_raw_spin_trylock(p) == 0,
     );
-    raeen_linuxkpi::mutex_unlock(p);
+    ath_linuxkpi::mutex_unlock(p);
     h.check(
         "lock: mutex_unlock releases (trylock then succeeds)",
-        raeen_linuxkpi::sync::_raw_spin_trylock(p) == 1,
+        ath_linuxkpi::sync::_raw_spin_trylock(p) == 1,
     );
-    raeen_linuxkpi::sync::_raw_spin_unlock(p);
+    ath_linuxkpi::sync::_raw_spin_unlock(p);
     // spin_lock routes to the same atomic path.
-    raeen_linuxkpi::spin_lock(p);
+    ath_linuxkpi::spin_lock(p);
     h.check(
         "lock: spin_lock holds",
-        raeen_linuxkpi::sync::_raw_spin_trylock(p) == 0,
+        ath_linuxkpi::sync::_raw_spin_trylock(p) == 0,
     );
-    raeen_linuxkpi::spin_unlock(p);
+    ath_linuxkpi::spin_unlock(p);
     h.check(
         "lock: spin_unlock releases",
-        raeen_linuxkpi::sync::_raw_spin_trylock(p) == 1,
+        ath_linuxkpi::sync::_raw_spin_trylock(p) == 1,
     );
-    raeen_linuxkpi::sync::_raw_spin_unlock(p);
+    ath_linuxkpi::sync::_raw_spin_unlock(p);
 }
 
 // ── 4d. printk %-specifier interpolation (was: format string printed verbatim) ─
 
 fn test_printk_format(h: &mut Harness) {
-    use raeen_linuxkpi::device::format_into;
+    use ath_linuxkpi::device::format_into;
 
     // Drive format_into with synthetic args (a fixed list consumed in order),
     // independent of the C vararg ABI — exercises the formatter itself.
@@ -419,7 +419,7 @@ fn test_driver_bringup(h: &mut Harness) {
     }
 }
 
-// ── 6. REAL amdgpu bring-up sequence (raeen_amdgpu::bringup) on a mock GPU ─────
+// ── 6. REAL amdgpu bring-up sequence (ath_amdgpu::bringup) on a mock GPU ─────
 //
 // Test 5 is a *representative* model. This one drives amdgpud's ACTUAL stage
 // sequence — the same `bringup::bringup` the live daemon runs — against a mock
@@ -457,7 +457,7 @@ struct MockGpu {
     complete_fence: Vec<(u32, u64, u32)>,
     /// IP-discovery blocks (None = not read, so gfx_regs falls back to gc11
     /// legacy); set to exercise the discovery-driven SOC15 offset path.
-    gfx_discovery: Option<Vec<raeen_amdgpu::discovery::IpBlock>>,
+    gfx_discovery: Option<Vec<ath_amdgpu::discovery::IpBlock>>,
     /// CP_ME_CNTL halt mask the mock honors; `Some` models a confirmed gfx11 RS64
     /// halt mask so the CP enable/halt path (`cp_gfx_enable`) actually writes.
     cp_me_cntl_halt_mask: Option<u32>,
@@ -574,7 +574,7 @@ impl GpuOps for MockGpu {
     fn gfx_regs(&mut self) -> Option<bringup::GfxRegs> {
         self.gfx_discovery
             .as_ref()
-            .and_then(|blocks| raeen_amdgpu::regs::gfx_regs(blocks))
+            .and_then(|blocks| ath_amdgpu::regs::gfx_regs(blocks))
     }
     fn cp_me_cntl_halt_mask(&mut self) -> Option<u32> {
         self.cp_me_cntl_halt_mask
@@ -582,7 +582,7 @@ impl GpuOps for MockGpu {
     fn sdma_regs(&mut self) -> Option<bringup::SdmaRegs> {
         self.gfx_discovery
             .as_ref()
-            .and_then(|blocks| raeen_amdgpu::regs::sdma_regs(blocks))
+            .and_then(|blocks| ath_amdgpu::regs::sdma_regs(blocks))
     }
     fn request_firmware(&mut self, _name: &str) -> bool {
         self.present_fw
@@ -658,7 +658,7 @@ fn test_real_amdgpu_bringup(h: &mut Harness) {
     }
     h.check(
         "amdgpu bringup: SDMA ring holds CONSTANT_FILL header",
-        sdma_first == Some(raeen_amdgpu::sdma::SDMA_OP_CONST_FILL),
+        sdma_first == Some(ath_amdgpu::sdma::SDMA_OP_CONST_FILL),
     );
 
     // CONFIG_MEMSIZE handshake: GMC sized VRAM from the mock's 2048 MiB.
@@ -710,10 +710,10 @@ fn test_amdgpu_submit_fence(h: &mut Harness) {
 }
 
 // ── 10. Workqueue + timer facade (deferred-exec, host-deterministic) ──────────
-// Drives the real raeen_linuxkpi::workqueue pumps with controlled jiffies, so
+// Drives the real ath_linuxkpi::workqueue pumps with controlled jiffies, so
 // work/timer/delayed-work scheduling + cancellation is verified off-target.
 
-use raeen_linuxkpi::workqueue::{self, TimerList, WorkStruct};
+use ath_linuxkpi::workqueue::{self, TimerList, WorkStruct};
 use std::sync::atomic::{AtomicU32, Ordering};
 
 static WQ_WORK_RUNS: AtomicU32 = AtomicU32::new(0);
@@ -827,13 +827,13 @@ fn test_workqueue(h: &mut Harness) {
 }
 
 // ── scatterlist (struct scatterlist / sg_table) ──────────────────────────────
-// Exercises the REAL raeen_linuxkpi::scatterlist surface a GPU/DRM driver walks:
+// Exercises the REAL ath_linuxkpi::scatterlist surface a GPU/DRM driver walks:
 // init, set_buf round-trip (page base + in-page offset reconstruct the virtual
 // address), the sg_next END-marker walk, sg_table alloc/free, and the identity
 // dma_map_sg / dma_map_sgtable mapping. repr(C) structs hit the same offsets a
 // real .ko would.
 
-use raeen_linuxkpi::scatterlist::{self, Scatterlist, SgTable};
+use ath_linuxkpi::scatterlist::{self, Scatterlist, SgTable};
 
 fn test_scatterlist(h: &mut Harness) {
     // ── sg_init_one: single entry round-trips the buffer ──
@@ -941,7 +941,7 @@ fn test_scatterlist(h: &mut Harness) {
 // Atomic refcount semantics over a driver-owned i32; kref_put fires the release
 // callback exactly on the 1->0 transition (object teardown).
 
-use raeen_linuxkpi::refcount;
+use ath_linuxkpi::refcount;
 
 static KREF_RELEASED: AtomicU32 = AtomicU32::new(0);
 extern "C" fn kref_release_cb(_k: *mut i32) {
@@ -1001,7 +1001,7 @@ fn test_refcount(h: &mut Harness) {
 // Lowest-free allocation, range bounds, freeing reuses the slot, and idr's
 // id->pointer round-trip. All over the daemon heap, no syscalls.
 
-use raeen_linuxkpi::idr;
+use ath_linuxkpi::idr;
 
 fn test_idr(h: &mut Harness) {
     // ── ida: dense lowest-free, free reuses ──
@@ -1071,7 +1071,7 @@ fn test_idr(h: &mut Harness) {
 // create/alloc/zalloc/free/destroy contract: non-null object, handle written,
 // page alignment, zeroing, and writability.
 
-use raeen_linuxkpi::dma_pool;
+use ath_linuxkpi::dma_pool;
 
 fn test_dma_pool(h: &mut Harness) {
     let pool = dma_pool::dma_pool_create(core::ptr::null(), 0, 256, 64, 0);
@@ -1124,7 +1124,7 @@ fn test_dma_pool(h: &mut Harness) {
 // Real ring logic: power-of-two sizing, free/used accounting, FIFO order, and
 // wraparound across the buffer end. esize=4 (u32 elements).
 
-use raeen_linuxkpi::kfifo::{self, Kfifo};
+use ath_linuxkpi::kfifo::{self, Kfifo};
 
 fn test_kfifo(h: &mut Harness) {
     let mut fifo = Kfifo {
@@ -1207,7 +1207,7 @@ fn test_kfifo(h: &mut Harness) {
 // Word-walk scan with partial-last-word masking. Bits packed LSB-first across
 // two longs to exercise the cross-word boundary.
 
-use raeen_linuxkpi::bitmap;
+use ath_linuxkpi::bitmap;
 
 fn test_bitmap(h: &mut Harness) {
     // two-long bitmap (128 bits), all clear
@@ -1328,7 +1328,7 @@ fn zero2() -> [u64; 2] {
 // Mirrors Linux: radix auto-detect, sign, trailing newline OK, junk -> -EINVAL,
 // overflow -> -ERANGE. Error paths are the point (a lax parser misprograms hw).
 
-use raeen_linuxkpi::kstrtox;
+use ath_linuxkpi::kstrtox;
 
 fn test_kstrtox(h: &mut Harness) {
     unsafe {
@@ -1399,7 +1399,7 @@ fn test_kstrtox(h: &mut Harness) {
 // the two return conventions (snprintf = would-be length, scnprintf = bytes
 // actually written). Synthetic varargs via a slice cursor (no C vararg ABI).
 
-use raeen_linuxkpi::printf;
+use ath_linuxkpi::printf;
 
 fn test_printf(h: &mut Harness) {
     // helper: build a "next" closure over a fixed arg list
@@ -1462,7 +1462,7 @@ fn test_printf(h: &mut Harness) {
 // trylock return polarity (Linux differs per call), mutex_is_locked, and the
 // non-blocking completion queries — all syscall-free, so harness-safe.
 
-use raeen_linuxkpi::{delay, sync};
+use ath_linuxkpi::{delay, sync};
 
 fn test_sync_extras(h: &mut Harness) {
     // mutex_is_locked + down_trylock polarity (0 == success for down_trylock)
@@ -1601,7 +1601,7 @@ fn test_pci_ext_cap(h: &mut Harness) {
             _ => 0,
         }
     };
-    use raeen_linuxkpi::pci_ext::walk_ext_cap;
+    use ath_linuxkpi::pci_ext::walk_ext_cap;
     h.check(
         "pci: ext cap found at head",
         walk_ext_cap(read, 0x0001) == 0x100,
@@ -1628,7 +1628,7 @@ fn test_pci_ext_cap(h: &mut Harness) {
 // init, callback queue fires exactly once on signal, double-signal/ENOENT
 // guards, remove_callback, wait fast-path, and the always-signaled stub.
 
-use raeen_linuxkpi::dma_fence::{self, DmaFence, DmaFenceCb, ListHead};
+use ath_linuxkpi::dma_fence::{self, DmaFence, DmaFenceCb, ListHead};
 
 static FENCE_CB_RUNS: AtomicU32 = AtomicU32::new(0);
 extern "C" fn fence_cb(_f: *mut DmaFence, _cb: *mut DmaFenceCb) {
@@ -1671,7 +1671,7 @@ fn test_dma_fence(h: &mut Harness) {
         );
 
         let mut lk: u32 = 0;
-        let ops = &dma_fence::raeen_dma_fence_stub_ops as *const dma_fence::DmaFenceOps;
+        let ops = &dma_fence::athena_dma_fence_stub_ops as *const dma_fence::DmaFenceOps;
         let mut f = blank_fence();
         let fp = &mut f as *mut DmaFence;
         dma_fence::dma_fence_init(fp, ops, &mut lk as *mut u32 as *mut u8, 100, 7);
@@ -1741,7 +1741,7 @@ fn test_dma_fence(h: &mut Harness) {
 
 fn test_dma_fence_chain(h: &mut Harness) {
     unsafe {
-        let ops = &dma_fence::raeen_dma_fence_stub_ops as *const dma_fence::DmaFenceOps;
+        let ops = &dma_fence::athena_dma_fence_stub_ops as *const dma_fence::DmaFenceOps;
         // inner work fences
         let mut lk1: u32 = 0;
         let mut lk2: u32 = 0;
@@ -1783,7 +1783,7 @@ fn test_dma_fence_chain(h: &mut Harness) {
 
 fn test_dma_fence_array(h: &mut Harness) {
     unsafe {
-        let ops = &dma_fence::raeen_dma_fence_stub_ops as *const dma_fence::DmaFenceOps;
+        let ops = &dma_fence::athena_dma_fence_stub_ops as *const dma_fence::DmaFenceOps;
         let mut lk1: u32 = 0;
         let mut lk2: u32 = 0;
         let mut c1 = blank_fence();
@@ -1846,14 +1846,14 @@ fn test_dma_fence_array(h: &mut Harness) {
 // reserve/add, usage-filtered iteration (READ yields KERNEL/WRITE/READ; WRITE
 // yields only KERNEL/WRITE), test_signaled, get_fences, get_singleton.
 
-use raeen_linuxkpi::dma_resv::{self, DmaResv, DmaResvIter};
+use ath_linuxkpi::dma_resv::{self, DmaResv, DmaResvIter};
 
 const USAGE_WRITE: u32 = 1;
 const USAGE_READ: u32 = 2;
 
 fn test_dma_resv(h: &mut Harness) {
     unsafe {
-        let ops = &dma_fence::raeen_dma_fence_stub_ops as *const dma_fence::DmaFenceOps;
+        let ops = &dma_fence::athena_dma_fence_stub_ops as *const dma_fence::DmaFenceOps;
         let mut obj: DmaResv = std::mem::zeroed();
         let op = &mut obj as *mut DmaResv;
         dma_resv::dma_resv_init(op);
@@ -1909,7 +1909,7 @@ fn test_dma_resv(h: &mut Harness) {
             dma_resv::dma_resv_get_fences(op, USAGE_READ, &mut num, &mut arr) == 0 && num == 2,
         );
         if !arr.is_null() {
-            raeen_linuxkpi::mm::kfree(arr as *mut u8);
+            ath_linuxkpi::mm::kfree(arr as *mut u8);
         }
 
         // signal both -> test_signaled true, wait fast-path > 0
@@ -1944,7 +1944,7 @@ fn test_dma_resv(h: &mut Harness) {
 // attach/map/unmap/pin/unpin reach the exporter's ops; move_notify reaches the
 // importer; dma_buf_get reports the documented host-brokering limitation.
 
-use raeen_linuxkpi::dma_buf::{
+use ath_linuxkpi::dma_buf::{
     self, DmaBuf as LkDmaBuf, DmaBufAttachOps, DmaBufAttachment, DmaBufOps,
 };
 
@@ -2068,12 +2068,12 @@ fn test_amdgpu_soc15_offsets(h: &mut Harness) {
     const GC_BASE: u32 = 0x8000; // GC segment 0 (CP_RB0_* registers)
     const GC_BASE_SEG1: u32 = 0x9000; // GC segment 1 (CP_ME_CNTL, RLC_SAFE_MODE)
                                       // The real gfx11 GFX-CP halt mask (ME_HALT|PFP_HALT) from the driver.
-    const HALT_MASK: u32 = raeen_amdgpu::gc11::CP_ME_CNTL_GFX11_HALT_MASK;
+    const HALT_MASK: u32 = ath_amdgpu::gc11::CP_ME_CNTL_GFX11_HALT_MASK;
     let mut mock = MockGpu::new(true, true, None);
     // Discovery publishes a GC block with BOTH base segments (real GC blocks do;
     // CP_ME_CNTL is base_idx 1, so seg 1 must be present for gfx_regs to resolve).
-    mock.gfx_discovery = Some(vec![raeen_amdgpu::discovery::IpBlock {
-        hw_id: raeen_amdgpu::regs::GC_HWID,
+    mock.gfx_discovery = Some(vec![ath_amdgpu::discovery::IpBlock {
+        hw_id: ath_amdgpu::regs::GC_HWID,
         instance: 0,
         bases: vec![GC_BASE, GC_BASE_SEG1],
     }]);
@@ -2123,7 +2123,7 @@ fn test_amdgpu_soc15_offsets(h: &mut Harness) {
     h.check(
         "amdgpu soc15: SDMA RB_CNTL has RB_ENABLE",
         mock.regs.get(&sdma_rb_cntl).copied().unwrap_or(0)
-            & raeen_amdgpu::sdma::SDMA_RB_CNTL_RB_ENABLE
+            & ath_amdgpu::sdma::SDMA_RB_CNTL_RB_ENABLE
             != 0,
     );
     h.check(
@@ -2168,7 +2168,7 @@ fn main() {
         h.finish(); // exits the process (PASS -> 0, any FAIL -> 1)
     }
 
-    println!("[linuxkpi-harness] raeen_linuxkpi logic + mock-GPU bring-up (host, no QEMU)");
+    println!("[linuxkpi-harness] ath_linuxkpi logic + mock-GPU bring-up (host, no QEMU)");
     let mut h = Harness::new();
     test_atomics(&mut h);
     test_bitops(&mut h);

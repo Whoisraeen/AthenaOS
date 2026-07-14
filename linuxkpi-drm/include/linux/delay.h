@@ -6,7 +6,7 @@
  * a clock to lock, a fence to post, a microengine to come alive. These MUST be
  * REAL: a no-op delay reads hardware state before it has settled, which is exactly
  * the class of bring-up failure this whole effort exists to fix (SCOPE.md rule 9).
- * So every one is declaration-only, backed by raeen_linuxkpi's timing facade (P1)
+ * So every one is declaration-only, backed by ath_linuxkpi's timing facade (P1)
  * at M4 — busy-spin for the sub-ms udelay/mdelay, a real sleep for msleep/
  * usleep_range. License boundary (../../README.md): API surface, no GPL source.
  */

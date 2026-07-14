@@ -1,5 +1,5 @@
 //! Weather data model for the AthenaOS Weather app (conditions, forecasts, units,
-//! weather codes). Moved from the former `raeshell::weather_app`; the app renders
+//! weather codes). Moved from the former `athshell::weather_app`; the app renders
 //! a subset, so unused model surface is expected.
 #![allow(dead_code, unused_imports, static_mut_refs)]
 

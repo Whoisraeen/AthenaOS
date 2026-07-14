@@ -26,7 +26,7 @@ four** — it is the *same OS* re-shelled, reading the *same live accent/tokens*
 the desktop, not a bolted-on launcher.
 
 **All tokens below are defined in [`design-language.md`](./design-language.md) and
-live in `components/rae_tokens`.** This spec assigns existing tokens and adds a
+live in `components/ath_tokens`.** This spec assigns existing tokens and adds a
 small, named **couch type-ramp scale-up** + **focus-ring** set (flagged for the
 master doc). It introduces no other magic numbers.
 
@@ -41,13 +41,13 @@ NOT a rebuild (CLAUDE.md rule 7 — extend the wired module, never twin it).
 
 | Piece | Where | Today | This spec changes |
 |---|---|---|---|
-| Couch shell (home/library/detail/quick-menu/settings/search/carousel) | **LIVE: `components/raeshell/src/gameos.rs::GameOsShell`** — full render + D-pad nav + launch | hardcoded local palette (`ACCENT 0xFF4E9CFF`, `CARD_W 200`, `GLYPH_W 8`), 8px bitmap glyphs | → read `rae_tokens` (`derive_accent` of the **live seed**, palette, spacing, radius, motion); couch type-ramp; AA text (RaeSans) not 8px block glyphs |
+| Couch shell (home/library/detail/quick-menu/settings/search/carousel) | **LIVE: `components/athshell/src/gameos.rs::GameOsShell`** — full render + D-pad nav + launch | hardcoded local palette (`ACCENT 0xFF4E9CFF`, `CARD_W 200`, `GLYPH_W 8`), 8px bitmap glyphs | → read `ath_tokens` (`derive_accent` of the **live seed**, palette, spacing, radius, motion); couch type-ramp; AA text (RaeSans) not 8px block glyphs |
 | Toggle in/out | **LIVE: `kernel/src/shell_runner.rs::toggle_gameos`** (F11; keyboard→controller routing; `couch: Option<GameOsShell>` in `ShellRunnerState`) | F11 + key routing only | → add controller Guide-chord + auto-on-controller-connect + auto-on-TV-out; spec the cross-fade transition |
 | Boot-into-couch | **LIVE: `config_registry "/gameos/boot_couch"`** read at shell start | boolean read works | → wire to GameOS Settings → General toggle + OOBE "Game Station" profile |
 | Keyboard→controller map | **LIVE: `shell_runner.rs` scancode→`GamepadButton`** | arrows/Enter/Backspace/Tab/F11 | → reference map only; the real binding is live gamepad (below) |
-| Generic HID gamepad decoder | **LIVE: `kernel/src/hid_gamepad.rs`** — report-descriptor parser, axes/buttons/hat, host-KAT'd, `/proc/raeen/hid_pad` | parses + decodes; **not bound to xHCI interrupt-IN yet** (iron half open) | → consumes its `PadInput`; glyph set + chord layer sit on top |
-| Per-game profiles | **LIVE: `kernel/src/game_profile.rs`** (syscalls 58–61, `/proc/raeen/games`, 3 presets) + **`components/raeplay` `GameProfile`** (display/gpu/audio/input/sched/compat) | store + apply wired; **compositor/audio/cpufreq setters not exposed yet** (logged-intent) | → the per-game profile *surface* edits these; setters are raeen-gfx/raeen-kernel work, referenced not designed here |
-| Library aggregation | **LIVE: `components/raeplay`** — Steam(VDF)/Epic(JSON)/GOG/AthStore/Manual connectors, `GameEntry`, launch manager | parsers + state machine real; cover-art is a hash, not pixels | → couch grid renders `raeplay::GameEntry`; cover-art fetch is a AthPlay/store concern |
+| Generic HID gamepad decoder | **LIVE: `kernel/src/hid_gamepad.rs`** — report-descriptor parser, axes/buttons/hat, host-KAT'd, `/proc/athena/hid_pad` | parses + decodes; **not bound to xHCI interrupt-IN yet** (iron half open) | → consumes its `PadInput`; glyph set + chord layer sit on top |
+| Per-game profiles | **LIVE: `kernel/src/game_profile.rs`** (syscalls 58–61, `/proc/athena/games`, 3 presets) + **`components/athplay` `GameProfile`** (display/gpu/audio/input/sched/compat) | store + apply wired; **compositor/audio/cpufreq setters not exposed yet** (logged-intent) | → the per-game profile *surface* edits these; setters are athena-gfx/athena-kernel work, referenced not designed here |
+| Library aggregation | **LIVE: `components/athplay`** — Steam(VDF)/Epic(JSON)/GOG/AthStore/Manual connectors, `GameEntry`, launch manager | parsers + state machine real; cover-art is a hash, not pixels | → couch grid renders `athplay::GameEntry`; cover-art fetch is a AthPlay/store concern |
 | Game Bar overlay | partial: `GameOsState::Overlay` enum + `NowPlaying{fps,frametime}` bar exist | now-playing strip only | → full Game Bar overlay spec (FPS/frametime graph/temps/power/capture/voice), Guide-chord invoked |
 
 > **Note for the implementer mid-build:** `gameos.rs` currently `#![allow(unused)]`
@@ -104,7 +104,7 @@ GameOS is the desktop shell's tokens at **couch distance**. Same palette, same
 accent ramp, same motion curves — scaled up for 10-foot viewing and 48px+ hit
 targets. **Cohesion rule: the accent is the live seed, not a constant.**
 
-### Color / accent (from `rae_tokens`)
+### Color / accent (from `ath_tokens`)
 - Base palette: `DARK` (couch defaults to dark — TV/OLED, evening use). Light
   parity supported via `LIGHT` for daytime/handheld.
 - Accent: `derive_accent(active_seed(), &DARK)` — the **same** seed the desktop and
@@ -117,32 +117,32 @@ targets. **Cohesion rule: the accent is the live seed, not a constant.**
   top-edge). State colors: `state.ok` (installed/FPS≥target), `state.warn`
   (FPS mid / updating), `state.danger` (FPS low / error).
 
-### Spacing & grid (4px grid, `rae_tokens` §2)
+### Spacing & grid (4px grid, `ath_tokens` §2)
 - Inter-tile gap: **`space.5` (24px)** at 1080p, **`space.6` (32px)** at ≥1440p
   (replaces the local `CARD_GAP 16` — too tight for couch).
 - Grid outer margin: **`space.8` (48px)** (the "large couch-mode gap" token).
 - Section gap (Featured ↔ Recently Played ↔ Library): **`space.8` (48px)**.
 - Hint-bar / quick-menu inner padding: **`space.4` (16px)**.
 
-### Hit targets (`rae_tokens`)
+### Hit targets (`ath_tokens`)
 - **`HIT_TARGET_COUCH = 48px` is the floor** for every focusable element (tiles,
   hint chips, OSK keys, quick-menu rows). The desktop's 32px floor does NOT apply
   in couch mode — controller + TV distance demand 48px.
 
-### Corner radius (`rae_tokens` §3)
+### Corner radius (`ath_tokens` §3)
 - Game tiles / cover-art cards: **`radius.lg` (16px)**.
 - Quick-menu / Game Bar / OSK panels: **`radius.lg` (16px)**; nested rows use
   `concentric(radius.lg, space.4)` = `radius.xs` so corners never mismatch.
 - Hint-bar chips / OSK keys: **`radius.md` (12px)**.
 
-### Elevation (`rae_tokens` §5.3)
+### Elevation (`ath_tokens` §5.3)
 - Resting tile: `elev.1`. Selected/focused tile: `elev.3` + **focus glow**
   (`elev_focus(accent.glow)`) — the SteamOS lesson: focus is *lift + glow*, not
   just a 1px border.
 - Quick-menu / Game Bar / OSK: `elev.3` (modal class).
 - Game-detail panel: `elev.4`.
 
-### Motion (`rae_tokens` §7)
+### Motion (`ath_tokens` §7)
 - Focus move tile→tile: **`motion.micro` (90ms, standard-out)** — must feel
   instant (Switch-class). Focus ring + tile scale animate on this curve.
 - Page/section change: **`motion.standard` (220ms, decelerate)**.
@@ -249,7 +249,7 @@ Layout, left→right / top→bottom, all on the 4px grid with `space.8` outer ma
   glyphs from the active glyph set (§5). This is the single biggest legibility win
   over the current bracketed-text hints (`[A] Play`).
 
-**Library aggregation:** the grid is fed `raeplay::GameEntry` from all enabled
+**Library aggregation:** the grid is fed `athplay::GameEntry` from all enabled
 connectors (Steam/Epic/GOG/AthStore/Manual — all LIVE parsers). One unified library,
 store badge per tile. AthPlay owns scan/launch; GameOS owns the *presentation*.
 
@@ -281,7 +281,7 @@ Panels (vertical, controller-navigable, each row ≥48px):
 - **Quick system:** brightness, volume, Wi-Fi, Do-Not-Disturb, friends, downloads,
   sleep, desktop-mode (LIVE `QuickMenu`).
 
-Data source: this consumes `/proc/raeen/perf` (the missing telemetry surface per
+Data source: this consumes `/proc/athena/perf` (the missing telemetry surface per
 CLAUDE.md North-Star table) + `NowPlaying{fps,frametime}` (LIVE). The frametime
 graph is the one net-new draw primitive.
 
@@ -289,7 +289,7 @@ graph is the one net-new draw primitive.
 
 Edits the existing record — **does not invent a new schema.** Backed by
 `kernel/src/game_profile.rs` (`GameProfileAbi`, syscalls 58–61) and the richer
-`raeplay::GameProfile` (display/gpu/audio/input/scheduler/compat). Reached from a
+`athplay::GameProfile` (display/gpu/audio/input/scheduler/compat). Reached from a
 tile's detail view ("⚙ Profile") or Settings → Games.
 
 Fields (grouped, controller-editable rows, `type.couch.body` values):
@@ -307,7 +307,7 @@ Fields (grouped, controller-editable rows, `type.couch.body` values):
 
 **Auto-apply:** on launch, AthPlay's `LaunchManager` applies the profile via
 `LaunchCallbacks` (LIVE trait) → `game_profile::apply_profile` → scheduler (LIVE) +
-compositor/audio/cpufreq setters (**not yet exposed** — raeen-gfx/raeen-kernel).
+compositor/audio/cpufreq setters (**not yet exposed** — athena-gfx/athena-kernel).
 The surface writes the record; the kernel applies it. Snapshot/rollback rides on
 `config_registry` (LIVE) so a bad tweak is one click back.
 
@@ -319,14 +319,14 @@ Y=search, Guide=quick-menu across all focus targets. This spec adds the missing
 input + presentation layers:
 
 - **Live gamepad binding:** consume `hid_gamepad::PadInput` (LIVE decoder) — bind
-  it to xHCI interrupt-IN endpoints (the iron half, raeen-gaming/raeen-kernel).
+  it to xHCI interrupt-IN endpoints (the iron half, athena-gaming/athena-kernel).
   First-party pads (DualSense/Xbox, decoded by VID/PID in `input.rs`) get the
   deluxe path (haptics/triggers/gyro per Concept); everything else gets correct
   generic HID (the "never nothing" rule in `hid_gamepad.rs`).
 - **Button-glyph system (NEW):** a glyph set abstraction with three skins —
   **Xbox** (A/B/X/Y colored), **PlayStation** (✕/◯/△/▢), **Steam/generic**
   (lettered). Auto-selected from the bound pad's VID/PID; user-overridable
-  (`raeplay::ControllerLayout`). Every hint chip + OSK + quick-menu renders the
+  (`athplay::ControllerLayout`). Every hint chip + OSK + quick-menu renders the
   active set. This replaces the hardcoded `[A]`/`[B]` ASCII in `render_*` today.
 - **On-screen keyboard (NEW):** slides from the bottom (`motion.fast`), QWERTY +
   symbol layers, focus-navigated by D-pad, A=type, LB/RB=layer, LT/RT=space/back;
@@ -340,7 +340,7 @@ input + presentation layers:
 
 GameOS is the *visible face* of paths the OS already promises; it must read them,
 not reimplement them:
-- **Live accent/tokens:** every color/spacing/radius/motion comes from `rae_tokens`
+- **Live accent/tokens:** every color/spacing/radius/motion comes from `ath_tokens`
   with `derive_accent(active_seed())`. A Vibe Mode change re-skins GameOS in lockstep
   with the desktop — *that's* the cohesion deliverable. (Today `gameos.rs` is the
   single biggest token-drift offender: ~20 file-local constants. Fixing it is the
@@ -350,7 +350,7 @@ not reimplement them:
 - **Exclusive-fullscreen direct-to-GPU** (Concept §Performance) — when a game runs,
   GameOS yields the scanout to the direct path (`FullscreenMode::ExclusiveFullscreen`);
   the Game Bar composites *above* without forcing the game off the direct path.
-  (raeen-gfx owns the scanout handoff; `scanout-backend-seam` memory is the seam.)
+  (athena-gfx owns the scanout handoff; `scanout-backend-seam` memory is the seam.)
 - **Compositor VRR/HDR** (LIVE drop-shadow/blur/HDR tone-map in `recomposite`) —
   GameOS surfaces are glass/elevation over the same compositor; per-game VRR/HDR is
   applied by the profile, not by GameOS.
@@ -384,11 +384,11 @@ contract):**
 
 ---
 
-## Accessibility (in scope from the start — flag to raeen-accessibility)
+## Accessibility (in scope from the start — flag to athena-accessibility)
 
 - **Focus visibility:** the four-redundant-signal focus (ring + scale + glow + top
   highlight) is the core a11y guarantee — focus must never depend on color alone
-  and must read at 3m. raeen-accessibility should screenshot-verify focus on every
+  and must read at 3m. athena-accessibility should screenshot-verify focus on every
   surface, including with a deuteranopia simulation.
 - **Contrast:** `type.couch.*` text on tiles/scrim must clear **4.5:1**; the
   bottom-of-tile gradient scrim exists specifically so title text over bright cover
@@ -398,7 +398,7 @@ contract):**
   parallax off. Focus still visibly relocates (snap).
 - **Hit targets:** `HIT_TARGET_COUCH = 48px` floor, no exceptions in couch mode.
 - **Text-scale:** the couch ramp should honor a global text-scale multiplier (a
-  raeen-accessibility setting) — a low-vision user can push `type.couch.*` further.
+  athena-accessibility setting) — a low-vision user can push `type.couch.*` further.
 - **Audio cues:** Vibe Mode sound set provides focus-move / select / back sounds
   (the "sound design" half of a coherent personality) — optional, off by default.
 
@@ -407,32 +407,32 @@ contract):**
 ## Handoff
 
 **Implementer split:**
-- **raeen-shell-apps** — owns the couch-UI *surface*: re-skin `raeshell/src/gameos.rs`
-  onto `rae_tokens` (retire the file-local palette + the `static mut GAMEOS_ACTIVE`
+- **athena-shell-apps** — owns the couch-UI *surface*: re-skin `athshell/src/gameos.rs`
+  onto `ath_tokens` (retire the file-local palette + the `static mut GAMEOS_ACTIVE`
   twin), the couch type-ramp, AA text (RaeSans, not 8px glyphs), focus-ring/scale,
   the button-hint bar, the OSK, the Game Bar overlay layout, the per-game profile
   *editor* UI. Plus the cross-fade transition in `shell_runner::toggle_gameos`.
-- **raeen-gaming** — owns the controller stack (bind `hid_gamepad::PadInput` to live
+- **athena-gaming** — owns the controller stack (bind `hid_gamepad::PadInput` to live
   xHCI interrupt-IN; first-party DualSense/Xbox haptics/triggers/gyro; the glyph-set
-  auto-select), the per-game profile *application* wiring (`raeplay::LaunchCallbacks`
+  auto-select), the per-game profile *application* wiring (`athplay::LaunchCallbacks`
   → `game_profile::apply_profile`), library aggregation (AthPlay connectors → grid),
   and the auto-enter triggers (controller-connect / TV-out).
-- **raeen-kernel / raeen-gfx** *(referenced, not specified here)* — SCHED_BODY for
+- **athena-kernel / athena-gfx** *(referenced, not specified here)* — SCHED_BODY for
   the couch render thread, the exclusive-fullscreen direct-scanout handoff, the
   compositor/audio/cpufreq profile **setters** that `game_profile::apply_profile`
-  logs intent for today, and the `/proc/raeen/perf` telemetry the Game Bar reads.
-- **rae_tokens (Opus / design)** — add the `type.couch.*` ramp + focus-ring tokens
+  logs intent for today, and the `/proc/athena/perf` telemetry the Game Bar reads.
+- **ath_tokens (Opus / design)** — add the `type.couch.*` ramp + focus-ring tokens
   to `design-language.md` and the crate.
 
 **Tokens added/changed (→ master doc):**
 - NEW: `type.couch.{hero,title,subtitle,body,caption,label}` (couch ramp).
 - NEW: focus-ring spec (4px `accent.base`, `space.1` inset, `radius.lg`,
   `elev_focus(accent.glow)`, 1.06× scale, top `stroke.strong` cue, 3:1 fallback).
-- CHANGED (cohesion): `gameos.rs` must consume `rae_tokens` instead of ~20
+- CHANGED (cohesion): `gameos.rs` must consume `ath_tokens` instead of ~20
   file-local constants; couch gaps move to `space.5`/`space.6`/`space.8`; hit
   targets to `HIT_TARGET_COUCH`.
 
-**Visual-QA checklist (raeen-visual-qa screenshots to verify):**
+**Visual-QA checklist (athena-visual-qa screenshots to verify):**
 1. Couch home renders the aggregated grid; tiles use cover-art proportions, AA text
    (not block glyphs), store badges, `space.5/6` gaps.
 2. Focus ring is unmistakable at 1:1 and at a downscaled "across-the-room" zoom;
@@ -446,7 +446,7 @@ contract):**
 6. OSK is legible, 48px keys, focus-navigable.
 7. Light-mode parity; reduced-motion (focus snaps, no carousel auto-advance).
 8. Per-game profile editor shows real fields and the values round-trip
-   (`/proc/raeen/games`).
+   (`/proc/athena/games`).
 
 **Unblocks checklist lines:** Phase 14.3 (Toggle in/out of GameOS Mode — extends the
 LIVE toggle), Phase 12.2 (controller stack — binds the LIVE HID decoder), Phase
@@ -460,7 +460,7 @@ The existing smoketest is already `[shell_runner] couch smoketest: dpad_nav=… 
 rendered=… boot_flag_default_desktop=… -> PASS`. Each phase extends a FAIL-able proof.
 
 1. **Token cohesion (first, smallest, highest fan-out).** Re-skin `gameos.rs` onto
-   `rae_tokens` + the couch ramp + AA text + focus ring. The existing render
+   `ath_tokens` + the couch ramp + AA text + focus ring. The existing render
    smoketest still passes; add accent-cohesion + token assertions.
    **Proof:** `[gameos] couch smoketest: tiles=N focus_nav=ok accent_matches_seed=ok glyphs=aa hit48=ok -> PASS`
    (FAIL if the rendered accent ≠ `derive_accent(active_seed()).base`, or any focus
@@ -471,9 +471,9 @@ rendered=… boot_flag_default_desktop=… -> PASS`. Each phase extends a FAIL-a
    keyboard-only routing). **Proof:** decode a known pad report → focus moves the
    expected direction. (host-KAT'able off the live decoder.)
 4. **Game Bar overlay.** Overlay layout + frametime graph + temps from
-   `/proc/raeen/perf`. **Proof:** `[gameos] gamebar smoketest: panels=N fps=… frametime_pts=… temps=ok -> PASS`.
+   `/proc/athena/perf`. **Proof:** `[gameos] gamebar smoketest: panels=N fps=… frametime_pts=… temps=ok -> PASS`.
 5. **Per-game profile editor + auto-apply round-trip.** Edit → `game_profile` →
-   `/proc/raeen/games` reflects it. **Proof:** profile set/get/apply round-trips.
+   `/proc/athena/games` reflects it. **Proof:** profile set/get/apply round-trips.
 6. **OSK + auto-enter triggers + cross-fade transition.** **Proof:** OSK types into
    search; toggle cross-fade present; auto-enter toast fires on simulated
    pad-connect.

@@ -1,4 +1,4 @@
-# Host harness that exercises the REAL `raeen_linuxkpi` shim logic (atomics,
+# Host harness that exercises the REAL `ath_linuxkpi` shim logic (atomics,
 # bit ops, MMIO accessors, allocators) plus a mock-MMIO driver-bring-up model,
 # on the dev host — no QEMU, no hardware. The same code the userspace driver
 # daemons (amdgpud/i915d) link against, so the harness validates real logic, not
@@ -20,11 +20,11 @@ name = "linuxkpi_harness"
 path = "main.rs"
 
 [dependencies]
-raeen_linuxkpi = { path = "../../components/raeen_linuxkpi", features = ["hosttest"] }
-rae_abi = { path = "../../components/rae_abi" }
+ath_linuxkpi = { path = "../../components/ath_linuxkpi", features = ["hosttest"] }
+ath_abi = { path = "../../components/ath_abi" }
 # The REAL amdgpu bring-up stage sequence (probe→VBIOS→GMC→IH→SMU→rings→display),
 # generic over a GpuOps trait. The harness implements GpuOps over a mock register
 # file + DMA store and replays amdgpud's ACTUAL code path — no QEMU/iron.
-raeen_amdgpu = { path = "../../components/raeen_amdgpu" }
+ath_amdgpu = { path = "../../components/ath_amdgpu" }
 
 [workspace]

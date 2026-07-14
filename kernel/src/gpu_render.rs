@@ -9,7 +9,7 @@ use alloc::collections::{BTreeMap, VecDeque};
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
-use rae_abi::drm_service as wire;
+use ath_abi::drm_service as wire;
 use spin::Mutex;
 
 const ENODEV: i64 = -19;
@@ -407,7 +407,7 @@ pub fn prepare_ioctl(task_id: u64, client_id: u64, cmd: u32, user_arg: u64) -> I
         }
     }
 
-    let resolved = match rae_render_broker::dispatch(cmd) {
+    let resolved = match ath_render_broker::dispatch(cmd) {
         Ok(spec) => spec,
         Err(error) => return IoctlAction::Complete(error.errno() as i64),
     };
@@ -527,7 +527,7 @@ pub fn prepare_ioctl(task_id: u64, client_id: u64, cmd: u32, user_arg: u64) -> I
         arg_len,
         copy_flat_out: matches!(
             resolved.copy,
-            rae_render_broker::CopyDir::Out | rae_render_broker::CopyDir::InOut
+            ath_render_broker::CopyDir::Out | ath_render_broker::CopyDir::InOut
         ),
         aux,
     };

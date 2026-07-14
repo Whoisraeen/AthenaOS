@@ -2,7 +2,7 @@
 #
 # Source: linux-firmware repo, amdgpu/ directory (gitlab.com/kernel-firmware/
 # linux-firmware). Phoenix1 is PSP 13.0.4 (NOT 13.0.8 — that's Mendocino).
-# The canonical list the daemon preflights is raeen_amdgpu::bringup::FW_PHOENIX:
+# The canonical list the daemon preflights is ath_amdgpu::bringup::FW_PHOENIX:
 #
 #   psp_13_0_4_toc.bin   psp_13_0_4_ta.bin   gc_11_0_1_imu.bin
 #   gc_11_0_1_me.bin     gc_11_0_1_pfp.bin   gc_11_0_1_mec.bin

@@ -8,7 +8,7 @@ back to `vbios/<vendor>-<device>.bin` when the expansion-ROM map fails.
 
 | File | Source | Validated |
 |---|---|---|
-| `1002-15bf.bin` | Extracted from Athena's real ACPI dump (`firmware/acpi/athena-beelink-elitemini/VFCT.dat`, captured on iron) — Radeon 760M (Phoenix1), 16896 bytes, AMD build date 09/15/23 | `55 AA` ROM sig, `ATOM` sig at hdr 0x194, byte-identity asserted by the `vfct_parses_real_athena_table` host KAT in `raeen_amdgpu::atombios` |
+| `1002-15bf.bin` | Extracted from Athena's real ACPI dump (`firmware/acpi/athena-beelink-elitemini/VFCT.dat`, captured on iron) — Radeon 760M (Phoenix1), 16896 bytes, AMD build date 09/15/23 | `55 AA` ROM sig, `ATOM` sig at hdr 0x194, byte-identity asserted by the `vfct_parses_real_athena_table` host KAT in `ath_amdgpu::atombios` |
 
 This is **machine-captured platform data** (like the ACPI and EDID dumps), not
 linux-firmware content; AMD's VBIOS ships on the device/board itself and this

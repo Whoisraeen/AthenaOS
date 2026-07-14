@@ -47,7 +47,7 @@ pub enum HardwareFamily {
 pub struct HardwareProfile {
     /// Internal identifier for the profile (e.g. `"beelink-athena"`).
     pub id: &'static str,
-    /// Human-readable description for logs and `/proc/raeen/hardware`.
+    /// Human-readable description for logs and `/proc/athena/hardware`.
     pub description: &'static str,
     pub family: HardwareFamily,
     /// Concept-doc "RaeReady" baseline match?
@@ -455,7 +455,7 @@ pub fn run_boot_smoketest() {
     }
 }
 
-// ── /proc/raeen/hardware ───────────────────────────────────────────────
+// ── /proc/athena/hardware ───────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let dmi = get_dmi();

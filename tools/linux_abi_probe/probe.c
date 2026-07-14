@@ -191,13 +191,13 @@ void probe_main(void) {
     // real binary needs to persist anything (game saves, configs, logs).
     // O_CREAT|O_WRONLY|O_TRUNC = 0x241; /tmp is the writable scratch mount
     // (tmpfs) — writable on real Linux too, so the Athena oracle validates it.
-    static const char wmsg[16] = "raeen-abi-write\n";
-    long wfd = sys6(SYS_openat, AT_FDCWD, (i64) "/tmp/raeen_abi.txt", 0x241,
+    static const char wmsg[16] = "athena-abi-write\n";
+    long wfd = sys6(SYS_openat, AT_FDCWD, (i64) "/tmp/athena_abi.txt", 0x241,
                     0644, 0, 0);
     if (wfd < 0) fail("open-w");
     if (sys6(SYS_write, wfd, (i64)wmsg, 16, 0, 0, 0) != 16) fail("write");
     (void)sys6(SYS_close, wfd, 0, 0, 0, 0, 0);
-    long rfd = sys6(SYS_openat, AT_FDCWD, (i64) "/tmp/raeen_abi.txt", 0, 0, 0, 0);
+    long rfd = sys6(SYS_openat, AT_FDCWD, (i64) "/tmp/athena_abi.txt", 0, 0, 0, 0);
     if (rfd < 0) fail("reopen");
     unsigned char vbuf[32];
     long rn = sys6(SYS_read, rfd, (i64)vbuf, sizeof(vbuf), 0, 0, 0);

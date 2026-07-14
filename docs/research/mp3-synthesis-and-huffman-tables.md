@@ -1,6 +1,6 @@
 # Spec: MP3 Layer III — polyphase synthesis filterbank + remaining Huffman tables
 
-Authoritative data spec to make `.mp3` **audible** in `raemedia`. The DSP math already
+Authoritative data spec to make `.mp3` **audible** in `athmedia`. The DSP math already
 landed and is host-KAT'd (commit `c5100db`: requant, IMDCT, overlap-add, MS-stereo, alias
 reduction, reorder, Huffman tables {1,2,3,5,6,7,8,10}). Two data gaps remain — both supplied
 here, both with a verification method. The implementer does **not** invent values: they
@@ -12,7 +12,7 @@ already does.
 
 > "AthenaOS ships a media stack that just plays the files people actually have — music, video,
 > photos — out of the box, with no codec hunts and no bundled spyware."
-> (LEGACY_GAMING_CONCEPT.md, Media / "it just works" pillar — the same line `raemedia/src/lib.rs`
+> (LEGACY_GAMING_CONCEPT.md, Media / "it just works" pillar — the same line `athmedia/src/lib.rs`
 > quotes in its module docstring for FLAC/WAV/MP3.)
 
 MP3 is the single most common consumer audio container in existence; "plays the files people
@@ -24,25 +24,25 @@ landed hybrid-filterbank output and PCM you can hear.
 The whole entropy + DSP path is **built and host-KAT'd** — do **not** rebuild it. Only the two
 data deltas below are missing.
 
-- `components/raemedia/src/mp3.rs` — header/side-info parse, bit reservoir, `BitReader`,
+- `components/athmedia/src/mp3.rs` — header/side-info parse, bit reservoir, `BitReader`,
   `huff_table()`, `decode_huff_pair()` (incl. linbits + sign), `decode_count1_quad()`,
   `decode_huffman_region()`. **[x] built.** `huff_table()` returns `Invalid` for any table not
   in {0,1,2,3,5,6,7,8,10}; `decode_count1_quad()` returns `Invalid` for `count1table_select==0`
   (table A). These two `Invalid` branches are exactly what this spec retires.
-- `components/raemedia/src/mp3_tables.rs` — landed Huffman tables `T1,T2,T3,T5,T6,T7,T8,T10`
+- `components/athmedia/src/mp3_tables.rs` — landed Huffman tables `T1,T2,T3,T5,T6,T7,T8,T10`
   (the `he!(code,len,x,y)` format), `VERIFIED_HUFF_TABLES = [0,1,2,3,5,6,7,8,10]`, sfb-band
   tables (all 9 rates), `SLEN_MPEG1`, `PRETAB`. **[x] built.**
-- `components/raemedia/src/mp3_dsp.rs` — `decode_scalefactors`, `requantize` (no-libm cbrt +
+- `components/athmedia/src/mp3_dsp.rs` — `decode_scalefactors`, `requantize` (no-libm cbrt +
   `pow2_quarter`), `reorder`, `stereo` (MS done; intensity deferred), `alias_reduce`, `imdct`
   (long/short/start/stop + freq-inversion + overlap-add via `ChannelState`). **[x] built and
   host-KAT'd.** Its module docstring explicitly names the polyphase synthesis filterbank as the
   one remaining deferred stage that this spec supplies.
-- `components/raemedia/src/mp3_imdct_tables.rs` — `IMDCT_LONG[36][18]`, `IMDCT_SHORT[12][6]`,
+- `components/athmedia/src/mp3_imdct_tables.rs` — `IMDCT_LONG[36][18]`, `IMDCT_SHORT[12][6]`,
   `WIN0..WIN3` as `const` cosine tables computed at table-build (sin/cos used only on the host
   at gen time). **[x] built.** This is the exact precedent for the synthesis cosine matrix:
   the new `N[64][32]` either reuses this generator or is computed once at runtime init (see
   Design §1; runtime compute is allowed because it is one-time, not per-frame).
-- `components/raemedia/src/lib.rs` — `Mp3Decoder`, `run_dsp_granule()` (returns the
+- `components/athmedia/src/lib.rs` — `Mp3Decoder`, `run_dsp_granule()` (returns the
   hybrid-filterbank output `[ch][576]`), `decode_hybrid_frame()` (runs the full real path), and
   the `Decoder::decode()` impl that currently emits **geometry-correct silence** because the
   subband output is dropped pre-synthesis (lib.rs ~L2486-2495). **[x] built**; this is the call
@@ -154,15 +154,15 @@ For `ss` in `0..18`:
    ```
 
 **Output scaling & clamp.** The D[] values are scaled so `acc` is already in roughly [-1, 1]
-float PCM. For an `f32` `AudioFrame` (raemedia's native sample format — see `AudioFrame`),
+float PCM. For an `f32` `AudioFrame` (athmedia's native sample format — see `AudioFrame`),
 emit `acc` directly, then hard-clamp to `[-1.0, 1.0]`. For an i16 path, `samp = round(acc *
 32767.0)` then clamp to `[-32767, 32767]` (note: 32767, not 32768 — the reference clamps
-symmetrically). Match whatever `AudioFrame.samples` expects; raemedia uses `f32`, so the f32
+symmetrically). Match whatever `AudioFrame.samples` expects; athmedia uses `f32`, so the f32
 clamp is the path. Do NOT add any extra gain; the D[] table carries the full filterbank gain.
 
 **Frame assembly.** Run synthesis for **both granules** of the frame and both channels; the
 576 samples/granule concatenate to 1152/channel/frame. Interleave to the `AudioFrame` channel
-layout the resampler/remixer expect (raemedia stores planar-per-channel `Vec<f32>` today; keep
+layout the resampler/remixer expect (athmedia stores planar-per-channel `Vec<f32>` today; keep
 that — one `Vec<f32>` of length `granules*576` per channel).
 
 **Failure modes / untrusted-input discipline (match the existing path):** every index above is
@@ -425,7 +425,7 @@ After the generator emits these, the implementer must:
 
 ## Interface needs (NEEDS-INTERFACE)
 
-**None.** This is entirely inside the `raemedia` userspace crate — no new syscall, no `rae_abi`
+**None.** This is entirely inside the `athmedia` userspace crate — no new syscall, no `ath_abi`
 change, no kernel ABI surface. The decoder already returns `AudioFrame` through the existing
 `Decoder` trait; only the *contents* go from silence to real PCM.
 
@@ -433,19 +433,19 @@ change, no kernel ABI surface. The decoder already returns `AudioFrame` through 
 
 - `tools/mp3_huff_gen/gen.rs` — add the 7 `Tab{}` rows from §2 to `tables()`. Run it; confirm
   `All N tables verified prefix-free.`; it rejects any transcription typo.
-- `components/raemedia/src/mp3_tables.rs` — paste the generator output (`pub static T9, T11,
+- `components/athmedia/src/mp3_tables.rs` — paste the generator output (`pub static T9, T11,
   T12, T13, T15, T16, T24`); extend `VERIFIED_HUFF_TABLES`.
-- `components/raemedia/src/mp3_imdct_tables.rs` — add `pub static SYNTH_D: [f32; 512]` (§1.D)
+- `components/athmedia/src/mp3_imdct_tables.rs` — add `pub static SYNTH_D: [f32; 512]` (§1.D)
   and `pub static SYNTH_N: [[f32; 32]; 64]` (if using the build-time `const` matrix, option a).
   If option (b), no table here; compute N at init instead.
-- `components/raemedia/src/mp3.rs` — add the 5 simple + 16 linbits-sharing match arms to
+- `components/athmedia/src/mp3.rs` — add the 5 simple + 16 linbits-sharing match arms to
   `huff_table()`; replace the count1 table-A `Invalid` branch in `decode_count1_quad()` with the
   16-entry table-A lookup from §2.
-- `components/raemedia/src/mp3_dsp.rs` — add `v_fifo: [f32; 1024]` to `ChannelState` (+ zero it
+- `components/athmedia/src/mp3_dsp.rs` — add `v_fifo: [f32; 1024]` to `ChannelState` (+ zero it
   in `new()`); add `pub fn synthesis(sb: &[[f32;18];32], state: &mut ChannelState, pcm_out: &mut
   [f32; 576])` implementing §1 steps 1-6, with the Concept-promise docstring and a
   `run_boot_smoketest`-able pure entry point.
-- `components/raemedia/src/lib.rs` — in `Mp3Decoder`, after `run_dsp_granule` produces the
+- `components/athmedia/src/lib.rs` — in `Mp3Decoder`, after `run_dsp_granule` produces the
   subband output, call `mp3_dsp::synthesis` per granule/channel and write the resulting PCM into
   the `AudioFrame` instead of the geometry-correct silence at ~L2486-2495. Add the host-KAT
   module asserts (Verification §A/§C) to the existing `#[cfg(test)]` block.
@@ -455,7 +455,7 @@ change, no kernel ABI surface. The decoder already returns `AudioFrame` through 
 - **Prefix-free generator gate (cheapest, run first):** `rustc -O tools/mp3_huff_gen/gen.rs &&
   ./gen 2>&1` MUST print `All N tables verified prefix-free.` (N rises from 8 to 15) and MUST
   exit 0. A bad transcription prints `FAIL T<k>: ...` and exits 1.
-- **Host KAT — Huffman round-trip (FAIL-able):** `cargo test -p raemedia mp3_huff` MUST pass a
+- **Host KAT — Huffman round-trip (FAIL-able):** `cargo test -p athmedia mp3_huff` MUST pass a
   `mp3_huff_tables_prefix_free` that now iterates selects `0..=31` and asserts every codebook in
   `VERIFIED_HUFF_TABLES` is prefix-free, AND a new `mp3_huff_decodes_known_codeword` that feeds a
   hand-built bitstream of one known codeword from T13/T16/T24 and asserts the exact `(x,y)` pair
@@ -475,15 +475,15 @@ change, no kernel ABI surface. The decoder already returns `AudioFrame` through 
   the first 1152 samples/channel. This is the single assert that proves "audible and correct,"
   not just "non-silent."
 - **Boot smoketest line:** `run_boot_smoketest()` for the MP3 path MUST emit
-  `[raemedia] mp3 synth: frames=<n> peak=<f> nonsilent=<bool> -> PASS` (FAIL if a decoded known
+  `[athmedia] mp3 synth: frames=<n> peak=<f> nonsilent=<bool> -> PASS` (FAIL if a decoded known
   clip is silent or peak is 0). This is the serial marker to grep.
-- **procfs:** `/proc/raeen/media` (or the raemedia status line, wherever the crate already
+- **procfs:** `/proc/athena/media` (or the athmedia status line, wherever the crate already
   reports) MUST report `mp3=audible` (was `mp3=hybrid-silent`) once synthesis is wired.
 - **Docstring:** `mp3_dsp::synthesis` MUST quote the Concept promise at the top of this spec.
 
 ## Handoff
 
-- **Implementer: raeen-media.** This is pure `raemedia` userspace work; no kernel/ABI touch.
+- **Implementer: athena-media.** This is pure `athmedia` userspace work; no kernel/ABI touch.
 - **Unblocks checklist lines:** the MP3 rows under media / Phase-7 audio in `MasterChecklist.md`
   (`.mp3` decode `[~] hybrid-silent` → `[~] audible (QEMU/host)` → `[x]` on iron HDA), and feeds
   the Phase-2.6/7 "real HDA PCM playback of a user file" goal (the HDA path already plays

@@ -2363,7 +2363,7 @@ pub fn run_amd_temp_selftest() {
     );
 }
 
-/// Render thermal state for `/proc/raeen/thermal`.
+/// Render thermal state for `/proc/athena/thermal`.
 pub fn dump_text() -> String {
     let mut out = String::new();
     out.push_str("=== Thermal (Phase 4.7) ===\n");

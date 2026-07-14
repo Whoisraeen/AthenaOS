@@ -2,7 +2,7 @@
 //!
 //! Concept §Architecture: "drivers (IOMMU-sandboxed)" run in user-space. This module
 //! is the "great deception" layer: it lets a Linux driver (`amdgpu`, `iwlwifi`, …),
-//! compiled as a userspace daemon against `components/raeen_linuxkpi`, believe it is
+//! compiled as a userspace daemon against `components/ath_linuxkpi`, believe it is
 //! running inside the Linux kernel with Ring-0 privileges. Every privileged call
 //! (`ioremap`, `dma_alloc_coherent`, `request_irq`, PCI config) is intercepted and
 //! translated into native AthKernel primitives:
@@ -20,7 +20,7 @@
 //! descriptor addresses). The actual payload (textures, packets) lives in shared
 //! frames the app writes directly — the host copies zero bytes.
 //!
-//! R10 contract: `init()` + `run_boot_smoketest()` + `/proc/raeen/linuxkpi` + this docstring.
+//! R10 contract: `init()` + `run_boot_smoketest()` + `/proc/athena/linuxkpi` + this docstring.
 //!
 //! ## Syscalls (block 23, LinuxKPI)
 //!
@@ -351,7 +351,7 @@ pub fn sys_printk(
 // ── Phase 2: PCI enumeration + BAR mapping (ioremap) ──────────────────────────
 
 /// `pci_enable_device` equivalent. The daemon presents either a packed BDF or,
-/// with `rae_abi::syscall::LINUXKPI_PCI_MATCH` (bit 63) set, a class+vendor
+/// with `ath_abi::syscall::LINUXKPI_PCI_MATCH` (bit 63) set, a class+vendor
 /// match spec (bits 16-23 = class, bits 0-15 = vendor, 0 = any vendor) that the
 /// host resolves against its PCI table — Linux drivers bind by id match, not by
 /// fixed BDF, so this is what lets amdgpud find the GPU at 00:01.0 on QEMU and
@@ -362,7 +362,7 @@ pub fn sys_printk(
 /// MasterChecklist Phase 6: "AMDGPU/Intel i915 DRM-equivalent driver hosted in
 /// userspace driver framework."
 pub fn lkpi_pci_enable(packed_bdf: u64) -> u64 {
-    let packed_bdf = if packed_bdf & rae_abi::syscall::LINUXKPI_PCI_MATCH != 0 {
+    let packed_bdf = if packed_bdf & ath_abi::syscall::LINUXKPI_PCI_MATCH != 0 {
         let want_class = ((packed_bdf >> 16) & 0xFF) as u8;
         let want_vendor = (packed_bdf & 0xFFFF) as u16;
         let found = crate::pci::enumerate()
@@ -1415,7 +1415,7 @@ pub fn run_boot_smoketest() {
     // still proves the path runs without panic — drivers get a graceful
     // E_NO_FIRMWARE rather than a hang. The map-into-daemon step reuses the
     // dma_alloc mapping path already proven above.
-    let fw_probe = match crate::linux_compat::request_firmware("raeen-selftest.bin") {
+    let fw_probe = match crate::linux_compat::request_firmware("athena-selftest.bin") {
         Ok(f) => {
             crate::serial_println!("[linuxkpi] request_firmware probe: found {} bytes", f.size);
             "found"

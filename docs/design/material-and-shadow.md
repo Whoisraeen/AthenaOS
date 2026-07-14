@@ -2,7 +2,7 @@
 
 > *"Built for people who care about how things feel."* — LEGACY_GAMING_CONCEPT.md
 >
-> This spec exists because raeen-visual-qa found the single biggest "looks basic,
+> This spec exists because athena-visual-qa found the single biggest "looks basic,
 > not premium" signal in the whole UI: the drop shadow renders as a **hard,
 > opaque, blue, offset duplicate rectangle**, not a soft ambient shadow. It is
 > systemic — it hits *every* `elev.*` surface (windows, Start, flyouts, toasts,
@@ -39,7 +39,7 @@ Pixel measurements on a clean OOBE frame (`zoom-shadow-corner-3x.png`):
   to a constant, OR the surface is drawing its own flat offset rect instead of
   calling `compositor::render_drop_shadow`.
 
-Two root causes to chase (raeen-gfx):
+Two root causes to chase (athena-gfx):
 1. **Is `render_drop_shadow` even invoked for this surface?** If the OOBE card /
    window draws its own offset rect, delete that and route through the compositor
    `SurfaceEffect::DropShadow`.
@@ -90,7 +90,7 @@ the surface's alpha mask, composited under the surface.*
 ### Acceptance: the penumbra test
 A correct `elev.4` shadow, sampled along a line crossing the card's bottom edge
 outward, shows alpha **monotonically decreasing from ~40% to 0 over ~40px** — a
-smooth ramp, not a flat band then a step. raeen-visual-qa proves this with a pixel
+smooth ramp, not a flat band then a step. athena-visual-qa proves this with a pixel
 sample line (the same method that caught the defect).
 
 ---
@@ -108,7 +108,7 @@ Two `material.glass` details visual-QA flagged as systemic chrome rules:
    finding #2: title/subtitle/labels were rendering blue). Accent is reserved for
    interactive fills, selection, and focus. This is a draw-time rule for every
    surface, enforced by reading text color from `text.*`, not `accent.*`. (This
-   half is a raeen-ui / raeen-shell-apps fix at the call sites, not a compositor
+   half is a athena-ui / athena-shell-apps fix at the call sites, not a compositor
    fix — flagged here because it's the same "looks basic" cluster.)
 
 ---
@@ -146,22 +146,22 @@ the blur math that makes this soft *already exists three functions away*.
 ## Handoff
 
 ### Implementers
-- **raeen-gfx (PRIMARY):** rewrite `compositor::render_drop_shadow` to the
+- **athena-gfx (PRIMARY):** rewrite `compositor::render_drop_shadow` to the
   blur-silhouette algorithm — rounded alpha mask → constant shadow color → 3-pass
   box blur by `radius` → offset → composite-under. Kill any backdrop color
   sampling (the blue). Make `elev.focus` an additive `accent.glow` glow. Audit
   every surface that draws its own offset rect (OOBE card, `window_chrome.rs`) and
   route them through `SurfaceEffect::DropShadow` instead.
-- **raeen-ui / raeen-shell-apps:** the chrome-color-restraint half — fix call
+- **athena-ui / athena-shell-apps:** the chrome-color-restraint half — fix call
   sites that color static labels/headings with `accent.*`; read text color from
   `text.*`. (OOBE card title/subtitle/labels first; then audit Settings group
   headers, Files metadata, every label.)
-- **raeen-accessibility (flagged):** the neutral-label fix must still clear AA —
+- **athena-accessibility (flagged):** the neutral-label fix must still clear AA —
   `text.secondary` ≥ 4.5:1 on the light card bg; the focus glow + ring must be the
   a11y-required visible focus (glow alone is insufficient for low-vision; the 2px
   ring is the contract).
 
-### On-screen / boot-log evidence (raeen-visual-qa + smoketests)
+### On-screen / boot-log evidence (athena-visual-qa + smoketests)
 - **The penumbra test:** screenshot of the OOBE card (or any `elev.4` surface)
   with a pixel-sample line across the bottom edge proving a smooth ~40px alpha
   ramp from ~40%→0, near-black (not blue). This is the headline proof.

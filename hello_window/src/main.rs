@@ -2,9 +2,9 @@
 #![no_main]
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
-use raegfx::Canvas;
+use athgfx::Canvas;
 
 const SURFACE_VIRT: u64 = 0x0000_8888_0000;
 const WIN_W: usize = 400;
@@ -12,9 +12,9 @@ const WIN_H: usize = 250;
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    let id = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let id = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if id == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
 
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
@@ -53,9 +53,9 @@ pub extern "C" fn _start() -> ! {
         canvas.draw_pixel(WIN_W - 1, y, 0xFF475569);
     }
 
-    raekit::sys::surface_present(id, 200, 150);
+    athkit::sys::surface_present(id, 200, 150);
 
     loop {
-        raekit::sys::yield_now();
+        athkit::sys::yield_now();
     }
 }

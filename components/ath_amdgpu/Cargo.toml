@@ -1,0 +1,16 @@
+# ath_amdgpu — pure, dependency-free AMD GPU command/ROM logic for the
+# userspace amdgpud driver. PM4 (PKT3) command-stream builders, ATOMBIOS ROM
+# parsing, and the GC 11.0.1 (Phoenix / Radeon 780M) register map. Kept free of
+# the syscall/LinuxKPI shim so it builds on the host and the encodings are
+# validated with `cargo test -p ath_amdgpu` (the host-KAT pattern), not only
+# on iron.
+[package]
+name = "ath_amdgpu"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "AMD GPU PM4 command builders + ATOMBIOS parser + GC 11.0.1 register map (host-testable, no_std)."
+
+[dependencies]

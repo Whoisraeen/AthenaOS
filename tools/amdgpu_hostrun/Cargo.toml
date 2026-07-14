@@ -2,7 +2,7 @@
 # Year-1 real-GPU-submit path; GPU campaign M1.x diagnostics).
 #
 # Links the exact merged C object graph amdgpud carries on iron
-# (linuxkpi-drm/m4c-link.sh, HOST mode) against the exact raeen_linuxkpi shim,
+# (linuxkpi-drm/m4c-link.sh, HOST mode) against the exact ath_linuxkpi shim,
 # with the shim's syscall seam backed by a functional Linux-host implementation
 # (`hostrun` feature): mmap-backed BARs/carveouts, file-backed request_firmware,
 # stderr printk. `amdgpu_device_init` then runs AS A NORMAL LINUX PROCESS on the
@@ -28,7 +28,7 @@ name = "amdgpu_hostrun"
 path = "main.rs"
 
 [dependencies]
-raeen_linuxkpi = { path = "../../components/raeen_linuxkpi", features = ["hostrun"] }
-rae_abi = { path = "../../components/rae_abi" }
+ath_linuxkpi = { path = "../../components/ath_linuxkpi", features = ["hostrun"] }
+ath_abi = { path = "../../components/ath_abi" }
 
 [workspace]

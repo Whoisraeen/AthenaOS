@@ -7,7 +7,7 @@ authors.workspace = true
 repository.workspace = true
 
 # Library target: the app's state + draw path + the syscall-free SYNC MODEL
-# (`SyncApp`) so a host KAT can link the LIVE zero-knowledge `raesync` E2E core
+# (`SyncApp`) so a host KAT can link the LIVE zero-knowledge `athsync` E2E core
 # (device enroll, group-key wrap/unwrap, SyncBlob encrypt/decrypt, LWW-register
 # CRDT merge) with NO kernel and NO network — the same structure apps/vpn,
 # apps/mail and apps/browser use.
@@ -26,22 +26,22 @@ path = "src/main.rs"
 test = false
 
 [features]
-# Forwards to `raekit/host`: lets the std `cargo test` harness link `sync`
-# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# Forwards to `athkit/host`: lets the std `cargo test` harness link `sync`
+# (-> `athkit`) without athkit's bare-ELF lang items colliding with std (E0152
 # duplicate panic_impl). The normal `cargo build -p sync --target
 # x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
 # with `cargo test -p sync --features host`.
-host = ["raekit/host"]
+host = ["athkit/host"]
 
 [dependencies]
-raegfx = { path = "../../components/raegfx" }
-raekit = { path = "../../components/raekit" }
-rae_tokens = { path = "../../components/rae_tokens" }
+athgfx = { path = "../../components/athgfx" }
+athkit = { path = "../../components/athkit" }
+ath_tokens = { path = "../../components/ath_tokens" }
 # The LIVE, already-host-KAT'd zero-knowledge sync core: ed25519+x25519 device
 # identities, per-device wrapped group keys (ECDH+HKDF+AEAD), the AEAD+ed25519
 # `SyncBlob` envelope (all the server ever sees), and the LWW-register CRDT with
 # deterministic convergence. This app is the clickable shell over it. The crate
-# opens NO sockets and has NO raenet dep — the live transport is a
+# opens NO sockets and has NO athnet dep — the live transport is a
 # `cfg(not(test))` wrapper the host KAT never links, so the host proof needs no
 # network.
-raesync = { path = "../../components/raesync" }
+athsync = { path = "../../components/athsync" }

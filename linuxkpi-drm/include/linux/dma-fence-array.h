@@ -4,7 +4,7 @@
  *
  * A composite fence that signals when an array of child fences all signal.
  * amdgpu uses it in the VM/sync paths. The type must be laid out for the
- * container_of accessors; the ops are backed by raeen_linuxkpi's fence facade at
+ * container_of accessors; the ops are backed by ath_linuxkpi's fence facade at
  * M4. License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_DMA_FENCE_ARRAY_H
@@ -41,7 +41,7 @@ static inline struct dma_fence_array *to_dma_fence_array(struct dma_fence *fence
 	return (struct dma_fence_array *)fence;
 }
 
-/* construction/iteration — backed by raeen_linuxkpi (M4) */
+/* construction/iteration — backed by ath_linuxkpi (M4) */
 struct dma_fence_array *dma_fence_array_create(int num_fences, struct dma_fence **fences,
 					       u64 context, unsigned int seqno, bool signal_on_any);
 struct dma_fence *dma_fence_array_first(struct dma_fence *head);

@@ -5,7 +5,7 @@
  * The sysfs object base. amdgpu embeds `struct kobject` BY VALUE in its xcp/ras
  * sysfs nodes, so the type must be fully defined for layout. The refcount is a
  * real kref; the sysfs registration (kobject_add/init_and_add) is backed by
- * raeen_linuxkpi at M4. License boundary (../../README.md): API surface.
+ * ath_linuxkpi at M4. License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_KOBJECT_H
 #define _LINUXKPI_LINUX_KOBJECT_H
@@ -44,7 +44,7 @@ struct sysfs_ops {
 };
 
 /* the default kobject sysfs ops the kernel exports (amdgpu's IP-discovery ksets
- * point their ktype at it). Backed by raeen_linuxkpi at M4. */
+ * point their ktype at it). Backed by ath_linuxkpi at M4. */
 extern const struct sysfs_ops kobj_sysfs_ops;
 
 struct kset_uevent_ops;
@@ -55,12 +55,12 @@ struct kset {
 	const struct kset_uevent_ops *uevent_ops;
 };
 
-/* kset registration — backed by raeen_linuxkpi (M4) */
+/* kset registration — backed by ath_linuxkpi (M4) */
 struct kset *kset_create_and_add(const char *name, const struct kset_uevent_ops *u, struct kobject *parent);
 int  kset_register(struct kset *kset);
 void kset_unregister(struct kset *kset);
 
-/* registration / lifetime — backed by raeen_linuxkpi (M4) */
+/* registration / lifetime — backed by ath_linuxkpi (M4) */
 void  kobject_init(struct kobject *kobj, const struct kobj_type *ktype);
 int   kobject_add(struct kobject *kobj, struct kobject *parent, const char *fmt, ...);
 int   kobject_init_and_add(struct kobject *kobj, const struct kobj_type *ktype,

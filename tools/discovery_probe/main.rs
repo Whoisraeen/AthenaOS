@@ -1,12 +1,12 @@
 //! discovery_probe — validate a captured amdgpu IP-discovery blob OFF-TARGET.
 //!
 //! Reads `firmware/amdgpu/ip_discovery.bin` (or an argv path), runs the kernel's
-//! exact parser (`raeen_amdgpu::discovery::parse_checked`) + SOC15 offset
-//! resolvers (`raeen_amdgpu::regs::*`) on the host, and prints the parsed IP
+//! exact parser (`ath_amdgpu::discovery::parse_checked`) + SOC15 offset
+//! resolvers (`ath_amdgpu::regs::*`) on the host, and prints the parsed IP
 //! blocks + the absolute register offsets the driver will use on iron. Proves the
 //! firmware-file discovery path will go ACTIVE before flashing the Athena.
 
-use raeen_amdgpu::{discovery, regs};
+use ath_amdgpu::{discovery, regs};
 use std::fs;
 
 fn main() {

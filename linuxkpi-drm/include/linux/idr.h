@@ -5,7 +5,7 @@
  * Integer-ID allocator (IDR) and the lighter ID allocator (IDA), layered on the
  * xarray. DRM uses IDR for object handle->pointer maps; amdgpu uses IDA for ctx
  * and pasid ids. `idr_init*` is a pure reset (inlined); the alloc/find/remove
- * data ops are backed by raeen_linuxkpi at M4 (a fake that handed out colliding
+ * data ops are backed by ath_linuxkpi at M4 (a fake that handed out colliding
  * or never-freed ids would corrupt the handle space — SCOPE.md rule 9). License
  * boundary (../../README.md): API surface only.
  */
@@ -28,7 +28,7 @@ static inline void idr_init_base(struct idr *idr, int base) { xa_init_flags(&idr
 static inline void idr_init(struct idr *idr) { idr_init_base(idr, 0); }
 static inline bool idr_is_empty(const struct idr *idr) { return xa_empty(&idr->idr_rt); }
 
-/* data ops — backed by raeen_linuxkpi (M4) */
+/* data ops — backed by ath_linuxkpi (M4) */
 int   idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp);
 int   idr_alloc_cyclic(struct idr *idr, void *ptr, int start, int end, gfp_t gfp);
 void *idr_remove(struct idr *idr, unsigned long id);

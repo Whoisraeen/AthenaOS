@@ -4,7 +4,7 @@
  *
  * Sequential-file output (debugfs/procfs dumps). amdgpu's ring/fence/ib info
  * handlers write through seq_printf. Debug-output path, out of the MES bring-up
- * subset; the writers are backed by raeen_linuxkpi at M4 (the daemon's /proc/raeen
+ * subset; the writers are backed by ath_linuxkpi at M4 (the daemon's /proc/athena
  * surface). License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_SEQ_FILE_H

@@ -2,7 +2,7 @@
 //!
 //! All the app (vault model, draw path, syscall wiring, the host-KAT'd
 //! `VaultModel`) lives in the `passwords` LIBRARY crate (`src/lib.rs`) so a host
-//! test can link it and exercise the LIVE rae_keychain + rae_otp engines with no
+//! test can link it and exercise the LIVE ath_keychain + ath_otp engines with no
 //! kernel. This bin is just the freestanding `_start` that hands control to
 //! `passwords::run()`.
 

@@ -16,13 +16,13 @@
 //      boot_hpet) without re-polling the RTC (slow + can stall on
 //      update-in-progress).
 //   3. Exposes seconds_since_epoch_now() for callers + dump_text() for
-//      /proc/raeen/rtc.
+//      /proc/athena/rtc.
 //
 // What this is NOT:
 //   • A time-of-day timezone handler. Wall clock returned is UTC iff
 //     the RTC is in UTC, otherwise local. Real world: 50/50. We log
 //     the raw reading and let userspace apply the timezone.
-//   • A NTP client. That belongs in raenet userspace.
+//   • A NTP client. That belongs in athnet userspace.
 
 #![allow(dead_code)]
 
@@ -363,7 +363,7 @@ pub fn dump_text() -> alloc::string::String {
     use alloc::string::String;
     // Compute the current epoch FIRST: seconds_since_epoch_now() locks RTC
     // internally, so calling it while holding the lock below would re-enter the
-    // spin::Mutex and deadlock the core (this froze the /proc/raeen/rtc boot
+    // spin::Mutex and deadlock the core (this froze the /proc/athena/rtc boot
     // dump deterministically once earlier blockers were cleared).
     let now_s = seconds_since_epoch_now();
     let s = RTC.lock();

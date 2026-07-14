@@ -6,7 +6,7 @@
  * paths under mutexes (the GMC, PSP, SMU, ring-mux locks). This is a REAL mutex
  * (atomic acquire/release giving genuine exclusion — not a no-op fake, SCOPE.md
  * rule 9). It busy-acquires here for self-containment; M5 may swap the body to
- * raeen_linuxkpi's blocking mutex so long holds (firmware load) don't spin a core.
+ * ath_linuxkpi's blocking mutex so long holds (firmware load) don't spin a core.
  * No signals interrupt the daemon's init, so the _interruptible/_killable
  * variants honestly always acquire (return 0). License boundary: API surface.
  */

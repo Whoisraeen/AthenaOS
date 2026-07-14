@@ -4,7 +4,7 @@
  *
  * Augmented red-black interval tree. amdgpu's VM tracks mapped address ranges in
  * one. The node embeds an rb_node (real layout); the insert/remove/iterate ops
- * are backed by raeen_linuxkpi at M4 (a fake tree would lose range overlaps —
+ * are backed by ath_linuxkpi at M4 (a fake tree would lose range overlaps —
  * SCOPE.md rule 9). License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_INTERVAL_TREE_H

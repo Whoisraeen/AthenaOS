@@ -4,7 +4,7 @@
  *
  * IOMMU domain query. amdgpu checks whether its device sits behind an
  * IDENTITY (passthrough) vs translated IOMMU domain to decide GART/DMA setup.
- * The query is backed by raeen_linuxkpi's IOMMU facade (P4) at M4 (it reports the
+ * The query is backed by ath_linuxkpi's IOMMU facade (P4) at M4 (it reports the
  * real domain the daemon's device is in); the type/consts are the layout surface.
  * License boundary (../../README.md): API surface, no GPL source.
  */
@@ -25,7 +25,7 @@ struct iommu_domain {
 	void        *priv;
 };
 
-/* domain query + map — backed by raeen_linuxkpi's IOMMU facade (M4) */
+/* domain query + map — backed by ath_linuxkpi's IOMMU facade (M4) */
 struct iommu_domain *iommu_get_domain_for_dev(struct device *dev);
 bool iommu_present(const void *bus);
 int  iommu_map(struct iommu_domain *domain, unsigned long iova, phys_addr_t paddr, size_t size, int prot, gfp_t gfp);

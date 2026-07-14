@@ -5,7 +5,7 @@
  * The kernel<->user copy boundary. amdgpu uses copy_from_user/copy_to_user in its
  * ioctl handlers (mostly the ioctl path, peripheral to MES bring-up). In the
  * AthenaOS daemon model the "user" is the guest app across a capability IPC; the
- * copies are backed by raeen_linuxkpi at M4 (a fake that did not actually copy
+ * copies are backed by ath_linuxkpi at M4 (a fake that did not actually copy
  * would silently corrupt every ioctl arg; SCOPE.md rule 9). License boundary
  * (../../README.md): API surface.
  */

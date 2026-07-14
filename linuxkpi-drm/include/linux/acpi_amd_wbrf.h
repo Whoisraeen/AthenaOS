@@ -5,7 +5,7 @@
  * AMD WBRF (Wifi Band RF Filtering) — an ACPI interface for the GPU/SMU to tell
  * the Wi-Fi stack which frequency bands to avoid (RFI mitigation). Out of the MES
  * bring-up subset (SCOPE.md). The SMU header includes it for the notifier/range
- * types; the register/notify ops are backed by raeen_linuxkpi at M4 if WBRF is
+ * types; the register/notify ops are backed by ath_linuxkpi at M4 if WBRF is
  * ever in scope. License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_ACPI_AMD_WBRF_H
@@ -32,7 +32,7 @@ enum wbrf_notifier_actions {
 	WBRF_CHANGED,
 };
 
-/* WBRF ops — backed by raeen_linuxkpi (M4) if brought into scope */
+/* WBRF ops — backed by ath_linuxkpi (M4) if brought into scope */
 bool wbrf_supported_producer(struct device *dev);
 int  wbrf_register_notifier(struct notifier_block *nb);
 int  wbrf_unregister_notifier(struct notifier_block *nb);

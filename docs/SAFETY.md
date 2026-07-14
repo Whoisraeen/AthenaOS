@@ -23,7 +23,7 @@ AthGuard is the safety and capability plane of AthenaOS. It dominates AthMind go
 ## Mapping to inherited code
 
 - Product face: `components/athguard/`
-- Capability engine today: `components/raeshield/` (AthGuard lineage)
+- Capability engine today: `components/athshield/` (AthGuard lineage)
 - Kernel enforcement: capability checks on privileged syscalls (inherited AthKernel / AthKernel path)
 
 ## Consent and ownership

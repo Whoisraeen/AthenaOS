@@ -127,10 +127,10 @@ pub fn check(rip: u64) -> Option<u64> {
 // ═══════════════════════════════════════════════════════════════════════════
 //
 // One small function, with three exported labels:
-//   _raeen_copy_user_movsb        — entry, called from Rust
-//   _raeen_copy_user_movsb_start  — first instruction of the rep movsb
-//   _raeen_copy_user_movsb_end    — first instruction AFTER the rep movsb
-//   _raeen_copy_user_movsb_fixup  — recovery point reached on page fault
+//   _athena_copy_user_movsb        — entry, called from Rust
+//   _athena_copy_user_movsb_start  — first instruction of the rep movsb
+//   _athena_copy_user_movsb_end    — first instruction AFTER the rep movsb
+//   _athena_copy_user_movsb_fixup  — recovery point reached on page fault
 //
 // Sys V ABI: rdi=src, rsi=dst, rdx=len. Returns u64 in rax (0 = OK, 1 = fault).
 //
@@ -140,19 +140,19 @@ pub fn check(rip: u64) -> Option<u64> {
 
 core::arch::global_asm!(
     ".text",
-    ".global _raeen_copy_user_movsb",
-    ".global _raeen_copy_user_movsb_start",
-    ".global _raeen_copy_user_movsb_end",
-    ".global _raeen_copy_user_movsb_fixup",
-    "_raeen_copy_user_movsb:",
+    ".global _athena_copy_user_movsb",
+    ".global _athena_copy_user_movsb_start",
+    ".global _athena_copy_user_movsb_end",
+    ".global _athena_copy_user_movsb_fixup",
+    "_athena_copy_user_movsb:",
     "    mov rcx, rdx",  // count → rcx
     "    xchg rsi, rdi", // movsb wants rsi=src, rdi=dst; we got rdi=src, rsi=dst
-    "_raeen_copy_user_movsb_start:",
+    "_athena_copy_user_movsb_start:",
     "    rep movsb",
-    "_raeen_copy_user_movsb_end:",
+    "_athena_copy_user_movsb_end:",
     "    xor rax, rax", // success: return 0
     "    ret",
-    "_raeen_copy_user_movsb_fixup:",
+    "_athena_copy_user_movsb_fixup:",
     "    mov rax, 1", // fault: return 1
     "    ret",
 );
@@ -166,35 +166,35 @@ core::arch::global_asm!(
 // `cpu_features::enable_smap`'s ordering contract).
 core::arch::global_asm!(
     ".text",
-    ".global _raeen_copy_user_movsb_smap",
-    ".global _raeen_copy_user_movsb_smap_start",
-    ".global _raeen_copy_user_movsb_smap_end",
-    ".global _raeen_copy_user_movsb_smap_fixup",
-    "_raeen_copy_user_movsb_smap:",
+    ".global _athena_copy_user_movsb_smap",
+    ".global _athena_copy_user_movsb_smap_start",
+    ".global _athena_copy_user_movsb_smap_end",
+    ".global _athena_copy_user_movsb_smap_fixup",
+    "_athena_copy_user_movsb_smap:",
     "    mov rcx, rdx",
     "    xchg rsi, rdi",
     "    stac", // open the supervisor→user access window
-    "_raeen_copy_user_movsb_smap_start:",
+    "_athena_copy_user_movsb_smap_start:",
     "    rep movsb",
-    "_raeen_copy_user_movsb_smap_end:",
+    "_athena_copy_user_movsb_smap_end:",
     "    clac", // close the window
     "    xor rax, rax",
     "    ret",
-    "_raeen_copy_user_movsb_smap_fixup:",
+    "_athena_copy_user_movsb_smap_fixup:",
     "    clac", // iretq restored AC=1 from the faulted frame — close it
     "    mov rax, 1",
     "    ret",
 );
 
 extern "C" {
-    pub fn _raeen_copy_user_movsb(src: *const u8, dst: *mut u8, len: usize) -> u64;
-    pub fn _raeen_copy_user_movsb_start();
-    pub fn _raeen_copy_user_movsb_end();
-    pub fn _raeen_copy_user_movsb_fixup();
-    pub fn _raeen_copy_user_movsb_smap(src: *const u8, dst: *mut u8, len: usize) -> u64;
-    pub fn _raeen_copy_user_movsb_smap_start();
-    pub fn _raeen_copy_user_movsb_smap_end();
-    pub fn _raeen_copy_user_movsb_smap_fixup();
+    pub fn _athena_copy_user_movsb(src: *const u8, dst: *mut u8, len: usize) -> u64;
+    pub fn _athena_copy_user_movsb_start();
+    pub fn _athena_copy_user_movsb_end();
+    pub fn _athena_copy_user_movsb_fixup();
+    pub fn _athena_copy_user_movsb_smap(src: *const u8, dst: *mut u8, len: usize) -> u64;
+    pub fn _athena_copy_user_movsb_smap_start();
+    pub fn _athena_copy_user_movsb_smap_end();
+    pub fn _athena_copy_user_movsb_smap_fixup();
 }
 
 /// True once the stac/clac copy stubs are the dispatched variant. Armed by
@@ -224,11 +224,11 @@ pub unsafe fn copy_user_no_stac_probe(src: *const u8, dst: *mut u8, len: usize) 
     }
     let result = x86_64::instructions::interrupts::without_interrupts(|| {
         install(
-            _raeen_copy_user_movsb_start as u64,
-            _raeen_copy_user_movsb_end as u64,
-            _raeen_copy_user_movsb_fixup as u64,
+            _athena_copy_user_movsb_start as u64,
+            _athena_copy_user_movsb_end as u64,
+            _athena_copy_user_movsb_fixup as u64,
         );
-        let status = unsafe { _raeen_copy_user_movsb(src, dst, len) };
+        let status = unsafe { _athena_copy_user_movsb(src, dst, len) };
         clear();
         status
     });
@@ -264,20 +264,20 @@ pub unsafe fn copy_user_with_fixup(src: *const u8, dst: *mut u8, len: usize) -> 
     let result = x86_64::instructions::interrupts::without_interrupts(|| {
         if SMAP_STUBS.load(Ordering::Relaxed) {
             install(
-                _raeen_copy_user_movsb_smap_start as u64,
-                _raeen_copy_user_movsb_smap_end as u64,
-                _raeen_copy_user_movsb_smap_fixup as u64,
+                _athena_copy_user_movsb_smap_start as u64,
+                _athena_copy_user_movsb_smap_end as u64,
+                _athena_copy_user_movsb_smap_fixup as u64,
             );
-            let status = unsafe { _raeen_copy_user_movsb_smap(src, dst, len) };
+            let status = unsafe { _athena_copy_user_movsb_smap(src, dst, len) };
             clear();
             status
         } else {
             install(
-                _raeen_copy_user_movsb_start as u64,
-                _raeen_copy_user_movsb_end as u64,
-                _raeen_copy_user_movsb_fixup as u64,
+                _athena_copy_user_movsb_start as u64,
+                _athena_copy_user_movsb_end as u64,
+                _athena_copy_user_movsb_fixup as u64,
             );
-            let status = unsafe { _raeen_copy_user_movsb(src, dst, len) };
+            let status = unsafe { _athena_copy_user_movsb(src, dst, len) };
             clear();
             status
         }

@@ -90,7 +90,7 @@ kernel/src/
 
 ### What stays generic (does NOT move into `arch`)
 
-Everything that is logic, not silicon: `scheduler.rs` (policy — EDF/SCHED_BODY), `task.rs` (Task struct, except the saved-register block), `vfs.rs`, `raefs.rs`, `capability.rs`, `compositor.rs`, all the Rae* services, `net*`, `crypto.rs` (already soft-float, arch-neutral after SIMD-gating), ACPI parsing logic (AML is arch-neutral; only the table *discovery* differs — UEFI config table on both x86 and ARM). The scheduler keeps calling `arch::context::switch(...)`; it doesn't know or care about CR3 vs TTBR0.
+Everything that is logic, not silicon: `scheduler.rs` (policy — EDF/SCHED_BODY), `task.rs` (Task struct, except the saved-register block), `vfs.rs`, `athfs.rs`, `capability.rs`, `compositor.rs`, all the Rae* services, `net*`, `crypto.rs` (already soft-float, arch-neutral after SIMD-gating), ACPI parsing logic (AML is arch-neutral; only the table *discovery* differs — UEFI config table on both x86 and ARM). The scheduler keeps calling `arch::context::switch(...)`; it doesn't know or care about CR3 vs TTBR0.
 
 ### The shared signature surface (what `arch/mod.rs` guarantees every backend provides)
 
@@ -156,11 +156,11 @@ fn set_kernel_stack(cpu_id, top: u64);
 
 ## Interface needs (NEEDS-INTERFACE)
 
-For **raeen-architect**:
+For **athena-architect**:
 
-- **None in `rae_abi` for Phase 0.** The arch boundary is an *internal kernel* module surface, not the frozen userspace ABI. Syscall *numbers* are arch-neutral already.
-- **Future (Phase 2+):** if aarch64 changes the userspace register-passing convention for syscalls, `rae_abi` may need an arch-tagged calling-convention note — but the *numbers* stay identical. Flag for later; not Phase 0.
-- raeen-architect owns the **xtask `--arch=<x86_64|aarch64|i686>` flag** and the per-arch target-triple/QEMU wiring (Build/Tooling section). This is build-system, not ABI, but it is architect's structural commit.
+- **None in `ath_abi` for Phase 0.** The arch boundary is an *internal kernel* module surface, not the frozen userspace ABI. Syscall *numbers* are arch-neutral already.
+- **Future (Phase 2+):** if aarch64 changes the userspace register-passing convention for syscalls, `ath_abi` may need an arch-tagged calling-convention note — but the *numbers* stay identical. Flag for later; not Phase 0.
+- athena-architect owns the **xtask `--arch=<x86_64|aarch64|i686>` flag** and the per-arch target-triple/QEMU wiring (Build/Tooling section). This is build-system, not ABI, but it is architect's structural commit.
 
 ---
 
@@ -176,7 +176,7 @@ For **raeen-architect**:
 ### Phase 1 (xtask multi-target wiring — can land parallel with Phase 0)
 - **`xtask/src/main.rs`**: add `--arch` flag; map `x86_64`→`x86_64-unknown-none` (default), `aarch64`→`aarch64-unknown-none-softfloat`, `i686`→`i686-unknown-none`. Per-arch QEMU: x86 unchanged; aarch64 → `qemu-system-aarch64 -M virt -cpu cortex-a72 -bios <QEMU_EFI.fd>` (serial via PL011 → `-serial`); image build path forks (UEFI app for ARM vs the bootloader-crate image for x86).
 
-### Phase 2-4 (aarch64 backend — new `raeen-arch` agent)
+### Phase 2-4 (aarch64 backend — new `athena-arch` agent)
 - **NEW `kernel/src/arch/aarch64/`**: `cpu.rs` (system regs via `aarch64-cpu`), `serial.rs` (PL011 MMIO — first milestone), `paging.rs` (EL1 4-level tables, TTBR0_EL1/TCR_EL1), `interrupt.rs` (VBAR_EL1 vector table + GICv2/v3), `context.rs` (x19-x30/sp save, `eret`), `time.rs` (generic timer), `smp.rs` (PSCI), `syscall.rs` (SVC handler).
 - **NEW `kernel/Cargo.toml`** `[target.'cfg(target_arch="aarch64")'.dependencies]`: `aarch64-cpu`, `arm-gic`, `smccc`/PSCI, `uefi`.
 
@@ -194,7 +194,7 @@ For **raeen-architect**:
 | **i686** | `i686-unknown-none` | `qemu-system-i386` | SeaBIOS | bootloader-crate BIOS img |
 
 - **x86_64 stays the default** in every command — `xtask build`/`run` with no `--arch` behaves exactly as today (this is a hard requirement; the iron pipeline must not change).
-- `--ci` semantics per arch: same "wait for `System successfully booted.`" loop; aarch64 reads the PL011 serial QEMU writes to the same `$TEMP\raeen-serial.log`.
+- `--ci` semantics per arch: same "wait for `System successfully booted.`" loop; aarch64 reads the PL011 serial QEMU writes to the same `$TEMP\athena-serial.log`.
 - aarch64 softfloat triple mirrors the kernel's existing soft-float posture (per memory: kernel is `-sse` soft-float on x86; `-softfloat` is the ARM analogue and avoids needing `CPACR_EL1` FP enablement before the first log line).
 - First aarch64 bring-up can use `-kernel <elf>` (QEMU loads the ELF, jumps to `_start` at EL1) to get a serial "hello" before the UEFI stub exists — shortest path to a green marker.
 
@@ -204,12 +204,12 @@ For **raeen-architect**:
 
 | Phase | Goal | Owner | Proof |
 |---|---|---|---|
-| **0** | Land `arch/` boundary; move x86_64 behind it; **x86_64 boots byte-identically** in QEMU (no-regression). | **raeen-kernel** (the move) + **raeen-architect** (the `arch/mod.rs` signature surface) | x86_64 QEMU boot still prints `[ OS ] System successfully booted.`, all existing smoketest PASS lines unchanged, `[BOOT-BENCH]` not regressed. |
-| **1** | xtask `--arch` flag + per-arch target/QEMU wiring; default stays x86_64. | **raeen-architect** | `xtask build` (no flag) unchanged; `xtask build --arch=aarch64` invokes the right cargo target (may fail-to-link until Phase 2 — acceptable). |
-| **2** | aarch64 serial "hello": `_start` → `arch::aarch64::serial::init` (PL011) → one marker line, then `wfi`. | **raeen-arch** (new agent) | `qemu-system-aarch64 -M virt` serial shows `[arch:aarch64] PL011 up — AthKernel first light` then idles (no fault). |
-| **3** | aarch64 to MMU + exceptions + timer: enable EL1 paging, install VBAR_EL1, generic-timer tick, GIC EOI. | **raeen-arch** | aarch64 serial shows `[arch:aarch64] MMU+GIC+timer online -> PASS` and survives ≥3 timer ticks without exception loop. |
-| **4** | aarch64 to the smoketest set: run the arch-neutral R10 smoketests (crypto KAT, scheduler spawn, vfs) on ARM; reach `System successfully booted.` | **raeen-arch** + **raeen-kernel** | aarch64 QEMU prints `[ OS ] System successfully booted.` + the same generic-module PASS lines that x86 prints. |
-| **5** | i686 backend to boot marker (proves the boundary generalizes to a 3rd arch). | **raeen-arch** | `qemu-system-i386` prints `[ OS ] System successfully booted.` |
+| **0** | Land `arch/` boundary; move x86_64 behind it; **x86_64 boots byte-identically** in QEMU (no-regression). | **athena-kernel** (the move) + **athena-architect** (the `arch/mod.rs` signature surface) | x86_64 QEMU boot still prints `[ OS ] System successfully booted.`, all existing smoketest PASS lines unchanged, `[BOOT-BENCH]` not regressed. |
+| **1** | xtask `--arch` flag + per-arch target/QEMU wiring; default stays x86_64. | **athena-architect** | `xtask build` (no flag) unchanged; `xtask build --arch=aarch64` invokes the right cargo target (may fail-to-link until Phase 2 — acceptable). |
+| **2** | aarch64 serial "hello": `_start` → `arch::aarch64::serial::init` (PL011) → one marker line, then `wfi`. | **athena-arch** (new agent) | `qemu-system-aarch64 -M virt` serial shows `[arch:aarch64] PL011 up — AthKernel first light` then idles (no fault). |
+| **3** | aarch64 to MMU + exceptions + timer: enable EL1 paging, install VBAR_EL1, generic-timer tick, GIC EOI. | **athena-arch** | aarch64 serial shows `[arch:aarch64] MMU+GIC+timer online -> PASS` and survives ≥3 timer ticks without exception loop. |
+| **4** | aarch64 to the smoketest set: run the arch-neutral R10 smoketests (crypto KAT, scheduler spawn, vfs) on ARM; reach `System successfully booted.` | **athena-arch** + **athena-kernel** | aarch64 QEMU prints `[ OS ] System successfully booted.` + the same generic-module PASS lines that x86 prints. |
+| **5** | i686 backend to boot marker (proves the boundary generalizes to a 3rd arch). | **athena-arch** | `qemu-system-i386` prints `[ OS ] System successfully booted.` |
 
 Phases 0 and 1 are independent and can land together. Phase 2 cannot start until Phase 0 is merged (the `arch/aarch64` submodules must implement the signatures Phase 0 defines).
 
@@ -217,33 +217,33 @@ Phases 0 and 1 are independent and can land together. Phase 2 cannot start until
 
 ## Acceptance criteria (the exact proof)
 
-- **Phase 0 (the gate):** on `cargo run -p xtask --release -- run --release --ci` (x86_64), serial log MUST still show `[ OS ] System successfully booted.`, MUST NOT show `PANIC`, and every pre-existing smoketest PASS marker (`[msr] run_boot_smoketest … -> PASS`, `[gdt]`, etc.) MUST be unchanged. `[BOOT-BENCH]` total within noise of the pre-refactor number; no new `[boot] WARN`. Per CLAUDE.md §10.17 SMP rule: re-boot ≥5× at `RAEEN_SMP=1` and `=2`. **A diff that changes any boot-log line other than nothing has regressed.**
+- **Phase 0 (the gate):** on `cargo run -p xtask --release -- run --release --ci` (x86_64), serial log MUST still show `[ OS ] System successfully booted.`, MUST NOT show `PANIC`, and every pre-existing smoketest PASS marker (`[msr] run_boot_smoketest … -> PASS`, `[gdt]`, etc.) MUST be unchanged. `[BOOT-BENCH]` total within noise of the pre-refactor number; no new `[boot] WARN`. Per CLAUDE.md §10.17 SMP rule: re-boot ≥5× at `ATHENA_SMP=1` and `=2`. **A diff that changes any boot-log line other than nothing has regressed.**
 - **Phase 2:** `qemu-system-aarch64 -M virt` serial MUST show `[arch:aarch64] PL011 up — AthKernel first light` and the VM MUST NOT enter an exception loop (no repeating fault address).
 - **Phase 3:** aarch64 serial MUST show `[arch:aarch64] MMU+GIC+timer online -> PASS` with the assertion that ≥3 generic-timer interrupts were taken and EOI'd.
 - **Phase 4:** aarch64 serial MUST show `[ OS ] System successfully booted.` plus the arch-neutral KAT PASS lines (crypto, scheduler).
-- **`/proc/raeen/arch` MUST report:** `arch: <x86_64|aarch64|i686>`, `cpus_online: <n>`, `page_size: <bytes>`, `interrupt_controller: <APIC|GICv3|…>`, `timer: <TSC+LAPIC|generic>`. (New procfs line in `vfs.rs`, arch-neutral, populated from `arch::cpu`/`arch::time`.)
+- **`/proc/athena/arch` MUST report:** `arch: <x86_64|aarch64|i686>`, `cpus_online: <n>`, `page_size: <bytes>`, `interrupt_controller: <APIC|GICv3|…>`, `timer: <TSC+LAPIC|generic>`. (New procfs line in `vfs.rs`, arch-neutral, populated from `arch::cpu`/`arch::time`.)
 - **Docstring:** `arch/mod.rs` MUST quote the §Thesis "third path / locked behind Apple silicon" promise above.
 
 ---
 
 ## Handoff
 
-- **First commit (raeen-architect, structural — NOT `[interface]`/`rae_abi`):**
+- **First commit (athena-architect, structural — NOT `[interface]`/`ath_abi`):**
   `arch: introduce kernel/src/arch boundary (x86_64 behind it, no behavior change)`
   - Create `kernel/src/arch/mod.rs` with the `#[cfg(target_arch="x86_64")]` selection + the shared submodule signature surface (the trait/type-alias list under "Design").
   - Create `kernel/src/arch/x86_64/{mod,cpu,paging,interrupt,context,time,serial,smp,syscall}.rs` as **re-export shells** that initially `pub use` the existing top-level modules (`pub use crate::context::*;` etc.) — this lands the *directory + signature surface* with **zero code motion and zero behavior change**, so x86_64 boots byte-identically and the no-regression gate passes on the very first commit.
-  - The actual *body relocation* (moving `gdt.rs`/`context.rs`/etc. into `arch/x86_64/`) is the **second** commit (raeen-kernel), done one module at a time, each re-verified against the Phase-0 gate.
+  - The actual *body relocation* (moving `gdt.rs`/`context.rs`/etc. into `arch/x86_64/`) is the **second** commit (athena-kernel), done one module at a time, each re-verified against the Phase-0 gate.
   - Move the x86-only crates under `[target.'cfg(target_arch="x86_64")'.dependencies]` in `kernel/Cargo.toml` in this same first commit (proves the workspace still builds with arch-gated deps).
   - **Acceptance for this commit:** `cargo run -p xtask --release -- build --release` exits 0; `--ci` boot still prints `System successfully booted.` with no new/changed/missing log lines; ≥5 boots clean at SMP=1 and SMP=2.
 
-- **Implementer:** raeen-kernel (Phase 0 body moves + per-arch x86_64 core), raeen-architect (Phase 0 `arch/mod.rs` signatures + Phase 1 xtask), new **raeen-arch** agent (Phases 2-5 aarch64/i686 bring-up).
+- **Implementer:** athena-kernel (Phase 0 body moves + per-arch x86_64 core), athena-architect (Phase 0 `arch/mod.rs` signatures + Phase 1 xtask), new **athena-arch** agent (Phases 2-5 aarch64/i686 bring-up).
 - **Unblocks checklist lines:** net-new — add a MasterChecklist section "Phase 15: Multi-arch reach" with lines 15.0 (boundary), 15.1 (xtask --arch), 15.2 (aarch64 hello), 15.3 (aarch64 MMU/GIC/timer), 15.4 (aarch64 boot marker), 15.5 (i686 boot marker). Also unblocks the long-deferred line 936 (ARM MTE) since MTE can only land once an aarch64 backend exists.
-- **Sequencing:** Phase 0 first commit (re-export shells) → Phase 0 body moves → Phase 1 xtask (parallel-safe) → Phase 2+ aarch64. No `rae_abi` bump required for Phase 0; revisit ABI only if aarch64 syscall convention diverges.
+- **Sequencing:** Phase 0 first commit (re-export shells) → Phase 0 body moves → Phase 1 xtask (parallel-safe) → Phase 2+ aarch64. No `ath_abi` bump required for Phase 0; revisit ABI only if aarch64 syscall convention diverges.
 
 ---
 
 ## Open questions for the lead
 
-1. **aarch64 entry: UEFI stub vs DT/`-kernel`?** This spec recommends UEFI (shares ACPI/GOP with x86); confirm before raeen-arch builds the entry shim. Cheapest first-light is `-kernel` ELF, then graduate to UEFI.
+1. **aarch64 entry: UEFI stub vs DT/`-kernel`?** This spec recommends UEFI (shares ACPI/GOP with x86); confirm before athena-arch builds the entry shim. Cheapest first-light is `-kernel` ELF, then graduate to UEFI.
 2. **Is i686 worth it at all?** It proves the boundary generalizes but ships to no gamer. Could be dropped to "boundary-ready, not built" and the proof-of-generality deferred to a RISC-V backend instead (more strategically interesting for the Rae Station).
 3. **Newtype `VirtAddr`/`PhysAddr` blast radius:** wrapping `x86_64::VirtAddr` keeps Phase 0 mechanical, but the call-site count is large. Acceptable to stage the newtype migration across several commits behind the Phase-0 gate?

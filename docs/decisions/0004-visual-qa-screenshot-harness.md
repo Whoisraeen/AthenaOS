@@ -2,14 +2,14 @@
 
 - Status: accepted (plan); implementation queued
 - Date: 2026-06-17
-- Owner: raeen-lead (autonomous)
+- Owner: athena-lead (autonomous)
 
 ## Context
-Goal #1 requires the UI be "proven by raeen-visual-qa screenshots judged against
+Goal #1 requires the UI be "proven by athena-visual-qa screenshots judged against
 current macOS/Windows 11 references." Today there is NO way to produce that image
 automatically:
 - xtask runs QEMU with `-display none` and has no screendump/screenshot path.
-- Subagent Bash is sandboxed (ADR 0002), so raeen-visual-qa cannot boot QEMU — the
+- Subagent Bash is sandboxed (ADR 0002), so athena-visual-qa cannot boot QEMU — the
   lead must capture and hand it the image.
 - Project memory (`ui-glass-design-system`): headless QEMU `screendump`→PPM→PNG has
   produced striping artifacts (a capture-pipeline bug, not the real render — iron +
@@ -36,7 +36,7 @@ capability, in this order:
 
 Until (1) lands, the UI loop proceeds on boot-log-provable token wiring (every
 re-skinned surface prints a FAIL-able `[shell]/[chrome]/[notify] ... -> PASS` line
-asserting it consumes rae_tokens), and visual critique is deferred — explicitly
+asserting it consumes ath_tokens), and visual critique is deferred — explicitly
 tracked, not silently skipped.
 
 ## Rationale
@@ -85,7 +85,7 @@ PNG** of the live desktop/OOBE. The pieces that made it work:
 - Screenshot-mode CI timeout bumped to 560s (UEFI/OVMF + ~72MB initramfs under
   TCG is slow; WHPX is blocked by the kernel high-PCI-BAR bug).
 First captured surface: the OOBE wizard (`docs/design/screenshots/oobe-uefi-2026-06-17.png`)
-— glass card, gradient + depth blobs, accent button. raeen-visual-qa now has a
+— glass card, gradient + depth blobs, accent button. athena-visual-qa now has a
 real image to critique vs macOS/Win11. Desktop (post-login) capture still needs
 an OOBE-bypass dev knob (the first boot parks on OOBE); tracked.
 

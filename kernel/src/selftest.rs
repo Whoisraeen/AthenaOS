@@ -12,7 +12,7 @@
 //! ```text
 //!   [selftest] boot health: 9/9 critical PASS, 2/3 optional present
 //!   [selftest]   PASS crit smp            (cpus_online=2)
-//!   [selftest]   FAIL crit raefs          (root not mounted)
+//!   [selftest]   FAIL crit athfs          (root not mounted)
 //!   ...
 //! ```
 //!
@@ -23,7 +23,7 @@
 //! profiles) and are reported as present/absent, never failing the boot.
 //!
 //! R10 contract: `run()` (the aggregator, called once at end of `kernel_main`),
-//! `dump_text()` → `/proc/raeen/selftest`, this docstring.
+//! `dump_text()` → `/proc/athena/selftest`, this docstring.
 
 #![allow(dead_code)]
 
@@ -245,7 +245,7 @@ fn opt(name: &'static str, pass: bool, detail: String) -> Check {
     }
 }
 
-/// `/proc/raeen/selftest` body.
+/// `/proc/athena/selftest` body.
 pub fn dump_text() -> String {
     let mut s = String::new();
     s.push_str("# AthenaOS consolidated boot self-test\n");

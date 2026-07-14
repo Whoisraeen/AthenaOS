@@ -8,7 +8,7 @@
 //!
 //! Two consumers today:
 //!
-//!   1. `/proc/raeen/bootlog` (via [`dump_text`]) — userspace or a future
+//!   1. `/proc/athena/bootlog` (via [`dump_text`]) — userspace or a future
 //!      kernel debug shell can pull the whole transcript.
 //!   2. `bootlog::flush_to_esp()` (future) — writes the buffer to a file
 //!      on the FAT32 ESP so it survives a reboot. Pending the safe-mode
@@ -31,7 +31,7 @@
 //!
 //! R10: `init()` is implicit (zero-init static); `run_boot_smoketest`
 //! prints a marker so the ring proves it captured; `dump_text` backs
-//! `/proc/raeen/bootlog`; this docstring satisfies the Concept tie-in.
+//! `/proc/athena/bootlog`; this docstring satisfies the Concept tie-in.
 
 extern crate alloc;
 
@@ -70,7 +70,7 @@ struct Ring {
 // The ring is only ever appended to from that single critical section.
 // `dump_text` reads under the same external lock by going through
 // `serial::_print`-equivalent gating (procfs dumps run with interrupts
-// disabled — see procfs::dump_all_raeen_endpoints_to_serial).
+// disabled — see procfs::dump_all_athena_endpoints_to_serial).
 unsafe impl Sync for Ring {}
 
 static RING: Ring = Ring {
@@ -120,7 +120,7 @@ pub fn append(data: &[u8]) {
 /// starting from the oldest still-live byte; pre-wrap it returns
 /// everything ever written.
 ///
-/// Intended for `/proc/raeen/bootlog`. Allocates ~256 KiB.
+/// Intended for `/proc/athena/bootlog`. Allocates ~256 KiB.
 pub fn snapshot() -> String {
     let head = RING.head.load(Ordering::Relaxed);
     let wrapped = RING.wrapped.load(Ordering::Relaxed);
@@ -145,7 +145,7 @@ pub fn snapshot() -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
-/// `/proc/raeen/bootlog` body. Prepends a small header so the consumer
+/// `/proc/athena/bootlog` body. Prepends a small header so the consumer
 /// knows whether the buffer wrapped (and lost the earliest lines).
 pub fn dump_text() -> String {
     let head = bytes_logged();
@@ -229,7 +229,7 @@ pub fn render_diagnostics(ptr: *mut u8, w: u32, h: u32) {
     const ERR: u32 = 0xFF_FF_6B_7A;
     const OK: u32 = 0xFF_66_E0_88;
 
-    let mut canvas = unsafe { raegfx::Canvas::new(ptr, w as usize, h as usize, 4) };
+    let mut canvas = unsafe { athgfx::Canvas::new(ptr, w as usize, h as usize, 4) };
     canvas.clear(BG);
 
     canvas.draw_text(
@@ -266,7 +266,7 @@ pub fn render_diagnostics(ptr: *mut u8, w: u32, h: u32) {
         // Boundary-safe: a raw `&line[..230]` PANICS (kernel crash) when byte
         // 230 lands inside a multi-byte UTF-8 code point — diagnostic lines can
         // carry user content / panic messages with accents/CJK/emoji.
-        let truncated = raeshell::text_util::truncate_chars(line, 230);
+        let truncated = athshell::text_util::truncate_chars(line, 230);
         canvas.draw_text(24, y, truncated, color, None);
         y += line_h;
         if y + line_h > h as usize {

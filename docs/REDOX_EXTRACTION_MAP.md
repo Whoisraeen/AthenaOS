@@ -13,20 +13,20 @@
 Redox decodes non-boot-protocol keyboards/mice via `usbhidd` → `rehid` →
 **`hidreport`** (MIT, `#![no_std]`, github.com/hidutils/hidreport). `rehid`
 itself is a thin wrapper (orbclient/redox_syscall glue we don't want); the
-reusable parser is `hidreport`. Harvested as **`components/raehid`** — a
+reusable parser is `hidreport`. Harvested as **`components/athhid`** — a
 `#![no_std]`+alloc wrapper that depends on `hidreport` (`default-features=false`,
 so no `std`/`hut`) and exposes `HidDevice::{parse, extract_mouse,
 extract_keyboard}` against raw report bytes (matches raw u16 usage codes:
 GenericDesktop X/Y/Wheel, Button page, Keyboard page + 0xE0..E7 modifiers).
-Host-KAT'd 8/8 (`cargo test -p raehid`: boot-mouse + boot-keyboard descriptors,
+Host-KAT'd 8/8 (`cargo test -p athhid`: boot-mouse + boot-keyboard descriptors,
 signed deltas, modifier/keycode-array, idle, `kind()` classification, boot-report
 bridges). **WIRED INTO THE KERNEL (2026-06-16):** `xhci::bring_up_hid_keyboard_with_config`
 now gates on `boot_capable` (Boot Interface Subclass 1 + boot protocol) — boot
 devices keep the exact iron-proven boot path (`hid_device == None`), while
 report-only HID devices (gaming mice/keyboards that skip boot subclass) get their
 report descriptor fetched (`get_hid_report_descriptor`, interface GET_DESCRIPTOR
-0x22) + parsed by `raehid`, stored in `DeviceSlot::hid_device`. `service_hid_reports`
-decodes those via raehid → boot-report bridge → existing dispatch (no new input
+0x22) + parsed by `athhid`, stored in `DeviceSlot::hid_device`. `service_hid_reports`
+decodes those via athhid → boot-report bridge → existing dispatch (no new input
 plumbing). QEMU-proven: `armed 3 HID` (no regression) + `report-protocol device —
 parsed 74-byte report descriptor, kind=Mouse` (QEMU usb-tablet) on a live boot.
 License rows added to `docs/THIRD_PARTY_LICENSES.md`.
@@ -117,12 +117,12 @@ MasterChecklist phases, not here.
 | R03 | `base.git` → **pcid** | `recipes/core/base/` | `components/pcid` + `kernel/src/pci.rs` | Phase 1 PCIe enumeration | `[x]` | `components/pcid` curated ID table; kernel enum logs `pcid::describe()`. Full `pciids.git` DB deferred (R34). MSI-X in `pci.rs`. |
 | R04 | `base.git` → **xhcid** | `recipes/core/base/` | userspace USB host + `kernel/src/xhci.rs` IPC | Phase 2.1 USB | `[x]` | Full HID path on QEMU: config descriptor → Configure Endpoint → SET_CONFIGURATION → interrupt IN at correct DCI. Fixed off-by-one in `xhci_ep_index` (was programming DCI 4 = EP2-OUT → StallError; now DCI 3 = EP1-IN). Live servicing thread drains interrupt-IN completions. Serial: `[xhci] HID report (slot 2): [00,00,04..07,..]` → `input::push_event`. |
 | R05 | `base.git` → **inputd** / **ps2d** | `recipes/core/base/`, `config/minimal.toml` init | `kernel/src/usb_hid.rs` + `kernel/src/input.rs` | Phase 2.1 HID | `[x]` | Parsers + smoketest PASS; live keystrokes (sendkey a/b/c/d) reach `usb_hid::dispatch_boot_report` → `input::push_event` via the xHCI servicing thread (R04). |
-| R06 | `base.git` → **ahcid** | `recipes/core/base/` | userspace AHCI daemon | Phase 1 storage / AthFS mount | `[~]` | In-kernel `ahci.rs`: identify + DMA read; QEMU `ahci` + `ide-hd` smoketest LBA0 (`[ahci] smoketest PASS`); `/proc/raeen/ahci`. Userspace `ahcid` deferred. |
-| R07 | `base.git` → **nvmed** (or nvme in base) | `recipes/core/base/` | userspace NVMe daemon | Phase 1 NVMe / AthFS | `[~]` | Identify: ONCS@520, sqes/cqes, tnvmcap log; `sector_size` from NS; `/proc/raeen/nvme`; smoketest PASS line — compare `drivers/nvmed` when cloned |
-| R08 | `redoxfs.git` | `recipes/core/redoxfs/` | `components/raefs/` (fork) | Phase 1 GPT/AthFS, storage tiers | `[x]` | `redoxfs_adapter/{tree,header,disk}.rs` + vendor LICENSE; disk trait and superblock probe completed |
-| R09 | `redox-fatfs.git` | `recipes/libs/redox-fatfs/` | `kernel/src/fatfs_esp.rs` (native) | Phase 16 installer | `[~]` | Upstream `fatfs 0.3.6` depends on the abandoned `core_io` crate and won't build no_std on current nightly. Shipped a native FAT32 BPB + root-dir cluster parser instead (read-only ESP locator, 8.3 + LFN decode). Smoketest mounts sector 0 of active block dev, dumps to `/proc/raeen/fatfs_esp`. Write support + GPT-partition view follow when install lane copies files. |
+| R06 | `base.git` → **ahcid** | `recipes/core/base/` | userspace AHCI daemon | Phase 1 storage / AthFS mount | `[~]` | In-kernel `ahci.rs`: identify + DMA read; QEMU `ahci` + `ide-hd` smoketest LBA0 (`[ahci] smoketest PASS`); `/proc/athena/ahci`. Userspace `ahcid` deferred. |
+| R07 | `base.git` → **nvmed** (or nvme in base) | `recipes/core/base/` | userspace NVMe daemon | Phase 1 NVMe / AthFS | `[~]` | Identify: ONCS@520, sqes/cqes, tnvmcap log; `sector_size` from NS; `/proc/athena/nvme`; smoketest PASS line — compare `drivers/nvmed` when cloned |
+| R08 | `redoxfs.git` | `recipes/core/redoxfs/` | `components/athfs/` (fork) | Phase 1 GPT/AthFS, storage tiers | `[x]` | `redoxfs_adapter/{tree,header,disk}.rs` + vendor LICENSE; disk trait and superblock probe completed |
+| R09 | `redox-fatfs.git` | `recipes/libs/redox-fatfs/` | `kernel/src/fatfs_esp.rs` (native) | Phase 16 installer | `[~]` | Upstream `fatfs 0.3.6` depends on the abandoned `core_io` crate and won't build no_std on current nightly. Shipped a native FAT32 BPB + root-dir cluster parser instead (read-only ESP locator, 8.3 + LFN decode). Smoketest mounts sector 0 of active block dev, dumps to `/proc/athena/fatfs_esp`. Write support + GPT-partition view follow when install lane copies files. |
 | R10 | `base.git` → **e1000d** / **rtl8139d** | `recipes/core/base/` | userspace NIC daemons | Phase 2.2 real NICs | `[x]` | **Conscious in-kernel** (`virtio_net`, e1000/igc paths). Userspace NIC daemons deferred until IOMMU + caps IPC model exists. |
-| R11 | `relibc.git` | `recipes/core/relibc/` | `components/raebridge/relibc/` | Phase 11 AthBridge | `[~]` | `raeenOS_syscall.rs` + build-std; `user_init` spawns `hello_relibc` first (`msg:811x`, `[hello_relibc]`); caps + R19/R20 remain |
+| R11 | `relibc.git` | `recipes/core/relibc/` | `components/athbridge/relibc/` | Phase 11 AthBridge | `[~]` | `athenaOS_syscall.rs` + build-std; `user_init` spawns `hello_relibc` first (`msg:811x`, `[hello_relibc]`); caps + R19/R20 remain |
 | R12 | `aml` (any1/aml) | `recipes/wip/libs/other/aml/`, crates.io `aml` | `kernel` via `acpi_full.rs` | Phase 1.4 ACPI | `[x]` | `aml = "0.16"` in kernel; bring-up audit log + SSDT count at boot |
 | R13 | Cookbook `mk/qemu.mk` | `mk/qemu.mk` | `target/boot.ps1`, `xtask` | QEMU smoketest | `[x]` | Already mirrored: `qemu-xhci`, virtio-net; **intel-iommu** left off (breaks boot) |
 
@@ -136,14 +136,14 @@ MasterChecklist phases, not here.
 | R15 | `pkgar.git` / `pkgutils.git` | `recipes/core/pkgar`, `pkgutils` | packaging research | Phase 16 atomic updates | `[ ]` | Ideas for artifact format — not wholesale pkgar unless checklist says |
 | R16 | `base.git` → **acpid** | `recipes/core/base/` | `kernel/src/acpi_full.rs`, `battery.rs` | Phase 1.4 | `[~]` | Daemon model for _BST, GPE — we poll in-kernel today |
 | R17 | `base.git` → **vesad** / **bgad** | `recipes/core/base/` | **SKIP** display server | Phase 3 AthGFX | **SKIP** | Use AthGFX + GOP/EDID path — not Orbital/VESA daemons |
-| R18 | `netdb.git` / `netutils.git` | `recipes/core/netdb`, `netutils` | `components/raenet/` DNS stub | Phase 10 AthNet | `[x]` | `netdb` is config data only; DNS resolver lives in already-added `relibc`. No standalone extraction. |
+| R18 | `netdb.git` / `netutils.git` | `recipes/core/netdb`, `netutils` | `components/athnet/` DNS stub | Phase 10 AthNet | `[x]` | `netdb` is config data only; DNS resolver lives in already-added `relibc`. No standalone extraction. |
 | R19 | `openposixtestsuite.git` | `recipes/tests/openposixtestsuite/` | CI / AthBridge tests | Phase 11 | `[ ]` | POSIX conformance when relibc lands |
 | R20 | `redox-posix-tests.git` | `recipes/tests/redox-posix-tests/` | CI | Phase 11 | `[ ]` | Smaller than full OPATS |
 | R21 | `redoxer.git` | `recipes/dev/redoxer/` | `xtask` cross-build ideas | DevEx | `[ ]` | Optional: guest testing harness — do not require Redoxer for main loop |
 | R22 | Cookbook `src/bin/repo.rs` | `redox_reference/src/` | `xtask` | Build loop | `[ ]` | Recipe dependency graph / incremental cook ideas |
 | R23 | `.gitlab-ci.yml` + `config/*ci.toml` | root, `config/x86_64/ci.toml` | `.github/workflows/` | CI | `[ ]` | QEMU headless test patterns only |
-| R29 | `userutils.git` | `recipes/core/userutils` | `components/raeshield/` | Phase 9 AthGuard | `[x]` | Covered natively: `components/raeid` (1795 L) already implements the account system; `userutils` would duplicate. |
-| R30 | `dynamic-example.git` | `recipes/demos/dynamic-example` | `components/raebridge/loader` | Phase 11 AthBridge | `[x]` | Covered + exceeded: `kernel/src/dynamic_linker.rs` (1211 L) + `elf_loader.rs` (1401 L) + `raebridge` full Win32 layer (kernel32/ntdll/d3d/pe_dll_registry). |
+| R29 | `userutils.git` | `recipes/core/userutils` | `components/athshield/` | Phase 9 AthGuard | `[x]` | Covered natively: `components/athid` (1795 L) already implements the account system; `userutils` would duplicate. |
+| R30 | `dynamic-example.git` | `recipes/demos/dynamic-example` | `components/athbridge/loader` | Phase 11 AthBridge | `[x]` | Covered + exceeded: `kernel/src/dynamic_linker.rs` (1211 L) + `elf_loader.rs` (1401 L) + `athbridge` full Win32 layer (kernel32/ntdll/d3d/pe_dll_registry). |
 | R33 | `gitoxide` / `binutils` | `recipes/dev/*` | `target/` rootfs | DevEx | `[ ]` | Pure-Rust git and development tools for self-hosting |
 | R34 | `pciids.git` | `recipes/libs/pciids` | `components/pcid` (expand) | Phase 1.7 Hardware | `[~]` | Subset in `pcid::KNOWN_DEVICES`; full DB vendored when installer/device-manager phase needs it |
 
@@ -159,7 +159,7 @@ MasterChecklist phases, not here.
 | R27 | `ion.git` | `recipes/core/ion` | optional shell research | `[ ]` | Reference only for CLI UX — Rae shell is separate |
 | R28 | `contain.git` | `recipes/core/contain` | AthGuard research | `[ ]` | Capability/container ideas — adapt to `crate::capability` |
 | R31 | `cosmic-*` | `recipes/cosmic/*` | `apps/` or `components/` | `[ ]` | System76 COSMIC desktop apps built in Rust; adapt `cosmic-files` as default file explorer |
-| R32 | `procedural-wallpapers-rs` | `recipes/gui/procedural-wallpapers-rs` | `components/raeui/` | `[ ]` | Concept §Live wallpapers that don't murder battery (GPU-accelerated procedural rendering) |
+| R32 | `procedural-wallpapers-rs` | `recipes/gui/procedural-wallpapers-rs` | `components/athui/` | `[ ]` | Concept §Live wallpapers that don't murder battery (GPU-accelerated procedural rendering) |
 
 ---
 
@@ -357,11 +357,11 @@ The root of the `redox_reference` cookbook itself contains several excellent scr
 | Path | Extraction IDs | Notes |
 |------|----------------|-------|
 | `components/pcid/` | R03, R34 (subset) | `no_std` PCI name lookup |
-| `components/raefat/` | R09 (slice 1) | FAT BPB / boot-sector probe |
-| `components/raefs/src/redoxfs_adapter/` | R08 | `tree.rs`, `header.rs`, MIT vendor tree |
+| `components/athfat/` | R09 (slice 1) | FAT BPB / boot-sector probe |
+| `components/athfs/src/redoxfs_adapter/` | R08 | `tree.rs`, `header.rs`, MIT vendor tree |
 | `kernel/src/{xhci,xhci_desc,usb_hid,input,pci}.rs` | R04, R05, R03 | In-kernel P0 stack |
-| `kernel/src/ahci.rs` + `target/boot.ps1` AHCI disk | R06 (slice) | LBA0 smoketest + `/proc/raeen/ahci` |
-| `components/raebridge/relibc/` | R11 (slice) | Syscall adapter, crt0, hello_relibc |
+| `kernel/src/ahci.rs` + `target/boot.ps1` AHCI disk | R06 (slice) | LBA0 smoketest + `/proc/athena/ahci` |
+| `components/athbridge/relibc/` | R11 (slice) | Syscall adapter, crt0, hello_relibc |
 | `components/kanata_daemon/vendor/` | Kanata appendix | LGPL reference only |
 
 ## Deferred backlog (not P0 — do not block boot)
@@ -402,8 +402,8 @@ subsystem surface was then cross-checked against the live AthenaOS tree.
 | `e1000d` / `ixgbed` / `rtl*` / `virtio-netd` | `net_drivers.rs` (2228 L, full E1000 regs) / `igc.rs` / `virtio_net` |
 | `audio/ihdad` (Intel HD Audio) / `ac97d` | `audio.rs` (2338 L, HDA controller) |
 | `acpid` / `amlserde` / `rtcd` | `acpi_full.rs` / `aml` crate (0.16) / `rtc.rs` |
-| `dynamic-example` (R30, dynamic ELF) | `dynamic_linker.rs` (1211 L) + `elf_loader.rs` (1401 L) + `raebridge` (full Win32 layer) |
-| `userutils` (R29, login/passwd) | `raeid` (1795 L account system) |
+| `dynamic-example` (R30, dynamic ELF) | `dynamic_linker.rs` (1211 L) + `elf_loader.rs` (1401 L) + `athbridge` (full Win32 layer) |
+| `userutils` (R29, login/passwd) | `athid` (1795 L account system) |
 | `netdb` (R18, DNS) | resolver lives in the already-added `relibc` |
 | `orbital` / `mesa` / `vesad` / scheme IPC | **SKIP** — AthGFX/AthUI + hybrid kernel (Concept) |
 

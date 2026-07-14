@@ -1,7 +1,7 @@
 # Visual QA — Independent Acceptance Checkpoint — Criterion #1 (2026-06-21)
 
 **Gate:** Goal criterion #1 — *"the UI is visually stunning and themeable, PROVEN by
-raeen-visual-qa screenshots judged against current macOS and Windows 11."*
+athena-visual-qa screenshots judged against current macOS and Windows 11."*
 
 **Method:** read-only independent pass over the **committed** artifacts on disk (NO build —
 a concurrent session has ~38 dirty files mid-iteration). I looked at every committed PNG in
@@ -103,43 +103,43 @@ Ordered by leverage to close the 82→92+ gap. Each is surface + pixel issue + r
 ### P0 — highest leverage, render-side (no token bake needed)
 1. **Wire the crisp RaeSans into the shipped-surface text path.** `atom-type-ramp.png` proves
    the face is crisp; every shipped surface (`surface-*.png`) renders a blocky mono fallback
-   instead. vs `download(1).jpg` SF-class type this is the largest felt gap. **→ raeen-ui /
-   raeen-shell-apps** (route the surface text rasterizer to the RaeSans atom path).
+   instead. vs `download(1).jpg` SF-class type this is the largest felt gap. **→ athena-ui /
+   athena-shell-apps** (route the surface text rasterizer to the RaeSans atom path).
 2. **Add card/tile depth: `elev.1/2` soft shadow + 1px `stroke.strong` top highlight at tile
    scale.** Start tiles (`surface-start-menu.png`) have faces *darker* than the inter-tile gap
    — the inverse of `reference/Aero Start Menu…jpg` raised chips. Also CC tiles, taskbar
    pills, toast cards. Target: tile face ≥ +8 L over gap with a visible penumbra. **→
-   raeen-gfx** (render) + **raeen-shell-apps** (call sites).
+   athena-gfx** (render) + **athena-shell-apps** (call sites).
 3. **Complete the warm-amber rim on the shipped surfaces.** Primitive renders it
    (`glass-iridescent-edge-3x.png`) but the shipped surfaces show ~0 warm bottom-edge px — the
    additive blend over a blue backdrop swamps the warm hue. Make the bottom-arc warm stop
    survive over blue. Target ≥2% warm px on each surface's bottom edge, visible amber at BR
-   corner. **→ raeen-gfx.**
+   corner. **→ athena-gfx.**
 4. **Fix context-menu lower-third legibility.** `surface-context-menu.png` rows over the bright
    teal aurora bleed push white text to ~3.7–3.9:1 (AA FAIL). The §2.3/§9 luma cap isn't
    biting on the popover tier over the bright bleed. Clamp the composited popover interior to
-   `GLASS_INTERIOR_LUMA_CEIL 0.40` there. **→ raeen-gfx** + **raeen-accessibility** (confirm).
+   `GLASS_INTERIOR_LUMA_CEIL 0.40` there. **→ athena-gfx** + **athena-accessibility** (confirm).
 5. **Make chrome visibly more see-through than panel.** Taskbar (chrome) L77 ≈ CC (panel) L78;
    per IDENTITY §2.1 chrome is 25% vs panel 45%. The "floats on the wallpaper" intent
    (`surface-taskbar.png`) doesn't land. Drop chrome effective alpha / lift backdrop bleed,
-   ≥+8 backdrop-bleed delta vs panel. **→ raeen-gfx.**
+   ≥+8 backdrop-bleed delta vs panel. **→ athena-gfx.**
 
-### P1 — token-blocked (held by the concurrent session's dirty `rae_tokens`)
+### P1 — token-blocked (held by the concurrent session's dirty `ath_tokens`)
 6. **+1 frost step per tier** to lift interiors toward the gold L188 milky frost (currently
    ~55–60%), with an a11y re-confirm so white text still clears AA. The dominant "looks dimmer
-   than the reference" gap. **→ raeen-ui (token) + raeen-gfx + raeen-accessibility.**
+   than the reference" gap. **→ athena-ui (token) + athena-gfx + athena-accessibility.**
 7. **Clean `status.danger` red** (~(255,69,58)) — notifications/taskbar urgent currently reads
-   a dull maroon (`surface-notifications.png`). **→ raeen-ui (token) + raeen-shell-apps.**
+   a dull maroon (`surface-notifications.png`). **→ athena-ui (token) + athena-shell-apps.**
 8. **Neutral `bg.content`** (~L57, ±3 channels) — Settings/Files content fields read faintly
-   cool (blue-biased). **→ raeen-ui.**
+   cool (blue-biased). **→ athena-ui.**
 
 ### P2 — kernel/risky tail (not yet glassed)
 9. **Login / OOBE** still predate the glass system (`login-card-preview.png`,
    `oobe-*-2026-06-17.png`). Re-compose over the aurora with `glass.panel` card + rim + depth.
-   These are the literal first impression. **→ raeen-shell-apps + raeen-gfx** (kernel-side
+   These are the literal first impression. **→ athena-shell-apps + athena-gfx** (kernel-side
    framebuffer render; respect the `oobe-auto-advance-login-only` session-phase flow).
 10. **Lock-screen gravity** — `surface-lock-screen.png` is a centered card; macOS Tahoe lock is
-    full-bleed with top-anchored time. Composition question, not a defect. **→ raeen-shell-apps.**
+    full-bleed with top-anchored time. Composition question, not a defect. **→ athena-shell-apps.**
 
 ---
 
@@ -197,7 +197,7 @@ and re-checkpoint after.
 
 ---
 
-### REPORT — raeen-visual-qa — 2026-06-21
+### REPORT — athena-visual-qa — 2026-06-21
 - Booted to: N/A (checkpoint of committed host-render PNGs; no QEMU/iron — concurrent session
   mid-iteration, build not attempted per instructions). Screenshots judged:
   `docs/design/screenshots/{wallpaper-aurora-dark, surface-control-center, surface-settings,
@@ -210,11 +210,11 @@ and re-checkpoint after.
   self-graded 86%).
 - Per-surface high/low: **HIGH** Desktop/Aurora 88, Settings 86. **LOW** Taskbar 75, Context
   menu 72.
-- Top remaining gaps: (1) wire crisp RaeSans into shipped-surface text (raeen-ui/shell-apps),
-  (2) add card/tile/pill depth — soft shadow + top highlight (raeen-gfx + shell-apps),
-  (3) complete the warm-amber rim on shipped surfaces (raeen-gfx), (4) fix context-menu
-  lower-third AA fail (raeen-gfx + a11y), (5) chrome must read more see-through than panel
-  (raeen-gfx); then (6) +1 frost step toward the milky reference (token-blocked, raeen-ui).
+- Top remaining gaps: (1) wire crisp RaeSans into shipped-surface text (athena-ui/shell-apps),
+  (2) add card/tile/pill depth — soft shadow + top highlight (athena-gfx + shell-apps),
+  (3) complete the warm-amber rim on shipped surfaces (athena-gfx), (4) fix context-menu
+  lower-third AA fail (athena-gfx + a11y), (5) chrome must read more see-through than panel
+  (athena-gfx); then (6) +1 frost step toward the milky reference (token-blocked, athena-ui).
 - Consistency issues: warm rim absent on shipped surfaces; chrome≈panel; tile/card depth absent
   shell-wide; frost one step low uniformly; type mono not RaeSans uniformly; danger red maroon.
 - Blocking (won't render): none — all 9 surfaces render cleanly; no handoff to verifier/debugger.

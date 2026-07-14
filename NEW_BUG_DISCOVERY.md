@@ -129,6 +129,6 @@ The user reported that their mouse and keyboard might not be working.
 **Finding:**
 The kernel logs show that the xHCI controller successfully enumerates the USB HID keyboard and mouse. The endpoints are configured, and the input servicing thread is spawned. Furthermore, the `usb-hid` smoketest passes, indicating that the kernel is successfully parsing HID reports.
 If the keyboard and mouse are "not working" for the user, the issue is **not** in the low-level kernel driver initialization or interrupt routing. It is highly likely to be:
-1. **User Space Routing:** The events are parsed by the kernel but not correctly routed to the active window/compositor surface (e.g., `raeshell` or the `first-boot setup wizard`).
+1. **User Space Routing:** The events are parsed by the kernel but not correctly routed to the active window/compositor surface (e.g., `athshell` or the `first-boot setup wizard`).
 2. **Virtualization Issue:** The QEMU window might not be capturing the host's mouse/keyboard input correctly. (The user must click into the window or use the QEMU grab hotkey, usually Ctrl+Alt+G).
 3. **Interrupt Delivery (Runtime):** While the smoketest passes (which often synthesizes events), the actual runtime hardware interrupts from the xHCI controller might not be firing or being acknowledged correctly after boot.

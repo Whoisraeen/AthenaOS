@@ -1361,7 +1361,7 @@ static struct {
  * heap/return-address corruption -> a wild jump that faulted at a NULL write
  * (misread across three sessions as a copy_toc_ucode / verify_claimed NULL bug at
  * rip=0x5d016). Skip to the real first entry exactly the way the proven native
- * raeen_amdgpu::rlc_autoload::find_toc_start does: RLC_G_UCODE (id 1) always sits
+ * ath_amdgpu::rlc_autoload::find_toc_start does: RLC_G_UCODE (id 1) always sits
  * at buffer offset 0 and is immediately followed by another in-range entry — a
  * specific anchor that robustly steps over the $PS1 block whatever its size. A
  * genuine gc_*_toc.bin (entries already at offset 0) is returned unchanged; if no

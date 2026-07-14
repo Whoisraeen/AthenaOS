@@ -1,7 +1,7 @@
-# raebridge_server — Cross-Process Sync Broker (Design)
+# athbridge_server — Cross-Process Sync Broker (Design)
 
 **Status:** design / interface decision (2026-06-28). Implements strategy-doc
-[`raebridge-wine-strategy.md`](raebridge-wine-strategy.md) §6.1 "the wineserver gap."
+[`athbridge-wine-strategy.md`](athbridge-wine-strategy.md) §6.1 "the wineserver gap."
 Builds on the committed in-process object model (`lib.rs` `SyncObject`, commit
 `e9be347`). Owner-assigned via /goal; interface-steward = Opus.
 
@@ -15,7 +15,7 @@ cross-process half.
 
 ## 1. Interface decision (the load-bearing call)
 
-**The broker needs ~zero new `rae_abi` surface.** It rides two existing primitives:
+**The broker needs ~zero new `ath_abi` surface.** It rides two existing primitives:
 
 | Primitive | Syscall | Why it's sufficient |
 |---|---|---|
@@ -31,9 +31,9 @@ namespace lookup), not on every wait.
 hand a freshly-created channel capability to an arbitrary client process (cap transfer
 across the broker)? If existing cap/channel plumbing already supports a daemon granting
 a channel cap to a client, **no ABI change at all**. If not, that is the *single*
-justified addition — one of the reserved native-sync slots (`rae_abi` 259–263, already
+justified addition — one of the reserved native-sync slots (`ath_abi` 259–263, already
 earmarked) for "open/create a named broker object → channel cap", landed as one
-deliberate `[interface]` commit (`RAEEN_AGENT=opus`, `ABI_VERSION` bump, `SYSCALL_TABLE.md`
+deliberate `[interface]` commit (`ATHENA_AGENT=opus`, `ABI_VERSION` bump, `SYSCALL_TABLE.md`
 in the same commit). No speculative widening before Slice 1 proves whether it's needed.
 
 ---
@@ -45,7 +45,7 @@ in the same commit). No speculative widening before Slice 1 proves whether it's 
   kernel32::CreateMutexW("Global\Foo")  kernel32::OpenMutexW("Global\Foo")
         │  (named → broker)                    │  (named → broker)
         ▼                                       ▼
-  ┌───────────────────── raebridge_server (userspace daemon) ─────────────────┐
+  ┌───────────────────── athbridge_server (userspace daemon) ─────────────────┐
   │  owns ONLY the namespace:  name "Global\Foo" → object-id → shared page     │
   │  create-on-first-open, refcount, free on last close                        │
   └───────────────────────────────────────────────────────────────────────────┘
@@ -91,7 +91,7 @@ shared atomics with futex blocking:
 
 ## 4. Slice plan (each is independently build+boot+KAT verifiable)
 
-1. **Broker daemon skeleton + namespace** — `raebridge_server` process: `name → object`
+1. **Broker daemon skeleton + namespace** — `athbridge_server` process: `name → object`
    map, create/open/close + refcount, FAIL-able boot smoketest (two synthetic clients
    share one named object id). **Resolves the open ABI question** (cap handoff). Pure
    logic host-KAT first.
@@ -108,13 +108,13 @@ shared atomics with futex blocking:
    a cross-process leg.
 
 R10 for the daemon: `init` (spawned at boot), `run_boot_smoketest` (FAIL-able cross-proc
-rendezvous), `/proc/raeen/raebridge_server` line, Concept docstring.
+rendezvous), `/proc/athena/athbridge_server` line, Concept docstring.
 
 ## 5. Proof markers
 
 - Host KAT: namespace refcount + each state machine on a simulated shared page (FAIL-able).
-- Boot: `[raebridge_server] cross-proc event: A waited, B signaled, A woke -> PASS`,
-  `[raebridge_server] named mutex shared across 2 procs -> PASS`, 7/7 HEALTHY, 0 panic.
+- Boot: `[athbridge_server] cross-proc event: A waited, B signaled, A woke -> PASS`,
+  `[athbridge_server] named mutex shared across 2 procs -> PASS`, 7/7 HEALTHY, 0 panic.
 - Iron: real Athena sweep (futex physical-keying + shmem map on real hardware).
 
 ## 6. Non-goals / guardrails
@@ -131,13 +131,13 @@ rendezvous), `/proc/raeen/raebridge_server` line, Concept docstring.
 This section promotes §1's *decision* to a concrete, stampable interface. Nothing
 here is landed by Composer; it is the exact proposal for a single deliberate
 `[interface]` commit. All syscall facts below were re-verified against
-`components/rae_abi/src/lib.rs` on 2026-06-30:
+`components/ath_abi/src/lib.rs` on 2026-06-30:
 
 | Fact | Value | Source |
 |---|---|---|
-| Cross-process shared page | `SYS_CHANNEL_SHMEM_MAP = 119` | `rae_abi` line 699 |
-| Blocking wait/wake | `SYS_FUTEX = 258` (op 0=WAIT,1=WAKE; WAIT: rdx=expected; returns 0 woke / 1 EAGAIN / 2 fault) | `rae_abi` lines 751–761 |
-| Free reserved sync slots | `259..=263` (`RESERVED_SYNC_LO=258`, `..HI=263`; 258 taken) | `rae_abi` lines 775–776 |
+| Cross-process shared page | `SYS_CHANNEL_SHMEM_MAP = 119` | `ath_abi` line 699 |
+| Blocking wait/wake | `SYS_FUTEX = 258` (op 0=WAIT,1=WAKE; WAIT: rdx=expected; returns 0 woke / 1 EAGAIN / 2 fault) | `ath_abi` lines 751–761 |
+| Free reserved sync slots | `259..=263` (`RESERVED_SYNC_LO=258`, `..HI=263`; 258 taken) | `ath_abi` lines 775–776 |
 
 `SYS_FUTEX` keys on the **physical** frame (`kernel/src/sync.rs` `FutexManager`),
 so a futex on a `SYS_CHANNEL_SHMEM_MAP` page is cross-process for free — no
@@ -151,7 +151,7 @@ a mismatched `version` at open. Proposed layout (all fields `AtomicU32`, natural
 8-byte tail alignment; fits one page with room for future kinds):
 
 ```rust
-// raebridge shared-sync object page — CROSS-PROCESS ABI. Bump VERSION on any
+// athbridge shared-sync object page — CROSS-PROCESS ABI. Bump VERSION on any
 // field move/resize; broker validates it at open and refuses on mismatch.
 pub const RAEBRIDGE_SYNC_ABI_VERSION: u32 = 1;
 
@@ -187,7 +187,7 @@ picks:
 - **Outcome A — NO ABI change (preferred).** If existing channel/cap plumbing
   already lets a daemon grant a channel cap to a connecting client (the same way
   other AthenaOS services hand back a channel), the broker uses it verbatim.
-  Deliverable: zero `rae_abi` edits; Slice 1 proves cap handoff with a boot KAT.
+  Deliverable: zero `ath_abi` edits; Slice 1 proves cap handoff with a boot KAT.
 - **Outcome B — ONE reserved slot.** If not, add a single syscall in the reserved
   sync block, e.g.:
 
@@ -197,7 +197,7 @@ picks:
                                   // -> returns channel cap id (or 0 + errno)
   ```
 
-  Landed as one `[interface]` commit: `RAEEN_AGENT=opus`, additive so **no
+  Landed as one `[interface]` commit: `ATHENA_AGENT=opus`, additive so **no
   `ABI_VERSION` bump** (matches the `SYS_FUTEX` precedent), `docs/SYSCALL_TABLE.md`
   updated in the same commit, number drawn from `259..=263`.
 

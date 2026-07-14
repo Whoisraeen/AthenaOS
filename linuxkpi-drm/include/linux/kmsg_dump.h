@@ -5,7 +5,7 @@
  * Kernel-log dumper (capture dmesg on panic/oops). Reached only via the DRM plane
  * type graph; amdgpu registers a dumper to snapshot its ring state on GPU hang.
  * Not present in the userspace-daemon model (register is a no-op returning
- * success-of-nothing) — the daemon's own crash path + /proc/raeen carry that
+ * success-of-nothing) — the daemon's own crash path + /proc/athena carry that
  * diagnostic instead. Honest "no kmsg dumper", not a fake of a functional path.
  * License boundary (../../README.md): API surface.
  */

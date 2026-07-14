@@ -3,7 +3,7 @@
  * <linux/printk.h> shim (MPL-2.0, original work).
  *
  * Kernel logging. amdgpu/DRM emit init progress, warnings, and error diagnostics
- * through printk/pr_*. Backed by raeen_linuxkpi's log facade at M4 (Phase 1
+ * through printk/pr_*. Backed by ath_linuxkpi's log facade at M4 (Phase 1
  * timing/log). The `pr_*` helpers are macros over printk; KERN_* level prefixes
  * are empty here (the facade carries severity out-of-band). License boundary
  * (../../README.md): API surface, no GPL source.

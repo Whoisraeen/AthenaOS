@@ -9,4 +9,4 @@ description = "Userspace Kanata macro input daemon"
 [dependencies]
 # kanata-parser requires std. It is vendored but disabled until Phase 11 AthBridge brings full std support.
 kanata-keyberon = { path = "vendor/kanata-keyberon" }
-raekit = { path = "../raekit" }
+athkit = { path = "../athkit" }

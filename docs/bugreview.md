@@ -211,7 +211,7 @@ More concretely: the bitmap only has 3 entries covering 192 vectors, but the cal
 
 ### BUG-24: `cow_write_block` does not write inode on fresh allocation (Data Loss)
 
-**File:** [raefs.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/raefs.rs#L1054-L1059)  
+**File:** [athfs.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/athfs.rs#L1054-L1059)  
 **Severity:** 🔴 Critical (Data Loss)
 
 When writing to a previously unallocated block slot (`old_block == 0`), `cow_write_block` allocates a new block, writes the data, and updates `inode.direct_blocks[block_idx] = new_block`. It then immediately returns `Ok(())` **without writing the inode back to disk** (`self.write_inode(inode)` is missing on this branch). If the system reboots, the newly allocated block is orphaned and the file retains a hole.
@@ -656,7 +656,7 @@ Similarly, `unblock_receivers(1)` (line 1037) wakes receivers on channel 1, whic
 
 ### BUG-31: `allocate_inode` misses superblock flush and `free_inodes` update
 
-**File:** [raefs.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/raefs.rs#L980-L997)  
+**File:** [athfs.rs](file:///c:/Users/woisr/OneDrive/Documents/AthenaOS/kernel/src/athfs.rs#L980-L997)  
 **Severity:** 🟡 Medium
 
 When `allocate_inode` successfully claims a bit in the inode bitmap, it writes the bitmap block to disk but fails to decrement `self.superblock.free_inodes` and does not call `self.flush_superblock()`. In contrast, `allocate_block` correctly handles these steps. If a crash occurs, the superblock's free inode count will be out of sync.

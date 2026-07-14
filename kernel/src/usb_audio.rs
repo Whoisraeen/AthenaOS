@@ -392,7 +392,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/usb_audio` text.
+/// `/proc/athena/usb_audio` text.
 pub fn dump_text() -> alloc::string::String {
     use alloc::string::String;
     let mut out = String::from("# AthenaOS USB Audio Class (UAC1/UAC2)\n");

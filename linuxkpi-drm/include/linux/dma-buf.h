@@ -6,7 +6,7 @@
  * amdgpu exports its BOs as dma-bufs and imports peers' (XGMI, multi-GPU, and
  * the compositor share path). Without this shim `<linux/dma-buf.h>` LEAKS to the
  * host's UAPI header, which has no kernel `struct dma_buf` — hence the type must
- * be defined here for layout. The export/attach ops are backed by raeen_linuxkpi
+ * be defined here for layout. The export/attach ops are backed by ath_linuxkpi
  * at M4. License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_DMA_BUF_H
@@ -88,14 +88,14 @@ struct dma_buf_export_info {
 /* no dynamic (move-notify) attachment during bring-up; importers see a pinned buf. */
 static inline bool dma_buf_is_dynamic(struct dma_buf *dmabuf) { (void)dmabuf; return false; }
 
-/* export / lifetime — backed by raeen_linuxkpi (M4) */
+/* export / lifetime — backed by ath_linuxkpi (M4) */
 void get_dma_buf(struct dma_buf *dmabuf);   /* take a reference (file refcount) */
 struct dma_buf *dma_buf_export(const struct dma_buf_export_info *exp_info);
 int  dma_buf_fd(struct dma_buf *dmabuf, int flags);
 struct dma_buf *dma_buf_get(int fd);
 void dma_buf_put(struct dma_buf *dmabuf);
 
-/* attach / map — backed by raeen_linuxkpi (M4) */
+/* attach / map — backed by ath_linuxkpi (M4) */
 struct dma_buf_attachment *dma_buf_attach(struct dma_buf *dmabuf, struct device *dev);
 struct dma_buf_attachment *dma_buf_dynamic_attach(struct dma_buf *dmabuf, struct device *dev,
 						  const struct dma_buf_attach_ops *importer_ops,

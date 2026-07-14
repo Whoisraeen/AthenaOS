@@ -10,16 +10,16 @@ AthenaOS may include or adapt components from other open-source projects. This f
 
 **License:** MIT — retain `LICENSE` / `LICENSE-MIT` and copyright headers in any copied crate.
 
-**Typical destinations when migrated:** `components/relibc/`, `components/raefs/` (from redoxfs), userspace drivers, low-level crates.
+**Typical destinations when migrated:** `components/relibc/`, `components/athfs/` (from redoxfs), userspace drivers, low-level crates.
 
 When a component is first migrated from Redox into the build, add a row below:
 
 | Component path | Upstream crate | Migrated (date/commit) | Notes |
 |----------------|----------------|------------------------|-------|
-| `components/raefs/src/redoxfs_adapter/` | redoxfs (`tree.rs`, `header.rs`) | 2026-05-28 | MIT; see `components/raefs/vendor/redoxfs/` |
+| `components/athfs/src/redoxfs_adapter/` | redoxfs (`tree.rs`, `header.rs`) | 2026-05-28 | MIT; see `components/athfs/vendor/redoxfs/` |
 | `components/pcid/` | pciids patterns (subset) | 2026-05-28 | Curated IDs only; not full pciids DB |
-| `components/raefat/` | redox-fatfs BPB patterns | 2026-05-28 | Boot-sector layout only; no full FS port |
-| `components/raehid/` | `hidreport` (hidutils) via Redox `rehid` | 2026-06-16 | MIT; `raehid` wraps the upstream `hidreport` crate (`default-features=false`, `#![no_std]`) — the same HID report-descriptor parser Redox's `usbhidd`→`rehid` uses. Linked into the kernel for report-protocol HID decoding. Pulls `hidreport` (MIT) + `thiserror` 2.0 (MIT/Apache-2.0) from crates.io. |
+| `components/athfat/` | redox-fatfs BPB patterns | 2026-05-28 | Boot-sector layout only; no full FS port |
+| `components/athhid/` | `hidreport` (hidutils) via Redox `rehid` | 2026-06-16 | MIT; `athhid` wraps the upstream `hidreport` crate (`default-features=false`, `#![no_std]`) — the same HID report-descriptor parser Redox's `usbhidd`→`rehid` uses. Linked into the kernel for report-protocol HID decoding. Pulls `hidreport` (MIT) + `thiserror` 2.0 (MIT/Apache-2.0) from crates.io. |
 
 ## Kanata (mixed: MIT + LGPL-3.0)
 

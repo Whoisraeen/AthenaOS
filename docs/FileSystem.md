@@ -4,7 +4,7 @@ AthenaOS uses the custom **AthFS** filesystem to deliver a tree that is
 human-readable, self-cleaning, crash-safe, and structurally enforces security
 and gaming priorities. This document is both the **UX contract** (what the user
 sees) and the **architecture plan** (how AthFS delivers it), with an honest
-**implementation-status** map to the code in `kernel/src/raefs.rs` and friends.
+**implementation-status** map to the code in `kernel/src/athfs.rs` and friends.
 
 > Conventions: `[x]` shipped + proven · `[~]` implemented, QEMU-verified ·
 > `[ ]` planned. AthFS follows the no-Linux-clone rule (§CLAUDE.md R7): no ext4,
@@ -29,7 +29,7 @@ files or untracked dumps at the root:
 | `/Games` | High-performance tier (game-aware extents, tiered routing) | Contiguous extents, tiered |
 | `/Vaults` | Dynamic mount point for secondary/external drives (by name, not letter) | AthFS-native or foreign-FS bridge |
 
-> **✅ Done:** `raefs::format()` now seeds exactly the Apex tree (`/System /Apps
+> **✅ Done:** `athfs::format()` now seeds exactly the Apex tree (`/System /Apps
 > /Users /Games /Vaults`, inodes 2–6) **and writes real named `DirEntry` records**
 > into the root directory block (block 9), so the tree is navigable by name — not
 > synthesized from a hidden manifest. Verified: `format_smoketest: … dirs=true
@@ -110,7 +110,7 @@ Secondary/USB drives mount by **name**, not letter: drive "Archive" → `/Vaults
 
 ## Part II — AthFS On-Disk Architecture (how the UX is delivered)
 
-The namespace above rides on these layers (all in `kernel/src/raefs.rs` unless noted):
+The namespace above rides on these layers (all in `kernel/src/athfs.rs` unless noted):
 
 1. **Superblock** (magic `0x5261654653_5321`) — geometry, bitmaps, root inode,
    snapshot/refcount/bucket table pointers, encryption + compression flags. `[~]`
@@ -123,14 +123,14 @@ The namespace above rides on these layers (all in `kernel/src/raefs.rs` unless n
    the journal to a consistent state. `fsck` (bitmap/refcount coherence, B-tree
    integrity, orphan-inode reclaim) verifies + repairs. `[~]`
 5. **Snapshots** — `create`/`rollback`/`delete` with CoW refcount bumps; exposed
-   to userspace as `SYS_RAEFS_SNAPSHOT_CREATE/RESTORE/DELETE` (101–103). `[~]`
+   to userspace as `SYS_ATHFS_SNAPSHOT_CREATE/RESTORE/DELETE` (101–103). `[~]`
 6. **Encryption** — XTS-AES-256 per 512-byte sector, tweak = block number
    (`encrypt_data_block`/`decrypt_data_block`). Cipher core proven against the
    FIPS-197 known-answer vector. `[~]`
 7. **Compression** — transparent LZ4-style coder with a per-block header + a
-   per-extent `COMPRESSED` flag; live ratio accounting at `/proc/raeen/raefs`
+   per-extent `COMPRESSED` flag; live ratio accounting at `/proc/athena/athfs`
    (kernel logs compress to ~17× — see Part IV). zstd decoder lives in the
-   `components/raefs` userspace half. `[~]`
+   `components/athfs` userspace half. `[~]`
 8. **Tiered storage** — devices classified NVMe / SATA / HDD; access-frequency
    hot/cold migration; game-install hot-pin. `[~]`
 9. **Per-app data buckets** — `create_bucket(app_id)` registers an isolated
@@ -167,8 +167,8 @@ Master key  ──(FDE, LUKS-equivalent, passphrase→KDF)──▶  /Users volu
 * **Cache flush:** writers that must survive a power-cycle (e.g. the bootlog,
   installer) issue an explicit device cache-sync — data in a controller's DRAM
   is otherwise lost on power-off.
-* **fsck:** runs the integrity passes above; a userspace `raefsck` mirrors the
-  logic for offline repair (`components/raefs/src/fsck.rs`).
+* **fsck:** runs the integrity passes above; a userspace `athfsck` mirrors the
+  logic for offline repair (`components/athfs/src/fsck.rs`).
 
 ### Capability → path enforcement (who can touch what)
 
@@ -218,7 +218,7 @@ history slider** because all config is versioned `.rcfg`.
 
 ### The `.rcfg` versioned-config format
 * **Shape:** a flat key→value tree (`Text`/`Int`/`Bool`/`Bytes`), e.g.
-  `/display/refresh_hz = 60`, surfaced at `/proc/raeen/config`.
+  `/display/refresh_hz = 60`, surfaced at `/proc/athena/config`.
 * **Versioning:** every `set` bumps a monotonic *generation* and journals the
   prior value. **Whole-snapshot rollback** (snapshot a generation, roll back all
   writes since) **and per-setting restore** (roll one key back to its value at a
@@ -232,20 +232,20 @@ history slider** because all config is versioned `.rcfg`.
 
 | Capability | Code | State |
 |---|---|---|
-| CoW + per-block refcounts | `raefs.rs` | `[~]` |
-| Snapshots (create/rollback/delete) + syscalls 101–103 | `raefs.rs`, `syscall.rs` | `[~]` |
-| Journal/WAL replay + fsck (integrity/btree/orphan) | `raefs.rs`, `components/raefs/fsck.rs` | `[~]` |
-| `mkfs` / `format()` | `raefs::format` | `[~]` (but seeds Unix tree — see gap) |
-| XTS-AES-256 block encryption (FIPS-197 KAT) | `raefs.rs`, `crypto.rs` | `[~]` |
-| Per-app bucket keys (FSCRYPT-equiv) | `raefs::bucket_encryption_key` | `[~]` |
+| CoW + per-block refcounts | `athfs.rs` | `[~]` |
+| Snapshots (create/rollback/delete) + syscalls 101–103 | `athfs.rs`, `syscall.rs` | `[~]` |
+| Journal/WAL replay + fsck (integrity/btree/orphan) | `athfs.rs`, `components/athfs/fsck.rs` | `[~]` |
+| `mkfs` / `format()` | `athfs::format` | `[~]` (but seeds Unix tree — see gap) |
+| XTS-AES-256 block encryption (FIPS-197 KAT) | `athfs.rs`, `crypto.rs` | `[~]` |
+| Per-app bucket keys (FSCRYPT-equiv) | `athfs::bucket_encryption_key` | `[~]` |
 | Full-disk encryption (FDE) at boot | `encryption.rs` | `[ ]` (Argon2 + TPM unlock) |
-| Compression (LZ4-style + per-extent flag + ratio) | `raefs.rs` | `[~]` (`/var/log` 17.2×) |
-| Tiered storage (NVMe/SATA/HDD, hot/cold) | `raefs.rs` | `[~]` |
-| Game-aware extents + sequential prefetch | `raefs.rs` | `[~]` |
-| Per-app data buckets (isolation + quota + caps) | `raefs.rs`, `data_buckets.rs` | `[~]` |
+| Compression (LZ4-style + per-extent flag + ratio) | `athfs.rs` | `[~]` (`/var/log` 17.2×) |
+| Tiered storage (NVMe/SATA/HDD, hot/cold) | `athfs.rs` | `[~]` |
+| Game-aware extents + sequential prefetch | `athfs.rs` | `[~]` |
+| Per-app data buckets (isolation + quota + caps) | `athfs.rs`, `data_buckets.rs` | `[~]` |
 | Versioned config (whole + per-key restore) | `config_registry.rs` | `[~]` |
 | FAT32 foreign-media read/bounded-write (`/Vaults`) | `fatfs_esp.rs`, `usb_msc.rs` | `[~]` |
-| Apex root tree (`/System /Apps /Users /Games /Vaults`) | `raefs::format` | `[~]` (mkfs writes named entries; in-RAM bootstrap pending) |
+| Apex root tree (`/System /Apps /Users /Games /Vaults`) | `athfs::format` | `[~]` (mkfs writes named entries; in-RAM bootstrap pending) |
 | A/B `/System` atomic update + boot-health rollback | `installer.rs`, bootloader | `[ ]` (slot A only) |
 | `.app` bundle + `RaeManifest.toml` parse/enforce | `app_bundle.rs`, `sandbox.rs` | `[~]` classifier / `[ ]` manifest |
 | Time-Machine retention + snapshot quota | — | `[ ]` |

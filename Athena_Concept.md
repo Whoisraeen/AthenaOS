@@ -36,20 +36,18 @@ Details: [docs/COGNITIVE_STACK.md](docs/COGNITIVE_STACK.md), [docs/SAFETY.md](do
 
 ---
 
-## Product stack (Athena names)
+## Product stack
 
-| Product name | Role | Repo mapping (v0) |
+| Product name | Role | Repo mapping |
 |---|---|---|
 | **AthKernel** | Hybrid real-time kernel | `kernel/` |
-| **AthFS** | CoW FS, identity + memory durability | `components/raefs/` |
-| **AthGuard** | Capabilities, E-stop, attestation | `components/athguard/` + `raeshield/` |
-| **AthNet** | Networking above L3 | `components/raenet/` |
+| **AthFS** | CoW FS, identity + memory durability | `components/athfs/` |
+| **AthGuard** | Capabilities, E-stop, attestation | `components/athguard/` + `athshield/` |
+| **AthNet** | Networking above L3 | `components/athnet/` |
 | **AthBody** | Motors, kinematics, balance | `components/athbody/` |
 | **AthSense** | Cameras, mic, IMU, tactile, fusion | `components/athsense/` |
-| **AthMind** | Self, memory, goals, planner, LLM/tools | `components/athmind/` (+ `raeai`) |
+| **AthMind** | Self, memory, goals, planner, LLM/tools | `components/athmind/` (+ `athai`) |
 | **AthVoice** | Speech I/O, social presence | `components/athvoice/` |
-
-Mass `rae*` → `ath*` crate path renames continue incrementally; product names above are authoritative.
 
 ---
 

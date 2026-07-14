@@ -1,14 +1,14 @@
 # Spec: Slice 1.5 — arch-neutral PAGING trait (`arch::mmu::AddressSpace`)
 
 Status: RESEARCH / executable plan. **SPEC ONLY — this document touches no kernel code, no
-`Cargo.toml`, no `xtask`, no `rae_abi`.** It is the §10-keystone follow-on the Slice-1 spec
+`Cargo.toml`, no `xtask`, no `ath_abi`.** It is the §10-keystone follow-on the Slice-1 spec
 explicitly deferred (`docs/research/slice1-arch-neutral-mm-newtypes.md` §4: *"the paging trait is
 Slice 1.5, deferred"*) and the **last big arch-abstraction piece before the aarch64 backend can
 compile + boot** (it is aarch64 Slice A4's first task — the MMU bring-up; this trait is the seam
 A4 plugs into).
 
-Owner of the seam contract: **raeen-architect** (internal kernel HAL — NOT `rae_abi`,
-`ABI_VERSION` unchanged, §6). Implementer: **raeen-kernel**.
+Owner of the seam contract: **athena-architect** (internal kernel HAL — NOT `ath_abi`,
+`ABI_VERSION` unchanged, §6). Implementer: **athena-kernel**.
 
 **Precondition:** Slice 1 (`arch::PhysAddr`/`VirtAddr`/`Frame` aliases) is COMPLETE + verifier-
 confirmed (commit `f809f41`). This spec builds on those types; it does NOT re-derive them. The
@@ -231,7 +231,7 @@ A single non-cfg struct holding a runtime-tagged backend.
 **RECOMMENDATION: Option (b).** `arch::mmu` as a seam module exposing free fns
 (`kernel()`, `current_user()`, `new_user()`, `flush*`, `user_root_token`) + a concrete
 `AddressSpace` struct with `cfg`-selected internals and inherent methods. This is the exact pattern
-of the five landed seams — the architecture-gate, the smoketest wiring, and the `/proc/raeen/arch`
+of the five landed seams — the architecture-gate, the smoketest wiring, and the `/proc/athena/arch`
 reporting all already know this shape.
 
 ---
@@ -321,7 +321,7 @@ Baseline proof line for EVERY sub-slice below (the falsifiable gate):
 > `[ OS ] System successfully booted.` + `boot health: 6/6 critical PASS -> HEALTHY`, **no
 > `[PANIC]`**, `[BOOT-BENCH]` not regressed, and the **`arch` smoketest line still prints `-> PASS`**
 > (now also reporting the `mmu=` token, §5). SMP/CR3-touching sub-slices get **≥5 boots at
-> `RAEEN_SMP=1` and `=2`** (CLAUDE.md §17) — flagged ⚠ below.
+> `ATHENA_SMP=1` and `=2`** (CLAUDE.md §17) — flagged ⚠ below.
 
 ### Sub-slice 1.5a — define `arch::mmu` + `PageFlags` + an x86 impl that DELEGATES to existing `memory.rs`, + a map/translate/unmap smoketest (ZERO behavior change) — **THE NAMED HAND-OFF (§8)**
 - **Files:**
@@ -373,7 +373,7 @@ Baseline proof line for EVERY sub-slice below (the falsifiable gate):
 - **§10.3 KEYSTONE:** the docstring's "call this **before** `create_new_pml4()`" ordering MUST be
   preserved — the migration is a body rewrite that keeps the same call order. The seam does NOT
   change *when* the stack is allocated relative to `new_user()`.
-- **Proof line:** baseline **+ ≥5 boots `RAEEN_SMP=1`/`=2`** (every spawned task gets a kernel
+- **Proof line:** baseline **+ ≥5 boots `ATHENA_SMP=1`/`=2`** (every spawned task gets a kernel
   stack; corruption here = the worst-bug class, §10.6).
 
 ### Sub-slice 1.5f — migrate `create_new_pml4` → `AddressSpace::new_user()` ⚠ (HIGHEST RISK)
@@ -385,7 +385,7 @@ Baseline proof line for EVERY sub-slice below (the falsifiable gate):
   reorder these. The deep-copy of user low PD[0] (the frame-collision fix audited at memory.rs:470-
   490 — "child mapping its text at base 0 REPLACES the parent's pages") MUST be preserved verbatim
   in the x86 `new_user()` impl.
-- **Proof line:** baseline **+ ≥5 boots `RAEEN_SMP=1`/`=2`** + the spawn-and-reap daemon chain
+- **Proof line:** baseline **+ ≥5 boots `ATHENA_SMP=1`/`=2`** + the spawn-and-reap daemon chain
   proven (user_init + daemons spawn without #UD — the regression class this code fixed).
 
 ### Sub-slice 1.5g — migrate the CR3 SWITCH → `arch::mmu::user_root_token` ⚠⚠ (HIGHEST RISK — §10.6)
@@ -398,7 +398,7 @@ Baseline proof line for EVERY sub-slice below (the falsifiable gate):
   the single most boot-critical edit in the slice. Pure token-computation relocation ONLY; do NOT
   alter the `mov cr3` asm, the block-path syscall-stack handling, or the lock-drop-before-switch
   ordering.
-- **Proof line:** baseline **+ ≥5 boots `RAEEN_SMP=1`/`=2`** (the steal-resume race class lives
+- **Proof line:** baseline **+ ≥5 boots `ATHENA_SMP=1`/`=2`** (the steal-resume race class lives
   exactly here; CLAUDE.md §17 + pitfall #9 — don't trust 2 green boots).
 
 ### Sub-slice 1.5h — reimplement the leaf map/unmap/translate seam bodies (stop delegating) + the `memory.rs` Cluster-B cleanup ⚠
@@ -408,7 +408,7 @@ Baseline proof line for EVERY sub-slice below (the falsifiable gate):
   thin `memory.rs` wrappers become 1-line forwards or are deleted). After this, **no shared kernel
   file names `x86_64::{OffsetPageTable, Mapper, Cr3, PageTableFlags, PhysFrame, Page, Size4KiB}`**
   — only `arch/x86_64/mmu.rs` does.
-- **Proof line:** baseline **+ ≥5 boots `RAEEN_SMP=1`/`=2`**.
+- **Proof line:** baseline **+ ≥5 boots `ATHENA_SMP=1`/`=2`**.
 
 ### Completion check for Slice 1.5
 After 1.5a–1.5h: grep for `x86_64::structures::paging` / `x86_64::registers::control::Cr3` in
@@ -457,20 +457,20 @@ later smoketest emission, not folded into the early one.
 
 ---
 
-## 6. Interface note — internal kernel HAL, NOT `rae_abi`
+## 6. Interface note — internal kernel HAL, NOT `ath_abi`
 
 **Confirmed: `ABI_VERSION` is UNCHANGED.** `arch::mmu::{AddressSpace, PageFlags, Root, MmuError}`
 are **internal kernel HAL types** — they never cross the syscall boundary:
 - mmap/mprotect/brk syscalls keep their ABI-level args as **plain `u64`/`usize` integers**
-  (`rae_abi` is untouched). The handler constructs `PageFlags` from the raw `prot` bits *inside* the
+  (`ath_abi` is untouched). The handler constructs `PageFlags` from the raw `prot` bits *inside* the
   kernel and calls `current_user().update_flags(..)`; the `arch::mmu` types never appear in a
-  `rae_abi` constant or struct. This is already true today (`PageTableFlags` is built inside
-  handlers, not in `rae_abi`) — the migration preserves it.
-- No `rae_abi` / `rae_driver_api` edit. The architecture-gate's `[interface]` sign-off requirement
-  does NOT apply (it gates `rae_abi`/`rae_driver_api`, not internal `arch::`).
-- The widened `arch::mmu` surface is the internal seam contract **raeen-architect** owns as
+  `ath_abi` constant or struct. This is already true today (`PageTableFlags` is built inside
+  handlers, not in `ath_abi`) — the migration preserves it.
+- No `ath_abi` / `ath_driver_api` edit. The architecture-gate's `[interface]` sign-off requirement
+  does NOT apply (it gates `ath_abi`/`ath_driver_api`, not internal `arch::`).
+- The widened `arch::mmu` surface is the internal seam contract **athena-architect** owns as
   documentation — consistent with the five landed seams. No `[interface]` commit tag needed (that
-  tag is `rae_abi`-only); these land as ordinary kernel commits under `RAEEN_AGENT=opus`.
+  tag is `ath_abi`-only); these land as ordinary kernel commits under `ATHENA_AGENT=opus`.
 
 ---
 
@@ -481,7 +481,7 @@ are **internal kernel HAL types** — they never cross the syscall boundary:
 | R1 | **Active-CR3 vs `KERNEL_PML4` confusion** — translating a kernel VA through the *active user* CR3, or mapping a kernel stack into the active CR3 instead of `KERNEL_PML4`, gives wrong/absent mappings → #PF reboot loop. | §10.2; memory.rs:94-110 | `AddressSpace::kernel()` is a DISTINCT handle from `current_user()`; `kernel_translate_addr` stays backed by `kernel()` (1.5h preserves the kernel-first order in `virt_to_phys`). The smoketest (§5) maps+translates through `kernel()` explicitly. |
 | R2 | **Per-task kernel stack allocated AFTER `new_user()`** — the clone misses the stack mapping → the task faults the instant it touches its stack → #DF. | §10.3; memory.rs:138-140 | 1.5e (stack maps) lands BEFORE 1.5f (`new_user`); both spec the ordering as inviolable; the x86 `new_user()` impl keeps the clone *after* the stack alloc, verbatim. |
 | R3 | **TLB not flushed on map/unmap/switch** — stale TLB entry → reads/writes hit the wrong (or freed) frame; classic silent corruption that boots "sometimes." | §10 general; memory.rs unmap paths | `flush(v)`/`flush_all()` are EXPLICIT trait ops (not implicit in map/unmap), and the §5 smoketest step 5 asserts `translate` returns `None` after unmap — a missing flush prints FAIL. The CR3-switch (1.5g) keeps the existing flush-on-reload semantics. |
-| R4 | **CR3-switch token miscomputed** (1.5g) — wrong PML4 → task runs in the wrong address space → instant fault or, worse, silent cross-task corruption (the steal-resume race class). | §10.6; context.rs, smp.rs:1829 | 1.5g is pure *token-computation* relocation; the `mov cr3, rdx` asm is UNCHANGED; ≥5 boots at `RAEEN_SMP=1`/`=2` (pitfall #9 — work-stealing race lives here; don't trust 2 green boots). |
+| R4 | **CR3-switch token miscomputed** (1.5g) — wrong PML4 → task runs in the wrong address space → instant fault or, worse, silent cross-task corruption (the steal-resume race class). | §10.6; context.rs, smp.rs:1829 | 1.5g is pure *token-computation* relocation; the `mov cr3, rdx` asm is UNCHANGED; ≥5 boots at `ATHENA_SMP=1`/`=2` (pitfall #9 — work-stealing race lives here; don't trust 2 green boots). |
 | R5 | **Frame-collision regression** — losing the user-low-PD[0] deep-copy in `new_user()` → child's base-0 text REPLACES the running parent's pages → parent executes child bytes → #UD (the audited 2026-06-10 bug). | memory.rs:470-490 | 1.5f preserves the deep-copy verbatim; proof line requires the spawn-and-reap daemon chain green (the exact scenario that regressed). |
 | R6 | **Multi-page table allocation non-contiguous** — allocating page-table pages (esp. aarch64's L0-L3 build) with an `allocate_frame()` loop instead of `allocate_contiguous_frames(order)` → walker reads garbage from a non-contiguous "table" → wild faults three subsystems away. | §10.7; pitfall #7 | The trait's `map_range`/`new_user` spec MANDATES `allocate_contiguous_frames` for any multi-page table region; called out per-slice (1.5e/1.5f). aarch64 A4 inherits the mandate. |
 | R7 | **`PageFlags` lowering wrong** — a mis-mapped flag (e.g. NX dropped, or USER set on a kernel page) → either a security hole or an instant fault. | §1 table | Host-KAT'd FIRST (§5) — every §1 row asserted on the dev box before boot; the aarch64 column reuses `aarch64_logic`'s proven encoder. |
@@ -494,7 +494,7 @@ SMP runs. No giant atomic `memory.rs` diff ever happens.
 
 ---
 
-## 8. HAND-OFF — the named first sub-slice for raeen-kernel
+## 8. HAND-OFF — the named first sub-slice for athena-kernel
 
 **Execute FIRST: Sub-slice 1.5a — define `arch::mmu` + `PageFlags` + an x86 `AddressSpace` impl that
 DELEGATES to the existing `memory.rs` functions, plus a map/translate/unmap smoketest. ZERO behavior
@@ -529,7 +529,7 @@ change.**
   HEALTHY`, no `[PANIC]`, `[BOOT-BENCH]` not regressed. Host-KAT the `PageFlags` lowering on the dev
   box FIRST (`cargo test -p aarch64_logic` for the aarch64 column), then QEMU boot.
 - **Then 1.5b → 1.5h** per §4, with **1.5d (`mprotect` lane) sequenced after any in-flight
-  `sys_mprotect` work merges**, and **1.5e / 1.5f / 1.5g gated on ≥5 boots at `RAEEN_SMP=1` and
+  `sys_mprotect` work merges**, and **1.5e / 1.5f / 1.5g gated on ≥5 boots at `ATHENA_SMP=1` and
   `=2`** (the §10.3/§10.6 keystones). **No aarch64 `arch::mmu` impl until 1.5h lands** — the seam
   contract must be complete + x86-proven before A4 fills the second backend.
 

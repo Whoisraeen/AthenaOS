@@ -18,7 +18,7 @@ time**.
 **Identity parity vs macOS 26 Tahoe / Windows 11 24H2: ~66%** (was 62% post-rim,
 58% at Round 4).
 
-The Round-4 P0 — the single ugliest defect, dark raeshell slate cards punched into
+The Round-4 P0 — the single ugliest defect, dark athshell slate cards punched into
 luminous panel glass — is **dead in the pixels.** Measured: CC tiles are now **L91**
 sitting on panel glass at **L90.6** (Round 4: tiles L40 on panel L72–95, a polarity
 clash). Toasts went **L45 → L84–93.** Pill toggles read as on/off switches. The
@@ -189,8 +189,8 @@ right split, matching macOS Finder / Win11 Explorer Mica:
    light treatment, tinted, not a hard red block. Minor but it's the most eye-catching
    wrong pixel in the frame.
 
-**Owner: raeen-shell-apps** (Files chrome → glass tiers; content-field de-tint;
-close-button restyle) with **raeen-gfx** providing the window-chrome glass+rim draw
+**Owner: athena-shell-apps** (Files chrome → glass tiers; content-field de-tint;
+close-button restyle) with **athena-gfx** providing the window-chrome glass+rim draw
 path if Files isn't yet routed through `draw_glass_surface`. Until the chrome is
 frosted, Files is the surface that most drags the *product* parity even though the
 demo surfaces look good.
@@ -251,14 +251,14 @@ Each: **surface → defect (measured) → fix + target value → owner.**
    **sidebar → `glass.panel`** slightly-translucent (target ~L88–95), **content list →
    solid de-tinted `bg.surface`** (lift off the bluish L45 near-black to a neutral
    light field so ftype icons pop; keep solid for legibility), **window edge → iridescent
-   rim + elev.2 soft shadow.** → owner: **raeen-shell-apps** (tier wiring + content
-   de-tint) + **raeen-gfx** (route Files chrome through `draw_glass_surface` if not
+   rim + elev.2 soft shadow.** → owner: **athena-shell-apps** (tier wiring + content
+   de-tint) + **athena-gfx** (route Files chrome through `draw_glass_surface` if not
    already). This is the single highest-leverage fix for product parity.
 
 2. **Files titlebar close button is a hard saturated-red square** → reads as the most
    off-system pixel in the frame. → Restyle to a pill/circular tinted control (or
    macOS traffic-light set). Target: no hard primary-red square; control matches the
-   pill language. → owner: **raeen-shell-apps**.
+   pill language. → owner: **athena-shell-apps**.
 
 ### P1 — the glass/rim finish on the shell (close the gap to "better than Win11")
 
@@ -266,7 +266,7 @@ Each: **surface → defect (measured) → fix + target value → owner.**
    popover L114 vs gold ref interior L174–181. → Push panel + popover `frost`
    white-add +1 step (panel `0x23→~0x2E`, popover `0x38→~0x44`). Target panel ≥L115,
    popover ≥L128 over the aurora, while a11y confirms text still clears 4.5:1.
-   → owner: **raeen-gfx** (frost step) + **raeen-ui** (token) + **raeen-accessibility**
+   → owner: **athena-gfx** (frost step) + **athena-ui** (token) + **athena-accessibility**
    (re-confirm contrast over the lifted glass).
 
 4. **Shipped Control Center rim is cyan-only** → CC chroma cyan 2,573 / violet 0 /
@@ -274,31 +274,31 @@ Each: **surface → defect (measured) → fix + target value → owner.**
    path isn't applying the full per-perimeter hue map that the demo surface uses.
    → Route CC's glass edge through the same per-perimeter cyan→violet→warm map the
    tiers/3× crop use. Target CC violet+warm each ≥ ~25% of its cyan count.
-   → owner: **raeen-gfx** (per-perimeter hue map on the shipped CC surface).
+   → owner: **athena-gfx** (per-perimeter hue map on the shipped CC surface).
 
 5. **Rim warm-amber stop is desaturated (reads pink-lilac, not amber)** → tiers warm
    249 px, bottom-edge sample `(105,113,160)` = warm-leaning lilac, not the spec
    `0x40_FFC97C`. Gold ref shows strong saturated warm. → Boost the warm stop's R and
    drop its B at the bottom/bottom-right perimeter position so it reads amber, not
    pink, over the violet-blue aurora. Target a bottom-edge sample with R>G>B and R≥190.
-   → owner: **raeen-gfx**.
+   → owner: **athena-gfx**.
 
 6. **Aurora peak still hot under the panels** → last measured peak L171 vs 140–150
    target, sitting directly under the centered CC/toast panels (worst-case glass
    contrast cell, pushing them toward their opaque auto-adjust bound). → Trim blue
    blob core weight (138→132 per Round 4); re-measure, 128 only if still >158.
-   → owner: **raeen-gfx**; a11y re-confirms 4.5:1 over the new peak.
+   → owner: **athena-gfx**; a11y re-confirms 4.5:1 over the new peak.
 
 ### P2 — the long tail
 
 7. **"On" pill toggle inner-glow halo is faint** → pill shape present (toggle-region
    L87, accent track) but the colored inner-glow bloom on the on-state is subtle.
    → Strengthen the inset accent-glow on the on-state track. Target a visible RaeBlue
-   bloom inside the on pill. → owner: **raeen-shell-apps**.
+   bloom inside the on pill. → owner: **athena-shell-apps**.
 
 8. **Toast-1 frost 1 step shy of uniform luminous** → toast-1 L84.4 vs toast-2 L92.7;
    target both ≥90 for a uniform stack. → +1 frost step on the topmost/normal-urgency
-   toast fill. → owner: **raeen-shell-apps**.
+   toast fill. → owner: **athena-shell-apps**.
 
 ---
 

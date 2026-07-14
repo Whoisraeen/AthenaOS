@@ -8,17 +8,17 @@ repository.workspace = true
 description = "amdgpud — AthenaOS userspace AMD GPU driver daemon. Runs the amdgpu init pipeline (PCI → VBIOS → GMC/GPUVM → IH → SMU → GFX → DC) on the LinuxKPI host."
 
 [dependencies]
-rae_abi = { path = "../components/rae_abi" }
-raeen_linuxkpi = { path = "../components/raeen_linuxkpi" }
-raeen_drm = { path = "../components/raeen_drm" }
-raeen_amdgpu = { path = "../components/raeen_amdgpu" }
+ath_abi = { path = "../components/ath_abi" }
+ath_linuxkpi = { path = "../components/ath_linuxkpi" }
+ath_drm = { path = "../components/ath_drm" }
+ath_amdgpu = { path = "../components/ath_amdgpu" }
 
 [features]
 # M5: link the REAL amdgpu_device_init (the FREESTANDING amdgpu object set) and
 # call it instead of the Rust reimpl. Requires build.rs to link the object set +
 # the bringup_entry.o (rae_amdgpu_device_init) — see linuxkpi-drm/M5-BAREMETAL-PLAN.md.
 # OFF by default so the daemon builds without the vendored GPL objects.
-real_amdgpu_init = ["raeen_linuxkpi/upstream_drm_core"]
+real_amdgpu_init = ["ath_linuxkpi/upstream_drm_core"]
 
 [[bin]]
 name = "amdgpud"

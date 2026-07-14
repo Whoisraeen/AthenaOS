@@ -156,12 +156,12 @@ that performs the privileged op.
 | `Camera` | **no** | **no** | **DESIGNED** | flavor + rights defined; the "requires user prompt" rule is NOT wired — a held Camera cap is not gated by user consent because no UI consumes the prompt queue (§5 prompt gap). Do not advertise camera consent. |
 | `Audio` / `Gpu` | partial | via driver | **PARTIAL** | device daemons hold them; no per-call app-side check yet. |
 | `Process` | yes | at spawn | **ENFORCED** | derivation + transitive revoke proven. |
-| `CryptoKey` | yes | TPM/raeshield | **PARTIAL** | minting path depends on TPM sealing (PLANNED). |
+| `CryptoKey` | yes | TPM/athshield | **PARTIAL** | minting path depends on TPM sealing (PLANNED). |
 | `Attestation` | yes | anti-cheat | **DESIGNED** | syscalls 100–106 exist; no vendor harness. |
 | `Hypervisor` / `Debug` | yes | root-only | **DESIGNED** | privileged; not exercised. |
 
 **Derivation/revocation core (narrowing-only grant, subset rights, transitive
-revoke, audit ring): ENFORCED** — boot-proven, `/proc/raeen/caps`. The gap is
+revoke, audit ring): ENFORCED** — boot-proven, `/proc/athena/caps`. The gap is
 not the algebra; it's that several flavors aren't yet *consulted* at their
 operation sites.
 
@@ -195,8 +195,8 @@ collapse the boundary:
 | Layer | Status | Boot proof |
 |---|---|---|
 | VFS gate (the path a real read takes) | **ENFORCED** | `data_buckets::run_boot_smoketest: … vfs_deny=true deny_foreign=true allow_owner=true -> PASS` |
-| AthFS capability layer | **ENFORCED** | `[raefs] bucket smoketest: isolation=true … cap=true` |
-| Per-app encryption keys (FSCRYPT-equiv) | **ENFORCED** | `[raefs] bucket-key selftest: cross_app_unreadable=true -> PASS` |
+| AthFS capability layer | **ENFORCED** | `[athfs] bucket smoketest: isolation=true … cap=true` |
+| Per-app encryption keys (FSCRYPT-equiv) | **ENFORCED** | `[athfs] bucket-key selftest: cross_app_unreadable=true -> PASS` |
 
 **Gap:** the end-to-end acceptance test — a real *malicious userspace app*
 spawned sandboxed that attempts a foreign-bucket read/write post-boot and reports

@@ -1,7 +1,7 @@
 # Spec: Kernel heap freelist hardening (DMA-UAF-corrupts-freelist class)
 
-Status: SPEC ONLY — no kernel code written. Author: raeen-researcher, 2026-07-04.
-Hand-off: raeen-kernel.
+Status: SPEC ONLY — no kernel code written. Author: athena-researcher, 2026-07-04.
+Hand-off: athena-kernel.
 
 ## Concept promise served
 
@@ -28,13 +28,13 @@ MasterChecklist flags as the next always-on hardening target after the buddy dou
   as the pattern to mirror at the heap layer:
   - `free_block` rejects a double-free via the per-frame bitmap authority (`buddy.rs:112`), WARNs, returns. Status `[x]` iron-proven.
   - `block_on_free_list` (`buddy.rs:183`) validates a node's `next`/`prev` are page-aligned + in-range + back-linked before trusting it — this is the intrusive-freelist-pointer-validation idea, already shipping for physical frames.
-  - `order_counts` (`buddy.rs:271`) caps traversal + validates each node before `phys_to_virt` so a corrupt list can't panic the `/proc/raeen/buddy` dump.
+  - `order_counts` (`buddy.rs:271`) caps traversal + validates each node before `phys_to_virt` so a corrupt list can't panic the `/proc/athena/buddy` dump.
   - FAIL-able boot smoketest at `buddy.rs:298–394`: double-free-guard proof (`rejected_second_free -> PASS/FAIL`) + range-check proof. **This is the template the heap smoketest must match.**
 - `kernel/src/memory/allocator.rs` — the **kernel heap**. `linked_list_allocator::LockedHeap` v0.10 behind `OomAwareHeap: GlobalAlloc`. HEAP_START `0xFFFF_9999_0000_0000`, HEAP_SIZE 128 MiB. **No freelist hardening today, and no `run_boot_smoketest()` at all** (buddy has one; the heap does not). This is the gap.
   - KASAN (`kasan_rt`, shadow + 512-slot quarantine) and KFENCE (guard-page sampler) already exist but are `#[cfg(feature = "kasan")]` / `#[cfg(feature = "kfence")]` — **compiled out of the default build**. They are UAF/OOB *detectors under test*, not always-on freelist-integrity guards. This spec does NOT touch them; it adds an always-on layer that ships in every build.
-- `kernel/src/hardening.rs` — reports KASLR/SMEP/SMAP/CFI honestly; `/proc/raeen/hardening`. `EntropySource` (rdrand/rdseed/tsc) lives here. New freelist-guard status will get its own `/proc/raeen/heap_guard` endpoint (do not overload the hardening dump).
+- `kernel/src/hardening.rs` — reports KASLR/SMEP/SMAP/CFI honestly; `/proc/athena/hardening`. `EntropySource` (rdrand/rdseed/tsc) lives here. New freelist-guard status will get its own `/proc/athena/heap_guard` endpoint (do not overload the hardening dump).
 - Entropy available at `init_heap` time: `memory::aslr_random()` (`memory.rs:1287`, TSC + xorshift mix) and rdrand (`cpu_features` detects it at `cpu_features.rs:268`). `init_heap` runs before the crypto entropy pool is up, so the cookie must be sourced from rdrand-with-TSC-fallback, NOT the CSPRNG.
-- `kernel/Cargo.toml:21` and `components/raeen_linuxkpi/Cargo.toml:31` both pin `linked_list_allocator = "0.10"`. A `[patch.crates-io]` vendor hardens **both** consumers at once (bonus: the LinuxKPI userspace-driver shim's heap gets the same guard).
+- `kernel/Cargo.toml:21` and `components/ath_linuxkpi/Cargo.toml:31` both pin `linked_list_allocator = "0.10"`. A `[patch.crates-io]` vendor hardens **both** consumers at once (bonus: the LinuxKPI userspace-driver shim's heap gets the same guard).
 - Vendoring precedent: `components/vendored/aml/` (the AML crate) is already vendored via `[patch.crates-io]` (pitfall #11). Mirror that exactly.
 
 ## Prior art & OSS verdict
@@ -157,7 +157,7 @@ extra memory, no lock changes (the existing `LockedHeap` spinlock still serializ
   caught); a double-free that relinks a hole into an inconsistent graph (the merge-path
   validation catches the bogus neighbour link).
 - **Cookie secrecy:** the XOR cookie is a boot-random not exported through any
-  `/proc`/syscall (the `/proc/raeen/heap_guard` dump masks it — prints only
+  `/proc`/syscall (the `/proc/athena/heap_guard` dump masks it — prints only
   `cookie_installed: true`, never the value), so a data-only wild write cannot forge a valid
   ciphertext without an infoleak of both the cookie and the target slot address.
 - **Not covered (out of scope, honest):** a *live-chunk* linear overflow that never touches
@@ -168,8 +168,8 @@ extra memory, no lock changes (the existing `LockedHeap` spinlock still serializ
 
 ## Interface needs (NEEDS-INTERFACE)
 
-**None.** Purely internal to the kernel heap. No new syscall, no `rae_abi` change, no
-`rae_driver_api` change, no ABI bump. (State this explicitly so raeen-architect is not
+**None.** Purely internal to the kernel heap. No new syscall, no `ath_abi` change, no
+`ath_driver_api` change, no ABI bump. (State this explicitly so athena-architect is not
 pulled in.)
 
 ## File-by-file plan
@@ -182,16 +182,16 @@ pulled in.)
   `#[cfg(test)]` unit tests (crate uses std in tests) for the pure predicate.
 - Root `Cargo.toml` — add `[patch.crates-io] linked_list_allocator = { path =
   "components/vendored/linked_list_allocator" }` (hardens both the kernel and
-  `raeen_linuxkpi`).
+  `ath_linuxkpi`).
 - `kernel/src/memory/allocator.rs` — in `init_heap`, after `HEAP_INNER.lock().init(...)`,
   call `set_freelist_cookie(rdrand64_or_tsc())` and print the init marker. Add a **new**
   `pub fn run_boot_smoketest()` (the heap currently has none). Add pub accessors that
   forward the vendored crate's `GuardStats` for procfs. Add the Concept docstring quote.
 - `kernel/src/main.rs` — call `memory::allocator::run_boot_smoketest()` in the smoketest
   tier, next to `buddy::run_boot_smoketest()`.
-- `kernel/src/procfs.rs` — add `proc_raeen_heap_guard()`; register `("heap_guard",
-  proc_raeen_heap_guard)` in the `ENTRIES` table (~line 1531), the match arm (~line 1138),
-  and the index listing (~line 1025). Format mirrors `proc_raeen_buddy`.
+- `kernel/src/procfs.rs` — add `proc_athena_heap_guard()`; register `("heap_guard",
+  proc_athena_heap_guard)` in the `ENTRIES` table (~line 1531), the match arm (~line 1138),
+  and the index listing (~line 1025). Format mirrors `proc_athena_buddy`.
 - Host KAT — the encode/decode/validate predicate is pure; test it in the vendored crate
   (`cargo test -p linked_list_allocator`). Heed the no_std host-test gotcha: run it
   per-crate, never `cargo test --workspace`.
@@ -213,7 +213,7 @@ pulled in.)
   the live heap; operates on the scratch buffer.)
 - **Init marker** MUST show:
   `[heap-guard] freelist hardening ON: cookie=installed encode=xor+loc-tie validate=range+align`
-- **`/proc/raeen/heap_guard`** MUST report: `cookie_installed: true`, `encoding:
+- **`/proc/athena/heap_guard`** MUST report: `cookie_installed: true`, `encoding:
   xor+location-tie`, `failure_action: panic (fail-closed)`, `validations: <n>`,
   `corruptions: 0` (and `last_corruption:` only if ever non-zero). Never prints the cookie value.
 - **Real-corruption line** (only if it ever fires in the field):
@@ -221,13 +221,13 @@ pulled in.)
 - **Boot-time guard**: no new `[boot] WARN`; `[BOOT-BENCH]` total not regressed beyond noise.
 - **Docstring** on the vendored hardening + `allocator.rs` MUST quote the Concept promise above.
 - **QEMU proof** (`[~]`): the init marker + smoketest `-> PASS` present in
-  `$env:TEMP\raeen-serial.log`, `System successfully booted`, 0 PANIC.
+  `$env:TEMP\athena-serial.log`, `System successfully booted`, 0 PANIC.
 - **Iron proof** (`[x]`): the same two lines present in a committed `logs/bootlog-*.txt`
   Athena transcript. Because the guard is always-on, every future iron boot re-proves it.
 
 ## Handoff
 
-- **Implementer: raeen-kernel.**
+- **Implementer: athena-kernel.**
 - **Unblocks / advances checklist lines:** the "Latent kernel bugs to clear before
   production ready" section (the DMA-UAF / freed-chunk-corruption hardening target); lets the
   USB-MSC `DmaPage` leak *workaround* (`25d8afa`) be revisited as a real fix rather than a
@@ -237,14 +237,14 @@ pulled in.)
   kernel boot needed — cheapest proof); (2) wire the cookie install + init marker in
   `init_heap`; (3) add `run_boot_smoketest` + main.rs call + procfs endpoint; (4) QEMU boot
   → `[~]`; (5) fold into the next Athena flash bundle → `[x]`. **No interface commit
-  required** (NEEDS-INTERFACE: none), so this does not depend on or block raeen-architect.
+  required** (NEEDS-INTERFACE: none), so this does not depend on or block athena-architect.
 
-## R10 4-artifact checklist (for raeen-kernel)
+## R10 4-artifact checklist (for athena-kernel)
 
 1. **`init()` from `kernel_main`** — cookie install + `[heap-guard] … ON` marker in
    `init_heap` (reached from the memory-init tier of `kernel_main`).
 2. **`run_boot_smoketest()`** — new in `allocator.rs`, called from `main.rs`, FAIL-able
    (the deliberate-corruption assertion above).
-3. **procfs line** — `/proc/raeen/heap_guard`.
+3. **procfs line** — `/proc/athena/heap_guard`.
 4. **Concept docstring** — quote §Kernel Architecture line 29 ("a bad GPU driver crashes a
    service, not the kernel") + §Principles line 13 ("Security by default, not by friction").

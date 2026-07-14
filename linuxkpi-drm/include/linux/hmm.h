@@ -4,7 +4,7 @@
  *
  * Heterogeneous Memory Management — CPU<->GPU shared address space (userptr/SVM).
  * Not on the MES bring-up path; reached via amdgpu_hmm.h for type layout. The
- * range-fault machinery is backed by raeen_linuxkpi at M4 when SVM is brought into
+ * range-fault machinery is backed by ath_linuxkpi at M4 when SVM is brought into
  * scope; here it is the type + decl surface (the pfn flag bits are kernel ABI).
  * License boundary (../../README.md): API surface, no GPL source.
  */

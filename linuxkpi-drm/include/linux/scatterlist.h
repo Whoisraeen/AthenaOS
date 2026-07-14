@@ -4,7 +4,7 @@
  *
  * Scatter-gather lists — amdgpu/TTM/PRIME describe BO page sets with these. The
  * accessors (sg_page/sg_dma_address/sg_next/for_each_sg) are pure field/pointer
- * ops, inlined. The table-alloc + dma_map_sg ops are backed by raeen_linuxkpi's
+ * ops, inlined. The table-alloc + dma_map_sg ops are backed by ath_linuxkpi's
  * existing scatterlist facade at M4 (it maps page==virtual-base identity DMA). The
  * struct layout matches the upstream ABI the facade expects (page_link low bits
  * tag chain/last). License boundary (../../README.md): API surface, no GPL source.
@@ -148,7 +148,7 @@ sg_page_iter_dma_address(struct sg_dma_page_iter *dma_iter)
 #define for_each_sgtable_page(sgt, iter, pgoffset) \
 	for_each_sg_page((sgt)->sgl, iter, (sgt)->orig_nents, pgoffset)
 
-/* table alloc + DMA map — backed by raeen_linuxkpi's scatterlist facade (M4) */
+/* table alloc + DMA map — backed by ath_linuxkpi's scatterlist facade (M4) */
 int  sg_alloc_table(struct sg_table *table, unsigned int nents, gfp_t gfp);
 void sg_free_table(struct sg_table *table);
 void sg_init_table(struct scatterlist *sgl, unsigned int nents);

@@ -12,7 +12,7 @@
 //! component (a shared library, a framework, a runtime) registers itself
 //! with a `(name, version, sha256)` triple. An app's `.raeapp` manifest
 //! declares its dependencies the same way. Before the kernel will let an
-//! app launch, the loader (or a userspace `raepackage` daemon) calls
+//! app launch, the loader (or a userspace `athpackage` daemon) calls
 //! `SYS_BUNDLE_VERIFY` with the manifest and the kernel either says "all
 //! deps are installed at the requested hashes" or "missing: libfoo 1.2.3
 //! sha256:abc…".
@@ -100,16 +100,16 @@ impl Registry {
         // placeholders — the real package server will replace these with
         // actual build artifacts.
         let core: &[(&str, u32)] = &[
-            ("raegfx", pack_semver(0, 1, 0)),
-            ("raeui", pack_semver(0, 1, 0)),
-            ("raekit", pack_semver(0, 1, 0)),
-            ("raeaudio", pack_semver(0, 1, 0)),
-            ("raenet", pack_semver(0, 1, 0)),
-            ("raeshield", pack_semver(0, 1, 0)),
-            ("raefont", pack_semver(0, 1, 0)),
-            ("raestore", pack_semver(0, 1, 0)),
-            ("raeplay", pack_semver(0, 1, 0)),
-            ("raebridge", pack_semver(0, 1, 0)),
+            ("athgfx", pack_semver(0, 1, 0)),
+            ("athui", pack_semver(0, 1, 0)),
+            ("athkit", pack_semver(0, 1, 0)),
+            ("athaudio", pack_semver(0, 1, 0)),
+            ("athnet", pack_semver(0, 1, 0)),
+            ("athshield", pack_semver(0, 1, 0)),
+            ("athfont", pack_semver(0, 1, 0)),
+            ("athstore", pack_semver(0, 1, 0)),
+            ("athplay", pack_semver(0, 1, 0)),
+            ("athbridge", pack_semver(0, 1, 0)),
             ("rust-std", pack_semver(1, 80, 0)),
             ("libc-rae", pack_semver(1, 0, 0)),
         ];
@@ -394,7 +394,7 @@ fn read_user_bytes(ptr: u64, len: u64) -> Vec<u8> {
     crate::uaccess::read_user_bytes(ptr, len)
 }
 
-// ── /proc/raeen/bundles ────────────────────────────────────────────────
+// ── /proc/athena/bundles ────────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let g = REGISTRY.lock();
@@ -451,17 +451,17 @@ pub fn run_boot_smoketest() {
     buf.extend_from_slice(&2u32.to_le_bytes()); // dep_count
     buf.extend_from_slice(app_name);
 
-    // Dep 0: raegfx 0.1.0 with the correct hash → should verify OK.
-    let raegfx_hash = {
+    // Dep 0: athgfx 0.1.0 with the correct hash → should verify OK.
+    let athgfx_hash = {
         let g = REGISTRY.lock();
         g.as_ref()
-            .and_then(|r| r.lookup_hash("raegfx", pack_semver(0, 1, 0)).copied())
+            .and_then(|r| r.lookup_hash("athgfx", pack_semver(0, 1, 0)).copied())
             .unwrap_or([0u8; 32])
     };
-    let d0 = b"raegfx";
+    let d0 = b"athgfx";
     buf.extend_from_slice(&(d0.len() as u32).to_le_bytes());
     buf.extend_from_slice(&pack_semver(0, 1, 0).to_le_bytes());
-    buf.extend_from_slice(&raegfx_hash);
+    buf.extend_from_slice(&athgfx_hash);
     buf.extend_from_slice(d0);
 
     // Dep 1: libfoo 1.0.0 that's NOT installed — should report missing.

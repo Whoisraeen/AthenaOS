@@ -3,19 +3,19 @@
 //!
 //! The daily-driver note-taking app: a **sidebar list** of `.md`/`.txt` notes in
 //! `<home>/Notes`, an **editable text buffer** (raw Markdown), and a **live
-//! rich-text preview** rendered straight from the from-scratch `rae_markdown`
+//! rich-text preview** rendered straight from the from-scratch `ath_markdown`
 //! parser — headings sized per level, **bold**/*italic*/`code` runs styled, lists
 //! with indent, blockquotes with an accent bar, fenced code in a mono panel, and
 //! thematic breaks as a rule. Tab toggles edit ⇄ preview; Ctrl+S saves; New/Delete
 //! manage the library.
 //!
 //! Standalone userspace ELF (`exec_path = "notes"`). Chrome is on the shared
-//! `rae_tokens` design language; the live desktop accent comes through
-//! `SYS_THEME_GET` (raekit::sys::theme_accent) at launch so Notes matches the
+//! `ath_tokens` design language; the live desktop accent comes through
+//! `SYS_THEME_GET` (athkit::sys::theme_accent) at launch so Notes matches the
 //! desktop 1:1 (whole-OS cohesion).
 //!
 //! HOSTILE-INPUT POSTURE: note text is untrusted. The whole render walks the
-//! `rae_markdown::parse` model, which NEVER panics (its 23 host KATs + the
+//! `ath_markdown::parse` model, which NEVER panics (its 23 host KATs + the
 //! `parse_never_panics_battery` are the parser proof) — bad markdown degrades to
 //! literal text. File read/write errors surface as a status-bar toast and the app
 //! stays alive; there is no panic path from any user action.
@@ -24,7 +24,7 @@
 //! runtime gate at `_start`) parses a built-in markdown fixture and asserts the
 //! `Document` has the expected blocks (a heading + a bold inline + a list) AND
 //! that the render's per-level heading sizing invariant holds (H1 draws larger
-//! than H3 draws larger than body) — exit(3) on any drift. `rae_markdown`'s host
+//! than H3 draws larger than body) — exit(3) on any drift. `ath_markdown`'s host
 //! KATs are the parser-logic proof; this proves the app's parse → render wiring.
 
 #![no_std]
@@ -36,14 +36,14 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
-use rae_markdown::{parse, Block, Inline, ListItem};
-use rae_regex::Regex;
-use rae_tokens::{TypeStyle, DARK, RAEBLUE};
-use rae_toml::Toml;
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
+use ath_markdown::{parse, Block, Inline, ListItem};
+use ath_regex::Regex;
+use ath_tokens::{TypeStyle, DARK, RAEBLUE};
+use ath_toml::Toml;
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
 
 // ── Window geometry ─────────────────────────────────────────────────────
 
@@ -247,9 +247,9 @@ fn find_bar_total_h(replace_mode: bool) -> usize {
     }
 }
 
-// ── Palette (rae_tokens, docs/design/design-language.md) ──────────────────
+// ── Palette (ath_tokens, docs/design/design-language.md) ──────────────────
 //
-// All chrome pulls onto the shared `rae_tokens::DARK` palette + the RaeBlue
+// All chrome pulls onto the shared `ath_tokens::DARK` palette + the RaeBlue
 // accent ramp so Notes matches the desktop default 1:1. Accent shades are
 // derived (non-const) → computed in helpers below.
 
@@ -266,17 +266,17 @@ const STROKE_HL: u32 = DARK.stroke_strong;
 const CODE_BG: u32 = DARK.bg_base; // inline/code-block panel fill
 
 fn theme_seed() -> u32 {
-    raekit::sys::theme_accent()
+    athkit::sys::theme_accent()
 }
 
 /// Accent base, derived through the shared ramp from the live theme seed.
 fn accent() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).base
+    ath_tokens::derive_accent(theme_seed(), &DARK).base
 }
 
 /// Opaque selection fill: the accent's pressed/active shade.
 fn sel_fill() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).active
+    ath_tokens::derive_accent(theme_seed(), &DARK).active
 }
 
 // ── Heading type sizing (the render invariant design_proof asserts) ───────
@@ -289,12 +289,12 @@ fn sel_fill() -> u32 {
 
 fn heading_style(level: u8) -> TypeStyle {
     match level {
-        1 => rae_tokens::TYPE_TITLE,    // 22px / 600
-        2 => rae_tokens::TYPE_SUBTITLE, // 17px / 500
+        1 => ath_tokens::TYPE_TITLE,    // 22px / 600
+        2 => ath_tokens::TYPE_SUBTITLE, // 17px / 500
         _ => TypeStyle {
-            px: rae_tokens::TYPE_BODY.px,
+            px: ath_tokens::TYPE_BODY.px,
             weight: 600, // heavier than body to read as a heading at H3+
-            line_height: rae_tokens::TYPE_BODY.line_height,
+            line_height: ath_tokens::TYPE_BODY.line_height,
         },
     }
 }
@@ -702,17 +702,17 @@ fn replace_one_at(buf: &str, range: (usize, usize), repl: &str) -> String {
     out
 }
 
-// ── Regex find/replace (rae_regex, the never-panic Pike-VM engine) ─────────
+// ── Regex find/replace (ath_regex, the never-panic Pike-VM engine) ─────────
 //
 // REGEX MODE: when the find bar's `regex_mode` is on, the query is compiled with
-// `rae_regex::Regex::new` (never panics — a malformed pattern returns Err). On a
+// `ath_regex::Regex::new` (never panics — a malformed pattern returns Err). On a
 // good pattern, `find_all` produces the SAME `Vec<(start,end)>` byte ranges the
 // literal path uses, so highlight / next / prev / caret-jump all work unchanged.
 // Replace-all uses `Regex::replace_all`, so `$1` group references in the
 // replacement expand. Replace-one re-runs `replace_all` bounded to the current
 // match's slice (so a group ref in the replacement expands for that one match).
 //
-// CASE SENSITIVITY: rae_regex documents NO inline flags (`(?i)` is unsupported),
+// CASE SENSITIVITY: ath_regex documents NO inline flags (`(?i)` is unsupported),
 // and folding a regex case-insensitively is not trivial, so in regex mode the
 // `[Aa]` toggle is IGNORED and matching is always case-sensitive (the documented,
 // least-surprising behavior — a user who wants case-insensitive regex writes a
@@ -807,10 +807,10 @@ struct FindState {
     /// Replace mode (Ctrl+H) shows the Replace field + Replace/All buttons.
     replace_mode: bool,
     /// Default off = case-insensitive; toggled with the [Aa] chip / Ctrl+I.
-    /// IGNORED in regex mode (rae_regex has no inline-flag support → regex is
+    /// IGNORED in regex mode (ath_regex has no inline-flag support → regex is
     /// always case-sensitive).
     case_sensitive: bool,
-    /// Regex mode (the `.*` chip / Ctrl+R): the query is a `rae_regex` pattern.
+    /// Regex mode (the `.*` chip / Ctrl+R): the query is a `ath_regex` pattern.
     regex_mode: bool,
     /// True when `regex_mode` is on AND the current query is a malformed pattern
     /// (the counter shows "Bad regex" and the match set is empty — never panics).
@@ -873,7 +873,7 @@ impl FindState {
     }
 }
 
-// ── Persistent preferences (rae_toml) ─────────────────────────────────────────
+// ── Persistent preferences (ath_toml) ─────────────────────────────────────────
 //
 // LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. Notes persists its VIEW state — which note was open, edit-vs-preview mode,
@@ -933,7 +933,7 @@ impl Prefs {
     }
 
     /// Serialize the live preferences into an order-stable `Toml::Table` ready for
-    /// `rae_toml::to_string`. The schema is flat (no headers) so a round-trip is
+    /// `ath_toml::to_string`. The schema is flat (no headers) so a round-trip is
     /// trivial and human-editable.
     fn to_toml(&self) -> Toml {
         let mut table: Vec<(String, Toml)> = Vec::new();
@@ -970,8 +970,8 @@ fn truncate_on_char_boundary(s: &str, max: usize) -> &str {
 fn prefs_dir() -> PathBuf {
     let mut p = PathBuf::new();
     let mut info = [0u8; 96];
-    if raekit::sys::session_info(&mut info).is_some() {
-        if let Some(home) = raekit::sys::session_home_from(&info) {
+    if athkit::sys::session_info(&mut info).is_some() {
+        if let Some(home) = athkit::sys::session_home_from(&info) {
             p.set(home);
             p.push_component(".config");
             return p;
@@ -982,12 +982,12 @@ fn prefs_dir() -> PathBuf {
 }
 
 /// Load preferences from `<home>/.config/notes.toml`. On ANY failure — file
-/// absent, unreadable, not UTF-8, or a `rae_toml::parse` error — returns the typed
+/// absent, unreadable, not UTF-8, or a `ath_toml::parse` error — returns the typed
 /// defaults. Never panics, never blocks the app from launching.
 fn load_prefs() -> Prefs {
     let mut path = prefs_dir();
     path.push_component("notes.toml");
-    let fd = raekit::sys::open(path.as_str(), 0);
+    let fd = athkit::sys::open(path.as_str(), 0);
     if fd == u64::MAX {
         return Prefs::defaults();
     }
@@ -998,34 +998,34 @@ fn load_prefs() -> Prefs {
         if data.len() > 64 * 1024 {
             break;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     let text = match core::str::from_utf8(&data) {
         Ok(s) => s,
         Err(_) => return Prefs::defaults(),
     };
-    match rae_toml::parse(text) {
+    match ath_toml::parse(text) {
         Ok(t) => Prefs::from_toml(&t),
         Err(_) => Prefs::defaults(),
     }
 }
 
 /// Persist `prefs` to `<home>/.config/notes.toml` (best effort). Creates the
-/// `.config` directory if missing, serializes via `rae_toml::to_string`, and
+/// `.config` directory if missing, serializes via `ath_toml::to_string`, and
 /// writes O_CREAT|O_TRUNC. A failure is silent — the app keeps running.
 fn save_prefs(prefs: &Prefs) {
     let dir = prefs_dir();
-    let _ = raekit::sys::mkdir(dir.as_str());
+    let _ = athkit::sys::mkdir(dir.as_str());
     let mut path = dir;
     path.push_component("notes.toml");
-    let text = rae_toml::to_string(&prefs.to_toml());
+    let text = ath_toml::to_string(&prefs.to_toml());
     // O_WRONLY | O_CREAT | O_TRUNC = 0x0241 (matches the save path above).
-    let fd = raekit::sys::open(path.as_str(), 0x0241);
+    let fd = athkit::sys::open(path.as_str(), 0x0241);
     if fd == u64::MAX {
         return;
     }
@@ -1033,13 +1033,13 @@ fn save_prefs(prefs: &Prefs) {
     let mut off = 0usize;
     while off < bytes.len() {
         let end = (off + 4096).min(bytes.len());
-        let n = raekit::sys::write(fd, &bytes[off..end]) as usize;
+        let n = athkit::sys::write(fd, &bytes[off..end]) as usize;
         if n == 0 {
             break;
         }
         off += n;
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
 }
 
 struct App {
@@ -1064,8 +1064,8 @@ struct App {
 impl App {
     fn notes_dir() -> PathBuf {
         let mut info = [0u8; 96];
-        if raekit::sys::session_info(&mut info).is_some() {
-            if let Some(home) = raekit::sys::session_home_from(&info) {
+        if athkit::sys::session_info(&mut info).is_some() {
+            if let Some(home) = athkit::sys::session_home_from(&info) {
                 let mut p = PathBuf::new();
                 p.set(home);
                 p.push_component("Notes");
@@ -1081,7 +1081,7 @@ impl App {
         // Restore saved view preferences (typed defaults on first run / any error).
         let prefs = load_prefs();
         let dir = Self::notes_dir();
-        let _ = raekit::sys::mkdir(dir.as_str());
+        let _ = athkit::sys::mkdir(dir.as_str());
         let mut find = FindState::new();
         find.case_sensitive = prefs.case_sensitive;
         find.regex_mode = prefs.regex_mode;
@@ -1161,7 +1161,7 @@ impl App {
         dirbuf[..dn].copy_from_slice(&self.dir.as_str().as_bytes()[..dn]);
         let dir = core::str::from_utf8(&dirbuf[..dn]).unwrap_or("/");
 
-        let count = raekit::sys::readdir_at(dir, &mut buf) as usize;
+        let count = athkit::sys::readdir_at(dir, &mut buf) as usize;
         let mut off = 0usize;
         for _ in 0..count {
             if off + 6 > buf.len() || self.notes.len() >= MAX_NOTES {
@@ -1196,7 +1196,7 @@ impl App {
     fn seed_welcome(&mut self) {
         let welcome = "# Welcome to Notes\n\n\
             A **Markdown** editor with a *live* preview, built on AthenaOS's own\n\
-            `rae_markdown` parser.\n\n\
+            `ath_markdown` parser.\n\n\
             ## Getting started\n\n\
             - Press **Tab** to toggle edit and preview\n\
             - Press **Ctrl+S** to save\n\
@@ -1292,7 +1292,7 @@ impl App {
             Some(p) => p,
             None => return,
         };
-        if raekit::sys::unlink(path.as_str()).is_ok() {
+        if athkit::sys::unlink(path.as_str()).is_ok() {
             self.set_toast("Deleted");
             self.scan();
             if self.notes.is_empty() {
@@ -1364,7 +1364,7 @@ impl App {
     }
 
     /// Recompute the match set from the live buffer + query, clamping `current`.
-    /// In regex mode the query is compiled via `rae_regex`; a bad pattern sets
+    /// In regex mode the query is compiled via `ath_regex`; a bad pattern sets
     /// `bad_regex` and yields zero matches (never panics, never crashes).
     fn recompute_matches(&mut self) {
         let hay = self.buf.to_string();
@@ -1613,7 +1613,7 @@ impl App {
                 self.delete_selected();
                 true
             }
-            Action::Close => raekit::sys::exit(0),
+            Action::Close => athkit::sys::exit(0),
             Action::OpenFind => {
                 self.open_find(false);
                 true
@@ -1664,11 +1664,11 @@ impl App {
     }
 }
 
-// ── File I/O (never-panic wrappers over raekit) ───────────────────────────
+// ── File I/O (never-panic wrappers over athkit) ───────────────────────────
 
 /// Read a whole file into a heap buffer (capped). `None` on any error.
 fn read_file(path: &str) -> Option<Vec<u8>> {
-    let fd = raekit::sys::open(path, 0);
+    let fd = athkit::sys::open(path, 0);
     if fd == u64::MAX {
         return None;
     }
@@ -1676,23 +1676,23 @@ fn read_file(path: &str) -> Option<Vec<u8>> {
     let mut chunk = [0u8; 4096];
     loop {
         if data.len() > READ_CAP {
-            let _ = raekit::sys::close(fd);
+            let _ = athkit::sys::close(fd);
             return None;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     Some(data)
 }
 
 /// Write `bytes` to `path` (create/truncate). Returns true on success.
 fn write_file(path: &str, bytes: &[u8]) -> bool {
     // O_WRONLY | O_CREAT | O_TRUNC = 0x0241 (matches the Text Editor save path).
-    let fd = raekit::sys::open(path, 0x0241);
+    let fd = athkit::sys::open(path, 0x0241);
     if fd == u64::MAX {
         return false;
     }
@@ -1700,14 +1700,14 @@ fn write_file(path: &str, bytes: &[u8]) -> bool {
     let mut ok = true;
     while off < bytes.len() {
         let end = (off + 4096).min(bytes.len());
-        let n = raekit::sys::write(fd, &bytes[off..end]) as usize;
+        let n = athkit::sys::write(fd, &bytes[off..end]) as usize;
         if n == 0 {
             ok = false;
             break;
         }
         off += n;
     }
-    raekit::sys::close(fd);
+    athkit::sys::close(fd);
     ok
 }
 
@@ -1772,9 +1772,9 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect_gradient(0, 0, WIN_W, TITLE_H, DARK.bg_elevated, TITLE_BG);
     canvas.draw_text_aa(
         12,
-        ((TITLE_H.saturating_sub(rae_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
+        ((TITLE_H.saturating_sub(ath_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
         "Notes",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -1786,15 +1786,15 @@ fn render(app: &App, canvas: &mut Canvas) {
         4,
         20,
         20,
-        rae_tokens::RADIUS_XS as usize,
+        ath_tokens::RADIUS_XS as usize,
         DARK.state_danger,
     );
-    let x_w = canvas.measure_text_aa("X", rae_tokens::TYPE_LABEL, FontFamily::Sans);
+    let x_w = canvas.measure_text_aa("X", ath_tokens::TYPE_LABEL, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 18) as i32 - x_w / 2,
-        (4 + (20 - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
+        (4 + (20 - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
         "X",
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         0xFF_FF_FF_FF,
         FontFamily::Sans,
     );
@@ -1811,15 +1811,15 @@ fn render(app: &App, canvas: &mut Canvas) {
             (Action::SetEdit, Mode::Edit) | (Action::SetPreview, Mode::Preview)
         );
         let fill = if active { sel_fill() } else { DARK.bg_elevated };
-        canvas.fill_rounded_rect(x, y, CHIP_W, CHIP_H, rae_tokens::RADIUS_XS as usize, fill);
-        let lw = canvas.measure_text_aa(label, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+        canvas.fill_rounded_rect(x, y, CHIP_W, CHIP_H, ath_tokens::RADIUS_XS as usize, fill);
+        let lw = canvas.measure_text_aa(label, ath_tokens::TYPE_LABEL, FontFamily::Sans);
         let ty =
-            (y + (CHIP_H.saturating_sub(rae_tokens::TYPE_LABEL.line_height as usize)) / 2) as i32;
+            (y + (CHIP_H.saturating_sub(ath_tokens::TYPE_LABEL.line_height as usize)) / 2) as i32;
         canvas.draw_text_aa(
             x as i32 + (CHIP_W as i32 - lw) / 2,
             ty,
             label,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             if active { TEXT_FG } else { TEXT_MUTED },
             FontFamily::Sans,
         );
@@ -1832,14 +1832,14 @@ fn render(app: &App, canvas: &mut Canvas) {
     let st_y = WIN_H - STATUS_H;
     canvas.fill_rect(0, st_y, WIN_W, STATUS_H, STATUS_BG);
     let st_ty = (st_y
-        + (STATUS_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+        + (STATUS_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
         as i32;
     if !app.toast_str().is_empty() {
         canvas.draw_text_aa(
             12,
             st_ty,
             app.toast_str(),
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             accent(),
             FontFamily::Sans,
         );
@@ -1851,19 +1851,19 @@ fn render(app: &App, canvas: &mut Canvas) {
                 12,
                 st_ty,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_MUTED,
                 FontFamily::Sans,
             );
         }
     }
     let hint = "Tab:edit/preview  Ctrl+F:find  Ctrl+H:replace  Ctrl+R:regex  Ctrl+S:save  Esc:quit";
-    let hw = canvas.measure_text_aa(hint, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let hw = canvas.measure_text_aa(hint, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 12) as i32 - hw,
         st_ty,
         hint,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_DIM,
         FontFamily::Sans,
     );
@@ -1880,7 +1880,7 @@ fn render_sidebar(app: &App, canvas: &mut Canvas) {
             14,
             (sb_y + 16) as i32,
             "No notes yet.",
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -1888,7 +1888,7 @@ fn render_sidebar(app: &App, canvas: &mut Canvas) {
             14,
             (sb_y + 34) as i32,
             "New (or Ctrl+N) starts one.",
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_DIM,
             FontFamily::Sans,
         );
@@ -1910,7 +1910,7 @@ fn render_sidebar(app: &App, canvas: &mut Canvas) {
         }
         let title = note_title(app, i);
         let fg = if selected { TEXT_FG } else { TEXT_MUTED };
-        let ty = ry + (ROW_H - rae_tokens::TYPE_LABEL.line_height as usize) / 2;
+        let ty = ry + (ROW_H - ath_tokens::TYPE_LABEL.line_height as usize) / 2;
         draw_label_clipped(canvas, title, 12, ty, SIDEBAR_W - 20, fg);
     }
 }
@@ -1984,14 +1984,14 @@ fn render_find_bar(app: &App, canvas: &mut Canvas) {
 
     // "N of M" match counter — or "Bad regex" when a malformed pattern is typed.
     let ty = (find_btn_rect(4).y
-        + (FIND_ROW_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+        + (FIND_ROW_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
         as i32;
     if app.find.regex_mode && app.find.bad_regex {
         canvas.draw_text_aa(
             find_count_x() as i32,
             ty,
             "Bad regex",
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             DARK.state_danger,
             FontFamily::Sans,
         );
@@ -2016,7 +2016,7 @@ fn render_find_bar(app: &App, canvas: &mut Canvas) {
                 find_count_x() as i32,
                 ty,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 fg,
                 FontFamily::Sans,
             );
@@ -2043,7 +2043,7 @@ fn render_find_bar(app: &App, canvas: &mut Canvas) {
 /// dimmed placeholder, and a caret when focused).
 fn draw_find_input(canvas: &mut Canvas, r: Rect, text: &str, focused: bool, placeholder: &str) {
     let fill = DARK.bg_base;
-    canvas.fill_rounded_rect(r.x, r.y, r.w, r.h, rae_tokens::RADIUS_XS as usize, fill);
+    canvas.fill_rounded_rect(r.x, r.y, r.w, r.h, ath_tokens::RADIUS_XS as usize, fill);
     if focused {
         // 1px accent ring (top/bottom/left/right).
         canvas.fill_rect(r.x, r.y, r.w, 1, accent());
@@ -2053,19 +2053,19 @@ fn draw_find_input(canvas: &mut Canvas, r: Rect, text: &str, focused: bool, plac
     }
     let ty = (r.y
         + (r.h
-            .saturating_sub(rae_tokens::TYPE_LABEL.line_height as usize))
+            .saturating_sub(ath_tokens::TYPE_LABEL.line_height as usize))
             / 2) as i32;
     if text.is_empty() {
         canvas.draw_text_aa(
             (r.x + 8) as i32,
             ty,
             placeholder,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             TEXT_DIM,
             FontFamily::Sans,
         );
     } else {
-        let tw = canvas.measure_text_aa(text, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+        let tw = canvas.measure_text_aa(text, ath_tokens::TYPE_LABEL, FontFamily::Sans);
         draw_label_clipped(
             canvas,
             text,
@@ -2091,17 +2091,17 @@ fn draw_find_input(canvas: &mut Canvas, r: Rect, text: &str, focused: bool, plac
 /// Draw a find-bar button (icon/label). `active` highlights it (case toggle on).
 fn draw_find_button(canvas: &mut Canvas, r: Rect, label: &str, active: bool) {
     let fill = if active { sel_fill() } else { DARK.bg_elevated };
-    canvas.fill_rounded_rect(r.x, r.y, r.w, r.h, rae_tokens::RADIUS_XS as usize, fill);
-    let lw = canvas.measure_text_aa(label, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+    canvas.fill_rounded_rect(r.x, r.y, r.w, r.h, ath_tokens::RADIUS_XS as usize, fill);
+    let lw = canvas.measure_text_aa(label, ath_tokens::TYPE_LABEL, FontFamily::Sans);
     let ty = (r.y
         + (r.h
-            .saturating_sub(rae_tokens::TYPE_LABEL.line_height as usize))
+            .saturating_sub(ath_tokens::TYPE_LABEL.line_height as usize))
             / 2) as i32;
     canvas.draw_text_aa(
         r.x as i32 + (r.w as i32 - lw) / 2,
         ty,
         label,
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         if active { TEXT_FG } else { TEXT_MUTED },
         FontFamily::Sans,
     );
@@ -2226,7 +2226,7 @@ fn render_preview(app: &App, canvas: &mut Canvas, mx: usize, my: usize, mw: usiz
             (mx + pad) as i32,
             (my + pad) as i32,
             "This note is empty.",
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_DIM,
             FontFamily::Sans,
         );
@@ -2261,7 +2261,7 @@ fn draw_blocks(canvas: &mut Canvas, blocks: &[Block], ctx: &mut DrawCtx, depth: 
                     ctx.x + indent,
                     &mut ctx.y,
                     ctx.width.saturating_sub(indent),
-                    rae_tokens::TYPE_BODY,
+                    ath_tokens::TYPE_BODY,
                     TEXT_FG,
                 );
                 ctx.y += 6;
@@ -2318,12 +2318,12 @@ fn draw_blocks(canvas: &mut Canvas, blocks: &[Block], ctx: &mut DrawCtx, depth: 
                     }
                     let style = if ri == 0 {
                         TypeStyle {
-                            px: rae_tokens::TYPE_BODY.px,
+                            px: ath_tokens::TYPE_BODY.px,
                             weight: 600,
-                            line_height: rae_tokens::TYPE_BODY.line_height,
+                            line_height: ath_tokens::TYPE_BODY.line_height,
                         }
                     } else {
-                        rae_tokens::TYPE_BODY
+                        ath_tokens::TYPE_BODY
                     };
                     draw_inline_line(canvas, &line, ctx.x + indent, &mut ctx.y, w, style, TEXT_FG);
                 }
@@ -2362,7 +2362,7 @@ fn draw_list(
                         mx as i32,
                         marker_y,
                         s,
-                        rae_tokens::TYPE_BODY,
+                        ath_tokens::TYPE_BODY,
                         accent(),
                         FontFamily::Sans,
                     );
@@ -2372,7 +2372,7 @@ fn draw_list(
                     mx as i32,
                     marker_y,
                     "\u{2022}",
-                    rae_tokens::TYPE_BODY,
+                    ath_tokens::TYPE_BODY,
                     accent(),
                     FontFamily::Sans,
                 );
@@ -2387,14 +2387,14 @@ fn draw_list(
         };
         draw_blocks(canvas, &item.blocks, &mut sub, 0);
         // Ensure at least one line of advance even for an empty item.
-        ctx.y = sub.y.max(ctx.y + rae_tokens::TYPE_BODY.line_height as i32);
+        ctx.y = sub.y.max(ctx.y + ath_tokens::TYPE_BODY.line_height as i32);
     }
     ctx.y += 4;
 }
 
 /// Draw a fenced code block: a CODE_BG panel, mono text, literal (no inlines).
 fn draw_code_block(canvas: &mut Canvas, lang: &str, code: &str, ctx: &mut DrawCtx, indent: usize) {
-    let line_h = rae_tokens::TYPE_BODY.line_height as usize;
+    let line_h = ath_tokens::TYPE_BODY.line_height as usize;
     let x = ctx.x + indent;
     let w = ctx.width.saturating_sub(indent);
     // Count lines for the panel height.
@@ -2407,7 +2407,7 @@ fn draw_code_block(canvas: &mut Canvas, lang: &str, code: &str, ctx: &mut DrawCt
             top as usize,
             w,
             panel_h,
-            rae_tokens::RADIUS_XS as usize,
+            ath_tokens::RADIUS_XS as usize,
             CODE_BG,
         );
     }
@@ -2419,7 +2419,7 @@ fn draw_code_block(canvas: &mut Canvas, lang: &str, code: &str, ctx: &mut DrawCt
                 (x + 8) as i32,
                 ly,
                 line,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 DARK.text_secondary,
                 FontFamily::Mono,
             );
@@ -2506,7 +2506,7 @@ fn draw_inline_runs(
                         (*y).max(0) as usize,
                         (w + 4).max(0) as usize,
                         style.line_height as usize,
-                        rae_tokens::RADIUS_XS as usize,
+                        ath_tokens::RADIUS_XS as usize,
                         CODE_BG,
                     );
                     canvas.draw_text_aa(*cx as i32, *y, c, style, DARK.state_ok, FontFamily::Mono);
@@ -2575,13 +2575,13 @@ fn draw_wrapped_text(
 
 /// Draw a string clipped to `max_w` px (ellipsis on overflow).
 fn draw_label_clipped(canvas: &mut Canvas, name: &str, x: usize, y: usize, max_w: usize, fg: u32) {
-    let full_w = canvas.measure_text_aa(name, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+    let full_w = canvas.measure_text_aa(name, ath_tokens::TYPE_LABEL, FontFamily::Sans);
     if (full_w as usize) <= max_w {
         canvas.draw_text_aa(
             x as i32,
             y as i32,
             name,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             fg,
             FontFamily::Sans,
         );
@@ -2596,13 +2596,13 @@ fn draw_label_clipped(canvas: &mut Canvas, name: &str, x: usize, y: usize, max_w
         buf[t] = b'.';
         buf[t + 1] = b'.';
         if let Ok(s) = core::str::from_utf8(&buf[..t + 2]) {
-            let w = canvas.measure_text_aa(s, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+            let w = canvas.measure_text_aa(s, ath_tokens::TYPE_LABEL, FontFamily::Sans);
             if (w as usize) <= max_w {
                 canvas.draw_text_aa(
                     x as i32,
                     y as i32,
                     s,
-                    rae_tokens::TYPE_LABEL,
+                    ath_tokens::TYPE_LABEL,
                     fg,
                     FontFamily::Sans,
                 );
@@ -2691,11 +2691,11 @@ fn scancode_to_ascii(code: u8, shift: bool) -> Option<u8> {
 /// True iff Notes' chrome is wired to the shared design tokens AND the
 /// Markdown parse → render wiring holds. Deliberately fail-able: a regression in
 /// token wiring, the parser, or the heading-sizing render invariant flips this to
-/// `false` (exit code 3 at startup). `rae_markdown`'s own host KATs prove the
+/// `false` (exit code 3 at startup). `ath_markdown`'s own host KATs prove the
 /// parser logic in isolation; this proves THIS app's parse → render mapping.
 #[must_use]
 pub fn design_proof() -> bool {
-    let ramp = rae_tokens::derive_accent(theme_seed(), &DARK);
+    let ramp = ath_tokens::derive_accent(theme_seed(), &DARK);
     let tokens_ok = accent() == ramp.base
         && sel_fill() == ramp.active
         && BG == DARK.bg_raised
@@ -2706,7 +2706,7 @@ pub fn design_proof() -> bool {
         && TEXT_MUTED == DARK.text_secondary
         && TEXT_DIM == DARK.text_tertiary
         && STROKE_HL == DARK.stroke_strong
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
 
     tokens_ok
         && parse_render_wiring_ok()
@@ -2716,10 +2716,10 @@ pub fn design_proof() -> bool {
 }
 
 /// Prove the Notes PREFS SCHEMA: a known non-default `Prefs` serialized via
-/// `rae_toml` then re-parsed restores every field exactly (last-open note, the
+/// `ath_toml` then re-parsed restores every field exactly (last-open note, the
 /// edit/preview mode, the find-bar case + regex toggles), AND a corrupt /
 /// missing-key document resolves to the typed defaults (NOT a panic, NOT a wrong
-/// value). This proves the per-app prefs contract on top of `rae_toml`'s own
+/// value). This proves the per-app prefs contract on top of `ath_toml`'s own
 /// parser KATs. Returns `false` on any drift (→ exit(3) at startup).
 #[must_use]
 fn prefs_round_trip_ok() -> bool {
@@ -2730,8 +2730,8 @@ fn prefs_round_trip_ok() -> bool {
         case_sensitive: true,
         regex_mode: true,
     };
-    let text = rae_toml::to_string(&p.to_toml());
-    let parsed = match rae_toml::parse(&text) {
+    let text = ath_toml::to_string(&p.to_toml());
+    let parsed = match ath_toml::parse(&text) {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -2742,7 +2742,7 @@ fn prefs_round_trip_ok() -> bool {
 
     // (b) A corrupt document → typed defaults (parse FAILS, we don't panic).
     let corrupt = "preview = = oops\n[unterminated\n";
-    let d = match rae_toml::parse(corrupt) {
+    let d = match ath_toml::parse(corrupt) {
         Ok(t) => Prefs::from_toml(&t), // shouldn't reach here for this input
         Err(_) => Prefs::defaults(),
     };
@@ -2751,7 +2751,7 @@ fn prefs_round_trip_ok() -> bool {
     }
 
     // (c) A well-formed doc MISSING every prefs key → typed defaults per field.
-    let empty = match rae_toml::parse("unrelated = 1\n") {
+    let empty = match ath_toml::parse("unrelated = 1\n") {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -2762,7 +2762,7 @@ fn prefs_round_trip_ok() -> bool {
 
     // (d) A wrong-TYPED field (preview as a string) is ignored → default, not a
     // crash; an unrelated valid key still parses.
-    let wrong = match rae_toml::parse("preview = \"yes\"\nlast_note = \"x.md\"\n") {
+    let wrong = match ath_toml::parse("preview = \"yes\"\nlast_note = \"x.md\"\n") {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -2869,10 +2869,10 @@ fn find_replace_proof() -> bool {
     regex_proof()
 }
 
-/// Prove the REGEX find/replace path (rae_regex wiring into the editor's match
+/// Prove the REGEX find/replace path (ath_regex wiring into the editor's match
 /// machinery). Fail-able (→ exit(3)): a `\d+` find returns the right ranges, a
 /// group-ref replace expands `$1`/`$2`, a bad pattern is handled as `None` (no
-/// crash), and an empty query yields no matches. `rae_regex`'s own host KATs
+/// crash), and an empty query yields no matches. `ath_regex`'s own host KATs
 /// prove the engine; this proves THIS app's regex → match-list wiring.
 #[must_use]
 fn regex_proof() -> bool {
@@ -3046,7 +3046,7 @@ fn parse_render_wiring_ok() -> bool {
     let h1 = heading_style(1);
     let h2 = heading_style(2);
     let h3 = heading_style(3);
-    let body = rae_tokens::TYPE_BODY;
+    let body = ath_tokens::TYPE_BODY;
     h1.px > h2.px && h2.px > h3.px && h1.px > body.px && h3.px >= body.px && h3.weight > body.weight
 }
 
@@ -3055,18 +3055,18 @@ fn parse_render_wiring_ok() -> bool {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     if !design_proof() {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
 
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
     let mut app = App::new();
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     let mut extended = false;
     let mut shift = false;
@@ -3079,7 +3079,7 @@ pub extern "C" fn _start() -> ! {
         let mut mouse_activity = false;
         let mut left_down = left_was_down;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -3088,27 +3088,27 @@ pub extern "C" fn _start() -> ! {
         }
         if mouse_activity || left_down != left_was_down {
             if left_down && !left_was_down {
-                let (cx, cy, _btn) = raekit::sys::cursor_pos();
+                let (cx, cy, _btn) = athkit::sys::cursor_pos();
                 // Subtract the LIVE window origin (not the stale present-time
                 // PRESENT_X/Y) so clicks land correctly after the window manager
                 // moves the window (Overview / Spaces / tiling). Falls back to the
                 // present origin if the surface isn't found. Saturating-sub keeps a
                 // cursor above/left of the window from underflowing.
-                let (ox, oy) = raekit::sys::surface_origin(sid)
+                let (ox, oy) = athkit::sys::surface_origin(sid)
                     .unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
                 let lx = (cx as i32).saturating_sub(ox as i32);
                 let ly = (cy as i32).saturating_sub(oy as i32);
                 if app.dispatch(app.hit(lx, ly)) {
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 }
             }
             left_was_down = left_down;
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
         let sc = key as u8;
@@ -3169,7 +3169,7 @@ pub extern "C" fn _start() -> ! {
                 }
                 if dirty {
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 }
                 continue;
             }
@@ -3228,14 +3228,14 @@ pub extern "C" fn _start() -> ! {
             }
             if dirty {
                 render(&app, &mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
             }
             continue;
         }
 
         // Global keys (work in both modes).
         match (ext, code) {
-            (false, 0x01) => raekit::sys::exit(0), // Esc = quit
+            (false, 0x01) => athkit::sys::exit(0), // Esc = quit
             (false, 0x21) if ctrl => {
                 // Ctrl+F = open Find bar.
                 app.open_find(false);
@@ -3346,12 +3346,12 @@ pub extern "C" fn _start() -> ! {
                 app.buf.update_scroll(edit_rows);
             }
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
     }
 }
 
-// FOLLOW-UP: register Notes tile in raeshell/start_menu (the concurrent opus
-// session owns raeshell/start_menu — this slice deliberately does NOT edit it).
+// FOLLOW-UP: register Notes tile in athshell/start_menu (the concurrent opus
+// session owns athshell/start_menu — this slice deliberately does NOT edit it).
 // Once that session lands, add a "Notes" entry with exec_path = "notes" so the
 // app is launchable from the Start menu, not only via the initramfs bundle.

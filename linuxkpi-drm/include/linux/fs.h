@@ -5,7 +5,7 @@
  * VFS inode/file surface. amdgpu touches `struct inode`/`struct file` only for its
  * char-device file_operations + the BO-mmap path (peripheral to MES bring-up).
  * Minimal definitions for the type layout; the file ops are driven by the guest
- * IPC/capability path, backed by raeen_linuxkpi at M4. License boundary: surface.
+ * IPC/capability path, backed by ath_linuxkpi at M4. License boundary: surface.
  */
 #ifndef _LINUXKPI_LINUX_FS_H
 #define _LINUXKPI_LINUX_FS_H
@@ -59,7 +59,7 @@ struct file {
 
 /* char-device / debugfs callback table. amdgpu defines several of these by value
  * (RAS debugfs nodes); the layout must be complete. The ops themselves run over
- * the guest IPC/capability path (backed by raeen_linuxkpi at M4). */
+ * the guest IPC/capability path (backed by ath_linuxkpi at M4). */
 struct file_operations {
 	struct module *owner;
 	unsigned int fop_flags;
@@ -80,13 +80,13 @@ struct file_operations {
 
 static inline struct inode *file_inode(const struct file *f) { return f->f_inode; }
 
-/* llseek helpers used in file_operations initializers (backed by raeen_linuxkpi). */
+/* llseek helpers used in file_operations initializers (backed by ath_linuxkpi). */
 loff_t default_llseek(struct file *file, loff_t offset, int whence);
 loff_t noop_llseek(struct file *file, loff_t offset, int whence);
 loff_t generic_file_llseek(struct file *file, loff_t offset, int whence);
 #define no_llseek NULL
 
-/* mm-side helper used by the device teardown (backed by raeen_linuxkpi, M4). */
+/* mm-side helper used by the device teardown (backed by ath_linuxkpi, M4). */
 void unmap_mapping_range(struct address_space *mapping, loff_t holebegin, loff_t holelen, int even_cows);
 
 #endif /* _LINUXKPI_LINUX_FS_H */

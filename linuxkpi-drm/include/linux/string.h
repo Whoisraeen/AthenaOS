@@ -3,7 +3,7 @@
  * <linux/string.h> shim (MPL-2.0, original work).
  *
  * The mem and str helper family. The core ones (memcpy/memset/memmove/strlen/...) are
- * provided by raeen_linuxkpi's libc-shadow at link time, declared here. memset32/
+ * provided by ath_linuxkpi's libc-shadow at link time, declared here. memset32/
  * memset64 (word fills) are pure inlines. Pulled from <linux/types.h> so these
  * are available wherever a header uses them transitively (kernel parity). License
  * boundary (../../README.md): API surface, no GPL source.
@@ -13,7 +13,7 @@
 
 #include <linux/types.h>
 
-/* provided by raeen_linuxkpi (or the compiler builtins) at link time */
+/* provided by ath_linuxkpi (or the compiler builtins) at link time */
 void  *memcpy(void *dst, const void *src, size_t n);
 void  *memmove(void *dst, const void *src, size_t n);
 void  *memset(void *s, int c, size_t n);

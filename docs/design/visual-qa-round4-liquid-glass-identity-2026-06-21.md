@@ -25,7 +25,7 @@ cyan + 444 violet chromatic pixels on the tiers panel.** The signature exists.
 What keeps us short of parity (and short of "better than Win11") is now a tighter,
 more specific list: the rim is **cyan-monochrome, not a cyan→violet→amber sweep**
 (warm stop renders ~0 pixels), the **internal cards inside Control Center /
-notifications are still dark raeshell slates** sitting on luminous glass (the single
+notifications are still dark athshell slates** sitting on luminous glass (the single
 ugliest remaining thing), controls are **flat squares not accent-glow pills**, and
 **Files is still the dead twin** (flat navy void, letter glyphs, no aurora — not on
 the live render path). None of these is a render-correctness bug now; they are
@@ -143,8 +143,8 @@ not just cosmetics. Recommendation: trim the blue blob core so peak lands ~150�
 (linear-ish: 171×132/138 ≈ 164; go to ~128 only if a second iteration still measures
 >158). **Do not flatten it to dim** — the brightness is what makes the glass
 luminous; just pull the single hottest core down out of the auto-adjust's
-over-bright band. Owner: **raeen-gfx**. Hand the post-trim peak to
-**raeen-accessibility** to confirm `text.primary` over the new peak still clears
+over-bright band. Owner: **athena-gfx**. Hand the post-trim peak to
+**athena-accessibility** to confirm `text.primary` over the new peak still clears
 4.5:1 (IDENTITY §8.7 / §9).
 
 ---
@@ -186,7 +186,7 @@ theme than to macOS Tahoe / the gold kit. **Fix: make the bottom/bottom-right ed
 actually render the warm `GLASS_EDGE_WARM 0x40_FFC97C` stop, and strengthen the
 violet on the right edge** so the per-perimeter interpolation produces the full
 cyan(top/left)→violet(right)→amber(bottom) cycle, not a cyan band with a violet
-whisper. Owner: **raeen-gfx** (the per-perimeter hue-position mapping is dropping the
+whisper. Owner: **athena-gfx** (the per-perimeter hue-position mapping is dropping the
 warm half of the cycle).
 
 ---
@@ -210,7 +210,7 @@ What still caps us below parity (the −42):
   than we do. Room to push frost +1 step on panel/popover.
 - **Rim is cyan-monochrome, not a rainbow sweep** (§3b). The reference's defining
   refraction is multi-hue; ours is one hue.
-- **Internal cards are dark raeshell slates on luminous glass** (§5 P0). Measured: CC
+- **Internal cards are dark athshell slates on luminous glass** (§5 P0). Measured: CC
   tile-grid region **L40.6** (rgb 36/40/60), darkest internal pixel **L25.7** — sitting
   on panel glass at L72–95. This is the *most jarring* remaining thing: a beautiful
   luminous panel with dark-card holes punched in it. The reference has light cards on
@@ -238,18 +238,18 @@ Each: **surface → defect (measured) → fix + target value → owner.**
 
 1. **Control Center internal cards / tiles** → measured **L40.6** (rgb 36/40/60),
    darkest internal pixel **L25.7**, sitting on panel glass at **L72–95** — dark
-   raeshell slates punched into luminous glass (polarity clash inside one surface).
+   athshell slates punched into luminous glass (polarity clash inside one surface).
    → Re-skin internal cards to a **light frosted sub-tier**: composite the same
    `GLASS_FROST_LIGHTEN`-style white-add over the card region so cards read *lighter*
    than the panel, or make them near-transparent so the panel glass shows through.
    Target: internal card interior **L ≥ panel interior** (≥95), never below it.
-   → owner: **raeen-shell-apps** (the CC render uses a hardcoded dark tile fill, not
+   → owner: **athena-shell-apps** (the CC render uses a hardcoded dark tile fill, not
    the glass tier system).
 
 2. **Notification toast cards** (`surface-notifications.png`) → toast interior
    **L45.4** (rgb 41/44/72) over aurora at **L137.7** — same dark-slate-on-luminous
    problem as CC. → Repoint toast fill to `glass.popover` tier + frost (IDENTITY §7),
-   not a dark fill. Target interior **L ≥ 90**. → owner: **raeen-shell-apps**.
+   not a dark fill. Target interior **L ≥ 90**. → owner: **athena-shell-apps**.
 
 ### P1 — the signature and tier finish
 
@@ -260,19 +260,19 @@ Each: **surface → defect (measured) → fix + target value → owner.**
    right edge renders `GLASS_EDGE_VIOLET 0x40_B47CFF` at full band, producing the
    continuous cyan→violet→amber cycle. Target: each of violet and warm ≥ ~30% of the
    cyan pixel count on a 4-edge panel (a balanced sweep, like the reference).
-   → owner: **raeen-gfx**.
+   → owner: **athena-gfx**.
 
 4. **Panel↔popover tiers visually indistinguishable** → interior luma 94 vs 96
    (Δ2, monotonic on the meter but not to the eye); chrome→panel is Δ29 (good).
    → Widen the popover frost/alpha step so popover reads ~10+ luma above panel.
    Target: chrome < panel < popover with **each step ≥ 8 luma** over a fixed
    backdrop (tighten the `tier_luminance_is_monotonic` KAT from ">" to "≥8 apart").
-   → owner: **raeen-gfx** (frost step) + **raeen-ui** (token + KAT).
+   → owner: **athena-gfx** (frost step) + **athena-ui** (token + KAT).
 
 5. **Aurora peak slightly hot** → peak **L171** vs target 140–150, and it sits
    directly under the centered panels (worst-case glass-contrast cell). → Trim blue
    blob core weight **138→132** so peak lands ~150–155; re-measure, go to 128 only if
-   still >158. → owner: **raeen-gfx**; a11y to re-confirm 4.5:1 over the new peak.
+   still >158. → owner: **athena-gfx**; a11y to re-confirm 4.5:1 over the new peak.
 
 ### P1 — controls (the reference's core look we don't have)
 
@@ -282,8 +282,8 @@ Each: **surface → defect (measured) → fix + target value → owner.**
    with a colored inner-glow halo. → Re-skin interactive controls to
    `radius_pill = h/2` + an inner accent-glow (RaeBlue/Vibe accent at low alpha,
    inset) + glossy top highlight. Target: every toggle/button/chip/slider-thumb is a
-   pill with accent glow on the "on"/primary state. → owner: **raeen-shell-apps**
-   (control draw) + **raeen-ui** (a reusable pill-with-glow primitive token if not
+   pill with accent glow on the "on"/primary state. → owner: **athena-shell-apps**
+   (control draw) + **athena-ui** (a reusable pill-with-glow primitive token if not
    already present).
 
 ### P2 — Files (flag: critique is moot until live-wire lands)
@@ -291,16 +291,16 @@ Each: **surface → defect (measured) → fix + target value → owner.**
 7. **`surface-files.png` is the dead twin** → content L18.4, sidebar L17.2, flat navy
    void, no aurora, letter glyphs (H/D/d/L/M/P/V/T) not icons. → **This is a known
    capture limitation, not a render regression**: the live `apps/files` preview can't
-   be host-wired due to the raekit lang-item conflict (per the task note + MEMORY
+   be host-wired due to the athkit lang-item conflict (per the task note + MEMORY
    `no-std-workspace-host-test`), so this PNG is still rendering the old dead
    `FileManager` twin, NOT the live Files. **Its identity critique is moot** — do not
    spend gfx/ui cycles re-skinning *this image*. The real fix is upstream: resolve
-   the raekit lang-item conflict so the live Files (with ftype-colored icons, already
+   the athkit lang-item conflict so the live Files (with ftype-colored icons, already
    committed `3102a46`) can be host-rendered, THEN re-shoot. Until then, mark this
-   surface "not identity-verifiable." → owner: **raeen-shell-apps** (lang-item
+   surface "not identity-verifiable." → owner: **athena-shell-apps** (lang-item
    conflict / live-wire), then re-shoot for a real critique.
 
-### Note for raeen-design-researcher
+### Note for athena-design-researcher
 
 - The 3× rim crop's title text says "TOP-LEFT edge" but the manifest
   (`manifest.txt` line for `glass-iridescent-edge-3x.png`) says "TOP-RIGHT corner."
@@ -348,8 +348,8 @@ Each: **surface → defect (measured) → fix + target value → owner.**
 ## Blocking (won't render)
 
 None for identity. All five identity surfaces render cleanly via the host
-rasterizer. **`surface-files.png` is a known dead-twin capture limitation** (raekit
-lang-item conflict blocks host-wiring the live Files) — flagged to raeen-shell-apps,
+rasterizer. **`surface-files.png` is a known dead-twin capture limitation** (athkit
+lang-item conflict blocks host-wiring the live Files) — flagged to athena-shell-apps,
 not a critique target until re-wired. No handoff to verifier/debugger needed.
 
 ## Confidence

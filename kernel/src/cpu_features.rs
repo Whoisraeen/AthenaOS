@@ -14,7 +14,7 @@
 //! Topology (Intel P/E cores, AMD CCX/Node clusters — for SCHED_BODY).
 //!
 //! Output: `[cpu] vendor=… family=… brand="…" features=…` at boot, plus
-//! `/proc/raeen/cpu` for runtime introspection.
+//! `/proc/athena/cpu` for runtime introspection.
 
 #![allow(dead_code)]
 
@@ -1190,7 +1190,7 @@ pub fn current_cpu_security_descriptor() -> CpuSecurityDescriptor {
     }
 }
 
-/// `/proc/raeen/vulnerabilities` text — the live CPU's per-attack posture.
+/// `/proc/athena/vulnerabilities` text — the live CPU's per-attack posture.
 pub fn vulnerabilities_dump_text() -> alloc::string::String {
     use alloc::string::String;
     let d = current_cpu_security_descriptor();
@@ -1268,7 +1268,7 @@ pub fn run_vulnerabilities_smoketest() {
         && s.spec_store_bypass == VulnStatus::Vulnerable;
     let pass = zen4_ok && skylake_ok;
 
-    // The real CPU's headline (the same data /proc/raeen/vulnerabilities dumps).
+    // The real CPU's headline (the same data /proc/athena/vulnerabilities dumps).
     let d = current_cpu_security_descriptor();
     let r = assess_vulnerabilities(&d);
     crate::serial_println!(
@@ -1452,7 +1452,7 @@ pub fn get_features() -> Features {
     g.as_ref().map(|i| i.features).unwrap_or_default()
 }
 
-// ── /proc/raeen/cpu ────────────────────────────────────────────────────
+// ── /proc/athena/cpu ────────────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let g = INFO.lock();

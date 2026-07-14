@@ -4,7 +4,7 @@
  *
  * Hybrid-graphics GPU switching (discrete<->integrated muxing on laptops).
  * Athena is a single-APU system with nothing to switch to, so amdgpu's
- * switcheroo registration is an honest no-op; backed by raeen_linuxkpi at M4 only
+ * switcheroo registration is an honest no-op; backed by ath_linuxkpi at M4 only
  * if hybrid switching is ever needed. License boundary (../../README.md): surface.
  */
 #ifndef _LINUXKPI_LINUX_VGA_SWITCHEROO_H

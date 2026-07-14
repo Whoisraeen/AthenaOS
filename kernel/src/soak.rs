@@ -9,7 +9,7 @@
 //! ("heap usage at end ≤ 10% over start", MasterChecklist Phase 4.9); the full
 //! 24h Athena run (Phase 4.12) layers more iterations on this same harness.
 //!
-//! R10: `init()` + `run_boot_smoketest()` + `/proc/raeen/soak` (`dump_text`) +
+//! R10: `init()` + `run_boot_smoketest()` + `/proc/athena/soak` (`dump_text`) +
 //! this Concept docstring.
 
 extern crate alloc;
@@ -173,7 +173,7 @@ mod endurance {
     use alloc::boxed::Box;
     use alloc::vec::Vec;
 
-    /// Result fields, also surfaced on `/proc/raeen/soak`.
+    /// Result fields, also surfaced on `/proc/athena/soak`.
     pub static RAN: AtomicBool = AtomicBool::new(false);
     pub static CYCLES: AtomicU64 = AtomicU64::new(0);
     pub static HEAP_DELTA: AtomicU64 = AtomicU64::new(0); // stored as i64 bits
@@ -351,7 +351,7 @@ pub fn run_endurance() {
 #[cfg(not(feature = "kasan"))]
 pub fn run_endurance() {}
 
-/// `/proc/raeen/soak` body.
+/// `/proc/athena/soak` body.
 pub fn dump_text() -> alloc::string::String {
     let base = alloc::format!(
         "# AthenaOS soak / leak harness (Phase 4.9)\n\

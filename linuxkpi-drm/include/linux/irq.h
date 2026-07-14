@@ -6,7 +6,7 @@
  * builds its interrupt-source dispatch on top of the IRQ domain (irqdomain.h) and
  * touches a few of these types. The real interrupt delivery is the AthenaOS kernel's
  * job; the daemon receives demuxed IRQ events over its IRQ-wait syscall, so the
- * chip/flow ops here are layout-only, backed by raeen_linuxkpi at M4. License
+ * chip/flow ops here are layout-only, backed by ath_linuxkpi at M4. License
  * boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_IRQ_H
@@ -36,7 +36,7 @@ struct irq_chip {
 
 typedef void (*irq_flow_handler_t)(struct irq_data *data);
 
-/* flow handlers + chip wiring — backed by raeen_linuxkpi (M4) */
+/* flow handlers + chip wiring — backed by ath_linuxkpi (M4) */
 void handle_level_irq(struct irq_data *data);
 void handle_edge_irq(struct irq_data *data);
 void handle_simple_irq(struct irq_data *data);

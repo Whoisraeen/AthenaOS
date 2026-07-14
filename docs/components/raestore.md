@@ -16,10 +16,10 @@ No review hostage situations.
 
 ## Layers
 
-- **raestore-client**: the user-facing app (built on AthUI, signed by us).
-- **raestore-runtime**: install / update / verify on-device. Uses AthFS snapshots
+- **athstore-client**: the user-facing app (built on AthUI, signed by us).
+- **athstore-runtime**: install / update / verify on-device. Uses AthFS snapshots
   for atomic install and rollback.
-- **raestore-backend** (out of scope here): the cloud-side catalog and review.
+- **athstore-backend** (out of scope here): the cloud-side catalog and review.
 
 ## Open design questions
 

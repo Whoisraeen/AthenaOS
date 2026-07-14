@@ -6,7 +6,7 @@
  * tree: insert/remove keyed on [start;last], plus iter_first/iter_next that walk
  * every stored interval overlapping a query [start;last]. amdgpu's VM keeps its
  * BO mappings in one (amdgpu_vm.c). Built on the augmented-rbtree cores in
- * raeen_linuxkpi (rbtree.rs) via <linux/rbtree_augmented.h>; the algorithm is the
+ * ath_linuxkpi (rbtree.rs) via <linux/rbtree_augmented.h>; the algorithm is the
  * well-known max-endpoint augmented interval tree, reimplemented as original MPL
  * work. A fake search would silently miss overlapping mappings (SCOPE.md rule 9).
  * License boundary (../../README.md): API surface + original macro implementation.

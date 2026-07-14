@@ -2910,12 +2910,12 @@ pub static AUDIO_MANAGER: Mutex<Option<AudioManager>> = Mutex::new(None);
 /// with interrupts disabled for the whole critical section, restoring the
 /// previous interrupt state on drop.
 ///
-/// SINGLE-CPU DEADLOCK GUARD (flagged by raeen-reviewer when SYS_AUDIO_SUBMIT
+/// SINGLE-CPU DEADLOCK GUARD (flagged by athena-reviewer when SYS_AUDIO_SUBMIT
 /// (267) made the window reachable; same class as compositor.rs `lock_compositor`,
 /// root-caused iron 2026-06-15). `AUDIO_MANAGER` is shared between a preemptible
 /// kernel thread (the SCHED_BODY audio thread's `process_tick` producer + the DMA
 /// drain consumer) and syscall handlers — `submit_samples` (← SYS_AUDIO_SUBMIT)
-/// and `dump_text` (← /proc/raeen/audio read) — which run with `RFLAGS.IF=0`
+/// and `dump_text` (← /proc/athena/audio read) — which run with `RFLAGS.IF=0`
 /// (SFMASK clears it on SYSCALL entry). On this kernel only the BSP schedules
 /// post-boot (APs halt — see scheduler::ap_enter_idle), so a spinning IF=0 waiter
 /// can NEVER be preempted. If the audio thread were preempted while holding the
@@ -3098,7 +3098,7 @@ const OUTPUT_CHANNELS: usize = 2;
 /// latency_us)`. The full round-trip on iron = this + the codec/DAC path;
 /// QEMU proves the INSTRUMENT (HDA consumption itself is iron-proven
 /// separately), and the next iron boot reads the real steady-state number
-/// from `/proc/raeen/audio`.
+/// from `/proc/athena/audio`.
 pub fn output_latency_snapshot() -> (usize, u32, u64) {
     let backlog_frames = AUDIO_RING
         .get()
@@ -3129,7 +3129,7 @@ fn enqueue_test_tone_square(frames: usize, sample_rate: u32, hz: u32) -> usize {
         TEST_TONE_WRITES.fetch_add(1, Ordering::Relaxed);
         TEST_TONE_SAMPLES_WRITTEN.fetch_add(wrote, Ordering::Relaxed);
     }
-    // /proc/raeen/perf telemetry: one period attempt; a fully-full ring
+    // /proc/athena/perf telemetry: one period attempt; a fully-full ring
     // (wrote == 0) means the HDA DMA consumer hasn't drained — a starvation /
     // underrun-class event the sub-3ms contract cares about.
     crate::perf::record_audio_period(wrote == 0);

@@ -2646,7 +2646,7 @@ impl VfsState {
 pub static VFS: Mutex<Option<VfsState>> = Mutex::new(None);
 
 // ═══════════════════════════════════════════════════════════════════════════
-// BACKWARD COMPATIBILITY — kept for syscall.rs, task.rs, raefs.rs
+// BACKWARD COMPATIBILITY — kept for syscall.rs, task.rs, athfs.rs
 // ═══════════════════════════════════════════════════════════════════════════
 
 pub trait Inode: Send + Sync {
@@ -2724,8 +2724,8 @@ pub fn open_path(path: &str) -> Option<Arc<dyn Inode>> {
         return Some(Arc::new(InitramfsInode { data }));
     }
 
-    if let Some(inode_id) = crate::raefs::RaeFS::find_or_create_file(path) {
-        return Some(Arc::new(crate::raefs::RaeFSInode { id: inode_id }));
+    if let Some(inode_id) = crate::athfs::RaeFS::find_or_create_file(path) {
+        return Some(Arc::new(crate::athfs::RaeFSInode { id: inode_id }));
     }
 
     None

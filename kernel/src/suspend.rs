@@ -381,7 +381,7 @@ impl HibernateImage {
 
     pub fn save_image(&self) -> Vec<u8> {
         let mut buf = Vec::new();
-        let magic = b"RAEEN_HIBERNATE\0";
+        let magic = b"ATHENA_HIBERNATE\0";
         buf.extend_from_slice(magic);
         buf.extend_from_slice(&self.total_pages.to_le_bytes());
         buf.push(match self.compression {
@@ -1505,7 +1505,7 @@ struct DtBlob([u8; 10]);
 static mut S3_GDTR_BLOB: DtBlob = DtBlob([0; 10]);
 static mut S3_IDTR_BLOB: DtBlob = DtBlob([0; 10]);
 
-/// S3 telemetry for the smoketest + /proc/raeen/suspend.
+/// S3 telemetry for the smoketest + /proc/athena/suspend.
 /// S3_LAST_RESULT: 0 = never attempted, 1 = SLP_EN ignored (fell through),
 /// 2 = slept and woke via the trampoline.
 pub static S3_LAST_RESULT: core::sync::atomic::AtomicU8 = core::sync::atomic::AtomicU8::new(0);
@@ -2284,7 +2284,7 @@ pub fn run_s3_roundtrip_smoketest() {
     );
 }
 
-/// /proc/raeen/suspend — S3 state + telemetry (R10 procfs artifact).
+/// /proc/athena/suspend — S3 state + telemetry (R10 procfs artifact).
 pub fn dump_text() -> alloc::string::String {
     use core::sync::atomic::Ordering;
     let mut out = alloc::string::String::new();

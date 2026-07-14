@@ -60,7 +60,7 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
 use spin::Mutex;
 
-const DRIVER_ABI_MAGIC: u64 = 0x52_41_45_45_4E_44_52_56; // "RAEENDRV"
+const DRIVER_ABI_MAGIC: u64 = 0x52_41_45_45_4E_44_52_56; // "ATHENDRV"
 pub const DRIVER_ABI_VERSION: u32 = 1;
 
 /// Contract versioning for userspace drivers.
@@ -577,7 +577,7 @@ pub fn stats() -> Stats {
     }
 }
 
-// ── /proc/raeen/drivers ───────────────────────────────────────────────
+// ── /proc/athena/drivers ───────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let s = stats();
@@ -775,7 +775,7 @@ fn read_user_string(ptr: u64, len: u64) -> Option<String> {
 
 /// The authority required to register a driver or claim/DMA-enable real
 /// hardware: a held `Cap::System` with WRITE rights — the same gate as
-/// `SYS_RAEEN_SHUTDOWN` / `SYS_INSTALL_RUN`. Only the trusted driver
+/// `SYS_ATHENA_SHUTDOWN` / `SYS_INSTALL_RUN`. Only the trusted driver
 /// supervisor (seeded at boot with the master System cap) and what it
 /// explicitly derives to may drive devices.
 ///
@@ -788,7 +788,7 @@ fn read_user_string(ptr: u64, len: u64) -> Option<String> {
 /// the sandbox to ring-0-equivalent power. (Audit 2026-07-06, finding #1.)
 fn caller_holds_driver_authority() -> bool {
     use crate::capability::{Cap, Rights};
-    // Mirrors the SYS_RAEEN_SHUTDOWN / SYS_INSTALL_RUN gate idiom exactly.
+    // Mirrors the SYS_ATHENA_SHUTDOWN / SYS_INSTALL_RUN gate idiom exactly.
     let mut allowed = false;
     crate::scheduler::with_current_task(|task| {
         for (_, cap) in task.cap_table.iter() {
@@ -848,7 +848,7 @@ fn should_seed_driver_daemon(name: &str, parent_authorized: bool) -> bool {
 /// TODO(MasterChecklist Phase 9): replace the broad `Cap::System{WRITE}` with a
 /// narrow, device-class-scoped `Cap::Gpu{WRITE}` / dedicated `Cap::Device` and
 /// teach the claim gate to accept it for the matching PCI class — so a GPU
-/// daemon cannot also reach `SYS_RAEEN_SHUTDOWN` / perm-prompt respond. This
+/// daemon cannot also reach `SYS_ATHENA_SHUTDOWN` / perm-prompt respond. This
 /// slice grants the exact authority the existing gate checks to avoid an ABI
 /// change; the over-grant is bounded to the allowlisted first-party binaries.
 pub fn maybe_seed_driver_daemon(child_id: crate::task::TaskId, name: &str) {

@@ -2,16 +2,16 @@
 //!
 //! LEGACY_GAMING_CONCEPT.md §"3. Web apps via PWA support that actually feels native (renders
 //! through AthUI)": a static render is not an *app*. A real page responds to clicks. The
-//! engines already ship the parts — `rae_js` runs script + exposes a host-object API,
-//! `raeweb` lays out the DOM and hit-tests a point to a node id, and [`crate::dom_js`] binds
+//! engines already ship the parts — `ath_js` runs script + exposes a host-object API,
+//! `athweb` lays out the DOM and hit-tests a point to a node id, and [`crate::dom_js`] binds
 //! `document.getElementById(id).textContent = …` to the live tree. This module is the join
 //! that makes a click *do* something:
 //!
 //!   1. **registration** — `el.addEventListener('click', fn)` stores the JS callable in a
-//!      registry keyed by `(element id, event type)` (and tags the raeweb `EventListener`
+//!      registry keyed by `(element id, event type)` (and tags the athweb `EventListener`
 //!      seam with a callback id so the engine's own node reflects the listener).
-//!   2. **dispatch** — a click at a node (by id, or by `(x,y)` via raeweb hit-testing) invokes
-//!      the registered callbacks in the live `rae_js` interpreter, bubbling up id-bearing
+//!   2. **dispatch** — a click at a node (by id, or by `(x,y)` via athweb hit-testing) invokes
+//!      the registered callbacks in the live `ath_js` interpreter, bubbling up id-bearing
 //!      ancestors. Any DOM mutation a handler makes marks the tree dirty → the caller
 //!      re-lays-out → the change shows.
 //!   3. **safety** — the interpreter's call-depth + step budgets bound every handler, so a
@@ -29,9 +29,9 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::cell::RefCell;
 
-use rae_js::{Interpreter, JsValue};
+use ath_js::{Interpreter, JsValue};
 
-/// One registered listener: the JS callable plus the id it was tagged with on the raeweb seam.
+/// One registered listener: the JS callable plus the id it was tagged with on the athweb seam.
 #[derive(Clone)]
 struct Listener {
     callback: JsValue,
@@ -58,7 +58,7 @@ impl ListenerRegistry {
     }
 
     /// Register `callback` for `event_type` on element `id`. Returns the callback id assigned
-    /// (also used to tag the raeweb `EventListener` seam). De-dups exact-same-callable repeats
+    /// (also used to tag the athweb `EventListener` seam). De-dups exact-same-callable repeats
     /// the way the DOM does (adding the identical function for the same type is a no-op there);
     /// here we keep it simple and append — repeated distinct closures all fire, which matches
     /// the common `addEventListener('click', () => …)` usage.
@@ -175,7 +175,7 @@ fn fire_along_path(
 /// also lands). This is the synthetic, by-id dispatch entry point — usable without pixel
 /// coordinates, and the one the host KAT drives.
 ///
-/// `ancestors` is the innermost-first id path (from [`raeweb::DomDocument::ancestor_id_path`]).
+/// `ancestors` is the innermost-first id path (from [`athweb::DomDocument::ancestor_id_path`]).
 /// Pass `&[id]` for no-bubble dispatch. Never panics: a thrown handler / a runaway handler is
 /// bounded by the interpreter budget and reported in [`DispatchResult::error`].
 pub fn dispatch_click_by_id(

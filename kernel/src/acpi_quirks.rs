@@ -2,7 +2,7 @@
 //!
 //! MasterChecklist Phase 1.4 — quirks list for vendor DSDTs. Entries are matched
 //! against the ACPI table OEM ID + OEM table ID at boot; matched quirks are logged
-//! and exposed via `/proc/raeen/acpi_quirks`.
+//! and exposed via `/proc/athena/acpi_quirks`.
 
 #![allow(dead_code)]
 

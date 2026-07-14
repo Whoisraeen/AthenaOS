@@ -25,11 +25,11 @@ Grounded in the actual code, not assumptions:
 | Drop shadow (quadratic falloff, configurable offset/radius/color) | `compositor::render_drop_shadow` | LIVE, per-surface `SurfaceEffect::DropShadow` |
 | Glassmorphism blur (3-pass box blur ≈ Gaussian + tint) | `compositor::BlurEngine::box_blur_3pass`, `set_surface_blur` | LIVE, per-surface `BlurRegion { radius, tint_color }` |
 | HDR tone-map (sRGB→linear→ACES/Reinhard→sRGB) | `compositor::HdrPipeline` | LIVE (pipeline); GPU scanout pending |
-| Canvas primitives: rounded-rect, gradient, circle, alpha blend, scaled AA text | `raegfx::Canvas` | LIVE (host-KAT'd 5/5) |
+| Canvas primitives: rounded-rect, gradient, circle, alpha blend, scaled AA text | `athgfx::Canvas` | LIVE (host-KAT'd 5/5) |
 | Theme token carrier (`accent_argb`, bg/fg/text, `blur_radius`, `corner_radius`, font, cursor) | `kernel/src/theme_engine.rs::ThemeAbi` | LIVE, 8 signed builtins |
 | Vibe Mode (theme+wallpaper+sound+RGB switched as a set) | `kernel/src/vibe_mode.rs` | LIVE, 5 presets |
 | Window chrome titlebar (28px flat bar, block-font, min/max/close) | `kernel/src/window_chrome.rs` | LIVE but **pre-polish** |
-| Taskbar (40px flat bar, top accent line, window buttons) | `components/raeshell/src/desktop.rs` | LIVE but **pre-polish** |
+| Taskbar (40px flat bar, top accent line, window buttons) | `components/athshell/src/desktop.rs` | LIVE but **pre-polish** |
 
 **The cohesion problem to fix:** ~30 files each redefine `const ACCENT: u32 =
 0xFF_4E_9C_FF` and a private palette (`calculator.rs`, `capture.rs`,
@@ -95,14 +95,14 @@ software-raster scale). All spacing, padding, and gaps are multiples.
 | `space.8` | 48 | large couch-mode gap |
 
 **Hit-target floor:** desktop/mouse = **32px**; touch/couch/controller =
-**48px** (SteamOS bar). Flag to raeen-accessibility if any interactive element
+**48px** (SteamOS bar). Flag to athena-accessibility if any interactive element
 ships below `32px` in pointer mode.
 
 ---
 
 ## 3. Corner-radius scale
 
-Continuous-feel rounding via `raegfx::Canvas` rounded-rect. **Concentric rule:**
+Continuous-feel rounding via `athgfx::Canvas` rounded-rect. **Concentric rule:**
 a child's radius = `parent.radius − parent.padding` (clamped ≥ `radius.xs`), so
 nested glass never shows mismatched corners (the macOS lesson).
 
@@ -160,7 +160,7 @@ All colors are ARGB `0xAARRGGBB` (compositor-native). Two base palettes
 
 **Dark/light parity rule:** every surface spec lists both. Contrast target
 (WCAG AA): `text.primary` ≥ 7:1 on its bg, `text.secondary` ≥ 4.5:1,
-`text.tertiary` ≥ 3:1 (large/non-essential only). raeen-accessibility verifies.
+`text.tertiary` ≥ 3:1 (large/non-essential only). athena-accessibility verifies.
 
 ### 4.3 Accent model (the cohesion engine)
 
@@ -181,7 +181,7 @@ is a single value change:
 
 A small fixed palette so a file *type* reads consistently across every Vibe
 preset (a directory must look like a directory in any theme). Reusable by any app
-that shows a file chip; lives in `rae_tokens` alongside the palettes. Two
+that shows a file chip; lives in `ath_tokens` alongside the palettes. Two
 exceptions track the accent on purpose (`dir`/`code` read as "primary"). See
 `files.md` §4 for the mapping from the legacy `FM_*` colors.
 
@@ -195,12 +195,12 @@ exceptions track the accent on purpose (`dir`/`code` read as "primary"). See
 | `ftype.archive` | `0xFF_F0_A0_3C` | archives |
 | `ftype.neutral` | = `text.secondary` | plain / unknown / device / socket / pipe |
 
-raeen-accessibility verifies each clears 3:1 on `bg.raised`.
+athena-accessibility verifies each clears 3:1 on `bg.raised`.
 
-Derivation lives once in `rae_tokens::derive_accent(seed, palette) -> AccentRamp`
+Derivation lives once in `ath_tokens::derive_accent(seed, palette) -> AccentRamp`
 (per ADR 0003; `theme_engine::derive_accent` delegates to it) and feeds every
 surface. The `Default (RaeBlue)` column is the authoritative contract — the
-host KATs in `rae_tokens` assert `base`/`subtle`/`glow` exactly and
+host KATs in `ath_tokens` assert `base`/`subtle`/`glow` exactly and
 `hover`/`active` within ±2/channel; the rule prose is the intent, the values win
 on any disagreement. **No surface hardcodes an accent.** This is what makes Vibe
 Mode's "the desktop becomes a different place in one tap" real rather than a
@@ -250,7 +250,7 @@ it becomes `accent.glow`.
 > silhouette** — rounded alpha mask filled with the constant shadow `color`,
 > blurred by `radius` via the existing 3-pass box blur, offset, composited under
 > the surface. It is NOT an analytic per-pixel falloff and it NEVER samples the
-> backdrop. raeen-visual-qa found the current renderer produces a *hard blue
+> backdrop. athena-visual-qa found the current renderer produces a *hard blue
 > offset block* — the #1 "looks basic" defect. The full algorithm + acceptance
 > (the penumbra test) live in [`material-and-shadow.md`](./material-and-shadow.md).
 > Every surface that references `elev.*` below inherits that fix.
@@ -272,12 +272,12 @@ Light mode multiplies shadow alpha by ~0.6 (shadows read heavier on light bg).
 
 **Direction:** a single neutral humanist-grotesque UI face — "RaeSans" — in the
 Inter / SF Pro / Segoe UI family (open, large x-height, legible at small px on a
-software raster). `ThemeAbi.font_family` defaults to `"Inter"`; the `raefont`
+software raster). `ThemeAbi.font_family` defaults to `"Inter"`; the `athfont`
 follow-up (per memory `ui-glass-design-system`) supplies crisp scalable text via
 `Canvas::draw_text` (scaled AA already exists). Monospace companion = "RaeMono"
 (JetBrains Mono family) for Terminal / code.
 
-**Type ramp** (px / weight / line-height). Until `raefont` lands, the block/8px
+**Type ramp** (px / weight / line-height). Until `athfont` lands, the block/8px
 glyph path approximates these at the nearest integer scale.
 
 | Token | px | weight | line-height | Use |
@@ -322,13 +322,13 @@ Mode swaps these — e.g. Cyberpunk = snappier, Ghibli = softer/longer).
 
 | Concern | Token / rule | Owner verify |
 |---|---|---|
-| Contrast | §4.2 ratios (AA: 7:1 / 4.5:1 / 3:1) | raeen-accessibility |
-| Focus visibility | `elev.focus` accent glow + 2px `accent.base` ring on every focusable element; never *only* a color change | raeen-accessibility |
-| Reduced motion | `motion.instant` collapse; surface specs MUST define the reduced path | raeen-accessibility |
-| Hit targets | 32px pointer floor / 48px couch floor (§2) | raeen-visual-qa |
-| Hover-independence | every hover affordance has a keyboard/controller focus equivalent (GNOME/SteamOS lesson) | raeen-accessibility |
+| Contrast | §4.2 ratios (AA: 7:1 / 4.5:1 / 3:1) | athena-accessibility |
+| Focus visibility | `elev.focus` accent glow + 2px `accent.base` ring on every focusable element; never *only* a color change | athena-accessibility |
+| Reduced motion | `motion.instant` collapse; surface specs MUST define the reduced path | athena-accessibility |
+| Hit targets | 32px pointer floor / 48px couch floor (§2) | athena-visual-qa |
+| Hover-independence | every hover affordance has a keyboard/controller focus equivalent (GNOME/SteamOS lesson) | athena-accessibility |
 
-Anything a surface cannot satisfy here is **flagged to raeen-accessibility**, not
+Anything a surface cannot satisfy here is **flagged to athena-accessibility**, not
 silently shipped.
 
 ---
@@ -344,16 +344,16 @@ So implementers know where a token *lives* at runtime:
   `material.glass`).
 - Static taskbar/titlebar tint → `material.mica` (computed once per wallpaper).
 - Spacing/radius/type/motion constants → proposed shared crate
-  `raeui::tokens` (so apps stop redefining `const ACCENT`). **This consolidation
+  `athui::tokens` (so apps stop redefining `const ACCENT`). **This consolidation
   is itself a polish item** (see surface specs).
 
 ---
 
 ## Handoff
 
-- **raeen-ui (framework):** own `raeui::tokens` — the shared constant module
+- **athena-ui (framework):** own `athui::tokens` — the shared constant module
   that ends the per-app palette duplication; expose `derive_accent(seed)`.
-- **raeen-gfx:** confirm `Canvas` rounded-rect supports the `radius.*` scale and
+- **athena-gfx:** confirm `Canvas` rounded-rect supports the `radius.*` scale and
   per-corner masking; confirm shadow color can be accent-tinted for
   `elev.focus`.
 - **theme_engine (kernel):** add `derive_accent` so all six accent-derived

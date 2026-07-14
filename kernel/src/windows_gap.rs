@@ -34,7 +34,7 @@ impl GapStatus {
 
 struct Row {
     windows: &'static str,
-    raeen_answer: &'static str,
+    athena_answer: &'static str,
     status: GapStatus,
     kernel_module: &'static str,
 }
@@ -43,91 +43,91 @@ fn rows() -> &'static [Row] {
     &[
         Row {
             windows: "Forced restarts for updates",
-            raeen_answer: "User controls update timing",
+            athena_answer: "User controls update timing",
             status: GapStatus::Userspace,
-            kernel_module: "raeupdate (userspace)",
+            kernel_module: "athupdate (userspace)",
         },
         Row {
             windows: "Update breaks your machine",
-            raeen_answer: "Atomic CoW updates + rollback",
+            athena_answer: "Atomic CoW updates + rollback",
             status: GapStatus::Stub,
-            kernel_module: "raefs.rs (snapshot API stub)",
+            kernel_module: "athfs.rs (snapshot API stub)",
         },
         Row {
             windows: "Bloatware preinstalled",
-            raeen_answer: "Zero — OS only default install",
+            athena_answer: "Zero — OS only default install",
             status: GapStatus::Userspace,
-            kernel_module: "raestore manifest policy",
+            kernel_module: "athstore manifest policy",
         },
         Row {
             windows: "Ads in Start / Explorer / lock screen",
-            raeen_answer: "Forbidden by design",
+            athena_answer: "Forbidden by design",
             status: GapStatus::Userspace,
-            kernel_module: "raeshell policy",
+            kernel_module: "athshell policy",
         },
         Row {
             windows: "Telemetry hard to disable",
-            raeen_answer: "Off by default, opt-in",
+            athena_answer: "Off by default, opt-in",
             status: GapStatus::Done,
             kernel_module: "config_registry (/system/telemetry_enabled=false)",
         },
         Row {
             windows: "Registry graveyard",
-            raeen_answer: "Versioned hierarchical config + snapshots",
+            athena_answer: "Versioned hierarchical config + snapshots",
             status: GapStatus::Done,
             kernel_module: "config_registry.rs (syscalls 50-53)",
         },
         Row {
             windows: "DLL hell",
-            raeen_answer: "App bundles with hashed deps",
+            athena_answer: "App bundles with hashed deps",
             status: GapStatus::Partial,
             kernel_module: "app_bundle.rs (verify syscall 66-67)",
         },
         Row {
             windows: "Settings vs Control Panel split",
-            raeen_answer: "Single unified Settings",
+            athena_answer: "Single unified Settings",
             status: GapStatus::Userspace,
-            kernel_module: "raesettings app",
+            kernel_module: "athsettings app",
         },
         Row {
             windows: "Search is broken",
-            raeen_answer: "Local-first indexed sub-100ms",
+            athena_answer: "Local-first indexed sub-100ms",
             status: GapStatus::Done,
             kernel_module: "search_index.rs (syscalls 54-57)",
         },
         Row {
             windows: "Random reboots",
-            raeen_answer: "Never without explicit consent",
+            athena_answer: "Never without explicit consent",
             status: GapStatus::Partial,
             kernel_module: "perm_prompt.rs + suspend.rs stub",
         },
         Row {
             windows: "Slow boot",
-            raeen_answer: "<6s NVMe, target 3s",
+            athena_answer: "<6s NVMe, target 3s",
             status: GapStatus::Partial,
-            kernel_module: "procfs /proc/raeen/boot + fast_boot.rs",
+            kernel_module: "procfs /proc/athena/boot + fast_boot.rs",
         },
         Row {
             windows: "Driver Wild West",
-            raeen_answer: "Signed drivers + IOMMU sandbox",
+            athena_answer: "Signed drivers + IOMMU sandbox",
             status: GapStatus::Partial,
             kernel_module: "capability.rs + iommu.rs stub + storage_irq.rs",
         },
         Row {
             windows: "Pushed Copilot / Cortana / Edge",
-            raeen_answer: "AI optional, off by default",
+            athena_answer: "AI optional, off by default",
             status: GapStatus::Userspace,
-            kernel_module: "raeshell install policy",
+            kernel_module: "athshell install policy",
         },
         Row {
             windows: "File Explorer from 2007",
-            raeen_answer: "Modern file manager",
+            athena_answer: "Modern file manager",
             status: GapStatus::Partial,
             kernel_module: "vfs.rs hierarchical paths + mkdir/unlink/rename syscalls",
         },
         Row {
             windows: "WSL friction",
-            raeen_answer: "Linux subsystem first-class",
+            athena_answer: "Linux subsystem first-class",
             status: GapStatus::Partial,
             kernel_module: "linux_syscall.rs + linux_exec.rs (SYS_LINUX_EXEC=5000)",
         },
@@ -156,12 +156,12 @@ pub fn dump_text() -> String {
     out.push_str("# Source: LEGACY_GAMING_CONCEPT.md §Windows Pain Points → AthenaOS Solutions\n\n");
     for (i, r) in rows().iter().enumerate() {
         out.push_str(&alloc::format!(
-            "[{:02}] status={:<10} kernel={}\n     windows: {}\n     raeen:   {}\n",
+            "[{:02}] status={:<10} kernel={}\n     windows: {}\n     athena:   {}\n",
             i + 1,
             r.status.tag(),
             r.kernel_module,
             r.windows,
-            r.raeen_answer,
+            r.athena_answer,
         ));
     }
     let done = rows()

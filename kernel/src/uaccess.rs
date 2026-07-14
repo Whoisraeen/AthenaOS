@@ -175,7 +175,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// procfs `/proc/raeen/uaccess`: the hardened-chokepoint status line.
+/// procfs `/proc/athena/uaccess`: the hardened-chokepoint status line.
 pub fn procfs_status() -> String {
     alloc::format!(
         "uaccess: user_addr_max={:#018x} chokepoint=copy_from_user/copy_to_user \

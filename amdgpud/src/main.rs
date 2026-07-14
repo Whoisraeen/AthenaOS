@@ -1,15 +1,15 @@
 //! amdgpud — AthenaOS userspace AMD GPU driver daemon.
 //!
 //! Runs the real amdgpu initialization pipeline (mirroring `amdgpu_device_init`
-//! → `amdgpu_device_ip_init`) on top of the LinuxKPI host + raeen_drm:
+//! → `amdgpu_device_ip_init`) on top of the LinuxKPI host + ath_drm:
 //!
-//!   1. PCI enable + BAR map           (raeen_linuxkpi: pci_enable, ioremap)
+//!   1. PCI enable + BAR map           (ath_linuxkpi: pci_enable, ioremap)
 //!   2. VBIOS / ATOMBIOS read          (BAR / ROM)
 //!   3. GMC / GPUVM (memory controller + GPU page tables)
 //!   4. IH ring (interrupt handler)
 //!   5. SMU / PSP power-up + firmware
 //!   6. GFX + SDMA rings (drm_sched)
-//!   7. DC (Display Core) modeset → first scanout (raeen_drm KMS)
+//!   7. DC (Display Core) modeset → first scanout (ath_drm KMS)
 //!
 //! On QEMU there is no Radeon, so PCI probe reports "no AMD GPU present" and the
 //! daemon exits cleanly. On real hardware (Athena Radeon 760M, `c4:00.0`
@@ -23,23 +23,23 @@
 extern crate alloc;
 
 use core::panic::PanicInfo;
-use rae_abi::syscall as abi;
+use ath_abi::syscall as abi;
 #[cfg(feature = "real_amdgpu_init")]
-use raeen_amdgpu::bringup::GpuOps;
-use raeen_drm::kms;
+use ath_amdgpu::bringup::GpuOps;
+use ath_drm::kms;
 
-const _: () = assert!(rae_abi::ABI_VERSION == 4);
+const _: () = assert!(ath_abi::ABI_VERSION == 4);
 
-// Global allocator backed by the LinuxKPI heap (raeen_linuxkpi::kmalloc/kfree).
-// raeen_drm + this daemon use alloc::{Vec, String, format}.
+// Global allocator backed by the LinuxKPI heap (ath_linuxkpi::kmalloc/kfree).
+// ath_drm + this daemon use alloc::{Vec, String, format}.
 struct LkpiAllocator;
 
 unsafe impl core::alloc::GlobalAlloc for LkpiAllocator {
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-        raeen_linuxkpi::kmalloc(layout.size(), 0)
+        ath_linuxkpi::kmalloc(layout.size(), 0)
     }
     unsafe fn dealloc(&self, ptr: *mut u8, _layout: core::alloc::Layout) {
-        raeen_linuxkpi::kfree(ptr);
+        ath_linuxkpi::kfree(ptr);
     }
 }
 
@@ -110,7 +110,7 @@ fn klog(msg: &str) {
     let n = msg.len().min(159);
     buf[..n].copy_from_slice(&msg.as_bytes()[..n]);
     buf[n] = 0;
-    raeen_linuxkpi::raeen_printk(buf.as_ptr());
+    ath_linuxkpi::athena_printk(buf.as_ptr());
 }
 
 /// SYS_NETLOG_FLUSH (296): broadcast the kernel bootlog ring over UDP NOW.
@@ -139,7 +139,7 @@ pub extern "C" fn rae_diag_netlog_flush() {
     // listener is last-write-wins by sequence number, so passes fill holes.
     for _ in 0..3 {
         netlog_flush();
-        raeen_linuxkpi::msleep(5);
+        ath_linuxkpi::msleep(5);
     }
 }
 
@@ -170,14 +170,14 @@ pub extern "C" fn rae_dbg_ptrs(a: u64, b: u64, c: u64) {
 /// Phoenix1 / Radeon 760M (Athena) firmware set — the signed blobs the PSP/SMU
 /// and command processors need. On Athena these are dropped into the initramfs
 /// `firmware/amdgpu/` tree; the kernel serves them via request_firmware (142).
-/// The canonical list lives in `raeen_amdgpu::bringup::FW_PHOENIX` so the
+/// The canonical list lives in `ath_amdgpu::bringup::FW_PHOENIX` so the
 /// preflight and the stage code can never drift apart.
-const AMDGPU_FW_PHOENIX: &[&str] = raeen_amdgpu::bringup::FW_PHOENIX;
+const AMDGPU_FW_PHOENIX: &[&str] = ath_amdgpu::bringup::FW_PHOENIX;
 
 /// Load one firmware blob through the LinuxKPI host (`request_firmware` → 142).
 /// Returns true if present and mapped.
 fn load_fw(name: &str) -> bool {
-    match raeen_linuxkpi::request_firmware_blob(name) {
+    match ath_linuxkpi::request_firmware_blob(name) {
         Some((_, sz)) if sz > 0 => {
             klog(&alloc::format!(
                 "[amdgpu] firmware '{}' loaded ({} bytes)",
@@ -201,7 +201,7 @@ fn load_fw(name: &str) -> bool {
 /// Sentinels: 9050 start, 9050+present_count.
 fn firmware_preflight() {
     unsafe { sys_print(9050) };
-    let loader_ok = load_fw("raeen-selftest.bin");
+    let loader_ok = load_fw("athena-selftest.bin");
     let mut present = 0u32;
     for (index, name) in AMDGPU_FW_PHOENIX.iter().enumerate() {
         // Every preflight request is a synchronous netlog fence. The real C
@@ -231,13 +231,13 @@ fn firmware_preflight() {
 }
 
 /// LinuxKPI-backed [`GpuOps`] — the platform operations `amdgpu_device_init`
-/// needs, routed to the real `raeen_linuxkpi` shim (PCI claim, ioremap, MMIO,
-/// IOMMU-sandboxed DMA, request_firmware) + `raeen_drm::kms` for the modeset
-/// commit. The bring-up STAGE SEQUENCE lives in `raeen_amdgpu::bringup` and is
+/// needs, routed to the real `ath_linuxkpi` shim (PCI claim, ioremap, MMIO,
+/// IOMMU-sandboxed DMA, request_firmware) + `ath_drm::kms` for the modeset
+/// commit. The bring-up STAGE SEQUENCE lives in `ath_amdgpu::bringup` and is
 /// generic over this trait, so the identical code path is replayed against a
 /// mock register file by `tools/linuxkpi_harness` (host, no QEMU/iron).
 ///
-/// [`GpuOps`]: raeen_amdgpu::bringup::GpuOps
+/// [`GpuOps`]: ath_amdgpu::bringup::GpuOps
 struct LkpiGpuOps {
     /// Most-recently-claimed LinuxKPI device handle (for the supervisor).
     handle: u64,
@@ -250,9 +250,9 @@ struct LkpiGpuOps {
     doorbell_mmio: *mut u8,
     /// IP-discovery blocks parsed from the GPU's discovery table (top-of-VRAM).
     /// `None` until `read_discovery` succeeds — then the offset methods resolve
-    /// authoritative SOC15 register offsets via `raeen_amdgpu::regs`, instead of
+    /// authoritative SOC15 register offsets via `ath_amdgpu::regs`, instead of
     /// staying gated. None on QEMU / if the read fails → bring-up falls back.
-    discovery_blocks: Option<alloc::vec::Vec<raeen_amdgpu::discovery::IpBlock>>,
+    discovery_blocks: Option<alloc::vec::Vec<ath_amdgpu::discovery::IpBlock>>,
     /// PSP TOC blob staged in VRAM: `(GPU MC addr, byte size)`, set lazily by
     /// `psp_toc_blob` (load `psp_13_0_4_toc.bin` → MM_INDEX-write into VRAM). Cached so
     /// the firmware-load handshake stages it once.
@@ -275,12 +275,12 @@ impl LkpiGpuOps {
     /// MM_INDEX_HI=0x18. `self.mmio` must already point at BAR5.
     unsafe fn mm_read_dw(&self, p: u64, hi: &mut u32) -> u32 {
         let p_hi = (p >> 31) as u32;
-        raeen_linuxkpi::pci::writel((p as u32) | 0x8000_0000, self.mmio.add(0x0) as *mut u32);
+        ath_linuxkpi::pci::writel((p as u32) | 0x8000_0000, self.mmio.add(0x0) as *mut u32);
         if p_hi != *hi {
-            raeen_linuxkpi::pci::writel(p_hi, self.mmio.add(0x18) as *mut u32);
+            ath_linuxkpi::pci::writel(p_hi, self.mmio.add(0x18) as *mut u32);
             *hi = p_hi;
         }
-        raeen_linuxkpi::pci::readl(self.mmio.add(0x4) as *const u32)
+        ath_linuxkpi::pci::readl(self.mmio.add(0x4) as *const u32)
     }
 
     /// Write one VRAM dword via the MM_INDEX/MM_DATA indirect aperture (the write
@@ -288,12 +288,12 @@ impl LkpiGpuOps {
     /// PSP command buffer / ring frames / firmware into VRAM without a BAR0 mapping.
     unsafe fn mm_write_dw(&self, p: u64, val: u32, hi: &mut u32) {
         let p_hi = (p >> 31) as u32;
-        raeen_linuxkpi::pci::writel((p as u32) | 0x8000_0000, self.mmio.add(0x0) as *mut u32);
+        ath_linuxkpi::pci::writel((p as u32) | 0x8000_0000, self.mmio.add(0x0) as *mut u32);
         if p_hi != *hi {
-            raeen_linuxkpi::pci::writel(p_hi, self.mmio.add(0x18) as *mut u32);
+            ath_linuxkpi::pci::writel(p_hi, self.mmio.add(0x18) as *mut u32);
             *hi = p_hi;
         }
-        raeen_linuxkpi::pci::writel(val, self.mmio.add(0x4) as *mut u32);
+        ath_linuxkpi::pci::writel(val, self.mmio.add(0x4) as *mut u32);
     }
 
     /// Build the ordered gfx firmware list for the PSP `LOAD_IP_FW` sequence, in the
@@ -311,8 +311,8 @@ impl LkpiGpuOps {
     /// a blob that fails to load/parse is skipped (the per-blob LOAD_IP_FW result localizes
     /// any PSP rejection on iron).
     fn build_gfx_fw_blobs(&mut self) -> alloc::vec::Vec<(u32, alloc::vec::Vec<u8>)> {
-        use raeen_amdgpu::bringup as bu;
-        use raeen_amdgpu::bringup::GpuOps as _; // bring request_firmware_bytes into scope
+        use ath_amdgpu::bringup as bu;
+        use ath_amdgpu::bringup::GpuOps as _; // bring request_firmware_bytes into scope
         let mut out: alloc::vec::Vec<(u32, alloc::vec::Vec<u8>)> = alloc::vec::Vec::new();
 
         // 1. SDMA (SDMA_UCODE_TH0=71 / TH1=72) — amdgpu loads these FIRST (iron mmiotrace
@@ -320,7 +320,7 @@ impl LkpiGpuOps {
         // slices ctx_jt_offset/ctl_jt_offset = 17408/16896 (host-KAT'd vs sdma_firmware_header_v2_0),
         // matching the trace. SDMA command execution is INDEPENDENT of the gfx/MES KIQ path.
         if let Some(b) = self.request_firmware_bytes("amdgpu/sdma_6_0_1.bin") {
-            if let Some((th0, th1)) = raeen_amdgpu::rlc_autoload::extract_sdma_threads(&b) {
+            if let Some((th0, th1)) = ath_amdgpu::rlc_autoload::extract_sdma_threads(&b) {
                 out.push((bu::GFX_FW_TYPE_SDMA_UCODE_TH0, th0.to_vec()));
                 out.push((bu::GFX_FW_TYPE_SDMA_UCODE_TH1, th1.to_vec()));
             }
@@ -333,7 +333,7 @@ impl LkpiGpuOps {
             ("amdgpu/gc_11_0_1_mec.bin", bu::GFX_FW_TYPE_CP_MEC),
         ] {
             if let Some(b) = self.request_firmware_bytes(name) {
-                if let Some(uc) = raeen_amdgpu::rlc_autoload::extract_common_ucode(&b) {
+                if let Some(uc) = ath_amdgpu::rlc_autoload::extract_common_ucode(&b) {
                     out.push((ty, uc.to_vec()));
                 }
             }
@@ -356,7 +356,7 @@ impl LkpiGpuOps {
             ),
         ] {
             if let Some(b) = self.request_firmware_bytes(name) {
-                if let Some((ucode, data)) = raeen_amdgpu::rlc_autoload::extract_mes_ucode_data(&b)
+                if let Some((ucode, data)) = ath_amdgpu::rlc_autoload::extract_mes_ucode_data(&b)
                 {
                     out.push((ucode_ty, ucode.to_vec()));
                     out.push((data_ty, data.to_vec()));
@@ -368,7 +368,7 @@ impl LkpiGpuOps {
         // it here (AFTER the engines), not first: LOAD_IP_FW only copies the blob into its
         // region; the power-up runs at AUTOLOAD_RLC time.
         if let Some(imu) = self.request_firmware_bytes("amdgpu/gc_11_0_1_imu.bin") {
-            if let Some(l) = raeen_amdgpu::imu::parse_imu_ucode_layout(&imu) {
+            if let Some(l) = ath_amdgpu::imu::parse_imu_ucode_layout(&imu) {
                 if let Some(s) = imu.get(l.iram_offset..l.iram_offset + l.iram_size) {
                     out.push((bu::GFX_FW_TYPE_IMU_I, s.to_vec()));
                 }
@@ -386,21 +386,21 @@ impl LkpiGpuOps {
         // needed for the autoload to complete (BOOTLOAD_STATUS stayed 0 without them).
         let rlc_blob = self.request_firmware_bytes("amdgpu/gc_11_0_1_rlc.bin");
         if let Some(rlc) = rlc_blob.as_deref() {
-            if let Some(gpm) = raeen_amdgpu::rlc_autoload::extract_rlc_gpm(rlc) {
+            if let Some(gpm) = ath_amdgpu::rlc_autoload::extract_rlc_gpm(rlc) {
                 out.push((bu::GFX_FW_TYPE_RLC_RESTORE_LIST_GPM_MEM, gpm.to_vec()));
             }
-            if let Some(srm) = raeen_amdgpu::rlc_autoload::extract_rlc_srm(rlc) {
+            if let Some(srm) = ath_amdgpu::rlc_autoload::extract_rlc_srm(rlc) {
                 out.push((bu::GFX_FW_TYPE_RLC_RESTORE_LIST_SRM_MEM, srm.to_vec()));
             }
-            if let Some((iram, dram)) = raeen_amdgpu::rlc_autoload::extract_rlc_rlx6(rlc) {
+            if let Some((iram, dram)) = ath_amdgpu::rlc_autoload::extract_rlc_rlx6(rlc) {
                 out.push((bu::GFX_FW_TYPE_RLC_IRAM, iram.to_vec()));
                 out.push((bu::GFX_FW_TYPE_RLC_DRAM_BOOT, dram.to_vec()));
             }
-            if let Some(rlcp) = raeen_amdgpu::rlc_autoload::extract_rlcp(rlc) {
+            if let Some(rlcp) = ath_amdgpu::rlc_autoload::extract_rlcp(rlc) {
                 out.push((bu::GFX_FW_TYPE_RLC_P, rlcp.to_vec()));
             }
             // RLC_G LAST — the PSP starts the RLC autoload right after it loads.
-            if let Some(uc) = raeen_amdgpu::rlc_autoload::extract_common_ucode(rlc) {
+            if let Some(uc) = ath_amdgpu::rlc_autoload::extract_common_ucode(rlc) {
                 out.push((bu::GFX_FW_TYPE_RLC_G, uc.to_vec()));
             }
         }
@@ -428,7 +428,7 @@ impl LkpiGpuOps {
         checkpoint(
             "[amdgpu] DISC 1: read_discovery entered — requesting ip_discovery.bin (raw ptr/sz)",
         );
-        if let Some((ptr, sz)) = raeen_linuxkpi::request_firmware_blob("amdgpu/ip_discovery.bin") {
+        if let Some((ptr, sz)) = ath_linuxkpi::request_firmware_blob("amdgpu/ip_discovery.bin") {
             checkpoint(&alloc::format!(
                 "[amdgpu] DISC 2: syscall returned ptr={:#x} sz={} — about to read first dword (UC test)",
                 ptr as u64,
@@ -441,7 +441,7 @@ impl LkpiGpuOps {
                 checkpoint(&alloc::format!(
                     "[amdgpu] DISC 3: first dword = {:#010x} (want {:#010x}) — copying full {} bytes",
                     first4,
-                    raeen_amdgpu::discovery::BINARY_SIGNATURE,
+                    ath_amdgpu::discovery::BINARY_SIGNATURE,
                     sz
                 ));
                 let blob = unsafe { core::slice::from_raw_parts(ptr, sz) }.to_vec();
@@ -449,7 +449,7 @@ impl LkpiGpuOps {
                     "[amdgpu] DISC 4: full blob copied ({} bytes) — parsing",
                     blob.len()
                 ));
-                match raeen_amdgpu::discovery::parse_checked(&blob) {
+                match ath_amdgpu::discovery::parse_checked(&blob) {
                     Some(blocks) => {
                         checkpoint(&alloc::format!(
                             "[amdgpu] DISC 5: parsed {} IP blocks — SOC15 offsets ACTIVE",
@@ -473,9 +473,9 @@ impl LkpiGpuOps {
         const RCC_CONFIG_MEMSIZE: usize = 0xde3 << 2; // 0x378c
         const TMR_OFFSET: u64 = 64 * 1024;
         const BLOB_MAX: usize = 16 * 1024;
-        let sig = raeen_amdgpu::discovery::BINARY_SIGNATURE;
+        let sig = ath_amdgpu::discovery::BINARY_SIGNATURE;
         if self.mmio.is_null() {
-            self.mmio = raeen_linuxkpi::pci::ioremap(handle, 5);
+            self.mmio = ath_linuxkpi::pci::ioremap(handle, 5);
         }
         if self.mmio.is_null() {
             klog("[amdgpu] discovery: BAR5 map failed — gated");
@@ -484,7 +484,7 @@ impl LkpiGpuOps {
         klog("[amdgpu] discovery[1/5]: BAR5 mapped (stage-1 point) — reading CONFIG_MEMSIZE");
         // (1) plain BAR5 register read — VRAM size.
         let memsize_mb =
-            unsafe { raeen_linuxkpi::pci::readl(self.mmio.add(RCC_CONFIG_MEMSIZE) as *const u32) };
+            unsafe { ath_linuxkpi::pci::readl(self.mmio.add(RCC_CONFIG_MEMSIZE) as *const u32) };
         klog(&alloc::format!(
             "[amdgpu] discovery[2/5]: CONFIG_MEMSIZE raw={:#010x} ({} MiB)",
             memsize_mb,
@@ -492,8 +492,8 @@ impl LkpiGpuOps {
         ));
         // (2) sample known registers — cross-check BAR5 IS the register aperture
         // (CP_WPTR[0x3048] should read the GOP-programmed ~0x03ffa208 the reg-probe saw).
-        let grbm = unsafe { raeen_linuxkpi::pci::readl(self.mmio.add(0x8010) as *const u32) };
-        let wptr = unsafe { raeen_linuxkpi::pci::readl(self.mmio.add(0x3048) as *const u32) };
+        let grbm = unsafe { ath_linuxkpi::pci::readl(self.mmio.add(0x8010) as *const u32) };
+        let wptr = unsafe { ath_linuxkpi::pci::readl(self.mmio.add(0x3048) as *const u32) };
         klog(&alloc::format!(
             "[amdgpu] discovery[3/5]: sample GRBM[0x8010]={:#010x} CP_WPTR[0x3048]={:#010x}",
             grbm,
@@ -511,7 +511,7 @@ impl LkpiGpuOps {
         // the daemon (yields the CPU), so the 7s/14s flushes fire during it.
         // Then even if [4/5] wedges, the safe diagnostics are already on disk.
         klog("[amdgpu] discovery: sleeping 16s so the late-flush persists [1-3/5] before the risky read");
-        raeen_linuxkpi::msleep(16000);
+        ath_linuxkpi::msleep(16000);
         // (3) the RISKY step LAST: one MM_INDEX/MM_DATA round-trip. If the [4/5]
         // line below is the last one in the log, this indirect read wedged.
         let pos_base = vram_size - TMR_OFFSET;
@@ -539,7 +539,7 @@ impl LkpiGpuOps {
                 *dst.add(i) = self.mm_read_dw(pos_base + (i as u64) * 4, &mut hi);
             }
         }
-        let blocks = raeen_amdgpu::discovery::parse(&blob);
+        let blocks = ath_amdgpu::discovery::parse(&blob);
         klog(&alloc::format!(
             "[amdgpu] discovery: parsed {} IP blocks — SOC15 offsets {}",
             blocks.len(),
@@ -559,8 +559,8 @@ impl LkpiGpuOps {
     /// mid-bring-up triggers a clean restart.
     fn claimed(&mut self, h: u64) -> Option<u64> {
         self.handle = h;
-        let _ = raeen_linuxkpi::lkpi_supervisor_register(h);
-        raeen_linuxkpi::lkpi_supervisor_heartbeat(h);
+        let _ = ath_linuxkpi::lkpi_supervisor_register(h);
+        ath_linuxkpi::lkpi_supervisor_heartbeat(h);
         // NOTE: do NOT touch BAR5 here. claimed() runs mid-pci_enable, and a
         // BAR5 access this early wedged the daemon on 06-16T1719/1739/1745
         // (no userspace output at all). Discovery is read in map_register_bar
@@ -569,9 +569,9 @@ impl LkpiGpuOps {
     }
 }
 
-impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
+impl ath_amdgpu::bringup::GpuOps for LkpiGpuOps {
     fn pci_enable(&mut self, bus: u8, dev: u8, func: u8) -> Option<u64> {
-        let h = raeen_linuxkpi::pci::pci_enable(bus, dev, func);
+        let h = ath_linuxkpi::pci::pci_enable(bus, dev, func);
         if h >= 0xFFFF_FFFF_FFFF_F000 {
             return None;
         }
@@ -579,17 +579,17 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
     }
 
     fn pci_enable_match(&mut self, class: u8, vendor: u16) -> Option<u64> {
-        let h = raeen_linuxkpi::pci_enable_match(class, vendor)?;
+        let h = ath_linuxkpi::pci_enable_match(class, vendor)?;
         self.claimed(h)
     }
 
     fn config_read_dword(&mut self, handle: u64, offset: u16) -> u32 {
-        raeen_linuxkpi::pci::read_config_dword(handle, offset)
+        ath_linuxkpi::pci::read_config_dword(handle, offset)
     }
 
     fn map_register_bar(&mut self, handle: u64, bar: u8) -> bool {
         // amdgpu maps BAR5 for the MMIO register aperture (BAR0 is VRAM).
-        let p = raeen_linuxkpi::pci::ioremap(handle, bar);
+        let p = ath_linuxkpi::pci::ioremap(handle, bar);
         if p.is_null() {
             return false;
         }
@@ -603,7 +603,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
             // Map the doorbell BAR (BAR2) too — separate from the register BAR5 —
             // so ring_doorbell can wake the SDMA/CP engines via a 64-bit write.
             // Null on failure → ring_doorbell becomes a safe no-op.
-            self.doorbell_mmio = raeen_linuxkpi::pci::ioremap(handle, 2);
+            self.doorbell_mmio = ath_linuxkpi::pci::ioremap(handle, 2);
             klog(if self.doorbell_mmio.is_null() {
                 "[amdgpu] doorbell BAR (BAR2) map FAILED — doorbell rings will no-op"
             } else {
@@ -619,7 +619,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
             return 0;
         }
         let addr = unsafe { self.mmio.add(off as usize) } as *const u32;
-        raeen_linuxkpi::pci::readl(addr)
+        ath_linuxkpi::pci::readl(addr)
     }
 
     fn reg_write(&mut self, off: u32, val: u32) {
@@ -627,7 +627,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
             return;
         }
         let addr = unsafe { self.mmio.add(off as usize) } as *mut u32;
-        raeen_linuxkpi::pci::writel(val, addr);
+        ath_linuxkpi::pci::writel(val, addr);
     }
 
     fn ring_doorbell(&mut self, byte_offset: u32, value: u64) {
@@ -637,20 +637,20 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
             return;
         }
         let addr = unsafe { self.doorbell_mmio.add(byte_offset as usize) } as *mut u64;
-        raeen_linuxkpi::pci::writeq(value, addr);
+        ath_linuxkpi::pci::writeq(value, addr);
     }
 
     fn delay_us(&mut self, usec: u32) {
-        // raeen_linuxkpi only exposes ms-granular msleep; round up so a sub-ms
+        // ath_linuxkpi only exposes ms-granular msleep; round up so a sub-ms
         // request still yields ~1ms. Fine for the SMU ~1s poll budget, and msleep
         // YIELDS CPU 0 (to the bootlog-flush thread) instead of busy-spinning it.
-        raeen_linuxkpi::msleep(((usec + 999) / 1000).max(1));
+        ath_linuxkpi::msleep(((usec + 999) / 1000).max(1));
     }
 
     fn read_vbios_rom(&mut self, handle: u64, max_len: usize) -> Option<alloc::vec::Vec<u8>> {
         // VBIOS lives in the PCI expansion ROM (BAR6). On QEMU there is no ROM so
         // the map fails (None) and bring-up treats absent VBIOS as non-fatal.
-        let rom_ptr = raeen_linuxkpi::pci::ioremap(handle, 6);
+        let rom_ptr = ath_linuxkpi::pci::ioremap(handle, 6);
         if rom_ptr.is_null() {
             return None;
         }
@@ -658,21 +658,21 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         Some(slice.to_vec())
     }
 
-    fn dma_alloc(&mut self, handle: u64, size: usize) -> Option<raeen_amdgpu::bringup::DmaBuf> {
-        let a = raeen_linuxkpi::dma::dma_alloc_coherent(handle, size);
+    fn dma_alloc(&mut self, handle: u64, size: usize) -> Option<ath_amdgpu::bringup::DmaBuf> {
+        let a = ath_linuxkpi::dma::dma_alloc_coherent(handle, size);
         if a.is_null() {
             return None;
         }
         // `dma_addr` is the bus address programmed into the ring registers; `id`
         // carries the CPU virtual address so `dma_write` can fill the buffer.
-        Some(raeen_amdgpu::bringup::DmaBuf {
+        Some(ath_amdgpu::bringup::DmaBuf {
             dma_addr: a.dma_addr,
             size: a.size,
             id: a.cpu_addr as u64,
         })
     }
 
-    fn dma_write(&mut self, buf: &raeen_amdgpu::bringup::DmaBuf, offset_dw: usize, data: &[u32]) {
+    fn dma_write(&mut self, buf: &ath_amdgpu::bringup::DmaBuf, offset_dw: usize, data: &[u32]) {
         if buf.id == 0 {
             return;
         }
@@ -684,7 +684,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
 
     fn dma_write_bytes(
         &mut self,
-        buf: &raeen_amdgpu::bringup::DmaBuf,
+        buf: &ath_amdgpu::bringup::DmaBuf,
         byte_offset: usize,
         data: &[u8],
     ) {
@@ -698,7 +698,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         unsafe { core::ptr::copy_nonoverlapping(data.as_ptr(), dst, n) };
     }
 
-    fn dma_read(&mut self, buf: &raeen_amdgpu::bringup::DmaBuf, offset_dw: usize, out: &mut [u32]) {
+    fn dma_read(&mut self, buf: &ath_amdgpu::bringup::DmaBuf, offset_dw: usize, out: &mut [u32]) {
         // Symmetric with `dma_write`: `buf.id` is the CPU virtual address of the
         // coherent DMA buffer, so the daemon reads back exactly what the GPU
         // posted to memory (e.g. a RELEASE_MEM fence or a WPTR writeback).
@@ -717,7 +717,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
     }
 
     fn request_firmware_bytes(&mut self, name: &str) -> Option<alloc::vec::Vec<u8>> {
-        let (ptr, sz) = raeen_linuxkpi::request_firmware_blob(name)?;
+        let (ptr, sz) = ath_linuxkpi::request_firmware_blob(name)?;
         if ptr.is_null() || sz == 0 {
             return None;
         }
@@ -727,7 +727,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         Some(slice.to_vec())
     }
 
-    // ── Register offsets — resolved from IP discovery (raeen_amdgpu::regs) ───────
+    // ── Register offsets — resolved from IP discovery (ath_amdgpu::regs) ───────
     // Once `read_discovery` parsed the table, every offset is the authoritative
     // SOC15 value `(ip_base(HWID,seg) + reg) << 2`. Until then (QEMU / read
     // failed) `discovery_blocks` is None and these return None, so the bring-up
@@ -736,18 +736,18 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
     fn config_memsize_mb(&mut self) -> Option<u32> {
         // nbio get_memsize: read RCC_DEV0_EPF0_RCC_CONFIG_MEMSIZE (the value IS
         // the UMA carve-out in MB) at its discovery-resolved SOC15 offset.
-        let reg = raeen_amdgpu::regs::config_memsize_reg(self.discovery_blocks.as_ref()?)?;
+        let reg = ath_amdgpu::regs::config_memsize_reg(self.discovery_blocks.as_ref()?)?;
         Some(self.reg_read(reg))
     }
 
-    fn smu_mailbox(&mut self) -> Option<raeen_amdgpu::bringup::SmuMailbox> {
-        raeen_amdgpu::regs::smu_mailbox(self.discovery_blocks.as_ref()?)
+    fn smu_mailbox(&mut self) -> Option<ath_amdgpu::bringup::SmuMailbox> {
+        ath_amdgpu::regs::smu_mailbox(self.discovery_blocks.as_ref()?)
     }
 
-    fn psp_regs(&mut self) -> Option<raeen_amdgpu::bringup::PspRegs> {
+    fn psp_regs(&mut self) -> Option<ath_amdgpu::bringup::PspRegs> {
         // PSP (MP0) mailbox + ring offsets — the firmware-load channel that
         // cold-starts GFX on this PSP-load APU. Discovery-gated (QEMU never pokes).
-        raeen_amdgpu::regs::psp_regs(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::psp_regs(self.discovery_blocks.as_ref()?)
     }
 
     fn vram_mc_base(&mut self) -> Option<u64> {
@@ -783,7 +783,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         // size = ucode_size[20]. Staging the raw blob (incl. header) made the PSP
         // reject LOAD_TOC with status 0x11 (boot 175656). extract_common_ucode pulls
         // exactly [off@24 .. off+size@20].
-        let ucode = raeen_amdgpu::rlc_autoload::extract_common_ucode(&bytes)?;
+        let ucode = ath_amdgpu::rlc_autoload::extract_common_ucode(&bytes)?;
         let mut dwords = alloc::vec::Vec::with_capacity(ucode.len().div_ceil(4));
         for chunk in ucode.chunks(4) {
             let mut d = [0u8; 4];
@@ -819,32 +819,32 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         }
     }
 
-    fn ih_ring(&mut self) -> Option<raeen_amdgpu::bringup::IhRing> {
-        raeen_amdgpu::regs::ih_ring(self.discovery_blocks.as_ref()?)
+    fn ih_ring(&mut self) -> Option<ath_amdgpu::bringup::IhRing> {
+        ath_amdgpu::regs::ih_ring(self.discovery_blocks.as_ref()?)
     }
 
-    fn rlc_safe_mode(&mut self) -> Option<raeen_amdgpu::bringup::RlcSafeMode> {
-        raeen_amdgpu::regs::rlc_safe_mode(self.discovery_blocks.as_ref()?)
+    fn rlc_safe_mode(&mut self) -> Option<ath_amdgpu::bringup::RlcSafeMode> {
+        ath_amdgpu::regs::rlc_safe_mode(self.discovery_blocks.as_ref()?)
     }
 
-    fn dcn_scanout_regs(&mut self) -> Option<raeen_amdgpu::regs::DcnScanout> {
+    fn dcn_scanout_regs(&mut self) -> Option<ath_amdgpu::regs::DcnScanout> {
         // DMU-block (HWID 271, seg 2) HUBP0/OTG0 offsets — discovery-gated so QEMU (no
         // DMU block) never reads a fabricated offset. The DCN is firmware-lit, so these
         // resolve + read live on a warm boot.
-        raeen_amdgpu::regs::dcn_scanout(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::dcn_scanout(self.discovery_blocks.as_ref()?)
     }
 
     fn gfx_off_disable_msg(&mut self) -> Option<u32> {
         // Phoenix-APU SMU 13.0.4 message id (only once discovery confirms we are
         // on the real GPU, so QEMU never sends it).
         self.discovery_blocks.as_ref()?;
-        Some(raeen_amdgpu::regs::PPSMC_MSG_DISALLOW_GFXOFF)
+        Some(ath_amdgpu::regs::PPSMC_MSG_DISALLOW_GFXOFF)
     }
 
     fn enable_gfx_imu_msg(&mut self) -> Option<u32> {
         // PPSMC_MSG_EnableGfxImu (0x16) — powers up GFX via the IMU. Discovery-gated.
         self.discovery_blocks.as_ref()?;
-        Some(raeen_amdgpu::regs::PPSMC_MSG_ENABLE_GFX_IMU)
+        Some(ath_amdgpu::regs::PPSMC_MSG_ENABLE_GFX_IMU)
     }
 
     fn gfx_device_driver_reset_msg(&mut self) -> Option<u32> {
@@ -852,11 +852,11 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         // runs on a dirty (warm) load. Discovery-gated so QEMU never sends it; only
         // fired on the GFX-DOWN branch, so a cold boot never sends it either.
         self.discovery_blocks.as_ref()?;
-        Some(raeen_amdgpu::regs::PPSMC_MSG_GFX_DEVICE_DRIVER_RESET)
+        Some(ath_amdgpu::regs::PPSMC_MSG_GFX_DEVICE_DRIVER_RESET)
     }
 
-    fn gfx_regs(&mut self) -> Option<raeen_amdgpu::bringup::GfxRegs> {
-        raeen_amdgpu::regs::gfx_regs(self.discovery_blocks.as_ref()?)
+    fn gfx_regs(&mut self) -> Option<ath_amdgpu::bringup::GfxRegs> {
+        ath_amdgpu::regs::gfx_regs(self.discovery_blocks.as_ref()?)
     }
 
     fn cp_me_cntl_halt_mask(&mut self) -> Option<u32> {
@@ -865,54 +865,54 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         // every offset method) so the CP unhalt only ever fires once the SOC15
         // CP_ME_CNTL offset is resolved — never a guessed write to the live CP.
         self.discovery_blocks.as_ref()?;
-        Some(raeen_amdgpu::gc11::CP_ME_CNTL_GFX11_HALT_MASK)
+        Some(ath_amdgpu::gc11::CP_ME_CNTL_GFX11_HALT_MASK)
     }
 
-    fn sdma_regs(&mut self) -> Option<raeen_amdgpu::bringup::SdmaRegs> {
+    fn sdma_regs(&mut self) -> Option<ath_amdgpu::bringup::SdmaRegs> {
         // SDMA0 QUEUE0 ring offsets, discovery-resolved (SDMA regs are in the GC
         // block on gfx11). Gated on discovery → stage 6 only programs/submits the
         // SDMA ring once the offsets are authoritative; never a guessed write.
-        raeen_amdgpu::regs::sdma_regs(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::sdma_regs(self.discovery_blocks.as_ref()?)
     }
 
-    fn cp_gfx_ring_regs(&mut self) -> Option<raeen_amdgpu::bringup::CpGfxRingRegs> {
+    fn cp_gfx_ring_regs(&mut self) -> Option<ath_amdgpu::bringup::CpGfxRingRegs> {
         // CP gfx-ring completion regs (CP_RB_ACTIVE + writeback addrs), discovery-
         // resolved. Gated → stage 6 fully programs + ACTIVATES the ring only with
         // authoritative offsets; never a guessed write to the live CP.
-        raeen_amdgpu::regs::cp_gfx_ring_regs(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::cp_gfx_ring_regs(self.discovery_blocks.as_ref()?)
     }
 
-    fn rs64_cp_regs(&mut self) -> Option<raeen_amdgpu::bringup::Rs64CpRegs> {
+    fn rs64_cp_regs(&mut self) -> Option<ath_amdgpu::bringup::Rs64CpRegs> {
         // RS64 CP startup register offsets, discovery-resolved (gfx11 config_gfx_rs64).
-        raeen_amdgpu::regs::rs64_cp_regs(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::rs64_cp_regs(self.discovery_blocks.as_ref()?)
     }
 
-    fn gmc_vm_regs(&mut self) -> Option<raeen_amdgpu::bringup::GmcVmRegs> {
+    fn gmc_vm_regs(&mut self) -> Option<ath_amdgpu::bringup::GmcVmRegs> {
         // gfxhub GPUVM state regs (read-only), discovery-resolved — the GART-
         // inheritance diagnostic dumps the firmware's VM config from these.
-        raeen_amdgpu::regs::gmc_vm_regs(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::gmc_vm_regs(self.discovery_blocks.as_ref()?)
     }
 
-    fn mes_enable_regs(&mut self) -> Option<raeen_amdgpu::mes::MesEnableRegs> {
+    fn mes_enable_regs(&mut self) -> Option<ath_amdgpu::mes::MesEnableRegs> {
         // MES engine-enable regs, discovery-resolved (mes_v11_0_enable / rung 1).
-        raeen_amdgpu::regs::mes_enable_regs(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::mes_enable_regs(self.discovery_blocks.as_ref()?)
     }
 
     fn mes_uc_starts(&mut self) -> Option<(u64, Option<u64>)> {
         // The MES microengine entry points from the autoloaded MES firmware headers:
         // mes_2.bin = scheduler (pipe 0, required), mes1.bin = KIQ (pipe 1, optional).
-        let p0 = raeen_amdgpu::mes::parse_mes_uc_start_addr(
+        let p0 = ath_amdgpu::mes::parse_mes_uc_start_addr(
             &self.request_firmware_bytes("amdgpu/gc_11_0_1_mes_2.bin")?,
         )?;
         let p1 = self
             .request_firmware_bytes("amdgpu/gc_11_0_1_mes1.bin")
-            .and_then(|b| raeen_amdgpu::mes::parse_mes_uc_start_addr(&b));
+            .and_then(|b| ath_amdgpu::mes::parse_mes_uc_start_addr(&b));
         Some((p0, p1))
     }
 
-    fn mes_load_regs(&mut self) -> Option<raeen_amdgpu::mes::MesLoadRegs> {
+    fn mes_load_regs(&mut self) -> Option<ath_amdgpu::mes::MesLoadRegs> {
         // MES IC/MD-base regs, discovery-resolved (mes_v11_0_load_microcode).
-        raeen_amdgpu::regs::mes_load_regs(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::mes_load_regs(self.discovery_blocks.as_ref()?)
     }
 
     fn imu_fw_blob(&mut self) -> Option<alloc::vec::Vec<u8>> {
@@ -926,7 +926,7 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         // The MES scheduler (pipe 0) ucode + data, split out of mes_2.bin — AthenaOS
         // direct-loads them into GART-mapped buffers (the PSP copy isn't addressable).
         let blob = self.request_firmware_bytes("amdgpu/gc_11_0_1_mes_2.bin")?;
-        let (ucode, data) = raeen_amdgpu::rlc_autoload::extract_mes_ucode_data(&blob)?;
+        let (ucode, data) = ath_amdgpu::rlc_autoload::extract_mes_ucode_data(&blob)?;
         Some((ucode.to_vec(), data.to_vec()))
     }
 
@@ -934,31 +934,31 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         // The MES KIQ (pipe 1) ucode + data, split out of mes1.bin — direct-loaded into
         // pipe 1's IC so the KIQ microengine can run (and map the SCHED ring).
         let blob = self.request_firmware_bytes("amdgpu/gc_11_0_1_mes1.bin")?;
-        let (ucode, data) = raeen_amdgpu::rlc_autoload::extract_mes_ucode_data(&blob)?;
+        let (ucode, data) = ath_amdgpu::rlc_autoload::extract_mes_ucode_data(&blob)?;
         Some((ucode.to_vec(), data.to_vec()))
     }
 
-    fn mes_hqd_regs(&mut self) -> Option<raeen_amdgpu::mes::MesHqdRegs> {
+    fn mes_hqd_regs(&mut self) -> Option<ath_amdgpu::mes::MesHqdRegs> {
         // CP_HQD regs (queue_init_register), discovery-resolved.
-        raeen_amdgpu::regs::mes_hqd_regs(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::mes_hqd_regs(self.discovery_blocks.as_ref()?)
     }
 
     fn doorbell_aper_en_reg(&mut self) -> Option<u32> {
         // regRCC_DEV0_EPF0_RCC_DOORBELL_APER_EN (NBIO seg 2), discovery-resolved.
-        raeen_amdgpu::regs::rcc_doorbell_aper_en(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::rcc_doorbell_aper_en(self.discovery_blocks.as_ref()?)
     }
 
     fn cp_mec_doorbell_range_regs(&mut self) -> Option<(u32, u32)> {
         // regCP_MEC_DOORBELL_RANGE_LOWER/UPPER (GC seg0), discovery-resolved — the MES/KIQ
         // doorbell-wake range AthenaOS had been missing.
-        raeen_amdgpu::regs::cp_mec_doorbell_range(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::cp_mec_doorbell_range(self.discovery_blocks.as_ref()?)
     }
 
     fn mes_ip_bases(&mut self) -> Option<([u32; 8], [u32; 8], [u32; 8])> {
         // gc/mmhub/osssys IP register bases (8 segments) for set_hw_resources, from
         // IP discovery (reg_offset[HWIP][0][seg]). HWIDs from soc15_hw_ip.h.
-        use raeen_amdgpu::discovery::ip_base;
-        use raeen_amdgpu::regs::{GC_HWID, MMHUB_HWID, OSSSYS_HWID};
+        use ath_amdgpu::discovery::ip_base;
+        use ath_amdgpu::regs::{GC_HWID, MMHUB_HWID, OSSSYS_HWID};
         let blocks = self.discovery_blocks.as_ref()?;
         let mut gc = [0u32; 8];
         let mut mm = [0u32; 8];
@@ -992,13 +992,13 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         Some((gc, mm, oss))
     }
 
-    fn gfxhub_gart_regs(&mut self) -> Option<raeen_amdgpu::gart::GfxhubGartRegs> {
+    fn gfxhub_gart_regs(&mut self) -> Option<ath_amdgpu::gart::GfxhubGartRegs> {
         // gfxhub GART-build regs, discovery-resolved — init_gart builds + applies
         // GART (firmware left GFX GPUVM unconfigured, so we must build it).
-        raeen_amdgpu::regs::gfxhub_gart_regs(self.discovery_blocks.as_ref()?)
+        ath_amdgpu::regs::gfxhub_gart_regs(self.discovery_blocks.as_ref()?)
     }
 
-    fn rs64_ucode_starts(&mut self) -> Option<raeen_amdgpu::bringup::Rs64UcodeStarts> {
+    fn rs64_ucode_starts(&mut self) -> Option<ath_amdgpu::bringup::Rs64UcodeStarts> {
         // RS64 program-counter STARTs from the PFP/ME/MEC headers — BUT only if the
         // CP firmware is actually RS64. amdgpu picks RS64 vs F32 by the ucode header
         // version (gfx_v11_0.c: rs64_enable = amdgpu_ucode_hdr_version >= 2). The
@@ -1020,15 +1020,15 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
         klog("[amdgpu] CP firmware: pfp hdr v2 -> RS64 CP path (config_gfx_rs64 applies)");
         let me = self.request_firmware_bytes("amdgpu/gc_11_0_1_me.bin")?;
         let mec = self.request_firmware_bytes("amdgpu/gc_11_0_1_mec.bin")?;
-        Some(raeen_amdgpu::bringup::Rs64UcodeStarts {
-            pfp: raeen_amdgpu::bringup::parse_rs64_ucode_start(&pfp)?,
-            me: raeen_amdgpu::bringup::parse_rs64_ucode_start(&me)?,
-            mec: raeen_amdgpu::bringup::parse_rs64_ucode_start(&mec)?,
+        Some(ath_amdgpu::bringup::Rs64UcodeStarts {
+            pfp: ath_amdgpu::bringup::parse_rs64_ucode_start(&pfp)?,
+            me: ath_amdgpu::bringup::parse_rs64_ucode_start(&me)?,
+            mec: ath_amdgpu::bringup::parse_rs64_ucode_start(&mec)?,
         })
     }
 
     fn commit_scanout(&mut self, width: u32, height: u32, pitch: u32, gpu_addr: u64) -> bool {
-        // amdgpu_dm builds a drm_atomic_state and commits; raeen_drm forwards the
+        // amdgpu_dm builds a drm_atomic_state and commits; ath_drm forwards the
         // final mode + scanout buffer to the AthenaOS compositor.
         let mode = kms::DrmDisplayMode::new(width as u16, height as u16, 60);
         let fb = kms::DrmFramebuffer {
@@ -1076,11 +1076,11 @@ impl raeen_amdgpu::bringup::GpuOps for LkpiGpuOps {
 const CKPT_MS: u32 = 250;
 fn checkpoint(label: &str) {
     klog(label);
-    raeen_linuxkpi::msleep(CKPT_MS);
+    ath_linuxkpi::msleep(CKPT_MS);
 }
 
 // ── The REAL amdgpu init path (M5) ───────────────────────────────────────────
-// Instead of the Rust reimpl (raeen_amdgpu::bringup, which halts at 0x7654), call
+// Instead of the Rust reimpl (ath_amdgpu::bringup, which halts at 0x7654), call
 // the COMPLETE upstream amdgpu_device_init compiled+linked from the real driver
 // source. `rae_amdgpu_device_init` (linuxkpi-drm/bringup_entry.c) is linked in by
 // build.rs from the FREESTANDING amdgpu object set; enabled by the
@@ -1189,7 +1189,7 @@ unsafe fn drm_service_register(device_handle: u64) -> u64 {
 #[cfg(feature = "real_amdgpu_init")]
 #[inline(always)]
 unsafe fn drm_service_fetch(
-    header: &mut rae_abi::drm_service::RequestHeader,
+    header: &mut ath_abi::drm_service::RequestHeader,
     payload: &mut [u8],
 ) -> u64 {
     let result: u64;
@@ -1228,7 +1228,7 @@ unsafe fn drm_service_complete(request_id: u64, status: i32, payload: &[u8]) -> 
 #[cfg(feature = "real_amdgpu_init")]
 fn render_service_loop(device_handle: u64) -> ! {
     use alloc::collections::BTreeMap;
-    use rae_abi::drm_service as wire;
+    use ath_abi::drm_service as wire;
 
     let registered = unsafe { drm_service_register(device_handle) };
     if registered != 0 {
@@ -1248,14 +1248,14 @@ fn render_service_loop(device_handle: u64) -> ! {
         let mut header = wire::RequestHeader::default();
         let fetched = unsafe { drm_service_fetch(&mut header, &mut payload) };
         if fetched == 0 {
-            raeen_linuxkpi::msleep(1);
+            ath_linuxkpi::msleep(1);
             continue;
         }
         if fetched >= wire::ERR_BUSY {
             klog(&alloc::format!(
                 "[amdgpu] REAL-UAPI: broker fetch failed ({fetched:#x})"
             ));
-            raeen_linuxkpi::msleep(10);
+            ath_linuxkpi::msleep(10);
             continue;
         }
         let payload_len = (fetched - 1) as usize;
@@ -1476,7 +1476,7 @@ fn render_service_loop(device_handle: u64) -> ! {
 /// (write all-ones, read the mask, restore). `is64` handles a 64-bit BAR pair.
 #[cfg(feature = "real_amdgpu_init")]
 fn read_bar(handle: u64, off: u16, is64: bool) -> (u64, u64) {
-    use raeen_linuxkpi::pci::{read_config_dword as rd, write_config_dword as wr};
+    use ath_linuxkpi::pci::{read_config_dword as rd, write_config_dword as wr};
     let orig_lo = rd(handle, off);
     let lo = (orig_lo & !0xf) as u64;
     let orig_hi = if is64 { rd(handle, off + 4) } else { 0 };
@@ -1502,13 +1502,13 @@ fn read_bar(handle: u64, off: u16, is64: bool) -> (u64, u64) {
     (phys, size)
 }
 
-/// Wire raeen_linuxkpi's device access to the claimed GPU (device_map) and run the
+/// Wire ath_linuxkpi's device access to the claimed GPU (device_map) and run the
 /// real amdgpu_device_init. Reads the device id + BAR windows from PCI config.
 /// Returns 0 on success.
 #[cfg(feature = "real_amdgpu_init")]
 fn run_real_amdgpu_init(handle: u64) -> i32 {
-    use raeen_linuxkpi::device_map::{lkpi_register_bar, lkpi_set_current_device};
-    use raeen_linuxkpi::pci::{read_config_dword as rd, write_config_dword as wr};
+    use ath_linuxkpi::device_map::{lkpi_register_bar, lkpi_set_current_device};
+    use ath_linuxkpi::pci::{read_config_dword as rd, write_config_dword as wr};
     let device = (rd(handle, 0x00) >> 16) as u16; // config 0x00 = vendor | device<<16
     let revision = (rd(handle, 0x08) & 0xff) as u8; // config 0x08 low byte = revision
                                                     // PCI spec 6.2.5.1: memory/IO decoding MUST be disabled while sizing a BAR
@@ -1569,13 +1569,13 @@ fn run_real_amdgpu_init(handle: u64) -> i32 {
     // c4:00.0 recorded in VFCT, and this avoids re-entering the firmware loader
     // at the final C-entry boundary. Keep VFCT as a fallback for hosts whose
     // class-match claim cannot report a location.
-    let (bus, dev8, func) = raeen_linuxkpi::device_bdf(handle)
-        .or_else(raeen_linuxkpi::vfct_native_bdf)
+    let (bus, dev8, func) = ath_linuxkpi::device_bdf(handle)
+        .or_else(ath_linuxkpi::vfct_native_bdf)
         .unwrap_or((0, 0, 0));
     let devfn = (dev8 << 3) | (func & 0x7);
     // Keep the served-copy patch aligned to the same value (belt-and-suspenders:
     // if amdgpu DOES read our copy, it now also carries this BDF).
-    raeen_linuxkpi::drm_bringup::set_vfct_bdf(bus, dev8, func);
+    ath_linuxkpi::drm_bringup::set_vfct_bdf(bus, dev8, func);
     klog(&alloc::format!(
         "[amdgpu] VBIOS: pdev BDF set to claimed/native {:02x}:{:02x}.{} (devfn=0x{:x}) for amdgpu_acpi_vfct_bios match",
         bus, dev8, func, devfn
@@ -1612,7 +1612,7 @@ pub extern "C" fn _start() -> ! {
     // (logs/BOOTLOG.dump.txt) showed the bring-up hard-hangs CPU 0 on a register
     // write the moment discovery goes live — and since the late-flush also lives
     // on CPU 0, ALL bring-up output was lost (not even "starting" persisted past
-    // the proof-of-life sleep). So run the stages INDIVIDUALLY (raeen_amdgpu::
+    // the proof-of-life sleep). So run the stages INDIVIDUALLY (ath_amdgpu::
     // bringup exposes each as a pub fn) with a `checkpoint` (log + msleep-to-flush)
     // BEFORE each register-writing stage. The bootlog then ends at the exact stage
     // that stalls — telling us which write to fix. The probe is match-first (class
@@ -1637,10 +1637,10 @@ pub extern "C" fn _start() -> ! {
             9002,
             "[amdgpu] REAL-INIT: upstream-only PCI claim; entering amdgpu_device_init (C)",
         );
-        raeen_linuxkpi::device::set_netlog_fence(true);
+        ath_linuxkpi::device::set_netlog_fence(true);
         unsafe { sys_setpriority_self_normal() };
         let r = run_real_amdgpu_init(handle);
-        raeen_linuxkpi::device::set_netlog_fence(false);
+        ath_linuxkpi::device::set_netlog_fence(false);
         let mut accel_working = 0u32;
         let info_r = if r == 0 {
             unsafe { rae_amdgpu_info_accel_working(&mut accel_working) }
@@ -1683,7 +1683,7 @@ pub extern "C" fn _start() -> ! {
                 ),
             );
         }
-        raeen_linuxkpi::msleep(CKPT_MS);
+        ath_linuxkpi::msleep(CKPT_MS);
         unsafe { sys_print(9098) };
         if service_ready {
             // The upstream adev, its rings, VM manager, IRQ/fence state, and BO
@@ -1697,7 +1697,7 @@ pub extern "C" fn _start() -> ! {
     checkpoint(
         "[amdgpu] CKPT 0: staged bring-up start — firmware preflight persisted, probing next",
     );
-    let Some(mut dev) = raeen_amdgpu::bringup::probe(&mut ops, BDFS) else {
+    let Some(mut dev) = ath_amdgpu::bringup::probe(&mut ops, BDFS) else {
         klog("[amdgpu] no AMD GPU found — amdgpud exiting (expected on QEMU)");
         unsafe { sys_print(9099) };
         unsafe { sys_exit(0) };
@@ -1713,10 +1713,10 @@ pub extern "C" fn _start() -> ! {
             "[amdgpu] CKPT 1: probe OK but discovery GATED — offsets fall back (blob not loaded?)",
         );
     }
-    raeen_linuxkpi::msleep(CKPT_MS);
+    ath_linuxkpi::msleep(CKPT_MS);
 
     // M5: the REAL amdgpu_device_init path. When built with --features
-    // real_amdgpu_init, wire raeen_linuxkpi's device access to the claimed GPU and
+    // real_amdgpu_init, wire ath_linuxkpi's device access to the claimed GPU and
     // run the COMPLETE upstream init (the whole point — see if it clears the 0x7654
     // halt the Rust reimpl below cannot). The `if cfg!()` wrapper keeps the Rust
     // staged path below reachable-per-compiler (no unreachable warning) while the
@@ -1739,7 +1739,7 @@ pub extern "C" fn _start() -> ! {
             // log lines broadcast the ring (throttled 40ms) so the netlog trail ends
             // at the EXACT line before a CPU-0 hard hang (the run-1 lucky single
             // broadcast only proved capture ENDS at CLKA #2, not that it HANGS there).
-            raeen_linuxkpi::device::set_netlog_fence(true);
+            ath_linuxkpi::device::set_netlog_fence(true);
             // Demote to Normal BEFORE the long C call so the safe-progress
             // broadcaster + ~480s auto-return threads keep scheduling on CPU 0 —
             // the box then self-recovers + keeps capturing even if the C init
@@ -1755,35 +1755,35 @@ pub extern "C" fn _start() -> ! {
             } else {
                 flush_marker(9003, "[amdgpu] REAL-INIT: amdgpu_device_init returned nonzero (see the stage it stalled at)");
             }
-            raeen_linuxkpi::msleep(CKPT_MS);
+            ath_linuxkpi::msleep(CKPT_MS);
             unsafe { sys_print(9098) };
             unsafe { sys_exit(if r == 0 { 0 } else { 1 }) };
         }
     }
 
     // Reads first (low hang risk; BAR5 reads proven safe on a prior boot).
-    raeen_amdgpu::bringup::probe_registers(&mut ops);
-    raeen_amdgpu::bringup::read_vbios(&mut ops, &mut dev);
-    raeen_amdgpu::bringup::init_gmc(&mut ops, &mut dev);
+    ath_amdgpu::bringup::probe_registers(&mut ops);
+    ath_amdgpu::bringup::read_vbios(&mut ops, &mut dev);
+    ath_amdgpu::bringup::init_gmc(&mut ops, &mut dev);
     checkpoint("[amdgpu] CKPT 2: reg-probe + VBIOS + GMC survived (reads OK) — NEXT init_ih (FIRST MMIO WRITES)");
 
-    raeen_amdgpu::bringup::init_ih(&mut ops, &dev);
+    ath_amdgpu::bringup::init_ih(&mut ops, &dev);
     checkpoint("[amdgpu] CKPT 3: init_ih survived (IH ring writes OK) — NEXT init_smu (SMU mailbox writes)");
 
-    raeen_amdgpu::bringup::init_smu(&mut ops, &dev);
+    ath_amdgpu::bringup::init_smu(&mut ops, &dev);
     checkpoint("[amdgpu] CKPT 4: init_smu survived (SMU mailbox OK) — NEXT init_rings (RLC/CP/SDMA writes)");
 
     // PSP path increment 1 (read-only): is the PSP secure-OS reachable over its MP0
     // mailbox? On this PSP-load APU the PSP is the only thing that can cold-start GFX
     // (boot 041507), so prove the channel before building ring/TMR/LOAD_IP_FW on it.
-    raeen_amdgpu::bringup::psp_sign_of_life(&mut ops);
+    ath_amdgpu::bringup::psp_sign_of_life(&mut ops);
     checkpoint("[amdgpu] CKPT 4b: PSP sign-of-life probed (MP0 mailbox) — NEXT ring create");
 
     // PSP path increment 2: create the GPCOM command ring (psp_v13_0_ring_create) —
     // a 4 KiB ring in VRAM, the channel the firmware-load commands (LOAD_TOC /
     // SETUP_TMR / LOAD_IP_FW) submit into. Pure C2PMSG register writes; the sOS
     // initializes the ring. Register values are Athena-oracle-confirmed.
-    let _psp_ring = raeen_amdgpu::bringup::psp_ring_create(&mut ops);
+    let _psp_ring = ath_amdgpu::bringup::psp_ring_create(&mut ops);
     checkpoint("[amdgpu] CKPT 4c: PSP ring-create attempted — NEXT init_rings");
 
     // VRAM write/read self-test (MM_INDEX/MM_DATA path) — PROVE CPU->VRAM writes work
@@ -1797,9 +1797,9 @@ pub extern "C" fn _start() -> ! {
         const VRAM_SELFTEST_OFF: u64 = 0x0600_0000; // 96 MiB into VRAM, unused
         let pat = [0xCAFE_BABEu32, 0x1234_5678, 0xDEAD_BEEF, 0xA5A5_5A5A];
         checkpoint("[amdgpu] VRAM self-test: writing 4 dwords via MM_INDEX @ VRAM+0x6000000...");
-        raeen_amdgpu::bringup::GpuOps::vram_write(&mut ops, VRAM_SELFTEST_OFF, &pat);
+        ath_amdgpu::bringup::GpuOps::vram_write(&mut ops, VRAM_SELFTEST_OFF, &pat);
         let mut rb = [0u32; 4];
-        raeen_amdgpu::bringup::GpuOps::vram_read(&mut ops, VRAM_SELFTEST_OFF, &mut rb);
+        ath_amdgpu::bringup::GpuOps::vram_read(&mut ops, VRAM_SELFTEST_OFF, &mut rb);
         let pass = rb == pat;
         checkpoint(&alloc::format!(
             "[amdgpu] VRAM self-test (MM_INDEX): read {:#x?} -> {}",
@@ -1818,7 +1818,7 @@ pub extern "C" fn _start() -> ! {
         // the live PSP and that LOAD_TOC returns a real TMR size. Returns false ("no
         // RLC_G") by design — watch the LOAD_TOC/SETUP_TMR result lines for the proof.
         if pass {
-            if let Some(psp) = raeen_amdgpu::bringup::GpuOps::psp_regs(&mut ops) {
+            if let Some(psp) = ath_amdgpu::bringup::GpuOps::psp_regs(&mut ops) {
                 // 3b: the full firmware-load handshake — LOAD_TOC -> SETUP_TMR ->
                 // per-blob LOAD_IP_FW (IMU first) -> AUTOLOAD_RLC after RLC_G. This is
                 // the swing at first light: the PSP authenticates each gfx ucode and the
@@ -1831,7 +1831,7 @@ pub extern "C" fn _start() -> ! {
                     fw_blobs.len()
                 ));
                 let r =
-                    raeen_amdgpu::bringup::psp_load_gfx_firmware(&mut ops, &psp, &ring, &fw_blobs);
+                    ath_amdgpu::bringup::psp_load_gfx_firmware(&mut ops, &psp, &ring, &fw_blobs);
                 checkpoint(&alloc::format!(
                     "[amdgpu] PSP fw-load 3b done (returned {r}) — watch the seg1-probe for GFX DEAD->live (first light)"
                 ));
@@ -1843,13 +1843,13 @@ pub extern "C" fn _start() -> ! {
     // DCN is a separate, firmware-lit power domain that reads live on a warm boot, whereas
     // init_rings' GFX power-up WEDGES on a warm GPU, so anything sequenced after it never
     // runs on a warm boot. Read-only — cannot blank the panel.
-    raeen_amdgpu::bringup::probe_dcn_scanout(&mut ops);
+    ath_amdgpu::bringup::probe_dcn_scanout(&mut ops);
 
     // PAGE FLIP — fill VRAM with magenta + point the DCN's HUBP0 surface address at it.
     // If the panel turns magenta, amdgpu is driving the scanout — the "displaying
     // graphics" proof. Warm-testable; runs before init_rings (the GFX power-up that
     // wedges on a warm GPU). Read-back is netlog-verified; the color needs eyes on screen.
-    raeen_amdgpu::bringup::try_page_flip(&mut ops);
+    ath_amdgpu::bringup::try_page_flip(&mut ops);
 
     // ── MES-BYPASS DISPLAY PATH ───────────────────────────────────────────────
     // try_page_flip just proved (CRC + eyes) that we can point the real DCN's HUBP0
@@ -1878,7 +1878,7 @@ pub extern "C" fn _start() -> ! {
     const FB_H: u32 = 1080;
     let scanout_phys = VRAM_PHYS_BASE + SCRATCH_OFF; // 0x3_E600_0000
     let reg = unsafe {
-        raeen_linuxkpi::host::sys_register_scanout(dev.handle, scanout_phys, FB_W, FB_H, FB_W * 4)
+        ath_linuxkpi::host::sys_register_scanout(dev.handle, scanout_phys, FB_W, FB_H, FB_W * 4)
     };
     klog(&alloc::format!(
         "[amdgpu] BYPASS: DCN desktop scanout register(phys={scanout_phys:#x} {FB_W}x{FB_H}) -> {}",
@@ -1912,7 +1912,7 @@ fn panic(info: &PanicInfo) -> ! {
         // panic renderer itself can depend on the LinuxKPI heap that is under
         // investigation; an encoded source line survives through SYS_PRINT
         // and pinpoints the Rust boundary reached by upstream C init.
-        let oom_size = raeen_linuxkpi::mm::last_alloc_failure_size() as u64;
+        let oom_size = ath_linuxkpi::mm::last_alloc_failure_size() as u64;
         if oom_size != 0 {
             sys_print(989_998);
             sys_print(oom_size);

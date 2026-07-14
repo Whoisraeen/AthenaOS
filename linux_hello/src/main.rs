@@ -2,7 +2,7 @@
 //! syscall translation / `linux_exec` route).
 //!
 //! This binary speaks ONLY the Linux x86_64 syscall ABI — raw `syscall`
-//! instructions with Linux numbers, no relibc, no rae_abi. xtask stamps its
+//! instructions with Linux numbers, no relibc, no ath_abi. xtask stamps its
 //! ELF osabi byte to ELFOSABI_LINUX (`config/base.toml`: `abi = "linux"`), so
 //! the kernel's SYS_SPAWN routes it through `linux_exec`: Linux auxv stack,
 //! Linux syscall-table marking, console fds. What it proves end-to-end:

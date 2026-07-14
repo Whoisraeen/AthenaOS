@@ -43,7 +43,7 @@ authority list**. Adding a 15th variant requires updating this file and
 | 7  | `Audio`       | `device_id: u32`                   | audio subsystem                   | `READ \| WRITE` |
 | 8  | `Camera`      | `device_id: u32`                   | media subsystem (user prompt PLANNED — see note) | `READ` |
 | 9  | `Process`     | `target_pid: u64`                  | scheduler at fork                 | `READ \| WRITE \| WAIT` |
-| 10 | `CryptoKey`   | `key_id: u64`                      | TPM / raeshield                   | `READ \| WRITE` |
+| 10 | `CryptoKey`   | `key_id: u64`                      | TPM / athshield                   | `READ \| WRITE` |
 | 11 | `Hypervisor`  | `vm_id: u64`                       | VMM (privileged)                  | `READ \| WRITE \| EXEC` |
 | 12 | `Attestation` | `session_id: u64`                  | anti-cheat subsystem              | `READ \| WAIT` |
 | 13 | `Debug`       | `scope: u32`                       | kernel (root-only)                | `READ` |
@@ -81,7 +81,7 @@ descendant cap is revoked too.
 
 Every grant, revoke, query, use, and denial is recorded in a 256-event
 ring buffer (`kernel/src/cap_audit.rs`) and visible via
-`cat /proc/raeen/caps`. Aggregate counters survive ring wrap.
+`cat /proc/athena/caps`. Aggregate counters survive ring wrap.
 
 ## Error codes
 

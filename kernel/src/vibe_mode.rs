@@ -173,7 +173,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/vibe` — Vibe Mode state.
+/// `/proc/athena/vibe` — Vibe Mode state.
 pub fn dump_text() -> String {
     let active = ACTIVE
         .lock()

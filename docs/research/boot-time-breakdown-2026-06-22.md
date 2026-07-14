@@ -1,11 +1,11 @@
 # Boot-Time Breakdown — AthenaOS (2026-06-22)
 
-**Investigator:** raeen-perf | **Item:** CLAUDE.md live-fix #1 / Concept "fast is a feature: boot <6s, target 3s"
+**Investigator:** athena-perf | **Item:** CLAUDE.md live-fix #1 / Concept "fast is a feature: boot <6s, target 3s"
 **Method:** parsed the saved integration-verify boot serial logs (measure-first; no boot-path code edited).
 
 ## Logs measured
-- `C:\Users\woisr\AppData\Local\Temp\raeen-serial.log` (smp2, current %TEMP%) — contains TWO appended CI boots, both identical timing.
-- `/tmp/raeen-serial-smp1.log`, `/tmp/raeen-serial-smp2.log` (integration verify captures).
+- `C:\Users\woisr\AppData\Local\Temp\athena-serial.log` (smp2, current %TEMP%) — contains TWO appended CI boots, both identical timing.
+- `/tmp/athena-serial-smp1.log`, `/tmp/athena-serial-smp2.log` (integration verify captures).
 
 All numbers below are **QEMU TCG** (the CI accel). Iron (Athena) is ~11.1s total; the iron/QEMU
 difference is called out per cost center.
@@ -28,7 +28,7 @@ Per-tier deltas computed from the `[TIER] ... (t=Nms)` cumulative timestamps:
 | **Tier 7 -> Tier 8 (platform/misc)** | 1718 | 12.1% | mixed (`aer+modules` + many smoketests) |
 | Tier 6 -> Tier 7 (power/ACPI) | 1033 | 7.3% | `aer+modules=1024ms` |
 | Tier 3 -> Tier 4 (security) | 577 | 4.1% | crypto KATs (genuine, cheap-ish) |
-| Tier 9 -> marker (post-init) | 525 | 3.7% | raefs/dhcp/demo |
+| Tier 9 -> marker (post-init) | 525 | 3.7% | athfs/dhcp/demo |
 | Tier 4 -> Tier 5 (procfs) | 140 | 1.0% | fine |
 | Tier 2 -> Tier 3 (networking) | 115 | 0.8% | fine |
 | Tier 8 -> Tier 9 | 87 | 0.6% | fine |
@@ -99,7 +99,7 @@ install / edid / thermal / suspend / power smoketests (log lines 801-891), again
 ### 3. Tier-7/Tier-8 `aer+modules` smoketest blocks — ~1024 ms + ~1718 ms — GENUINE + DEFERRABLE
 - **Site:** `kernel/src/main.rs` Tier-7 (lines ~801-891) and Tier-8 (lines ~902-1056) module inits +
   inline smoketests (AER, PM, OOM, swap, soak, fatfs, install, EDID, compress, vgpu, crypto/TLS,
-  raebridge, linuxkpi, bluetooth, etc.).
+  athbridge, linuxkpi, bluetooth, etc.).
 - **Why slow:** same pattern as #1 — correctness smoketests on the critical path, each emitting serial
   lines. Many gate nothing the OS needs to declare itself up.
 - **Classification:** GENUINE (serial/compute tax helps iron too), DEFERRABLE via the same ADR-0006
@@ -121,7 +121,7 @@ install / edid / thermal / suspend / power smoketests (log lines 801-891), again
 ### CUT 1 (highest value, low risk) — Extend ADR-0006 deferral to the heavy Tier-1/7/8 smoketests
 - **What:** move the non-critical feature smoketests (notify, settings, palette, spaces, switcher,
   capture, wm, chrome, gameos couch/glyph/padbind/gamebar/profile/osk, clipboard-panel, oobe layout,
-  AER / OOM / swap / soak / install / edid / compress / vgpu / raebridge correctness checks) from
+  AER / OOM / swap / soak / install / edid / compress / vgpu / athbridge correctness checks) from
   inline calls in `main.rs` into `boot_selftest::run_deferred()` so they run **post-marker**. Keep
   every `*::init()` (anything that spawns a thread or seeds state the OS depends on) on the critical
   path; defer only the `run_boot_smoketest()` *checks* — exactly what ADR-0006 was built for.
@@ -132,7 +132,7 @@ install / edid / thermal / suspend / power smoketests (log lines 801-891), again
   rule: a deferred test must not be one the boot-health 7/7 aggregation depends on, and its `init()`
   must already have run. (Watch the notify smoketest: confirm it does not leave surfaces the first real
   composite needs — it tears its own surfaces down, so safe.)
-- **Owner:** **raeen-kernel** (boot-path ordering in `main.rs` + `boot_selftest.rs`).
+- **Owner:** **athena-kernel** (boot-path ordering in `main.rs` + `boot_selftest.rs`).
 - **Proof markers:** lower `[BOOT-BENCH] T0 -> userspace`; `[boot-selftest] deferred sweep DONE: N`
   with N grown from 10; every moved test STILL prints its `-> PASS`; no lost `[ OK ]` lines;
   `[tier1-prof] modules=` drops sharply.
@@ -148,7 +148,7 @@ install / edid / thermal / suspend / power smoketests (log lines 801-891), again
   existing comment guards (a real downstream-hub HID config event can be microseconds away). Gate the
   fast-fail strictly on HCE/HSE latched, never on a clean controller, so **iron behaviour is
   unchanged** (controller never wedges there).
-- **Owner:** **raeen-drivers** (xHCI / USB hub enumeration).
+- **Owner:** **athena-drivers** (xHCI / USB hub enumeration).
 - **Proof markers:** `[tier6-prof] hid_smoke`/`xhci_smoke` drop; the 5x `GetPortStatus ... RingFull`
   and dead-probe lines shrink; 3 HID interrupt-IN endpoints STILL armed (no lost input devices);
   `[TIER] Tier 6 complete` timestamp drops; iron tier6-prof unchanged on next flash.
@@ -160,7 +160,7 @@ install / edid / thermal / suspend / power smoketests (log lines 801-891), again
   the bigger lever (each line ~5ms there).
 - **Risk:** LOW but trades on-screen boot diagnostics during the smoketest window. Lower priority than
   CUT 1.
-- **Owner:** **raeen-kernel** (console mirror gate).
+- **Owner:** **athena-kernel** (console mirror gate).
 - **Proof markers:** lower iron BOOT-BENCH specifically; no change to captured serial/bootlog content.
 
 ---
@@ -180,6 +180,6 @@ install / edid / thermal / suspend / power smoketests (log lines 801-891), again
 ## Safe-to-land-immediately assessment
 **CUT 1 is the one safe enough to recommend landing first** — it reuses an existing, documented,
 reversible mechanism (ADR-0006), changes only *when* tests run (not *whether* they can FAIL), and has
-the largest expected savings. It must still go through raeen-kernel + raeen-verifier (boot >=5x at
+the largest expected savings. It must still go through athena-kernel + athena-verifier (boot >=5x at
 SMP=1 and SMP=2 per CLAUDE.md rule 17; confirm no PANIC, marker present, all moved tests still print
 PASS, BOOT-BENCH lower). I did not edit the boot path this slice.

@@ -44,7 +44,7 @@ It does **not** set `CP_MES_IC_BASE`. On PSP load the MES IMEM is already popula
 
 ## AthenaOS divergences (what to remove on the first-light / PSP path)
 
-All in `components/raeen_amdgpu/src/bringup.rs::init_rings` (stage 6):
+All in `components/ath_amdgpu/src/bringup.rs::init_rings` (stage 6):
 
 1. **Backdoor IMU bring-up** (`program_rlc_ram` + autoload buffer + `imu_load_microcode` + `setup_imu` + `try_imu_core_start`) — **already gated off** on `first_light` (commit 95e60fb). amdgpu runs none of it on PSP.
 2. **MES IC-base direct-load** (~2845 `mes_load`, ~2874 `mes_kiq_load`, ~3543 `build_mes_load_sequence` writing `CP_MES_IC_BASE/MDBASE`). The `psp_loaded` flag at **3578 is hardcoded `false`** from the stale H2 conclusion ("PSP rejects MES, 0xffff0006") — which NIGHT 5 FIXED (types 33/34/81/82 now accepted, no rejects in the netlog). The dead `if psp_loaded {…}` ENABLE-ONLY branch (3583) is the correct path.

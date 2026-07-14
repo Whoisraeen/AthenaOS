@@ -2,34 +2,34 @@
 
 - Status: accepted
 - Date: 2026-06-21
-- Owner: raeen-lead (autonomous)
+- Owner: athena-lead (autonomous)
 
 ## Context
 Mid-session a SECOND active session began a major "Liquid Glass identity / Aurora" UI
 overhaul in the same OneDrive-shared tree (commits 7d31891, df48a91, bb3895c, 48677e7,
 dcb4ee3, 3b5321d, 89bdb49, 4ac0f20, 868bfe4, 00a052b + a workspace `cargo fmt`), touching
-rae_tokens, raegfx, kernel (compositor/aurora/main/shell_runner), apps/files,
+ath_tokens, athgfx, kernel (compositor/aurora/main/shell_runner), apps/files,
 notifications_daemon, and the screenshot harness. Two agents on overlapping crates is the #1
 documented failure mode (multi-agent shared worktree).
 
 Response taken: yielded the UI/kernel lanes to the concurrent session; worked only
 collision-free (specs + isolated leaf/component-crate host-KATs) with explicit-path commits;
 did NOT install the pre-commit hook (it would force the concurrent session's commits through
-the gate and could block them); verified the merged tree GREEN (both streams integrate — raegfx
+the gate and could block them); verified the merged tree GREEN (both streams integrate — athgfx
 icon KATs + glass/aurora KATs coexist 19/19, 3/3 boots, full a11y/CC/notify/search regression
 intact). My corrective process notes: never pipe the architecture-gate through `tail` (masks the
 exit code — caused one bad commit, since reverted); always read its pass/reject verdict.
 
 ## Decision — what to resume once the concurrent UI overhaul SETTLES
-"Settled" = the concurrent session's contested files (rae_tokens/raegfx/kernel-compositor/
+"Settled" = the concurrent session's contested files (ath_tokens/athgfx/kernel-compositor/
 apps-files/notifications_daemon) show committed with no fresh uncommitted churn for a stable
 window. Until then, stay on isolated host-KAT / doc lanes only.
 
 Prioritized resumption queue (build ON the committed Liquid Glass foundation):
 1. **Visual-QA Round-5 on the settled identity** — the concurrent session exposed
-   `apps/files::render_preview` (3b5321d) and `raekit` host feature (868bfe4), so the harness can
+   `apps/files::render_preview` (3b5321d) and `athkit` host feature (868bfe4), so the harness can
    now render the LIVE Files + the Aurora/glass surfaces. Re-screenshot all surfaces, critique vs
-   macOS/Win11, file the remaining polish gaps. (raeen-visual-qa.)
+   macOS/Win11, file the remaining polish gaps. (athena-visual-qa.)
 2. **Notification Center dead-twin resolution** — the concurrent session is polishing
    `notifications_daemon` (the unpolished twin the harness rendered). Once it lands, confirm one
    canonical notification renderer (no twin) and that visual-QA sees the real one.
@@ -43,9 +43,9 @@ Prioritized resumption queue (build ON the committed Liquid Glass foundation):
 6. **Non-UI subsystem depth** (collision-free even now, host-KAT-able): AthNet protocol
    completeness (TLS 1.3 handshake, sockets API), AthAudio engine, AthFS hardening (criterion #2,
    but kernel-contested for boot proof), services/installer.
-7. **Library follow-ups surfaced this session**: rae_json shortest-float is done; raeshell
-   inline-vector glyphs → the 13 new raegfx canonical icons (CC swap, kernel-contested);
-   websocket RFC-6455 control-frame ≤125 enforcement (non-safety); rae_diff byte_delta → raeupdate
+7. **Library follow-ups surfaced this session**: ath_json shortest-float is done; athshell
+   inline-vector glyphs → the 13 new athgfx canonical icons (CC swap, kernel-contested);
+   websocket RFC-6455 control-frame ≤125 enforcement (non-safety); ath_diff byte_delta → athupdate
    wiring behind safe_mode_guard_write.
 
 ## Rationale

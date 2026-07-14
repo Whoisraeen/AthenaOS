@@ -4,22 +4,22 @@
 
 | Crate | Component |
 |-------|-----------|
-| `components/raefs` | AthFS filesystem |
-| `components/raefat` | FAT filesystem |
-| `components/raeaudio` | AthAudio engine |
-| `components/raemedia` | Media framework |
-| `components/raenet` | AthNet networking |
-| `components/raevpn` | WireGuard VPN daemon |
-| `components/raegfx` | AthGFX graphics API |
-| `components/raeui` | AthUI framework |
-| `components/raekit` | AthKit SDK |
-| `components/raefont` | Font subsystem |
-| `components/raeshell` | AthShell desktop |
-| `components/raelocale` | Locale/i18n |
-| `components/raeaccessibility` | Accessibility |
+| `components/athfs` | AthFS filesystem |
+| `components/athfat` | FAT filesystem |
+| `components/athaudio` | AthAudio engine |
+| `components/athmedia` | Media framework |
+| `components/athnet` | AthNet networking |
+| `components/athvpn` | WireGuard VPN daemon |
+| `components/athgfx` | AthGFX graphics API |
+| `components/athui` | AthUI framework |
+| `components/athkit` | AthKit SDK |
+| `components/athfont` | Font subsystem |
+| `components/athshell` | AthShell desktop |
+| `components/athlocale` | Locale/i18n |
+| `components/athaccessibility` | Accessibility |
 
 > [!IMPORTANT]
-> I do **not** touch `kernel/`, `xtask/`, `rae_abi/`, `rae_driver_api/` (Opus), nor drivers, installer, apps, tests, LinuxKPI shim (Composer). Items below are filtered to my slice only.
+> I do **not** touch `kernel/`, `xtask/`, `ath_abi/`, `ath_driver_api/` (Opus), nor drivers, installer, apps, tests, LinuxKPI shim (Composer). Items below are filtered to my slice only.
 
 ---
 
@@ -31,7 +31,7 @@ These are core Concept §AthFS promises. Most infrastructure exists (`[~]`), but
 
 | Item | Status | What remains | Concept alignment |
 |------|--------|-------------|-------------------|
-| **§5.1 Snapshot syscall surface** | `[~]` | Wire `sys_raefs_snapshot(name)` userspace API in `components/raefs` | §AthFS CoW snapshots |
+| **§5.1 Snapshot syscall surface** | `[~]` | Wire `sys_athfs_snapshot(name)` userspace API in `components/athfs` | §AthFS CoW snapshots |
 | **§5.1 Snapshot restore userspace API** | `[~]` | Userspace snapshot syscall/UI flow | §"Atomic CoW updates with one-click rollback" |
 | **§5.1 Time-machine UX retention policy** | `[ ]` | Hourly + daily + weekly retention logic | §AthFS snapshots |
 | **§5.1 Snapshot disk quota** | `[ ]` | Quota enforcement so snapshots can't fill the drive | §AthFS |
@@ -40,13 +40,13 @@ These are core Concept §AthFS promises. Most infrastructure exists (`[~]`), but
 | **§5.5 Sequential prefetch** | `[ ]` | Read-ahead for game asset patterns | §"Game-aware extents" |
 | **§5.6 Bucket-level encryption keys** | `[ ]` | Per-bucket crypto keys | §"Per-app data buckets" |
 | **§5.7 Per-key config restore** | `[~]` | `sys_config_restore(key, version)` granularity | §"Versioned config" |
-| **§5.8 `raefsck` userspace utility** | `[ ]` | Full userspace fsck tool | §AthFS reliability |
+| **§5.8 `athfsck` userspace utility** | `[ ]` | Full userspace fsck tool | §AthFS reliability |
 
 ### Needs interface from Opus (file `NEEDS-INTERFACE:` note)
 
 | Item | What I need |
 |------|-------------|
-| Snapshot syscall number | New syscall nr in `SYSCALL_TABLE.md` for `sys_raefs_snapshot` |
+| Snapshot syscall number | New syscall nr in `SYSCALL_TABLE.md` for `sys_athfs_snapshot` |
 | Bucket encryption key syscall | Syscall for key provisioning per bucket |
 
 ---
@@ -57,9 +57,9 @@ These are core Concept §AthFS promises. Most infrastructure exists (`[~]`), but
 
 | Item | Status | What remains | Concept alignment |
 |------|--------|-------------|-------------------|
-| **§6.2 AthGFX public API polish** | `[~]` | Expand Vulkan-equivalent API surface (textures, buffers, pipelines) in `components/raegfx` | §AthGFX "Vulkan-equivalent capabilities" |
-| **§6.4 HDR pipeline (10/12-bit)** | `[ ]` | Implement in `components/raegfx` | §"Compositor-level HDR" |
-| **§6.4 Color management** | `[ ]` | ICC profile handling in raegfx | §AthGFX |
+| **§6.2 AthGFX public API polish** | `[~]` | Expand Vulkan-equivalent API surface (textures, buffers, pipelines) in `components/athgfx` | §AthGFX "Vulkan-equivalent capabilities" |
+| **§6.4 HDR pipeline (10/12-bit)** | `[ ]` | Implement in `components/athgfx` | §"Compositor-level HDR" |
+| **§6.4 Color management** | `[ ]` | ICC profile handling in athgfx | §AthGFX |
 
 ### Blocked (needs GPU driver from Composer + kernel interface from Opus)
 
@@ -79,7 +79,7 @@ These are core Concept §AthFS promises. Most infrastructure exists (`[~]`), but
 | Item | Status | What remains | Concept alignment |
 |------|--------|-------------|-------------------|
 | **§7.2 Audio mixer** | `[ ]` | In-component mixer with SCHED_BODY priority path | §AthAudio "sub-3ms" |
-| **§7.2 Per-app volume + EQ** | `[ ]` | Per-stream volume/EQ in `components/raeaudio` | §AthAudio |
+| **§7.2 Per-app volume + EQ** | `[ ]` | Per-stream volume/EQ in `components/athaudio` | §AthAudio |
 | **§7.2 Routing matrix** | `[ ]` | VoiceMeeter-class input→effects→output routing | §"VoiceMeeter-class functionality built in" |
 | **§7.2 Loopback monitoring** | `[ ]` | Monitor path in audio engine | §AthAudio |
 | **§7.2 Latency measurement** | `[ ]` | Measurement harness for sub-3ms proof | §"Sub-3ms round-trip on certified hardware" |
@@ -100,16 +100,16 @@ These are core Concept §AthFS promises. Most infrastructure exists (`[~]`), but
 
 | Item | Status | What remains | Concept alignment |
 |------|--------|-------------|-------------------|
-| **§8.1 Skia integration** | `[ ]` | Wire Skia under `gpu_userspace` feature in `components/raeui` | §AthUI "Skia + wgpu" |
-| **§8.1 wgpu integration** | `[ ]` | Wire wgpu in `components/raeui` | §AthUI |
+| **§8.1 Skia integration** | `[ ]` | Wire Skia under `gpu_userspace` feature in `components/athui` | §AthUI "Skia + wgpu" |
+| **§8.1 wgpu integration** | `[ ]` | Wire wgpu in `components/athui` | §AthUI |
 | **§8.1 Glassmorphic surfaces** | `[ ]` | Blur + transparency at compositor level | §"Glassmorphic by default" |
 | **§8.1 Live wallpapers** | `[ ]` | GPU-accelerated, paused when occluded | §"Live wallpapers" |
 | **§8.1 Window animation curves** | `[ ]` | User-editable animation curves | §"Window animations curve-editable" |
-| **§8.2 Declarative widget tree** | `[ ]` | `view!` macro or similar in `components/raekit` | §AthKit "SwiftUI-style" |
-| **§8.2 State/binding system** | `[ ]` | Reactive state in `components/raekit` | §AthKit |
-| **§8.2 Layout engine** | `[ ]` | Constraint/flexbox layout in `components/raekit` | §AthKit |
+| **§8.2 Declarative widget tree** | `[ ]` | `view!` macro or similar in `components/athkit` | §AthKit "SwiftUI-style" |
+| **§8.2 State/binding system** | `[ ]` | Reactive state in `components/athkit` | §AthKit |
+| **§8.2 Layout engine** | `[ ]` | Constraint/flexbox layout in `components/athkit` | §AthKit |
 | **§8.2 Theming hook** | `[ ]` | Theme engine integration | §"Theme engine at the compositor level" |
-| **§8.2 App bundle packager** | `[ ]` | `raekit bundle` tool | §AthKit |
+| **§8.2 App bundle packager** | `[ ]` | `athkit bundle` tool | §AthKit |
 | **§8.2 Hot reload** | `[ ]` | Dev-time hot reload | §AthKit |
 
 ---
@@ -122,8 +122,8 @@ These are core Concept §AthFS promises. Most infrastructure exists (`[~]`), but
 |------|--------|-------------|-------------------|
 | **§10.2 Real X25519** | `[ ]` | Replace stub with real x25519-dalek (already in deps) | §AthNet WireGuard |
 | **§10.2 Real Blake2s** | `[ ]` | Replace SHA-256 placeholder with blake2 (already in deps) | §AthNet WireGuard |
-| **§10.2 QUIC implementation** | `[ ]` | QUIC protocol in `components/raenet` | §"QUIC priority" |
-| **§10.2 WireGuard daemon** | `[ ]` | `raevpn` userspace daemon in `components/raevpn` | §"Built-in WireGuard" |
+| **§10.2 QUIC implementation** | `[ ]` | QUIC protocol in `components/athnet` | §"QUIC priority" |
+| **§10.2 WireGuard daemon** | `[ ]` | `athvpn` userspace daemon in `components/athvpn` | §"Built-in WireGuard" |
 | **§10.2 Gaming traffic shaping** | `[ ]` | Prioritize foreground game's traffic | §"Gaming traffic shaping" |
 | **§10.2 Firewall rulesets** | `[ ]` | Per-app firewall rules | §AthNet |
 | **§10.2 mDNS / DNS-SD** | `[ ]` | LAN discovery | §AthNet |
@@ -138,12 +138,12 @@ These are core Concept §AthFS promises. Most infrastructure exists (`[~]`), but
 
 | Item | Status | What remains | Concept alignment |
 |------|--------|-------------|-------------------|
-| **§13.1 Theme bundles signed + sandboxed** | `[ ]` | Theme bundle signing in `components/raeshell` or `raeui` | §"Themes ship as small declarative bundles, signed and sandboxed" |
+| **§13.1 Theme bundles signed + sandboxed** | `[ ]` | Theme bundle signing in `components/athshell` or `athui` | §"Themes ship as small declarative bundles, signed and sandboxed" |
 | **§13.1 Vibe Mode presets** | `[ ]` | System-wide visual personalities | §"Vibe Mode" |
 | **§13.1 Vibe Mode components** | `[ ]` | Wallpaper + accents + sounds + fonts + cursor + animations | §Vibe Mode |
-| **§13.2 Swappable WM API** | `[ ]` | Tile/stack/float/hybrid WM API in `components/raeshell` | §"Swappable window managers" |
+| **§13.2 Swappable WM API** | `[ ]` | Tile/stack/float/hybrid WM API in `components/athshell` | §"Swappable window managers" |
 | **§13.2 Swappable shell** | `[ ]` | Shell replacement API | §"Swappable shells" |
-| **§13.2 Widget system** | `[ ]` | Rainmeter-equivalent in `components/raeui` | §"Widget system" |
+| **§13.2 Widget system** | `[ ]` | Rainmeter-equivalent in `components/athui` | §"Widget system" |
 
 ---
 
@@ -154,9 +154,9 @@ These are core Concept §AthFS promises. Most infrastructure exists (`[~]`), but
 | Item | Status | What remains | Concept alignment |
 |------|--------|-------------|-------------------|
 | **§14.1 System tray clock** | `[ ]` | Read `sys_wall_clock` in shell | §AthShell |
-| **§14.1 Notifications surface** | `[ ]` | Notification rendering in `components/raeshell` | §AthShell |
+| **§14.1 Notifications surface** | `[ ]` | Notification rendering in `components/athshell` | §AthShell |
 | **§14.1 Search bar** | `[ ]` | Sub-100ms search UI (kernel index ready) | §"Search is broken → sub-100ms results" |
-| **§14.3 GameOS Mode couch UI** | `[ ]` | Large fonts, controller-driven in `components/raeshell` | §"GameOS Mode" |
+| **§14.3 GameOS Mode couch UI** | `[ ]` | Large fonts, controller-driven in `components/athshell` | §"GameOS Mode" |
 | **§14.3 Library aggregator** | `[ ]` | Unified game library view | §AthPlay |
 
 ---
@@ -172,9 +172,9 @@ These are common sources of confusion — they mention my subsystems but live in
 | NIC drivers (e1000, igc, i219, RTL) | **Composer** (drivers) |
 | GPU drivers (amdgpu, i915) | **Composer** (LinuxKPI driver daemons) |
 | Kernel-side audio.rs / net.rs / syscall.rs | **Opus** (kernel/) |
-| installer / raeinstaller | **Composer** |
+| installer / athinstaller | **Composer** |
 | AthBridge / Win32 compat | **OWNERLESS** — do not touch |
-| Syscall numbers / rae_abi | **Opus** — file NEEDS-INTERFACE notes |
+| Syscall numbers / ath_abi | **Opus** — file NEEDS-INTERFACE notes |
 
 ---
 
@@ -225,5 +225,5 @@ Ordered by **fan-out** (how many downstream items each unblocks) and **Concept d
 
 ### Manual Verification
 - QEMU boot: `target/boot.ps1` must reach `[ OS ] System successfully booted.` with no regressions
-- New `/proc/raeen/*` endpoints for any new subsystem features
+- New `/proc/athena/*` endpoints for any new subsystem features
 - Athena hardware verification deferred to when hardware is available

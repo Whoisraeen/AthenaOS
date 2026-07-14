@@ -4,17 +4,17 @@
 #![no_main]
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
-use rae_tokens::{DARK, RAEBLUE};
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
+use ath_tokens::{DARK, RAEBLUE};
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
 
 const WIN_W: usize = 720;
 const WIN_H: usize = 440;
 const SURFACE_VIRT: u64 = 0x0000_7C00_0000;
 
-// Generic chrome on `rae_tokens::DARK` + the RaeBlue accent ramp (whole-OS
+// Generic chrome on `ath_tokens::DARK` + the RaeBlue accent ramp (whole-OS
 // cohesion). No app-specific colors. Live Vibe accent = NEEDS-INTERFACE (report).
 const BG: u32 = DARK.bg_raised;
 const TITLE_BG: u32 = DARK.bg_base;
@@ -27,15 +27,15 @@ const STATUS_BG: u32 = DARK.bg_base;
 /// the theme syscall is unavailable. Read at launch so Task Manager re-skins to
 /// the active theme (Concept §Customization Engine).
 fn theme_seed() -> u32 {
-    raekit::sys::theme_accent()
+    athkit::sys::theme_accent()
 }
 /// Accent base (live ramp) — the SCHED_BODY class label.
 fn accent() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).base
+    ath_tokens::derive_accent(theme_seed(), &DARK).base
 }
 /// Selected-row wash: the accent's active (pressed) shade.
 fn row_sel() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).active
+    ath_tokens::derive_accent(theme_seed(), &DARK).active
 }
 
 const ENTRY_BYTES: usize = 24;
@@ -73,7 +73,7 @@ impl App {
 
     fn refresh(&mut self) {
         let mut buf = [0u8; ENTRY_BYTES * MAX_TASKS];
-        let n = raekit::sys::proclist(&mut buf) as usize;
+        let n = athkit::sys::proclist(&mut buf) as usize;
         self.count = 0;
         for i in 0..n.min(MAX_TASKS) {
             let off = i * ENTRY_BYTES;
@@ -118,7 +118,7 @@ impl App {
     fn kill_selected(&mut self) {
         if let Some(row) = self.rows.get(self.selected) {
             if row.pid != 0 {
-                let _ = raekit::sys::kill(row.pid);
+                let _ = athkit::sys::kill(row.pid);
             }
         }
     }
@@ -138,20 +138,20 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect(0, 0, WIN_W, 28, TITLE_BG);
     canvas.draw_text_aa(
         12,
-        ((28 - rae_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
+        ((28 - ath_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
         "Task Manager",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
 
     canvas.fill_rect(0, 28, WIN_W, 24, DARK.bg_overlay);
-    let hdr_ty = (28 + (24 - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32;
+    let hdr_ty = (28 + (24 - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32;
     canvas.draw_text_aa(
         12,
         hdr_ty,
         "PID",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_DIM,
         FontFamily::Sans,
     );
@@ -159,7 +159,7 @@ fn render(app: &App, canvas: &mut Canvas) {
         100,
         hdr_ty,
         "State",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_DIM,
         FontFamily::Sans,
     );
@@ -167,7 +167,7 @@ fn render(app: &App, canvas: &mut Canvas) {
         200,
         hdr_ty,
         "Class",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_DIM,
         FontFamily::Sans,
     );
@@ -175,7 +175,7 @@ fn render(app: &App, canvas: &mut Canvas) {
         320,
         hdr_ty,
         "vruntime",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_DIM,
         FontFamily::Sans,
     );
@@ -197,7 +197,7 @@ fn render(app: &App, canvas: &mut Canvas) {
             canvas.fill_rect(0, y, WIN_W, row_h, ROW_ALT);
         }
 
-        let row_ty = (y + (row_h - rae_tokens::TYPE_BODY.line_height as usize) / 2) as i32;
+        let row_ty = (y + (row_h - ath_tokens::TYPE_BODY.line_height as usize) / 2) as i32;
         let mut buf = [0u8; 16];
         let n = fmt_u64(row.pid, &mut buf);
         if let Ok(s) = core::str::from_utf8(&buf[..n]) {
@@ -205,7 +205,7 @@ fn render(app: &App, canvas: &mut Canvas) {
                 12,
                 row_ty,
                 s,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 TEXT_FG,
                 FontFamily::Sans,
             );
@@ -215,7 +215,7 @@ fn render(app: &App, canvas: &mut Canvas) {
             100,
             row_ty,
             state_label(row.state),
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_FG,
             FontFamily::Sans,
         );
@@ -224,7 +224,7 @@ fn render(app: &App, canvas: &mut Canvas) {
             200,
             row_ty,
             class,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             accent(),
             FontFamily::Sans,
         );
@@ -236,7 +236,7 @@ fn render(app: &App, canvas: &mut Canvas) {
                 320,
                 row_ty,
                 vs,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 TEXT_DIM,
                 FontFamily::Sans,
             );
@@ -247,9 +247,9 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect(0, st_y, WIN_W, 24, STATUS_BG);
     canvas.draw_text_aa(
         12,
-        (st_y + (24 - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
+        (st_y + (24 - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
         "Up/Down: select   Del: end task   R: refresh   Esc: close",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_DIM,
         FontFamily::Sans,
     );
@@ -278,15 +278,15 @@ fn fmt_u64(mut v: u64, out: &mut [u8]) -> usize {
 
 // ── Design proof (R10: a fail-able check the token wiring is correct) ─────
 //
-// `cargo test` can't host a libtest harness in this `#![no_main]` bin (raekit's
-// `#[panic_handler]` + std's = duplicate lang item). This pure `rae_tokens`
+// `cargo test` can't host a libtest harness in this `#![no_main]` bin (athkit's
+// `#[panic_handler]` + std's = duplicate lang item). This pure `ath_tokens`
 // proof is the fail-able authority; the ramp is host-KAT'd by
-// `cargo test -p rae_tokens`.
+// `cargo test -p ath_tokens`.
 
 /// True iff Task Manager's chrome is wired to the shared design tokens.
 #[must_use]
 pub fn design_proof() -> bool {
-    let ramp = rae_tokens::derive_accent(theme_seed(), &DARK);
+    let ramp = ath_tokens::derive_accent(theme_seed(), &DARK);
     accent() == ramp.base
         && row_sel() == ramp.active
         && BG == DARK.bg_raised
@@ -294,24 +294,24 @@ pub fn design_proof() -> bool {
         && ROW_ALT == DARK.bg_elevated
         && TEXT_FG == DARK.text_primary
         && TEXT_DIM == DARK.text_secondary
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE
 }
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     if !design_proof() {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
 
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
     let mut app = App::new();
     app.refresh();
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, 200, 70);
+    athkit::sys::surface_present(sid, 200, 70);
 
     let mut extended = false;
     let mut tick: u64 = 0;
@@ -321,12 +321,12 @@ pub extern "C" fn _start() -> ! {
         if tick % 500_000 == 0 {
             app.refresh();
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, 200, 70);
+            athkit::sys::surface_present(sid, 200, 70);
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
 
@@ -360,13 +360,13 @@ pub extern "C" fn _start() -> ! {
                 app.refresh();
                 dirty = true;
             }
-            (false, 0x01) => raekit::sys::exit(0),
+            (false, 0x01) => athkit::sys::exit(0),
             _ => {}
         }
 
         if dirty {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, 200, 70);
+            athkit::sys::surface_present(sid, 200, 70);
         }
     }
 }

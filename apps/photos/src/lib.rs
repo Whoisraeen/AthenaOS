@@ -3,19 +3,19 @@
 //! The daily-driver photo viewer that rivals Windows Photos and macOS Preview on
 //! day one: a **thumbnail grid** of a Pictures directory plus a **single-image
 //! view** (full decode, aspect-fit, EXIF-oriented) with next/prev navigation and
-//! keyboard controls. Still images open through the unified `rae_image` "open any
+//! keyboard controls. Still images open through the unified `ath_image` "open any
 //! image" dispatcher — the SAME seam the Files app uses — so Photos now decodes
 //! **PNG / JPEG / BMP / WebP** (content-sniffed by magic bytes, never the
-//! extension) plus the `raemedia::exif` orientation transforms for JPEG. Animated
-//! GIFs route to `rae_gif` directly for the multi-frame animation loop.
+//! extension) plus the `athmedia::exif` orientation transforms for JPEG. Animated
+//! GIFs route to `ath_gif` directly for the multi-frame animation loop.
 //!
 //! Standalone userspace ELF (`exec_path = "photos"`). Chrome is on the shared
-//! `rae_tokens` design language; the live desktop accent comes through
-//! `SYS_THEME_GET` (raekit::sys::theme_accent) at launch, so Photos matches the
+//! `ath_tokens` design language; the live desktop accent comes through
+//! `SYS_THEME_GET` (athkit::sys::theme_accent) at launch, so Photos matches the
 //! desktop 1:1 (whole-OS cohesion).
 //!
 //! HOSTILE-INPUT POSTURE: a photo is untrusted data. Every decode goes through
-//! the host-KAT'd `rae_image` / `rae_gif` decoders which return `Err` (never
+//! the host-KAT'd `ath_image` / `ath_gif` decoders which return `Err` (never
 //! panic) on malformed input; a decode failure renders a "can't display"
 //! placeholder tile and the app stays alive. The whole image pipeline never
 //! panics.
@@ -26,13 +26,13 @@
 //! syscall-free, so the host KAT (`cargo test -p photos --features host`, in the
 //! `tests` module below) feeds an in-memory BMP, WebP, and PNG through it and
 //! asserts exact dimensions/pixels — proving the NEW formats open in Photos.
-//! `rae_image`/`rae_gif`/`raemedia`'s own host KATs prove the decode logic.
+//! `ath_image`/`ath_gif`/`athmedia`'s own host KATs prove the decode logic.
 //!
 //! This is the LIBRARY target; the freestanding `_start` lives in the thin
 //! `src/main.rs` bin and just calls [`run`].
 
 // no_std for the real userspace ELF; std under `cargo test` (or the `host`
-// feature) so the host KAT can link without raekit's bare-ELF lang items
+// feature) so the host KAT can link without athkit's bare-ELF lang items
 // colliding with std.
 #![cfg_attr(not(test), no_std)]
 
@@ -41,20 +41,20 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 use alloc::string::String;
-use rae_tokens::{DARK, RAEBLUE};
-use rae_toml::Toml;
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
-use raemedia::exif::{apply_orientation, parse_orientation, Orientation};
+use ath_tokens::{DARK, RAEBLUE};
+use ath_toml::Toml;
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
+use athmedia::exif::{apply_orientation, parse_orientation, Orientation};
 // `DecodedImage` is the app's working ARGB8888 image type (the shape the
 // downscale/letterbox/blit path consumes). `decode_png` is retained for the
 // built-in `design_proof()` fixture decode (the live-ELF runtime gate); the live
-// open path now goes through `rae_image::decode` (see `decode_oriented`).
-use raemedia::jpeg::DecodedImage;
-use raemedia::png::decode_png;
+// open path now goes through `ath_image::decode` (see `decode_oriented`).
+use athmedia::jpeg::DecodedImage;
+use athmedia::png::decode_png;
 // The unified "open any image" dispatcher (the cohesion seam shared with Files):
 // one `decode` call that sniffs the format from MAGIC BYTES (never the
 // extension) and routes PNG/JPEG/BMP/GIF/WebP to the matching from-scratch
@@ -62,15 +62,15 @@ use raemedia::png::decode_png;
 // already uses. Adopting it makes Photos open BMP + WebP in addition to the
 // existing PNG/JPEG, through ONE path. Hostile-input safe (returns `Err`, never
 // panics).
-use rae_image::{decode as decode_image, FileKind};
+use ath_image::{decode as decode_image, FileKind};
 // Animated-GIF decode (Concept §creators/media: "show my photos" extends to the
-// animated images that fill the web/messaging). `rae_image` collapses a GIF to
+// animated images that fill the web/messaging). `ath_image` collapses a GIF to
 // its first frame (the right still/thumbnail behavior), so animated GIFs route
-// to `rae_gif::decode_gif` directly to keep ALL frames + per-frame `delay_ms` for
+// to `ath_gif::decode_gif` directly to keep ALL frames + per-frame `delay_ms` for
 // the single-view animation loop. Each frame is a fully-composited ARGB8888
 // `Vec<u32>`, structurally identical to a decoded still, so it reuses the EXACT
 // aspect-fit/letterbox/blit path. `decode_gif` is hostile-input safe.
-use rae_gif::{decode_gif, GifImage};
+use ath_gif::{decode_gif, GifImage};
 
 // ── Window geometry ─────────────────────────────────────────────────────
 
@@ -183,9 +183,9 @@ fn single_back_rect() -> Rect {
     }
 }
 
-// ── Palette (rae_tokens, docs/design/design-language.md) ──────────────────
+// ── Palette (ath_tokens, docs/design/design-language.md) ──────────────────
 //
-// Generic chrome pulls onto the shared `rae_tokens::DARK` palette + the RaeBlue
+// Generic chrome pulls onto the shared `ath_tokens::DARK` palette + the RaeBlue
 // accent ramp so Photos matches the desktop default 1:1. The accent ramp is
 // derived (not const), so accent fills are computed in helpers below.
 
@@ -201,43 +201,43 @@ const STROKE_HL: u32 = DARK.stroke_strong; // glass top-edge / tile border
 const VIEW_SCRIM: u32 = 0xEE_06_07_0C; // single-image view dimming
 
 fn theme_seed() -> u32 {
-    raekit::sys::theme_accent()
+    athkit::sys::theme_accent()
 }
 
 /// Accent base, derived through the shared ramp from the live theme seed.
 fn accent() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).base
+    ath_tokens::derive_accent(theme_seed(), &DARK).base
 }
 
 /// Opaque selection fill: the accent's pressed/active shade.
 fn sel_fill() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).active
+    ath_tokens::derive_accent(theme_seed(), &DARK).active
 }
 
 // ── Image format sniffing ────────────────────────────────────────────────
 
 /// The 8-byte PNG signature (used by the built-in `build_test_png` proof fixture
-/// encoder; the live open path sniffs via `rae_image::detect`).
+/// encoder; the live open path sniffs via `ath_image::detect`).
 const PNG_SIG: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
 
 /// Whether `bytes` is an (animated) GIF — the one format Photos routes off the
-/// unified `rae_image` still path to `rae_gif` directly, so the single-view can
-/// loop all frames. Sniffed by MAGIC BYTES (via `rae_image::detect`, the same
+/// unified `ath_image` still path to `ath_gif` directly, so the single-view can
+/// loop all frames. Sniffed by MAGIC BYTES (via `ath_image::detect`, the same
 /// content-not-extension sniffer the dispatcher uses), never the file name.
 fn is_gif(buf: &[u8]) -> bool {
-    rae_image::detect(buf) == FileKind::Gif
+    ath_image::detect(buf) == FileKind::Gif
 }
 
 /// Whether `bytes` is a JPEG — used to gate EXIF-orientation handling (only JPEG
-/// carries the orientation tag Photos honors). Content-sniffed via `rae_image`.
+/// carries the orientation tag Photos honors). Content-sniffed via `ath_image`.
 fn is_jpeg(buf: &[u8]) -> bool {
-    rae_image::detect(buf) == FileKind::Jpeg
+    ath_image::detect(buf) == FileKind::Jpeg
 }
 
-/// Re-home a unified [`rae_image::Image`] into the app's [`DecodedImage`]. Both
+/// Re-home a unified [`ath_image::Image`] into the app's [`DecodedImage`]. Both
 /// are the identical ARGB8888 `Vec<u32>` model, so this is a field move, never a
 /// pixel convert.
-fn image_to_decoded(img: rae_image::Image) -> DecodedImage {
+fn image_to_decoded(img: ath_image::Image) -> DecodedImage {
     DecodedImage {
         width: img.width,
         height: img.height,
@@ -249,16 +249,16 @@ fn image_to_decoded(img: rae_image::Image) -> DecodedImage {
 /// JPEGs. Returns `None` on any unsupported/corrupt input (never panics).
 ///
 /// Still images (PNG/JPEG/BMP/WebP — and a GIF's first frame) go through the
-/// unified [`rae_image::decode`] dispatcher (one path, magic-byte routing); only
-/// JPEG then gets the EXIF-orientation transform applied (`rae_image` surfaces no
+/// unified [`ath_image::decode`] dispatcher (one path, magic-byte routing); only
+/// JPEG then gets the EXIF-orientation transform applied (`ath_image` surfaces no
 /// EXIF, so orientation is parsed from the original bytes and applied to the
 /// decoded buffer exactly as before). Animated GIFs keep all frames via
-/// [`App::open_single`]'s direct `rae_gif` path — here a GIF still resolves to its
-/// first frame (the thumbnail/Quick-Look representation), which `rae_image`
+/// [`App::open_single`]'s direct `ath_gif` path — here a GIF still resolves to its
+/// first frame (the thumbnail/Quick-Look representation), which `ath_image`
 /// already returns.
 fn decode_oriented(bytes: &[u8]) -> Option<DecodedImage> {
     let img = image_to_decoded(decode_image(bytes).ok()?);
-    // EXIF orientation is JPEG-only; apply it to the decoded buffer (rae_image
+    // EXIF orientation is JPEG-only; apply it to the decoded buffer (ath_image
     // does not rotate, so this preserves the prior behavior precisely).
     if is_jpeg(bytes) {
         let o = parse_orientation(bytes);
@@ -389,7 +389,7 @@ impl View {
 /// MAX_PIXELS posture — no unbounded allocation from one open).
 const DECODE_CAP: usize = 24 * 1024 * 1024; // 24 MiB
 
-// ── Persistent preferences (rae_toml) ─────────────────────────────────────────
+// ── Persistent preferences (ath_toml) ─────────────────────────────────────────
 //
 // LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. Photos persists its last library FOLDER, the view MODE (grid vs single),
@@ -442,7 +442,7 @@ impl Prefs {
     }
 
     /// Serialize the live preferences into an order-stable `Toml::Table` ready for
-    /// `rae_toml::to_string`. The schema is flat (no headers).
+    /// `ath_toml::to_string`. The schema is flat (no headers).
     fn to_toml(&self) -> Toml {
         let mut table: Vec<(String, Toml)> = Vec::new();
         table.push((
@@ -485,8 +485,8 @@ fn truncate_on_char_boundary(s: &str, max: usize) -> &str {
 fn prefs_dir() -> PathBuf {
     let mut p = PathBuf::new();
     let mut info = [0u8; 96];
-    if raekit::sys::session_info(&mut info).is_some() {
-        if let Some(home) = raekit::sys::session_home_from(&info) {
+    if athkit::sys::session_info(&mut info).is_some() {
+        if let Some(home) = athkit::sys::session_home_from(&info) {
             p.set(home);
             p.push_component(".config");
             return p;
@@ -497,12 +497,12 @@ fn prefs_dir() -> PathBuf {
 }
 
 /// Load preferences from `<home>/.config/photos.toml`. On ANY failure — file
-/// absent, unreadable, not UTF-8, or a `rae_toml::parse` error — returns the typed
+/// absent, unreadable, not UTF-8, or a `ath_toml::parse` error — returns the typed
 /// defaults. Never panics, never blocks the app from launching.
 fn load_prefs() -> Prefs {
     let mut path = prefs_dir();
     path.push_component("photos.toml");
-    let fd = raekit::sys::open(path.as_str(), 0);
+    let fd = athkit::sys::open(path.as_str(), 0);
     if fd == u64::MAX {
         return Prefs::defaults();
     }
@@ -513,34 +513,34 @@ fn load_prefs() -> Prefs {
         if data.len() > 64 * 1024 {
             break;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     let text = match core::str::from_utf8(&data) {
         Ok(s) => s,
         Err(_) => return Prefs::defaults(),
     };
-    match rae_toml::parse(text) {
+    match ath_toml::parse(text) {
         Ok(t) => Prefs::from_toml(&t),
         Err(_) => Prefs::defaults(),
     }
 }
 
 /// Persist `prefs` to `<home>/.config/photos.toml` (best effort). Creates the
-/// `.config` directory if missing, serializes via `rae_toml::to_string`, and
+/// `.config` directory if missing, serializes via `ath_toml::to_string`, and
 /// writes O_CREAT|O_TRUNC. A failure is silent — the app keeps running.
 fn save_prefs(prefs: &Prefs) {
     let dir = prefs_dir();
-    let _ = raekit::sys::mkdir(dir.as_str());
+    let _ = athkit::sys::mkdir(dir.as_str());
     let mut path = dir;
     path.push_component("photos.toml");
-    let text = rae_toml::to_string(&prefs.to_toml());
+    let text = ath_toml::to_string(&prefs.to_toml());
     // O_WRONLY | O_CREAT | O_TRUNC = 0x0241.
-    let fd = raekit::sys::open(path.as_str(), 0x0241);
+    let fd = athkit::sys::open(path.as_str(), 0x0241);
     if fd == u64::MAX {
         return;
     }
@@ -548,13 +548,13 @@ fn save_prefs(prefs: &Prefs) {
     let mut off = 0usize;
     while off < bytes.len() {
         let end = (off + 4096).min(bytes.len());
-        let n = raekit::sys::write(fd, &bytes[off..end]) as usize;
+        let n = athkit::sys::write(fd, &bytes[off..end]) as usize;
         if n == 0 {
             break;
         }
         off += n;
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
 }
 
 struct App {
@@ -586,8 +586,8 @@ impl App {
     fn pictures_dir() -> PathBuf {
         // Prefer <session home>/Pictures; fall back to a system bucket.
         let mut info = [0u8; 96];
-        if raekit::sys::session_info(&mut info).is_some() {
-            if let Some(home) = raekit::sys::session_home_from(&info) {
+        if athkit::sys::session_info(&mut info).is_some() {
+            if let Some(home) = athkit::sys::session_home_from(&info) {
                 let mut p = PathBuf::new();
                 p.set(home);
                 p.push_component("Pictures");
@@ -612,7 +612,7 @@ impl App {
             p
         };
         // Best-effort: ensure the bucket exists (idempotent).
-        let _ = raekit::sys::mkdir(dir.as_str());
+        let _ = athkit::sys::mkdir(dir.as_str());
         let mut app = Self {
             dir,
             photos: Vec::new(),
@@ -687,7 +687,7 @@ impl App {
         dirbuf[..dn].copy_from_slice(&self.dir.as_str().as_bytes()[..dn]);
         let dir = core::str::from_utf8(&dirbuf[..dn]).unwrap_or("/");
 
-        let count = raekit::sys::readdir_at(dir, &mut buf) as usize;
+        let count = athkit::sys::readdir_at(dir, &mut buf) as usize;
         let mut off = 0usize;
         for _ in 0..count {
             if off + 6 > buf.len() || self.photos.len() >= MAX_PHOTOS {
@@ -728,7 +728,7 @@ impl App {
         let mut path = PathBuf::new();
         path.set(self.dir.as_str());
         path.push_component(p.name());
-        let fd = raekit::sys::open(path.as_str(), 0);
+        let fd = athkit::sys::open(path.as_str(), 0);
         if fd == u64::MAX {
             return None;
         }
@@ -736,16 +736,16 @@ impl App {
         let mut chunk = [0u8; 4096];
         loop {
             if data.len() > DECODE_CAP {
-                let _ = raekit::sys::close(fd);
+                let _ = athkit::sys::close(fd);
                 return None;
             }
-            let n = raekit::sys::read(fd, &mut chunk) as usize;
+            let n = athkit::sys::read(fd, &mut chunk) as usize;
             if n == 0 || n > chunk.len() {
                 break;
             }
             data.extend_from_slice(&chunk[..n]);
         }
-        let _ = raekit::sys::close(fd);
+        let _ = athkit::sys::close(fd);
         if data.is_empty() {
             None
         } else {
@@ -783,7 +783,7 @@ impl App {
         // Reset any prior animation before decoding the new selection.
         self.anim = None;
         self.current_frame = 0;
-        self.last_advance_ns = raekit::sys::time_ns();
+        self.last_advance_ns = athkit::sys::time_ns();
         let bytes = self.read_photo_bytes(idx);
 
         // An animated GIF keeps all its frames so the single-view can loop them;
@@ -830,7 +830,7 @@ impl App {
             return false;
         }
         let delay_ms = (gif.frames[self.current_frame].delay_ms as u64).max(GIF_MIN_DELAY_MS);
-        let now = raekit::sys::time_ns();
+        let now = athkit::sys::time_ns();
         if now.saturating_sub(self.last_advance_ns) < delay_ms * 1_000_000 {
             return false;
         }
@@ -1000,7 +1000,7 @@ impl App {
                 self.close_single();
                 true
             }
-            Action::Close => raekit::sys::exit(0),
+            Action::Close => athkit::sys::exit(0),
             Action::None => false,
         }
     }
@@ -1129,9 +1129,9 @@ fn render(app: &mut App, canvas: &mut Canvas) {
     canvas.fill_rect_gradient(0, 0, WIN_W, TITLE_H, DARK.bg_elevated, TITLE_BG);
     canvas.draw_text_aa(
         12,
-        ((TITLE_H.saturating_sub(rae_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
+        ((TITLE_H.saturating_sub(ath_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
         "Photos",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -1140,15 +1140,15 @@ fn render(app: &mut App, canvas: &mut Canvas) {
         4,
         20,
         20,
-        rae_tokens::RADIUS_XS as usize,
+        ath_tokens::RADIUS_XS as usize,
         DARK.state_danger,
     );
-    let x_w = canvas.measure_text_aa("X", rae_tokens::TYPE_LABEL, FontFamily::Sans);
+    let x_w = canvas.measure_text_aa("X", ath_tokens::TYPE_LABEL, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 18) as i32 - x_w / 2,
-        (4 + (20 - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
+        (4 + (20 - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
         "X",
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         0xFF_FF_FF_FF,
         FontFamily::Sans,
     );
@@ -1157,13 +1157,13 @@ fn render(app: &mut App, canvas: &mut Canvas) {
     let tb_y = TITLE_H;
     canvas.fill_rect(0, tb_y, WIN_W, TOOLBAR_H, TOOLBAR_BG);
     let tb_ty = (tb_y
-        + (TOOLBAR_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+        + (TOOLBAR_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
         as i32;
     let lbl_w = canvas.draw_text_aa(
         12,
         tb_ty,
         "Library:",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -1171,7 +1171,7 @@ fn render(app: &mut App, canvas: &mut Canvas) {
         lbl_w + 18,
         tb_ty,
         app.dir.as_str(),
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         accent(),
         FontFamily::Sans,
     );
@@ -1185,14 +1185,14 @@ fn render(app: &mut App, canvas: &mut Canvas) {
     let st_y = WIN_H - STATUS_H;
     canvas.fill_rect(0, st_y, WIN_W, STATUS_H, STATUS_BG);
     let st_ty = (st_y
-        + (STATUS_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+        + (STATUS_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
         as i32;
     if !app.toast_str().is_empty() {
         canvas.draw_text_aa(
             12,
             st_ty,
             app.toast_str(),
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             DARK.state_danger,
             FontFamily::Sans,
         );
@@ -1204,7 +1204,7 @@ fn render(app: &mut App, canvas: &mut Canvas) {
                 12,
                 st_ty,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_MUTED,
                 FontFamily::Sans,
             );
@@ -1214,12 +1214,12 @@ fn render(app: &mut App, canvas: &mut Canvas) {
         View::Grid => "Enter:open  Arrows:move  Esc:quit",
         View::Single => "Left/Right:prev/next  Esc:grid",
     };
-    let hw = canvas.measure_text_aa(hint, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let hw = canvas.measure_text_aa(hint, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 12) as i32 - hw,
         st_ty,
         hint,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -1235,7 +1235,7 @@ fn render_grid(app: &mut App, canvas: &mut Canvas) {
             24,
             (grid_y + 24) as i32,
             "No photos in your Pictures library yet.",
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -1264,7 +1264,7 @@ fn render_grid(app: &mut App, canvas: &mut Canvas) {
                 cy.saturating_sub(4),
                 THUMB_W + 8,
                 THUMB_H + LABEL_H + 8,
-                rae_tokens::RADIUS_SM as usize,
+                ath_tokens::RADIUS_SM as usize,
                 sel_fill(),
             );
         }
@@ -1276,12 +1276,12 @@ fn render_grid(app: &mut App, canvas: &mut Canvas) {
         } else {
             // Placeholder: a broken-image glyph centered in the tile.
             let glyph = "[ x ]";
-            let gw = canvas.measure_text_aa(glyph, rae_tokens::TYPE_BODY, FontFamily::Sans);
+            let gw = canvas.measure_text_aa(glyph, ath_tokens::TYPE_BODY, FontFamily::Sans);
             canvas.draw_text_aa(
                 (cx + (THUMB_W - gw as usize) / 2) as i32,
                 (cy + THUMB_H / 2 - 8) as i32,
                 glyph,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 if p.attempted {
                     DARK.state_danger
                 } else {
@@ -1313,38 +1313,38 @@ fn render_single(app: &App, canvas: &mut Canvas) {
         back.y,
         back.w,
         back.h,
-        rae_tokens::RADIUS_XS as usize,
+        ath_tokens::RADIUS_XS as usize,
         DARK.bg_elevated,
     );
     let bl = "Grid";
-    let blw = canvas.measure_text_aa(bl, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+    let blw = canvas.measure_text_aa(bl, ath_tokens::TYPE_LABEL, FontFamily::Sans);
     canvas.draw_text_aa(
         back.x as i32 + (back.w as i32 - blw) / 2,
-        (back.y + (back.h - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
+        (back.y + (back.h - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
         bl,
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         TEXT_FG,
         FontFamily::Sans,
     );
     if app.photos.len() > 1 {
         let prev = single_prev_rect();
         let next = single_next_rect();
-        let chev_y = (prev.y + prev.h / 2 - rae_tokens::TYPE_TITLE.line_height as usize / 2) as i32;
-        let lw = canvas.measure_text_aa("<", rae_tokens::TYPE_TITLE, FontFamily::Sans);
+        let chev_y = (prev.y + prev.h / 2 - ath_tokens::TYPE_TITLE.line_height as usize / 2) as i32;
+        let lw = canvas.measure_text_aa("<", ath_tokens::TYPE_TITLE, FontFamily::Sans);
         canvas.draw_text_aa(
             (prev.x + (prev.w - lw as usize) / 2) as i32,
             chev_y,
             "<",
-            rae_tokens::TYPE_TITLE,
+            ath_tokens::TYPE_TITLE,
             accent(),
             FontFamily::Sans,
         );
-        let rw = canvas.measure_text_aa(">", rae_tokens::TYPE_TITLE, FontFamily::Sans);
+        let rw = canvas.measure_text_aa(">", ath_tokens::TYPE_TITLE, FontFamily::Sans);
         canvas.draw_text_aa(
             (next.x + (next.w - rw as usize) / 2) as i32,
             chev_y,
             ">",
-            rae_tokens::TYPE_TITLE,
+            ath_tokens::TYPE_TITLE,
             accent(),
             FontFamily::Sans,
         );
@@ -1369,7 +1369,7 @@ fn render_single(app: &App, canvas: &mut Canvas) {
             16,
             cap_y,
             name,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_FG,
             FontFamily::Sans,
         );
@@ -1378,7 +1378,7 @@ fn render_single(app: &App, canvas: &mut Canvas) {
                 16 + nw + 12,
                 cap_y,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 accent(),
                 FontFamily::Sans,
             );
@@ -1386,12 +1386,12 @@ fn render_single(app: &App, canvas: &mut Canvas) {
     } else {
         // Decode failed: a centered "can't display" message, app stays alive.
         let msg = "Can't display this image";
-        let mw = canvas.measure_text_aa(msg, rae_tokens::TYPE_BODY, FontFamily::Sans);
+        let mw = canvas.measure_text_aa(msg, ath_tokens::TYPE_BODY, FontFamily::Sans);
         canvas.draw_text_aa(
             ((WIN_W - mw as usize) / 2) as i32,
             (area_y + area_h / 2) as i32,
             msg,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             DARK.state_danger,
             FontFamily::Sans,
         );
@@ -1400,13 +1400,13 @@ fn render_single(app: &App, canvas: &mut Canvas) {
 
 /// Draw a file name clipped to `max_w` pixels (ellipsis when it overflows).
 fn draw_label_clipped(canvas: &mut Canvas, name: &str, x: usize, y: usize, max_w: usize, fg: u32) {
-    let full_w = canvas.measure_text_aa(name, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let full_w = canvas.measure_text_aa(name, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     if (full_w as usize) <= max_w {
         canvas.draw_text_aa(
             x as i32,
             y as i32,
             name,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             fg,
             FontFamily::Sans,
         );
@@ -1423,7 +1423,7 @@ fn draw_label_clipped(canvas: &mut Canvas, name: &str, x: usize, y: usize, max_w
         buf[t] = b'.';
         buf[t + 1] = b'.';
         if let Ok(s) = core::str::from_utf8(&buf[..t + 2]) {
-            let w = canvas.measure_text_aa(s, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+            let w = canvas.measure_text_aa(s, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
             if (w as usize) <= max_w {
                 clipped[..t + 2].copy_from_slice(&buf[..t + 2]);
                 if let Ok(cs) = core::str::from_utf8(&clipped[..t + 2]) {
@@ -1431,7 +1431,7 @@ fn draw_label_clipped(canvas: &mut Canvas, name: &str, x: usize, y: usize, max_w
                         x as i32,
                         y as i32,
                         cs,
-                        rae_tokens::TYPE_CAPTION,
+                        ath_tokens::TYPE_CAPTION,
                         fg,
                         FontFamily::Sans,
                     );
@@ -1495,10 +1495,10 @@ fn fmt_u64(mut v: u64, out: &mut [u8]) -> usize {
 /// pixels. Deliberately fail-able: a regression in token wiring, the decoder, the
 /// downscale math, or the EXIF transform flips this to `false` (exit code 3 at
 /// startup). This is the proof an ELF bin can carry (no `cargo test` here);
-/// `raemedia`'s own host KATs prove the decode/EXIF logic in isolation.
+/// `athmedia`'s own host KATs prove the decode/EXIF logic in isolation.
 #[must_use]
 pub fn design_proof() -> bool {
-    let ramp = rae_tokens::derive_accent(theme_seed(), &DARK);
+    let ramp = ath_tokens::derive_accent(theme_seed(), &DARK);
     let tokens_ok = accent() == ramp.base
         && sel_fill() == ramp.active
         && BG == DARK.bg_raised
@@ -1507,7 +1507,7 @@ pub fn design_proof() -> bool {
         && TEXT_FG == DARK.text_primary
         && TEXT_MUTED == DARK.text_secondary
         && STROKE_HL == DARK.stroke_strong
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
 
     let pipeline_ok = pipeline_decode_downscale_exif_ok();
 
@@ -1515,10 +1515,10 @@ pub fn design_proof() -> bool {
 }
 
 /// Prove the Photos PREFS SCHEMA: a known non-default `Prefs` serialized via
-/// `rae_toml` then re-parsed restores every field exactly (last folder, view mode,
+/// `ath_toml` then re-parsed restores every field exactly (last folder, view mode,
 /// last-selected photo), AND a corrupt / missing-key document resolves to the
 /// typed defaults (NOT a panic, NOT a wrong value). This proves the per-app prefs
-/// contract on top of `rae_toml`'s own parser KATs. Returns `false` on any drift
+/// contract on top of `ath_toml`'s own parser KATs. Returns `false` on any drift
 /// (→ exit(3) at startup).
 #[must_use]
 fn prefs_round_trip_ok() -> bool {
@@ -1528,8 +1528,8 @@ fn prefs_round_trip_ok() -> bool {
         single: true,
         last_photo: String::from("sunset 2.jpg"),
     };
-    let text = rae_toml::to_string(&p.to_toml());
-    let parsed = match rae_toml::parse(&text) {
+    let text = ath_toml::to_string(&p.to_toml());
+    let parsed = match ath_toml::parse(&text) {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -1548,7 +1548,7 @@ fn prefs_round_trip_ok() -> bool {
 
     // (c) A corrupt document → typed defaults (parse FAILS, we don't panic).
     let corrupt = "view = = oops\n[unterminated\n";
-    let d = match rae_toml::parse(corrupt) {
+    let d = match ath_toml::parse(corrupt) {
         Ok(t) => Prefs::from_toml(&t), // shouldn't reach here for this input
         Err(_) => Prefs::defaults(),
     };
@@ -1557,7 +1557,7 @@ fn prefs_round_trip_ok() -> bool {
     }
 
     // (d) A well-formed doc MISSING every prefs key → typed defaults per field.
-    let empty = match rae_toml::parse("unrelated = 1\n") {
+    let empty = match ath_toml::parse("unrelated = 1\n") {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -1567,7 +1567,7 @@ fn prefs_round_trip_ok() -> bool {
     }
 
     // (e) An unknown view token → the default Grid (single == false), not a crash.
-    let bad = match rae_toml::parse("view = \"bogus\"\nlast_photo = \"a.png\"\n") {
+    let bad = match ath_toml::parse("view = \"bogus\"\nlast_photo = \"a.png\"\n") {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -1580,10 +1580,10 @@ fn prefs_round_trip_ok() -> bool {
 }
 
 /// Prove the animated-GIF wiring (exit code 3 on failure): build a hand-rolled
-/// 2-frame GIF fixture, decode it through the real `rae_gif::decode_gif`, and
+/// 2-frame GIF fixture, decode it through the real `ath_gif::decode_gif`, and
 /// assert: (1) two frames, (2) the two frames' pixels DIFFER, (3) frame 0's
 /// thumbnail/still image is frame 0's color, and (4) the animation timer advances
-/// to frame 1 once frame 0's `delay_ms` has elapsed (but NOT before). `rae_gif`'s
+/// to frame 1 once frame 0's `delay_ms` has elapsed (but NOT before). `ath_gif`'s
 /// 17 host KATs prove the decode; this proves THIS app's wiring + the
 /// frame-advance timer logic. FAIL-able by construction.
 #[must_use]
@@ -1638,7 +1638,7 @@ fn gif_animation_proof() -> bool {
 
     // (4a) With `last_advance_ns` freshly stamped to NOW, no time has elapsed, so
     //      the timer must NOT advance (guards against an always-advance spin).
-    app.last_advance_ns = raekit::sys::time_ns();
+    app.last_advance_ns = athkit::sys::time_ns();
     app.current_frame = 0;
     if app.tick_animation() {
         return false;
@@ -1809,7 +1809,7 @@ fn hit_test_proof() -> bool {
     app_s.view == View::Grid
 }
 
-/// Build a 2x2 known-pixel PNG, decode it through `raemedia::png`, then assert:
+/// Build a 2x2 known-pixel PNG, decode it through `athmedia::png`, then assert:
 ///   (1) the four decoded ARGB pixels are exact,
 ///   (2) a thumbnail downscale to 8x8 nearest-samples the right source pixels,
 ///   (3) an EXIF 90°-CW rotation moves a known corner correctly.
@@ -1948,18 +1948,18 @@ fn build_test_png(width: u32, height: u32, raw_scanlines: &[u8]) -> Vec<u8> {
 /// `SYS_EXIT`).
 pub fn run() -> ! {
     if !design_proof() {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
 
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
     let mut app = App::new();
     render(&mut app, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     let mut extended = false;
     let mut left_was_down = false;
@@ -1969,7 +1969,7 @@ pub fn run() -> ! {
         let mut mouse_activity = false;
         let mut left_down = left_was_down;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -1978,20 +1978,20 @@ pub fn run() -> ! {
         }
         if mouse_activity || left_down != left_was_down {
             if left_down && !left_was_down {
-                let (cx, cy, _btn) = raekit::sys::cursor_pos();
+                let (cx, cy, _btn) = athkit::sys::cursor_pos();
                 // Subtract the LIVE window origin (not the stale present-time
                 // PRESENT_X/Y) so clicks land correctly after the window manager
                 // moves the window (Overview / Spaces / tiling). Falls back to the
                 // present origin if the surface isn't found. Saturating-sub keeps a
                 // cursor above/left of the window from underflowing.
-                let (ox, oy) = raekit::sys::surface_origin(sid)
+                let (ox, oy) = athkit::sys::surface_origin(sid)
                     .unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
                 let lx = (cx as i32).saturating_sub(ox as i32);
                 let ly = (cy as i32).saturating_sub(oy as i32);
                 let action = app.hit(lx, ly);
                 if app.dispatch(action) {
                     render(&mut app, &mut canvas);
-                    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 }
             }
             left_was_down = left_down;
@@ -2002,12 +2002,12 @@ pub fn run() -> ! {
         //    the delay); only re-presents when the frame actually changes. ──
         if app.view == View::Single && app.tick_animation() {
             render(&mut app, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
         let sc = key as u8;
@@ -2055,7 +2055,7 @@ pub fn run() -> ! {
                     dirty = true;
                 } // 'r' = rescan library
                 (false, 0x01) => {
-                    raekit::sys::exit(0);
+                    athkit::sys::exit(0);
                 } // Esc = quit
                 _ => {}
             },
@@ -2082,7 +2082,7 @@ pub fn run() -> ! {
 
         if dirty {
             render(&mut app, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
     }
 }
@@ -2091,7 +2091,7 @@ pub fn run() -> ! {
 // Host KAT — `cargo test -p photos --features host`. FAIL-able by construction.
 //
 // The slice this proves: Photos' still-image open path ([`decode_oriented`]) now
-// goes through the unified `rae_image` dispatcher, so it opens BMP and WebP IN
+// goes through the unified `ath_image` dispatcher, so it opens BMP and WebP IN
 // ADDITION to the existing PNG/JPEG/GIF. The test feeds an in-memory BMP and an
 // in-memory WebP (the NEW formats) plus a PNG control (no regression) through the
 // EXACT function the live grid/single-view call, and asserts a non-empty bitmap
@@ -2099,8 +2099,8 @@ pub fn run() -> ! {
 // format, an R/B swap, or a dimension bug fails the test.
 //
 // Fixtures are hand-built minimal real headers (BMP 24-bpp bottom-up; WebP VP8L
-// single-symbol Huffman) mirroring `rae_image`'s own proven KAT corpus, and a PNG
-// control encoded via the in-tree `rae_image::encode`. Under #[cfg(test)] the
+// single-symbol Huffman) mirroring `ath_image`'s own proven KAT corpus, and a PNG
+// control encoded via the in-tree `ath_image::encode`. Under #[cfg(test)] the
 // crate builds as std, so `Vec`/`vec!` come from the imported `alloc`.
 // ════════════════════════════════════════════════════════════════════════════
 #[cfg(test)]
@@ -2109,7 +2109,7 @@ mod tests {
     use alloc::vec;
 
     /// A tiny LSB-first bit writer for hand-building the VP8L bitstream (the same
-    /// construction `rae_image`'s WebP KAT uses).
+    /// construction `ath_image`'s WebP KAT uses).
     struct BitWriter {
         bytes: Vec<u8>,
         cur: u32,
@@ -2179,7 +2179,7 @@ mod tests {
 
     /// Hand-build a minimal lossless VP8L WebP carrying a solid-color image (no
     /// transforms, no color cache, no meta-Huffman, five single-symbol "simple"
-    /// Huffman code groups) — the exact bit layout `rae_image`'s WebP KAT uses.
+    /// Huffman code groups) — the exact bit layout `ath_image`'s WebP KAT uses.
     fn webp_solid(width: u32, height: u32, a: u8, r: u8, g: u8, b: u8) -> Vec<u8> {
         let mut w = BitWriter::new();
         w.put(0x2F, 8); // VP8L signature
@@ -2220,20 +2220,20 @@ mod tests {
     /// A real 2x2 PNG via the in-tree encoder (the no-regression control):
     ///   (0,0)=red (1,0)=green / (0,1)=blue (1,1)=white.
     fn png_2x2() -> Vec<u8> {
-        let img = rae_image::Image {
+        let img = ath_image::Image {
             width: 2,
             height: 2,
             pixels: vec![0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF],
         };
-        rae_image::encode(&img, rae_image::ImageFormat::Png).expect("encode png control")
+        ath_image::encode(&img, ath_image::ImageFormat::Png).expect("encode png control")
     }
 
     // ── 1. NEW: Photos now opens a BMP through its real decode dispatch ───────
     #[test]
     fn photos_opens_bmp() {
         let bytes = bmp_2x2();
-        assert_eq!(rae_image::detect(&bytes), FileKind::Bmp);
-        let img = decode_oriented(&bytes).expect("photos decodes BMP via rae_image");
+        assert_eq!(ath_image::detect(&bytes), FileKind::Bmp);
+        let img = decode_oriented(&bytes).expect("photos decodes BMP via ath_image");
         assert_eq!((img.width, img.height), (2, 2));
         assert!(!img.pixels.is_empty());
         assert_eq!(img.pixel(0, 0), Some((0xFF, 255, 0, 0))); // red
@@ -2249,8 +2249,8 @@ mod tests {
     fn photos_opens_webp() {
         // 2x1 solid green (A=255, R=0, G=255, B=0).
         let bytes = webp_solid(2, 1, 255, 0, 255, 0);
-        assert_eq!(rae_image::detect(&bytes), FileKind::Webp);
-        let img = decode_oriented(&bytes).expect("photos decodes WebP via rae_image");
+        assert_eq!(ath_image::detect(&bytes), FileKind::Webp);
+        let img = decode_oriented(&bytes).expect("photos decodes WebP via ath_image");
         assert_eq!((img.width, img.height), (2, 1));
         assert!(!img.pixels.is_empty());
         assert_eq!(img.pixel(0, 0), Some((0xFF, 0, 255, 0))); // green, opaque
@@ -2263,8 +2263,8 @@ mod tests {
     #[test]
     fn photos_opens_png_no_regression() {
         let bytes = png_2x2();
-        assert_eq!(rae_image::detect(&bytes), FileKind::Png);
-        let img = decode_oriented(&bytes).expect("photos decodes PNG via rae_image");
+        assert_eq!(ath_image::detect(&bytes), FileKind::Png);
+        let img = decode_oriented(&bytes).expect("photos decodes PNG via ath_image");
         assert_eq!((img.width, img.height), (2, 2));
         assert_eq!(img.pixel(0, 0), Some((0xFF, 255, 0, 0))); // red
         assert_eq!(img.pixel(1, 0), Some((0xFF, 0, 255, 0))); // green

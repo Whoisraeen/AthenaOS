@@ -391,7 +391,7 @@ pub fn verify_rrsig(
                 Ok(s) => s,
                 Err(_) => return DnssecStatus::Bogus,
             };
-            if rae_crypto::ed25519::verify(&pk, &data, &sig) {
+            if ath_crypto::ed25519::verify(&pk, &data, &sig) {
                 DnssecStatus::Secure
             } else {
                 DnssecStatus::Bogus
@@ -403,7 +403,7 @@ pub fn verify_rrsig(
             // bytes). The signed data is SHA-256-hashed then ECDSA-P256
             // verified — `p256_ecdsa::verify` does the SHA-256 internally and
             // accepts both the raw 64-byte key and the raw 64-byte signature.
-            if rae_crypto::p256_ecdsa::verify(&dnskey.public_key, &data, &rrsig.signature) {
+            if ath_crypto::p256_ecdsa::verify(&dnskey.public_key, &data, &rrsig.signature) {
                 DnssecStatus::Secure
             } else {
                 DnssecStatus::Bogus
@@ -475,7 +475,7 @@ pub fn verify_rrsig(
             // ECDSA-P384 verified — `p384_ecdsa::verify` does the SHA-384
             // internally and accepts both the raw 96-byte key and the raw
             // 96-byte signature. This closes DNSSEC to algorithm-complete.
-            if rae_crypto::p384_ecdsa::verify(&dnskey.public_key, &data, &rrsig.signature) {
+            if ath_crypto::p384_ecdsa::verify(&dnskey.public_key, &data, &rrsig.signature) {
                 DnssecStatus::Secure
             } else {
                 DnssecStatus::Bogus
@@ -541,7 +541,7 @@ pub fn verify_ds(ds: &Ds, dnskey: &Dnskey, owner: &str) -> bool {
     }
     let mut input = encode_name_canonical(owner);
     input.extend_from_slice(&dnskey_rdata(dnskey));
-    let computed = rae_crypto::sha256::sha256(&input);
+    let computed = ath_crypto::sha256::sha256(&input);
     crate::crypto::ct_eq(&computed, &ds.digest)
 }
 
@@ -1976,7 +1976,7 @@ pub fn run_boot_smoketest() {
 
     // 4. Query construction: header + encoded name + qtype(A=1) + class(IN=1).
     let mut r = DnsResolver::new();
-    let q = r.build_query("raeen.dev", DnsQueryType::A);
+    let q = r.build_query("athena.dev", DnsQueryType::A);
     let query_ok = DnsHeader::parse(&q)
         .map(|x| x.qd_count == 1 && x.an_count == 0)
         .unwrap_or(false)
@@ -2552,12 +2552,12 @@ pub fn run_boot_smoketest() {
     //    RRSIG over their DNSKEY RRset (that would need the zone's private key,
     //    which the RFCs do not publish). So — exactly like the WireGuard
     //    loopback precedent — we build a minimal SELF-CONSISTENT chain here by
-    //    generating a test KSK + ZSK with rae_crypto::ed25519 and signing the
+    //    generating a test KSK + ZSK with ath_crypto::ed25519 and signing the
     //    DNSKEY RRset (KSK) and an answer RRset (ZSK) ourselves. This is an
     //    INTERNAL-CONSISTENCY proof of the chain-walk logic (fail-closed
     //    verdicts, tamper detection); the cryptographic verify/DS primitives are
     //    separately proven above against the REAL published RFC signatures.
-    let ct_owner = "raenet.test";
+    let ct_owner = "athnet.test";
     let ksk_seed: [u8; 32] = [
         0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
         0x00, 0x0f, 0x1e, 0x2d, 0x3c, 0x4b, 0x5a, 0x69, 0x78, 0x87, 0x96, 0xa5, 0xb4, 0xc3, 0xd2,
@@ -2572,13 +2572,13 @@ pub fn run_boot_smoketest() {
         flags: 257, // KSK: Zone Key + SEP
         protocol: 3,
         algorithm: 15, // Ed25519
-        public_key: rae_crypto::ed25519::derive_public_key(&ksk_seed).to_vec(),
+        public_key: ath_crypto::ed25519::derive_public_key(&ksk_seed).to_vec(),
     };
     let zsk = Dnskey {
         flags: 256, // ZSK: Zone Key, no SEP
         protocol: 3,
         algorithm: 15,
-        public_key: rae_crypto::ed25519::derive_public_key(&zsk_seed).to_vec(),
+        public_key: ath_crypto::ed25519::derive_public_key(&zsk_seed).to_vec(),
     };
     let ct_dnskeys = alloc::vec![ksk, zsk];
     let ksk_tag = dnskey_key_tag(&ct_dnskeys[0]);
@@ -2591,7 +2591,7 @@ pub fn run_boot_smoketest() {
         key_tag: ksk_tag,
         algorithm: 15,
         digest_type: 2,
-        digest: rae_crypto::sha256::sha256(&ds_input).to_vec(),
+        digest: ath_crypto::sha256::sha256(&ds_input).to_vec(),
     };
 
     // Validity window bracketing our test `now`.
@@ -2620,7 +2620,7 @@ pub fn run_boot_smoketest() {
         signature: Vec::new(),
     };
     let dnskey_signed = dnssec_signed_data(&dnskey_sig, ct_owner, &dnskey_canon);
-    dnskey_sig.signature = rae_crypto::ed25519::sign(&ksk_seed, &dnskey_signed).to_vec();
+    dnskey_sig.signature = ath_crypto::ed25519::sign(&ksk_seed, &dnskey_signed).to_vec();
 
     // Answer RRset (A 203.0.113.5 at the apex) signed by the ZSK.
     let answer_rrset = [CanonicalRr {
@@ -2640,7 +2640,7 @@ pub fn run_boot_smoketest() {
         signature: Vec::new(),
     };
     let answer_signed = dnssec_signed_data(&answer_sig, ct_owner, &answer_rrset);
-    answer_sig.signature = rae_crypto::ed25519::sign(&zsk_seed, &answer_signed).to_vec();
+    answer_sig.signature = ath_crypto::ed25519::sign(&zsk_seed, &answer_signed).to_vec();
 
     // 1. A genuine anchor-DS → DNSKEY-RRset → answer-RRset chain ⇒ Secure.
     check(
@@ -2903,9 +2903,9 @@ pub fn run_boot_smoketest() {
 
     // ── DNSSEC recursive multi-zone delegation walk — validate_with_delegation ──
     //    Build a 3-zone hierarchy IN THE TEST — root "." , "com.", "example.com."
-    //    — each with its own KSK + ZSK (rae_crypto::ed25519). Each zone signs its
+    //    — each with its own KSK + ZSK (ath_crypto::ed25519). Each zone signs its
     //    DNSKEY RRset with its KSK; each PARENT publishes a signed DS committing
-    //    to its child's KSK (rae_crypto::sha256), signed by the parent's ZSK; and
+    //    to its child's KSK (ath_crypto::sha256), signed by the parent's ZSK; and
     //    example.com signs an A answer at www.example.com with its ZSK. A
     //    `MockFetcher` returns these signed records so the WALK logic is proven
     //    end-to-end with ZERO network (the live UDP `DnssecFetcher` is the tail).
@@ -2920,7 +2920,7 @@ pub fn run_boot_smoketest() {
             flags,
             protocol: 3,
             algorithm: 15,
-            public_key: rae_crypto::ed25519::derive_public_key(&seed).to_vec(),
+            public_key: ath_crypto::ed25519::derive_public_key(&seed).to_vec(),
         };
         (seed, dk)
     };
@@ -2949,7 +2949,7 @@ pub fn run_boot_smoketest() {
             signature: Vec::new(),
         };
         let data = dnssec_signed_data(&sig, owner, rrset);
-        sig.signature = rae_crypto::ed25519::sign(seed, &data).to_vec();
+        sig.signature = ath_crypto::ed25519::sign(seed, &data).to_vec();
         sig
     };
     // Parent's DS for a child: SHA-256(canonical child zone ‖ child KSK RDATA).
@@ -2960,7 +2960,7 @@ pub fn run_boot_smoketest() {
             key_tag: dnskey_key_tag(child_ksk),
             algorithm: 15,
             digest_type: 2,
-            digest: rae_crypto::sha256::sha256(&input).to_vec(),
+            digest: ath_crypto::sha256::sha256(&input).to_vec(),
         }
     };
     let dnskey_canon = |keys: &[Dnskey]| -> Vec<CanonicalRr> {
@@ -3223,7 +3223,7 @@ pub fn run_boot_smoketest() {
     }
 }
 
-/// `/proc/raeen/dns` — global resolver upstream servers and static hosts.
+/// `/proc/athena/dns` — global resolver upstream servers and static hosts.
 /// MasterChecklist Phase 10.
 pub fn dump_text() -> String {
     let guard = DNS_RESOLVER.lock();

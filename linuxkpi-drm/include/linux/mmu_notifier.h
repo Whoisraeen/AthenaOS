@@ -5,7 +5,7 @@
  * MMU notifiers — callbacks when the CPU page tables backing a userptr/SVM range
  * change, so the GPU can invalidate its mapping. Not on the MES bring-up path
  * (userptr/SVM is out of subset); reached via amdgpu_hmm.h for type layout. The
- * register/invalidate machinery is backed by raeen_linuxkpi at M4 when SVM is in
+ * register/invalidate machinery is backed by ath_linuxkpi at M4 when SVM is in
  * scope. License boundary (../../README.md): API surface, no GPL source.
  */
 #ifndef _LINUXKPI_LINUX_MMU_NOTIFIER_H
@@ -49,7 +49,7 @@ struct mmu_interval_notifier {
 	unsigned long invalidate_seq;
 };
 
-/* backed by raeen_linuxkpi (M4) */
+/* backed by ath_linuxkpi (M4) */
 int  mmu_interval_notifier_insert(struct mmu_interval_notifier *interval_sub, struct mm_struct *mm,
 				  unsigned long start, unsigned long length,
 				  const struct mmu_interval_notifier_ops *ops);

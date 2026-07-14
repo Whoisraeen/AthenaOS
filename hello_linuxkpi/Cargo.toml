@@ -7,4 +7,4 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
-raeen_linuxkpi = { path = "../components/raeen_linuxkpi" }
+ath_linuxkpi = { path = "../components/ath_linuxkpi" }

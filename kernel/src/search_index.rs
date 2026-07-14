@@ -101,7 +101,7 @@ struct Index {
     items: BTreeMap<u64, Item>,
     /// token -> set of item ids that contain that token
     postings: BTreeMap<String, BTreeSet<u64>>,
-    /// rolling stats for /proc/raeen/search
+    /// rolling stats for /proc/athena/search
     queries_total: u64,
     last_query_cycles: u64,
     best_query_cycles: u64,
@@ -472,7 +472,7 @@ pub fn query_resolved(query: &str, max: usize) -> Vec<ItemInfo> {
 }
 
 /// Kind discriminant as the on-the-wire `u32` tag (mirrors
-/// `rae_abi::SEARCH_KIND_*`). Used by [`serialize_resolved`].
+/// `ath_abi::SEARCH_KIND_*`). Used by [`serialize_resolved`].
 #[inline]
 fn kind_tag(k: Kind) -> u32 {
     k as u32
@@ -493,21 +493,21 @@ fn truncate_on_char_boundary(s: &str, max: usize) -> &str {
 
 /// Serialize the resolved hits for `query` into the documented
 /// `SYS_SEARCH_QUERY_RESOLVED` (281) wire format: back-to-back records, each a
-/// 24-byte [`rae_abi::SearchResolvedHeader`] followed by `name_len` UTF-8 name
+/// 24-byte [`ath_abi::SearchResolvedHeader`] followed by `name_len` UTF-8 name
 /// bytes then `path_len` UTF-8 path bytes. Returns `(bytes, count)`.
 ///
 /// Only WHOLE records that fit in `out_cap_bytes` are emitted (a partial
 /// trailing record is never produced), the count is capped at
-/// [`rae_abi::syscall::SEARCH_RESOLVED_MAX_RESULTS`], and each name/path is
-/// truncated to [`rae_abi::syscall::SEARCH_RESOLVED_MAX_STR`] on a char boundary.
+/// [`ath_abi::syscall::SEARCH_RESOLVED_MAX_RESULTS`], and each name/path is
+/// truncated to [`ath_abi::syscall::SEARCH_RESOLVED_MAX_STR`] on a char boundary.
 /// PURE serialization over the resolved `ItemInfo` list — the syscall arm
 /// `copy_to_user`s the returned bytes. The id is not carried by `ItemInfo`
 /// (the palette opens by path, not id), so the header `id` is `0` here; a future
 /// resolver that surfaces the id fills it without a format change.
 pub fn serialize_resolved(query: &str, out_cap_bytes: usize) -> (Vec<u8>, usize) {
-    let max_results = rae_abi::syscall::SEARCH_RESOLVED_MAX_RESULTS;
-    let max_str = rae_abi::syscall::SEARCH_RESOLVED_MAX_STR;
-    let header_size = rae_abi::syscall::SEARCH_RESOLVED_HEADER_SIZE;
+    let max_results = ath_abi::syscall::SEARCH_RESOLVED_MAX_RESULTS;
+    let max_str = ath_abi::syscall::SEARCH_RESOLVED_MAX_STR;
+    let header_size = ath_abi::syscall::SEARCH_RESOLVED_HEADER_SIZE;
 
     let hits = query_resolved(query, max_results);
     let mut out: Vec<u8> = Vec::new();
@@ -524,7 +524,7 @@ pub fn serialize_resolved(query: &str, out_cap_bytes: usize) -> (Vec<u8>, usize)
         if out.len() + rec_len > out_cap_bytes {
             break;
         }
-        // Header (little-endian, matches rae_abi::SearchResolvedHeader layout).
+        // Header (little-endian, matches ath_abi::SearchResolvedHeader layout).
         out.extend_from_slice(&0u64.to_le_bytes()); // id (ItemInfo carries none)
         out.extend_from_slice(&kind_tag(info.kind).to_le_bytes()); // kind
         out.push(if info.is_folder { 1 } else { 0 }); // is_folder
@@ -833,15 +833,15 @@ pub fn run_boot_smoketest() {
     // assert the exact hit. An empty index or a broken query returns 0 hits →
     // FAIL. This proves the crawler→index→query pipe end-to-end without
     // depending on a logged-in session (the live home crawl runs post-login).
-    const PROBE: &str = "raeenzzz_searchprobe_quux";
-    const PROBE_NAME: &str = "raeenzzz_searchprobe_quux.txt";
-    const PROBE_PATH: &str = "/home/raeen/Documents/raeenzzz_searchprobe_quux.txt";
+    const PROBE: &str = "athenazzz_searchprobe_quux";
+    const PROBE_NAME: &str = "athenazzz_searchprobe_quux.txt";
+    const PROBE_PATH: &str = "/home/athena/Documents/athenazzz_searchprobe_quux.txt";
     // Seed the probe entry through the SAME path the crawler uses (add_item_full),
     // so the resolver sees the exact name/path/folder fields the palette will.
     let before = stats().items;
     add_item_full(
         Kind::Document,
-        "raeenzzz_searchprobe_quux Documents",
+        "athenazzz_searchprobe_quux Documents",
         PROBE_NAME,
         PROBE_PATH,
         false,
@@ -851,7 +851,7 @@ pub fn run_boot_smoketest() {
         Kind::File,
         "Vacation_Photos Pictures",
         "Vacation_Photos",
-        "/home/raeen/Pictures/Vacation_Photos",
+        "/home/athena/Pictures/Vacation_Photos",
         true,
     );
     add_item(Kind::Document, "Budget_2026 Documents");
@@ -875,18 +875,18 @@ pub fn run_boot_smoketest() {
     let folder_ok = folder.len() == 1
         && folder[0].name == "Vacation_Photos"
         && folder[0].is_folder
-        && folder[0].path == "/home/raeen/Pictures/Vacation_Photos";
+        && folder[0].path == "/home/athena/Pictures/Vacation_Photos";
 
     let after = stats().items;
 
     // ── FAIL-able SYS_SEARCH_QUERY_RESOLVED (281) wire round-trip ──────────
     //
     // Serialize the probe hit through the EXACT encoder the syscall arm uses
-    // (serialize_resolved → the rae_abi::SearchResolvedHeader wire format), then
+    // (serialize_resolved → the ath_abi::SearchResolvedHeader wire format), then
     // decode it back here with a defensive walk and assert the name/path/kind/
     // folder-flag survive the round-trip. A broken encoder (wrong offsets, bad
     // length fields, truncated payload) makes this FAIL — it proves the kernel
-    // half of the contract the raekit host KAT proves on the decoder half.
+    // half of the contract the athkit host KAT proves on the decoder half.
     let (wire, wire_count) = serialize_resolved(PROBE, 4096);
     let decoded = decode_resolved_for_test(&wire, wire_count);
     let wire_ok = wire_count == 1
@@ -927,12 +927,12 @@ pub fn run_boot_smoketest() {
 }
 
 /// Defensive decoder used ONLY by the boot smoketest to verify the
-/// `serialize_resolved` wire output round-trips. Mirrors the raekit decoder's
+/// `serialize_resolved` wire output round-trips. Mirrors the athkit decoder's
 /// bounds discipline: clamp the walk to `count`, bounds-check every header +
 /// payload length against the remaining buffer, and stop (never panic) on a
 /// short/garbage record. Returns `(name, path, kind, is_folder)` per record.
 fn decode_resolved_for_test(buf: &[u8], count: usize) -> Vec<(String, String, u32, bool)> {
-    let header = rae_abi::syscall::SEARCH_RESOLVED_HEADER_SIZE;
+    let header = ath_abi::syscall::SEARCH_RESOLVED_HEADER_SIZE;
     let mut out = Vec::new();
     let mut off = 0usize;
     for _ in 0..count {

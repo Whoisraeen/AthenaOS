@@ -8,7 +8,7 @@ Honest assessment so nobody (human or agent) mistakes the foundation for the fin
 - `mes_v11_0.c` (our target) is 11 `#include`s, but one of them is `amdgpu.h` —
   **74 includes deep**, transitively the entire driver's struct graph + DRM + TTM +
   the Linux kernel API.
-- `raeen_linuxkpi` already implements **488 C-ABI functions**. That is a real head
+- `ath_linuxkpi` already implements **488 C-ABI functions**. That is a real head
   start, but it is the *implementation* side. The **C header shim** that declares
   those functions AND the hundreds of kernel *types/macros* amdgpu needs
   (`struct device`, `pci_dev`, `dma_fence`, `drm_device`, `ttm_*`, `REG_SET_FIELD`,
@@ -40,7 +40,7 @@ hours.
 | **M1 structs** ✅ | none — `mes_v11_api_def.h` + `v11_structs.h` are stdint/stdbool only. |
 | **M2 preprocess** | provide every `linux/*.h` + `drm/*.h` `mes_v11_0.c` reaches. `amdgpu.h` is the dragon: 74 includes. |
 | **M3 compile** | `struct amdgpu_device` + ~40 sub-block structs must typecheck. `WREG32_SOC15`/`REG_SET_FIELD`/`soc15_common.h` macros must expand. This is where most of the type shim gets written. |
-| **M4 link** | map every undefined symbol to a `raeen_linuxkpi` export or a new shim. Build `raeen_linuxkpi` as a `staticlib` (the `clib` feature, currently deferred). |
+| **M4 link** | map every undefined symbol to a `ath_linuxkpi` export or a new shim. Build `ath_linuxkpi` as a `staticlib` (the `clib` feature, currently deferred). |
 | **M5 run** | wire the linked amdgpu objects into `amdgpud`, feed it the real BAR/IRQ/DMA via the existing `GpuOps`/userspace-driver path, and run its init against the live Athena GPU. |
 
 ## What success looks like
@@ -54,5 +54,5 @@ the gate to real rendering = the gate to games.
 
 If a specific milestone stalls, the `docs/gpu-oracle/` loop (ftrace/mmiotrace the live
 driver, no flash) can extract the exact broader-init register delta and we port *just
-that* into `components/raeen_amdgpu` — cheaper if the gap turns out to be small. The
+that* into `components/ath_amdgpu` — cheaper if the gap turns out to be small. The
 two tracks share the same oracle infrastructure.

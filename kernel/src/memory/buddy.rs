@@ -258,7 +258,7 @@ impl BuddyAllocator {
     }
 
     /// Snapshot the free-list cardinality at each order. Used by
-    /// `/proc/raeen/buddy` so userspace and the boot dump can see
+    /// `/proc/athena/buddy` so userspace and the boot dump can see
     /// fragmentation state without locking the allocator for long.
     pub fn order_counts(&self) -> [usize; MAX_ORDER] {
         let mut counts = [0usize; MAX_ORDER];
@@ -266,7 +266,7 @@ impl BuddyAllocator {
         // A valid free-list node is a page-aligned physical address in range.
         // Without this guard a corrupted `next` pointer (seen as text-like
         // garbage) feeds a bogus address into `phys_to_virt`, panicking with a
-        // non-canonical VirtAddr while the /proc/raeen/buddy boot dump walks the
+        // non-canonical VirtAddr while the /proc/athena/buddy boot dump walks the
         // list. Stop the walk on the first implausible node instead of faulting.
         let valid = |p: u64| p != 0 && p < max_addr && (p & 0xFFF) == 0;
         for o in 0..MAX_ORDER {

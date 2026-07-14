@@ -78,7 +78,7 @@ of the three** and the right first impression.
   **4.27:1** — just under AA, where the clock's top edge sits; the §2.3 cap should pull
   this ≥4.5. (b) The **warm rim stop is absent** (0/4080 bottom-edge warm px — see §4).
   (c) The card feels slightly small/centered-generic vs macOS's full-bleed lock with the
-  time top-anchored; this is a composition choice, flag to **raeen-shell-apps** as a
+  time top-anchored; this is a composition choice, flag to **athena-shell-apps** as a
   "does this match the macOS lock gravity" question, not a defect.
 
 **Verdict: matches core-surface quality. Ship-worthy. No defect blocks it.**
@@ -100,8 +100,8 @@ right-aligned shortcut hints, and separators.
   pushing **white text to CR 3.73–3.94:1 — AA FAIL.** This is exactly the §2.3/§9
   legibility-luma-cap failure class: the cap is not biting hard enough on the popover
   tier over a bright backdrop region. The disabled row uses `text.tertiary` which is
-  even dimmer → worse. **Owner: raeen-gfx** (cap must clamp the composited interior over
-  the bright bleed) + **raeen-accessibility** (confirm ratio). This is the one genuine
+  even dimmer → worse. **Owner: athena-gfx** (cap must clamp the composited interior over
+  the bright bleed) + **athena-accessibility** (confirm ratio). This is the one genuine
   new regression of the round.
 
 **Verdict: good bones, but the lower-third legibility drop keeps it at B−. Fixable
@@ -122,7 +122,7 @@ and right-aligned category tags.
 - **Nits:** (a) **warm rim absent** (0/6000 bottom-edge warm px). (b) The palette interior
   bottom (L104) is fine for white primary text (CR 4.91), but the **secondary path text**
   on result rows is unmeasurable at this zoom and is the R8-flagged class where
-  `text.secondary` over bright popover can't reach 4.5:1 — **route to raeen-shell-apps to
+  `text.secondary` over bright popover can't reach 4.5:1 — **route to athena-shell-apps to
   confirm path/secondary text is promoted to `text.primary`** per IDENTITY §9 note.
 
 **Verdict: competitive, matches core quality. No blocking defect; the rim + secondary-text
@@ -151,7 +151,7 @@ legibility drop, which is a render-cap fix, not a design miss.
   panel is 45% — chrome must be *visibly more see-through* than panel. Right now they
   read the same. The "chrome floats on the wallpaper, most backdrop shows" intent (§7) is
   not landing — chrome needs to drop alpha / show more backdrop relative to panel. **Owner:
-  raeen-gfx.**
+  athena-gfx.**
 
 **Iridescent rim — INCONSISTENT and INCOMPLETE (the headline consistency defect):**
 
@@ -173,7 +173,7 @@ legibility drop, which is a render-cap fix, not a design miss.
   **two-stop cyan→violet sweep, never reaching the warm third stop at the bottom.** This
   is the single most consistent identity defect across the entire set. (The lone warm pixel
   found anywhere was one (219,190,109) artifact on a context-menu *internal* separator at
-  y269, not the rim.) **Owner: raeen-gfx** — the perimeter hue interpolation is not
+  y269, not the rim.) **Owner: athena-gfx** — the perimeter hue interpolation is not
   completing the bottom arc, or the warm stop alpha is being lost in the additive blend
   over the blue backdrop.
 
@@ -194,7 +194,7 @@ selection/hover rows carry dark-on-accent ink correctly; no surface drowns label
 **Legibility — mostly holds, two soft spots:** white `text.primary` clears AA on Files/CC/
 Settings/Start/taskbar/lock-body/palette-body. **Fails** in (a) context-menu lower third
 (3.7–3.9:1) and (b) lock card top band (4.27:1). Both are the §2.3 cap not biting over
-bright aurora bleed — route to **raeen-gfx + raeen-accessibility**.
+bright aurora bleed — route to **athena-gfx + athena-accessibility**.
 
 **Surfaces that DRIFT:** (1) **taskbar** — chrome tier not distinct from panel; (2)
 **context menu** — lower-third legibility. Everything else is in-system.
@@ -212,7 +212,7 @@ Tagged by blocker status. **Doable-now items alone are worth an estimated +4–5
    completes cyan→violet only. → Fix the perimeter hue interpolation so the bottom arc
    reaches `GLASS_EDGE_WARM 0x40FFC97C`; ensure the additive blend preserves the warm hue
    over a blue backdrop (it's currently being swamped). **Target:** ≥2% warm px on each
-   surface's bottom edge, visible amber at the BR corner. **Owner: raeen-gfx.**
+   surface's bottom edge, visible amber at the BR corner. **Owner: athena-gfx.**
    *Highest-leverage doable-now — it's the literal "instantly recognizable" signature, and
    it's missing on every surface.* **~2 pts.**
 
@@ -220,49 +220,49 @@ Tagged by blocker status. **Doable-now items alone are worth an estimated +4–5
    The §2.3/§9 legibility luma cap isn't biting on the popover tier over a bright backdrop
    region. → Clamp the composited popover interior to `GLASS_INTERIOR_LUMA_CEIL 0.40` where
    it sits over the bright bleed. **Target:** white `text.primary` ≥4.5:1 across the whole
-   menu. **Owner: raeen-gfx** + **raeen-accessibility** (confirm). **~1 pt.**
+   menu. **Owner: athena-gfx** + **athena-accessibility** (confirm). **~1 pt.**
 
 3. **Chrome tier not distinguishable from panel (taskbar L77 ≈ CC panel L78).** Chrome
    must show more backdrop per §2.1 (25% vs 45% alpha). → Drop chrome effective alpha /
    lift its backdrop bleed so it reads visibly more see-through than panel. **Target:**
    chrome interior ≥ +8 backdrop-bleed delta vs panel over matched backdrop. **Owner:
-   raeen-gfx.** **~1 pt.**
+   athena-gfx.** **~1 pt.**
 
 4. **Tiles/cards have no depth (Start tiles face < inter-tile gap; CC tiles flat).**
    Carried from R8 P0 #1 — still the single biggest "Win11-tier" tell missing. → `elev.1/2`
    soft shadow + 1px `stroke.strong` top highlight at tile scale. **Target:** tile face
-   ≥+8 L over the gap with a visible penumbra. **Owner: raeen-gfx** (render) +
-   **raeen-shell-apps** (call sites). **~2 pts.**
+   ≥+8 L over the gap with a visible penumbra. **Owner: athena-gfx** (render) +
+   **athena-shell-apps** (call sites). **~2 pts.**
 
 5. **Lock card top band marginal (white CR 4.27 at y270).** Minor — the §2.3 cap fix in
-   #2 likely covers it. **Owner: raeen-gfx.** **~0.5 pt.**
+   #2 likely covers it. **Owner: athena-gfx.** **~0.5 pt.**
 
-### TOKEN-BLOCKED (rae_tokens held by concurrent session)
+### TOKEN-BLOCKED (ath_tokens held by concurrent session)
 
 6. **Frost one step low system-wide** (popovers L104–112 / panels L77–84 / chrome L77 vs
    gold **L188**, ~55–60%). → +1 white-add frost step per tier, a11y re-confirm. **Owner:
-   raeen-ui (token) + raeen-gfx + raeen-accessibility.** **TOKEN-BLOCKED** (frost-step bake).
+   athena-ui (token) + athena-gfx + athena-accessibility.** **TOKEN-BLOCKED** (frost-step bake).
    **~2–3 pts.**
 
 7. **Danger/urgent red is a dull maroon, not a clean danger red** (notifications/taskbar
    urgent). → `status.danger` ink (~(255,69,58)) that survives the legibility cap without
-   desaturating to maroon. **Owner: raeen-ui (token) + raeen-shell-apps + raeen-gfx.**
+   desaturating to maroon. **Owner: athena-ui (token) + athena-shell-apps + athena-gfx.**
    **TOKEN-BLOCKED** (`status.danger`). **~1 pt.**
 
 8. **Chrome type is blocky mono, not RaeSans** (all 9 surfaces). → real RaeSans UI font on
-   chrome call sites at the documented scale/weights. **Owner: raeen-ui (font/token) +
-   raeen-shell-apps.** **TOKEN/FONT-BLOCKED** (shared type tokens). **~2–3 pts** — largest
+   chrome call sites at the documented scale/weights. **Owner: athena-ui (font/token) +
+   athena-shell-apps.** **TOKEN/FONT-BLOCKED** (shared type tokens). **~2–3 pts** — largest
    single felt-quality gap vs SF Pro / Segoe.
 
 9. **Content fields faintly cool** (Settings B+18, Files B+7; no neutral `bg.content`). →
-   near-neutral `bg.content` (~L57, ±3 channels). **Owner: raeen-ui.** **TOKEN-BLOCKED.**
+   near-neutral `bg.content` (~L57, ±3 channels). **Owner: athena-ui.** **TOKEN-BLOCKED.**
    **~0.5 pt.**
 
 ### KERNEL / RISKY (not yet glassed — first-run + window chrome)
 
 10. **Login / OOBE screens** predate the glass system (`login-card-preview.png`,
     `oobe-*-2026-06-17.png` are pre-identity). → re-compose over the aurora with
-    `glass.panel` card + rim + the new depth. **Owner: raeen-shell-apps + raeen-gfx.**
+    `glass.panel` card + rim + the new depth. **Owner: athena-shell-apps + athena-gfx.**
     **KERNEL/RISKY** (login/OOBE are kernel-side framebuffer renders per the memory
     `oobe-auto-advance-login-only`; needs care to not regress the boot session-phase flow).
     **~1–1.5 pts.**
@@ -270,7 +270,7 @@ Tagged by blocker status. **Doable-now items alone are worth an estimated +4–5
 11. **Generic window chrome (titlebar / traffic-lights / borders) on a non-Files app.**
     Only critiqued inline via Files. → shoot a standalone app window; apply the Files chrome
     recipe (frosted titlebar ≥ toolbar, full-perimeter rim, traffic-light controls).
-    **Owner: raeen-shell-apps + raeen-gfx.** **KERNEL/RISKY** (window-chrome path is
+    **Owner: athena-shell-apps + athena-gfx.** **KERNEL/RISKY** (window-chrome path is
     compositor-side). **~1 pt.**
 
 ---

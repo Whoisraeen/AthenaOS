@@ -23,7 +23,7 @@ extern crate alloc;
 
 use alloc::string::String;
 use core::sync::atomic::{AtomicU64, Ordering};
-use rae_tokens::{AccentRamp, DARK};
+use ath_tokens::{AccentRamp, DARK};
 use spin::Mutex;
 
 use crate::perm_prompt::{PermRequest, Verdict};
@@ -32,7 +32,7 @@ const DIALOG_W: u32 = 460;
 const DIALOG_H: u32 = 180;
 
 // Same token palette as login_ui / window chrome — every colour is a
-// `rae_tokens::DARK` value so the consent dialog reads as part of the OS, not a
+// `ath_tokens::DARK` value so the consent dialog reads as part of the OS, not a
 // bolted-on box. The accent bar is LIVE (`accent()`), tracking Vibe Mode.
 //
 // SECURITY: this is a consent surface, so the danger semantics are deliberate
@@ -53,7 +53,7 @@ const WARN: u32 = DARK.state_warn; // unverified-developer danger banner
 /// colours stay fixed token states (a re-skin must never recolour a warning).
 #[inline]
 fn accent() -> AccentRamp {
-    rae_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK)
+    ath_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK)
 }
 
 /// The accent base actually painted — public so the cross-surface cohesion
@@ -96,7 +96,7 @@ pub fn dialog_open() -> bool {
 }
 
 fn render(ptr: *mut u8, w: u32, h: u32, req: &PermRequest) {
-    let mut canvas = unsafe { raegfx::Canvas::new(ptr, w as usize, h as usize, 4) };
+    let mut canvas = unsafe { athgfx::Canvas::new(ptr, w as usize, h as usize, 4) };
     let wu = w as usize;
     let hu = h as usize;
     let accent = accent().base;
@@ -115,7 +115,7 @@ fn render(ptr: *mut u8, w: u32, h: u32, req: &PermRequest) {
         // Boundary-safe truncation: `String::truncate(52)` PANICS (kernel crash)
         // when byte 52 lands mid-codepoint, and a capability description is
         // arbitrary app-supplied text (accents/CJK/emoji).
-        let desc = raeshell::text_util::truncate_chars(&req.description, 52);
+        let desc = athshell::text_util::truncate_chars(&req.description, 52);
         canvas.draw_text(20, 100, desc, FG_DIM, None);
     }
 
@@ -285,7 +285,7 @@ pub fn run_boot_smoketest() {
     // .base, the palette must be DARK tokens, and the danger states must stay
     // distinct + alarming (Deny == state.danger, banner == state.warn, both
     // != the accent). If any drifts or the warning washes out, prints FAIL.
-    let want_accent = rae_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK).base;
+    let want_accent = ath_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK).base;
     let accent_ok = proof_accent() == want_accent;
     let palette_ok = CARD_BG == DARK.bg_raised && FG == DARK.text_primary && ALLOW == DARK.state_ok;
     // Danger emphasis preserved: deny/warn are the alarming token states and
@@ -311,7 +311,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/perm_ui` — prompt UI counters.
+/// `/proc/athena/perm_ui` — prompt UI counters.
 pub fn dump_text() -> String {
     alloc::format!(
         "# permission prompt UI (compositor-rendered, modal)\ndialog_open: {}\nprompts_shown: {}\napproved: {}\ndenied: {}\n",

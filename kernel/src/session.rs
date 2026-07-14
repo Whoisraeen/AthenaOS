@@ -1,4 +1,4 @@
-//! User sessions — wires `raeid::AccountManager` into the kernel boot path.
+//! User sessions — wires `athid::AccountManager` into the kernel boot path.
 //!
 //! Concept § AthID: passkeys first, optional, never required for local use.
 //! Guest mode is full-featured; local accounts use password auth at login.
@@ -11,7 +11,7 @@ use alloc::string::String;
 use core::sync::atomic::Ordering;
 use spin::Mutex;
 
-use raeid::{AccountManager, AuthResult, DeviceInfo, SessionToken, UserId, GUEST_USER_ID};
+use athid::{AccountManager, AuthResult, DeviceInfo, SessionToken, UserId, GUEST_USER_ID};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SessionPhase {
@@ -71,19 +71,19 @@ fn fresh_token(st: &mut SessionState) -> SessionToken {
     SessionToken(bytes)
 }
 
-/// Seed AthID with the default local account (`raeen` / `raeen`).
+/// Seed AthID with the default local account (`athena` / `athena`).
 pub fn init() {
     let now = now_secs();
     let mut manager = AccountManager::new(now);
 
-    let profile = manager.create_user(String::from("raeen"), String::from("Raeen"), now);
+    let profile = manager.create_user(String::from("athena"), String::from("Athena"), now);
     let user_id = profile.id;
 
     let salt = [
         0x52, 0xAE, 0xE0, 0x5, 0x4C, 0x4F, 0x47, 0x49, 0x4E, 0x2D, 0x53, 0x41, 0x4C, 0x54, 0x00,
         0x01,
     ];
-    let _ = manager.add_password(user_id, b"raeen", salt, now);
+    let _ = manager.add_password(user_id, b"athena", salt, now);
 
     *SESSION.lock() = Some(SessionState {
         manager,
@@ -94,13 +94,13 @@ pub fn init() {
         token_seq: 1,
     });
 
-    crate::serial_println!("[session] AthID ready — default user 'raeen' (password: raeen)");
+    crate::serial_println!("[session] AthID ready — default user 'athena' (password: athena)");
     run_persistence_smoketest();
 }
 
 /// Create a local user account during install (MasterChecklist Phase 16.1).
 /// Registers the account in AthID with a real Argon2id (RFC 9106) password hash
-/// (via `rae_crypto`, the shared memory-hard KDF) and persists the profile to
+/// (via `ath_crypto`, the shared memory-hard KDF) and persists the profile to
 /// the config registry so it survives reboot. Returns the new user id on
 /// success, or `None` if the username is taken/invalid.
 pub fn create_local_account(username: &str, display_name: &str, password: &[u8]) -> Option<u64> {
@@ -145,8 +145,8 @@ pub fn create_local_account(username: &str, display_name: &str, password: &[u8])
     // Account-creation password-strength feedback (Win11/macOS parity). Advisory
     // only — we do NOT block weak passwords here (the owner may set a simple
     // local password), but a warning is logged so the UI/OOBE can surface it.
-    let strength = raeid::estimate_password_strength(password);
-    if strength <= raeid::PasswordStrength::Weak {
+    let strength = athid::estimate_password_strength(password);
+    if strength <= athid::PasswordStrength::Weak {
         crate::serial_println!(
             "[session] account '{}' password strength: {:?} (weak — consider a longer, more varied password)",
             username,
@@ -171,7 +171,7 @@ pub fn create_local_account(username: &str, display_name: &str, password: &[u8])
     let persisted = persist_accounts(st);
 
     crate::serial_println!(
-        "[session] create_local_account: '{}' ({}) id={} -> OK (password set, raefs_persisted={})",
+        "[session] create_local_account: '{}' ({}) id={} -> OK (password set, athfs_persisted={})",
         username,
         display_name,
         user_id.0,
@@ -181,13 +181,13 @@ pub fn create_local_account(username: &str, display_name: &str, password: &[u8])
 }
 
 /// Flat file in the AthFS root holding all local accounts (identity + Argon2id
-/// credential). See `raeid::{serialize,deserialize}_accounts`.
+/// credential). See `athid::{serialize,deserialize}_accounts`.
 const ACCOUNTS_FILE: &str = "accounts.dat";
 
 /// Write all non-guest local accounts to the AthFS root. Returns `false` (and
 /// no-ops) when AthFS isn't mounted — durable persistence only happens on an
 /// installed system with a AthFS root. Holds the caller's `SESSION` lock; only
-/// the `RAEFS` lock is taken here (no nesting with `SESSION`).
+/// the `ATHFS` lock is taken here (no nesting with `SESSION`).
 fn persist_accounts(st: &SessionState) -> bool {
     let mut records = alloc::vec::Vec::new();
     for profile in st.manager.list_users() {
@@ -195,15 +195,15 @@ fn persist_accounts(st: &SessionState) -> bool {
             continue;
         }
         if let Some(cred) = st.manager.password_credential(profile.id) {
-            records.push(raeid::AccountRecord {
+            records.push(athid::AccountRecord {
                 username: profile.username.clone(),
                 display_name: profile.display_name.clone(),
                 credential: cred.clone(),
             });
         }
     }
-    let bytes = raeid::serialize_accounts(&records);
-    crate::raefs::RAEFS
+    let bytes = athid::serialize_accounts(&records);
+    crate::athfs::ATHFS
         .lock()
         .as_mut()
         .map(|fs| fs.write_file_bytes_on(ACCOUNTS_FILE, &bytes))
@@ -213,9 +213,9 @@ fn persist_accounts(st: &SessionState) -> bool {
 /// Load persisted accounts from the AthFS root into the session manager. Call
 /// AFTER `storage_mount` has mounted the AthFS root (which is after
 /// `session::init`). Accounts whose username already exists (e.g. the default
-/// `raeen`) are skipped. Safe no-op when AthFS is absent or has no accounts.
+/// `athena`) are skipped. Safe no-op when AthFS is absent or has no accounts.
 pub fn load_persisted_accounts() {
-    let bytes = match crate::raefs::RAEFS
+    let bytes = match crate::athfs::ATHFS
         .lock()
         .as_ref()
         .and_then(|fs| fs.read_file_bytes_on(ACCOUNTS_FILE))
@@ -228,7 +228,7 @@ pub fn load_persisted_accounts() {
             return;
         }
     };
-    let records = raeid::deserialize_accounts(&bytes);
+    let records = athid::deserialize_accounts(&bytes);
     let now = now_secs();
     let mut guard = SESSION.lock();
     let Some(st) = guard.as_mut() else {
@@ -265,31 +265,31 @@ pub fn load_persisted_accounts() {
 /// exercised by `persist_accounts` / `load_persisted_accounts` on an installed
 /// system. Uses a low Argon2id cost so the boot stays fast.
 pub fn run_persistence_smoketest() {
-    let params = raeid::PasswordParams {
-        algorithm: raeid::PasswordAlgorithm::Argon2id,
-        salt: *b"raeen-persist-ck",
+    let params = athid::PasswordParams {
+        algorithm: athid::PasswordAlgorithm::Argon2id,
+        salt: *b"athena-persist-ck",
         iterations: 1,
         memory_cost_kb: 64,
         parallelism: 1,
     };
-    let cred = raeid::PasswordCredential {
-        hash: raeid::hash_password(b"s3cret-pw", &params),
+    let cred = athid::PasswordCredential {
+        hash: athid::hash_password(b"s3cret-pw", &params),
         params,
         created_at: 1,
         last_changed: 1,
         requires_change: false,
     };
-    let records = alloc::vec![raeid::AccountRecord {
+    let records = alloc::vec![athid::AccountRecord {
         username: String::from("persisttest"),
         display_name: String::from("Persist Test"),
         credential: cred.clone(),
     }];
-    let bytes = raeid::serialize_accounts(&records);
-    let back = raeid::deserialize_accounts(&bytes);
+    let bytes = athid::serialize_accounts(&records);
+    let back = athid::deserialize_accounts(&bytes);
     let hash_match = back.len() == 1 && back[0].credential.hash == cred.hash;
     let reload_auth = back.len() == 1
-        && raeid::verify_password(b"s3cret-pw", &back[0].credential)
-        && !raeid::verify_password(b"wrong", &back[0].credential);
+        && athid::verify_password(b"s3cret-pw", &back[0].credential)
+        && !athid::verify_password(b"wrong", &back[0].credential);
     let pass = hash_match && reload_auth;
     crate::serial_println!(
         "[session] persistence smoketest: records={} hash_match={} reload_auth={} -> {}",
@@ -315,7 +315,7 @@ pub fn is_desktop_active() -> bool {
 pub fn display_name() -> alloc::string::String {
     let guard = SESSION.lock();
     let Some(st) = guard.as_ref() else {
-        return String::from("Raeen");
+        return String::from("Athena");
     };
     let uid = st.active_user.unwrap_or(st.default_user);
     st.manager
@@ -331,7 +331,7 @@ pub fn active_user_id() -> Option<u64> {
         .and_then(|s| s.active_user.map(|u| u.0))
 }
 
-/// Login name for the active session (`raeen`, `guest`, …).
+/// Login name for the active session (`athena`, `guest`, …).
 pub fn username() -> alloc::string::String {
     let guard = SESSION.lock();
     let Some(st) = guard.as_ref() else {
@@ -413,7 +413,7 @@ pub fn login_password(username: &str, password: &[u8]) -> bool {
 
     let user_id = if let Some(u) = st.manager.find_user_by_username(username) {
         u.id
-    } else if username.eq_ignore_ascii_case("raeen") {
+    } else if username.eq_ignore_ascii_case("athena") {
         st.default_user
     } else {
         return false;
@@ -559,11 +559,11 @@ pub fn write_info(buf: &mut [u8]) -> u64 {
     need as u64
 }
 
-/// /proc/raeen/session — current login/session state snapshot.
+/// /proc/athena/session — current login/session state snapshot.
 pub fn dump_text() -> String {
     // Compute home_dir() FIRST: it calls username() which locks SESSION, so
     // calling it while holding the guard below would re-enter the spin::Mutex
-    // and deadlock the core (froze the /proc/raeen/session boot dump).
+    // and deadlock the core (froze the /proc/athena/session boot dump).
     let home = home_dir();
     let guard = SESSION.lock();
     let Some(st) = guard.as_ref() else {
@@ -596,13 +596,13 @@ pub fn dump_text() -> String {
     out.push_str(&alloc::format!("active_uid: {active_uid}\n"));
     out.push_str(&alloc::format!("active_user: {active_name}\n"));
     out.push_str(&alloc::format!("home_dir: {}\n", home));
-    out.push_str("default_account: raeen\n");
+    out.push_str("default_account: athena\n");
     out
 }
 
 /// Boot smoketest for session login/lock/unlock/logout flow.
 pub fn run_boot_smoketest() {
-    let login_ok = login_password("raeen", b"raeen");
+    let login_ok = login_password("athena", b"athena");
     let mut lock_ok = false;
     let mut unlock_ok = false;
     let mut logout_ok = false;
@@ -610,7 +610,7 @@ pub fn run_boot_smoketest() {
     if login_ok {
         lock();
         lock_ok = phase() == SessionPhase::Locked;
-        unlock_ok = unlock_password(b"raeen");
+        unlock_ok = unlock_password(b"athena");
         logout();
         logout_ok = phase() == SessionPhase::Login;
     }

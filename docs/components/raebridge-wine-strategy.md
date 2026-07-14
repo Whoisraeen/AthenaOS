@@ -1,8 +1,8 @@
 # AthBridge — Wine Porting & Improvement Strategy
 
 **Status:** analysis / strategy (2026-06-26). Companion to
-[`raebridge.md`](raebridge.md) (vision), [`raebridge-process-model.md`](raebridge-process-model.md)
-(one-process-per-exe model), and [`raebridge-real-crt-abi.md`](raebridge-real-crt-abi.md)
+[`athbridge.md`](athbridge.md) (vision), [`athbridge-process-model.md`](athbridge-process-model.md)
+(one-process-per-exe model), and [`athbridge-real-crt-abi.md`](athbridge-real-crt-abi.md)
 (GS-base / mprotect ABI). Live status always defers to `MasterChecklist.md` Phase 11.
 
 **Concept lines served** (`LEGACY_GAMING_CONCEPT.md` §Compatibility / §Gaming-First):
@@ -150,7 +150,7 @@ These cannot both be the plan. The honest reconciliation:
   where source reuse is the bet.** Port DXVK/VKD3D's *runtime* via `zig cc`, but feed
   it your own validated SPIR-V where the from-scratch translator is ready.
 - **Decision needed from the owner:** ratify "from-scratch shader translator +
-  ported DXVK/VKD3D runtime" as the official split, and update Phase 11 + `raebridge.md`
+  ported DXVK/VKD3D runtime" as the official split, and update Phase 11 + `athbridge.md`
   to say so. Right now an implementer could reasonably build either, and that
   ambiguity will waste a wave.
 
@@ -176,7 +176,7 @@ that never contends survives; anything that *relies on the mutex blocking* or on
 processes sharing a `Global\Name` object breaks.
 
 Wine solves this with the **`wineserver`** broker process (Unix sockets). **Do not
-port wineserver.** Build a native `raebridge_server` userspace daemon over AthenaOS
+port wineserver.** Build a native `athbridge_server` userspace daemon over AthenaOS
 IPC (`SYS_IPC_SEND`/`RECV`) + capabilities that owns:
 - the named-object namespace (mutex / event / semaphore / file-mapping / named pipe),
 - real wait/signal semantics (`WaitForSingleObject`/`MultipleObjects` that actually block),
@@ -205,7 +205,7 @@ The unwind *engine* is done and KAT'd (`seh.rs`, 14/14). The missing half is
 plumbing (`RtlDispatchException` + the funclet execution phase). Without it, any app
 that relies on `__try/__except` for control flow (lots of them, including the MSVC
 CRT's own SEH scaffolding under fault) will terminate instead of recovering. Needs
-kernel cooperation → coordinate with raeen-kernel; **HUMAN-GATED** (see §8).
+kernel cooperation → coordinate with athena-kernel; **HUMAN-GATED** (see §8).
 
 ---
 
@@ -218,7 +218,7 @@ Mapped to what's blocked on what. Items in a phase are independent unless noted.
    every `DLL!name` a real target hits; rank by frequency; fill `winapi_shims` in
    that order (this is Phase 11's `[ ] Phase C: 200 most-imported names` made
    data-driven). Cheapest coverage-per-hour in the project.
-2. **`raebridge_server` broker** (§6.1) — named mutex/event/semaphore with *real*
+2. **`athbridge_server` broker** (§6.1) — named mutex/event/semaphore with *real*
    wait/signal. `[interface]` via architect. Highest structural leverage.
 3. **Registry thunk wiring** — `advapi32 RegOpenKeyExW/RegQueryValueExW` → the
    already-built `win_registry.rs` versioned-config shim (the backing store is done;
@@ -248,8 +248,8 @@ Mapped to what's blocked on what. Items in a phase are independent unless noted.
   one). Design, host-KATs, ABI-surface proposals, and the broker's *interface* are
   fair game to prepare; landing new guest-execution paths is not, without a go.
 - **ABI changes go through the architect.** The broker (§6.1) and any new SEH/signal
-  syscalls are `[interface]` commits: `rae_abi` number + dispatch arm + `docs/SYSCALL_TABLE.md`
-  in one `RAEEN_AGENT=opus`-tagged commit. Bump `ABI_VERSION` on any break.
+  syscalls are `[interface]` commits: `ath_abi` number + dispatch arm + `docs/SYSCALL_TABLE.md`
+  in one `ATHENA_AGENT=opus`-tagged commit. Bump `ABI_VERSION` on any break.
 - **No Linux clones.** AthBridge speaks *native* AthenaOS syscalls; it is not a Linux
   personality. The guest is Windows code; the host substrate is AthenaOS, not a POSIX
   emulation. (Linux-ELF support is a *separate* track in `linux_syscall.rs`.)
@@ -277,22 +277,22 @@ Mapped to what's blocked on what. Items in a phase are independent unless noted.
 ## 10. Open decisions for the owner
 
 1. **Ratify the D3D split** (§5): from-scratch Rust shader translator + ported
-   DXVK/VKD3D *runtime*. Update Phase 11 + `raebridge.md` to remove the ambiguity.
-2. **Approve the `raebridge_server` broker** as the next AthBridge `[interface]`
+   DXVK/VKD3D *runtime*. Update Phase 11 + `athbridge.md` to remove the ambiguity.
+2. **Approve the `athbridge_server` broker** as the next AthBridge `[interface]`
    slice (§6.1) — it's the highest-leverage unblocked structural item.
 3. **Green-light the `zig cc` hermetic toolchain** (Phase 11 `[ ]`) — the gate that
    unlocks *all* Wine/DXVK/Mesa source reuse; nothing in §4/§5's harvesting half can
    start without it.
-4. **Wine upstreaming policy** (carried over from `raebridge.md`): strict downstream
+4. **Wine upstreaming policy** (carried over from `athbridge.md`): strict downstream
    harvest vs. contribute-back. Affects how §4 harvesting is structured.
 
 ---
 
 ## Provenance
 
-Built from a direct read of `components/raebridge/` (72,569 lines across 39 modules)
+Built from a direct read of `components/athbridge/` (72,569 lines across 39 modules)
 on 2026-06-26: `exec.rs`, `kernel32.rs:960+` (named-object stub finding), `ntdll.rs`,
 `d3d_translate.rs`, `dxbc_spirv.rs`, `handoff.rs`, `launcher.rs`; the Phase 11/12 and
-sizing sections of `MasterChecklist.md`; and the existing `docs/components/raebridge*.md`.
-Related memory: `[[raebridge-real-exe-execution]]`, `[[raebridge-runs-real-windows-exe]]`,
-`[[raebridge-seh-engine]]`, `[[linux-clone-threads-scoping]]`, `[[anticheat-two-tier-strategy]]`.
+sizing sections of `MasterChecklist.md`; and the existing `docs/components/athbridge*.md`.
+Related memory: `[[athbridge-real-exe-execution]]`, `[[athbridge-runs-real-windows-exe]]`,
+`[[athbridge-seh-engine]]`, `[[linux-clone-threads-scoping]]`, `[[anticheat-two-tier-strategy]]`.

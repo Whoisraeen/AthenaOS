@@ -870,8 +870,8 @@ fn populate_default_services(mgr: &mut ServiceManager) {
             .with_wants(&[
                 "dbus.service",
                 "network.service",
-                "raeshield.service",
-                "raesync.service",
+                "athshield.service",
+                "athsync.service",
                 "login.service",
             ])
             .with_after(&["basic.target"]),
@@ -882,10 +882,10 @@ fn populate_default_services(mgr: &mut ServiceManager) {
             .with_requires(&["multi-user.target"])
             .with_wants(&[
                 "compositor.service",
-                "raeshell.service",
+                "athshell.service",
                 "audio.service",
                 "bluetooth.service",
-                "raestore.service",
+                "athstore.service",
             ])
             .with_after(&["multi-user.target"]),
     );
@@ -917,7 +917,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
     // ── Network ──────────────────────────────────────────────────────────────
 
     mgr.register_service(
-        ServiceUnit::new("network.service", "/sbin/raenetd")
+        ServiceUnit::new("network.service", "/sbin/athnetd")
             .with_description("AthenaOS Network Manager")
             .with_dependencies(&["udev.service", "dbus.service"])
             .with_wanted_by(&["multi-user.target"])
@@ -927,7 +927,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
     // ── Security ─────────────────────────────────────────────────────────────
 
     mgr.register_service(
-        ServiceUnit::new("raeshield.service", "/usr/sbin/raeshieldd")
+        ServiceUnit::new("athshield.service", "/usr/sbin/athshieldd")
             .with_description("AthenaOS Security Framework")
             .with_dependencies(&["basic.target"])
             .with_wanted_by(&["multi-user.target"])
@@ -938,7 +938,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
     // ── Sync ─────────────────────────────────────────────────────────────────
 
     mgr.register_service(
-        ServiceUnit::new("raesync.service", "/usr/sbin/raesyncd")
+        ServiceUnit::new("athsync.service", "/usr/sbin/athsyncd")
             .with_description("AthenaOS Sync Daemon")
             .with_dependencies(&["network.service"])
             .with_wanted_by(&["multi-user.target"])
@@ -958,7 +958,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
     // ── Audio ────────────────────────────────────────────────────────────────
 
     mgr.register_service(
-        ServiceUnit::new("audio.service", "/usr/bin/raeaudiod")
+        ServiceUnit::new("audio.service", "/usr/bin/athaudiod")
             .with_description("AthenaOS Audio Server")
             .with_dependencies(&["udev.service"])
             .with_wanted_by(&["graphical.target"])
@@ -988,7 +988,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
     // ── Desktop Shell ────────────────────────────────────────────────────────
 
     mgr.register_service(
-        ServiceUnit::new("raeshell.service", "/usr/bin/raeshell")
+        ServiceUnit::new("athshell.service", "/usr/bin/athshell")
             .with_description("AthenaOS Desktop Shell")
             .with_dependencies(&["compositor.service"])
             .with_wanted_by(&["graphical.target"])
@@ -998,7 +998,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
     // ── App Store Daemon ─────────────────────────────────────────────────────
 
     mgr.register_service(
-        ServiceUnit::new("raestore.service", "/usr/sbin/raestored")
+        ServiceUnit::new("athstore.service", "/usr/sbin/athstored")
             .with_description("AthenaOS App Store Daemon")
             .with_dependencies(&["network.service"])
             .with_wanted_by(&["graphical.target"])
@@ -1029,7 +1029,7 @@ fn populate_default_services(mgr: &mut ServiceManager) {
     // ── Timers ───────────────────────────────────────────────────────────────
 
     mgr.register_timer(
-        TimerUnit::new("raesync.timer", "raesync.service")
+        TimerUnit::new("athsync.timer", "athsync.service")
             .with_on_boot(60)
             .with_interval(300),
     );

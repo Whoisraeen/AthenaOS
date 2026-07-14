@@ -6,7 +6,7 @@
  * ORIGINAL implementation of the kfifo API CONTRACT (element-size based) — NOT a
  * transcription of the kernel's union/macro machinery. A typed handle pairs the
  * `struct __kfifo` base with a typed buffer pointer so the put/get macros infer
- * the element size; the actual ring ops are backed by raeen_linuxkpi's kfifo
+ * the element size; the actual ring ops are backed by ath_linuxkpi's kfifo
  * (one of its 488 exports) at M4 — never faked to silently drop records
  * (SCOPE.md rule 9). License boundary (../../README.md): API surface.
  */
@@ -42,7 +42,7 @@ struct kfifo {
 		(fifo).kfifo.data = (fifo).buf; \
 	} while (0)
 
-/* ring ops on the base — backed by raeen_linuxkpi (M4). */
+/* ring ops on the base — backed by ath_linuxkpi (M4). */
 int          __kfifo_alloc(struct __kfifo *fifo, unsigned int size, size_t esize, gfp_t gfp);
 void         __kfifo_free(struct __kfifo *fifo);
 unsigned int __kfifo_in(struct __kfifo *fifo, const void *buf, unsigned int len);

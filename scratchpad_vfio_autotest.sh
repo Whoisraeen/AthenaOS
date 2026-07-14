@@ -3,25 +3,25 @@
 # Boots the AthenaOS real-amdgpu image with the AMD GPU (c4:00.0) passed through,
 # preserves serial CONTINUOUSLY, then reboots back to the default desktop entry.
 set -u
-cd /home/whoisraeen/raeen-vm
+cd /home/whoisathena/athena-vm
 STAMP=cap11
 IMG=kernel-real-amdgpu-cap.img
 rm -f .vfio-test-armed                       # disarm FIRST — never loop
-systemctl disable raeen-vfio-test.service 2>/dev/null || true
+systemctl disable athena-vfio-test.service 2>/dev/null || true
 {
   echo "[autotest] $(date -Is) kernel=$(uname -r) run=$STAMP img=$IMG"
   echo "[autotest] GPU state: $(lspci -ks c4:00.0 | tr '\n' ' | ')"
   if ! lspci -ks c4:00.0 | grep -q "vfio-pci"; then
     echo "[autotest] GPU NOT bound to vfio-pci — wrong boot entry, skipping test"
   else
-    ( while :; do cp -f /tmp/raeen-serial.log "serial-vfio-${STAMP}.log" 2>/dev/null; sync -f .; sleep 5; done ) &
+    ( while :; do cp -f /tmp/athena-serial.log "serial-vfio-${STAMP}.log" 2>/dev/null; sync -f .; sleep 5; done ) &
     COPIER=$!
-    systemd-inhibit --what=handle-power-key --who=raeen-vfio-test \
+    systemd-inhibit --what=handle-power-key --who=athena-vfio-test \
       --why="AthenaOS GPU test in progress — auto-reboots when done" \
       env IMG="$IMG" TIMEOUT=300 timeout 420 ./run-vfio.sh
     echo "[autotest] run-vfio.sh exit=$?"
     kill $COPIER 2>/dev/null
-    cp -f /tmp/raeen-serial.log "serial-vfio-${STAMP}.log" 2>/dev/null || true
+    cp -f /tmp/athena-serial.log "serial-vfio-${STAMP}.log" 2>/dev/null || true
     echo "[autotest] serial saved: serial-vfio-${STAMP}.log ($(wc -l < "serial-vfio-${STAMP}.log" 2>/dev/null || echo 0) lines)"
     grep -acE "\[PANIC\]" "serial-vfio-${STAMP}.log" 2>/dev/null | sed 's/^/[autotest] panic lines: /'
     echo "[autotest] --- claim/seed trail ---"
@@ -33,6 +33,6 @@ systemctl disable raeen-vfio-test.service 2>/dev/null || true
   fi
   echo "[autotest] done $(date -Is) — rebooting to default entry"
 } > "autotest-${STAMP}.out" 2>&1
-chown whoisraeen:whoisraeen "autotest-${STAMP}.out" "serial-vfio-${STAMP}.log" 2>/dev/null || true
+chown whoisathena:whoisathena "autotest-${STAMP}.out" "serial-vfio-${STAMP}.log" 2>/dev/null || true
 sync
 systemctl reboot

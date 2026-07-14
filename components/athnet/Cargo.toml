@@ -1,0 +1,54 @@
+[package]
+name = "athnet"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "AthNet — userspace networking above L3 with WireGuard, QUIC priority, gaming traffic shaping."
+
+[dependencies]
+x25519-dalek = { version = "2", default-features = false, features = ["static_secrets"] }
+blake2 = { version = "0.10", default-features = false }
+subtle = { version = "2", default-features = false }
+chacha20poly1305 = { version = "0.10", default-features = false, features = ["alloc"] }
+zeroize = { version = "1", default-features = false, features = ["alloc"] }
+smoltcp = { version = "0.11", default-features = false, features = ["medium-ethernet", "proto-ipv4", "proto-dhcpv4", "socket-tcp", "socket-udp", "socket-icmp", "alloc"] }
+# ath_deflate — the bomb-bounded inflate/gzip/zlib decoder. Powers HTTP
+# `Content-Encoding: gzip|deflate` response decoding in http1.rs. no_std + alloc,
+# so the kernel/bare-metal link of athnet is unaffected.
+ath_deflate = { path = "../ath_deflate" }
+# ath_hash (SHA-1) + ath_encode (base64) — the WebSocket RFC 6455 handshake
+# accept-key = base64(SHA1(key + GUID)). Both no_std + alloc.
+ath_hash = { path = "../ath_hash" }
+ath_encode = { path = "../ath_encode" }
+# brotli-decompressor — battle-tested no_std RFC 7932 decoder (the static
+# dictionary + transforms make hand-rolling impractical; this is the Skia/wgpu/
+# naga "stand on a proven library" pattern). Optional + OFF by default so the
+# kernel's bare-metal link of athnet never pulls it; the `brotli` feature turns
+# it on for the userspace HTTP daemon / host KAT.
+brotli-decompressor = { version = "5", default-features = false, optional = true }
+
+# ── TLS 1.3 building blocks (RustCrypto), behind the `tls13` feature ──────────
+# Optional so the kernel's no_std link of athnet is unaffected; the AthNet
+# userspace daemon (and `cargo test -p athnet --features tls13`) turns them on.
+# These take the TLS path from "handshake demo" to "validates a real cert chain":
+# HKDF key schedule, AES-GCM record cipher, X.509 parse + ECDSA/RSA verify.
+sha2     = { version = "0.10", default-features = false, optional = true }
+hkdf     = { version = "0.12", default-features = false, optional = true }
+aes-gcm  = { version = "0.10", default-features = false, features = ["alloc", "aes"], optional = true }
+der      = { version = "0.7", default-features = false, features = ["alloc", "oid"], optional = true }
+x509-cert = { version = "0.2", default-features = false, optional = true }
+p256     = { version = "0.13", default-features = false, features = ["ecdsa", "alloc"], optional = true }
+p384     = { version = "0.13", default-features = false, features = ["ecdsa", "alloc"], optional = true }
+rsa      = { version = "0.9", default-features = false, features = ["sha2"], optional = true }
+
+[features]
+default = []
+# Enables the RustCrypto TLS 1.3 crypto surface (athnet::tls_crypto).
+tls13 = ["sha2", "hkdf", "aes-gcm", "der", "x509-cert", "p256", "p384", "rsa"]
+# Enables `Content-Encoding: br` (brotli) response decoding via brotli-decompressor.
+brotli = ["brotli-decompressor"]
+
+[dev-dependencies]
+# Deterministic RNG for the tls_crypto round-trip KATs (host `cargo test`).
+rand = "0.8"

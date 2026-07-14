@@ -4,7 +4,7 @@
  *
  * Message/event rate limiter. amdgpu embeds `struct ratelimit_state` BY VALUE for
  * its RAS error-throttle counters (the `_rs` fields), so the type must be defined
- * for layout. The rate-limit decision is backed by raeen_linuxkpi at M4; here it
+ * for layout. The rate-limit decision is backed by ath_linuxkpi at M4; here it
  * is the struct + init. License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_RATELIMIT_H
@@ -31,7 +31,7 @@ struct ratelimit_state {
 static inline void ratelimit_state_init(struct ratelimit_state *rs, int interval, int burst)
 { raw_spin_lock_init(&rs->lock); rs->interval = interval; rs->burst = burst; rs->printed = 0; rs->missed = 0; }
 
-/* rate-limit decision — backed by raeen_linuxkpi (M4) */
+/* rate-limit decision — backed by ath_linuxkpi (M4) */
 int ___ratelimit(struct ratelimit_state *rs, const char *func);
 #define __ratelimit(state) ___ratelimit(state, __func__)
 

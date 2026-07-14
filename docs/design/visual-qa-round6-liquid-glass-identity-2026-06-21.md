@@ -66,18 +66,18 @@ the hard red square.
   (R≈G≈B within ±3) so ftype icon hues read against a hue-free field, exactly as Finder's
   near-white / our dark-neutral. **Defect:** content L57–64 reads marginally cooler than a
   clean neutral. **Fix:** drop the residual blue tint on the content fill by ~5–7 on B.
-  **Target:** content rgb within ±3 across channels, L held at ~60. **Owner: raeen-shell-apps.**
+  **Target:** content rgb within ±3 across channels, L held at ~60. **Owner: athena-shell-apps.**
 - **Titlebar L57 is the lightest *chrome* but still the darkest *frosted* band** — it's
   frosted now (up from L20) but sits below the toolbar (L72) and well below the sidebar
   (L81). macOS/Win11 titlebars are typically the *brightest* glass band, not the dimmest.
   **Defect:** titlebar L57 < toolbar L72 < sidebar L81 (chrome tier inverted top-to-bottom).
   **Fix:** lift titlebar frost to ≥ toolbar (target titlebar ≥L72) so the chrome reads
-  top-down brightest-to-content. **Owner: raeen-gfx** (chrome frost step) + **raeen-shell-apps**.
+  top-down brightest-to-content. **Owner: athena-gfx** (chrome frost step) + **athena-shell-apps**.
 - **Window rim is present but asymmetric / weak on the bottom edge** — the max-242 spikes
   cluster on the sidebar/titlebar (top-left); the bottom and right window edges don't show
   the same iridescent tell. **Defect:** rim energy concentrated top-left, weak bottom-right.
   **Fix:** route the Files window edge through the same full-perimeter cyan→violet→warm map
-  the tiers demo uses. **Owner: raeen-gfx.**
+  the tiers demo uses. **Owner: athena-gfx.**
 
 **Net: the Files window is fixed.** It belongs to the OS now. The three items above are
 polish, not cohesion breaks — they move Files from "belongs" to "best-in-class."
@@ -96,7 +96,7 @@ L<140, not the tile mean):
 | Region | glyph L | local-bg L | contrast | AA (4.5:1)? |
 |---|---:|---:|---:|:--:|
 | CC "Game Mode" label (on bright blue on-tile) | 204 | 121 | **1.66:1** | **FAIL** |
-| CC "Raeen-5G" (selected/brightest wifi row) | 214 | 108 | **1.94:1** | **FAIL** |
+| CC "Athena-5G" (selected/brightest wifi row) | 214 | 108 | **1.94:1** | **FAIL** |
 | Toast body text (frosted card L94–99) | dark-on-glass | 96 | passes (dark text) | OK |
 | Files content rows (neutral field L60) | mixed | 60 | OK | OK |
 
@@ -113,8 +113,8 @@ L108–121, and white-on-that washes out.
   behind the glyph* (macOS does exactly this — text on Control Center colored toggles gets a
   shadow), OR (b) darken the accent-"on" fill itself so white clears 4.5:1. Target: every
   primary tile label ≥4.5:1, sublabel ≥3:1.
-- **Owner: raeen-shell-apps** (ink + scrim on accent tiles) with **raeen-accessibility**
-  re-confirming 4.5:1 / 3:1, and **raeen-gfx** if the clamp needs to also factor accent-fill
+- **Owner: athena-shell-apps** (ink + scrim on accent tiles) with **athena-accessibility**
+  re-confirming 4.5:1 / 3:1, and **athena-gfx** if the clamp needs to also factor accent-fill
   luma (not just aurora luma) into the cap.
 
 **Verdict:** the clamp is real and working on aurora-driven glass (that's why the panel and
@@ -150,7 +150,7 @@ Round 5 flagged on the demo tiers.**
 - **Fix:** boost the warm stop at the bottom/bottom-right perimeter position — raise R, drop
   B so it reads amber not pink/dark over the violet-blue aurora. **Target:** bottom-edge
   sample with R>G>B and R≥180; warm-px count ≥25% of violet count.
-- **Owner: raeen-gfx** (per-perimeter warm stop on the shipped CC render path).
+- **Owner: athena-gfx** (per-perimeter warm stop on the shipped CC render path).
 
 **Verdict on the claim (violet 1004 / warm 949):** violet **CONFIRMED** (1900–3500, well
 over the claimed 1004). Warm **NOT confirmed** — measures ~29–63, not ~949. The amber stop
@@ -207,42 +207,42 @@ Each: **surface → defect (measured) → fix + target value → owner.**
 
 ### P0 — usability + the rim finish
 
-1. **White text on accent-"on" tiles below WCAG AA** (CC Game Mode label 1.66:1, Raeen-5G
+1. **White text on accent-"on" tiles below WCAG AA** (CC Game Mode label 1.66:1, Athena-5G
    row 1.94:1; glyph L204–214 on local-bg L108–121). The luma clamp caps the aurora
    contribution but not the accent-fill self-luminance, so tinted "on" tiles wash white
    labels. → **Add a `text.on-accent` ink with a subtle dark scrim/halo behind glyphs on
    accent-tinted tiles** (the macOS Control Center pattern), or darken the accent-"on" fill.
-   **Target:** primary label ≥4.5:1, sublabel ≥3:1 on every tile. → owner: **raeen-shell-apps**
-   (ink + scrim) + **raeen-accessibility** (re-confirm) + **raeen-gfx** (clamp factors
+   **Target:** primary label ≥4.5:1, sublabel ≥3:1 on every tile. → owner: **athena-shell-apps**
+   (ink + scrim) + **athena-accessibility** (re-confirm) + **athena-gfx** (clamp factors
    accent-fill luma if needed). *Highest leverage — it's the one thing that hurts daily use.*
 
 2. **CC rim warm-amber stop is missing on the shipped surface** (bottom edge L28–33;
    warm 29–63 px vs violet ~2500). The cyan→violet half ships; amber does not. → Boost the
    warm stop's R, drop B at the bottom/BR perimeter so it reads amber over the violet-blue
    aurora. **Target:** bottom-edge sample R>G>B, R≥180; warm ≥25% of violet count. → owner:
-   **raeen-gfx**.
+   **athena-gfx**.
 
 ### P1 — the frost finish + Files top-down chrome (close the gap to "better than Win11")
 
 3. **Glass interior ~50–55% of reference frost brightness** — ours panel L100 / Files
    chrome L57–81 vs gold ref interior **L188**. → Push chrome-band frost +1 white-add step
    (titlebar/toolbar/CC chrome). **Target** chrome bands ≥L90, panel ≥L115, while a11y
-   confirms text still clears 4.5:1 (interacts with P0 #1). → owner: **raeen-gfx** (frost
-   step) + **raeen-ui** (token) + **raeen-accessibility**.
+   confirms text still clears 4.5:1 (interacts with P0 #1). → owner: **athena-gfx** (frost
+   step) + **athena-ui** (token) + **athena-accessibility**.
 
 4. **Files chrome tier inverted top-to-bottom** — titlebar L57 < toolbar L72 < sidebar L81;
    the titlebar (should be brightest chrome) is the dimmest band. → Lift titlebar frost to
    ≥ toolbar. **Target:** titlebar ≥L72 (brightest-to-content top-down). → owner:
-   **raeen-gfx** + **raeen-shell-apps**.
+   **athena-gfx** + **athena-shell-apps**.
 
 5. **Files content field faintly cool** — rows (55/57/64), B +7 over R. → Drop residual blue
    on the content fill. **Target:** content rgb within ±3 across channels, L~60. → owner:
-   **raeen-shell-apps**.
+   **athena-shell-apps**.
 
 6. **Files window rim asymmetric** — max-242 iridescent spikes cluster top-left
    (sidebar/titlebar); bottom/right edges weak. → Route Files window edge through the full
    per-perimeter cyan→violet→warm map. **Target:** all four edges carry rim. → owner:
-   **raeen-gfx**.
+   **athena-gfx**.
 
 ### P2 — the surfaces we have NOT touched (the new largest bucket toward 80–90%)
 
@@ -252,29 +252,29 @@ in leverage order (most-seen surface first):
 
 7. **Taskbar / dock** — the single most-on-screen surface; not yet captured or glassed. →
    Glass `chrome` tier, running-app indicators, rim. Shoot it, then critique. → owner:
-   **raeen-shell-apps** (compose) + **raeen-gfx** (glass chrome). *Spec exists:
+   **athena-shell-apps** (compose) + **athena-gfx** (glass chrome). *Spec exists:
    `docs/design/taskbar-running-apps.md`, `system-tray.md`.*
 
 8. **Start / launcher / command palette** — second-most-invoked surface; spec exists
    (`command-palette.md`) but no shipped shot. The Aero/glass Start references
    (`reference/Aero Start Menu...jpg`, `Liquid Glass Theme for Windows 11...jpg`) are the
-   bar. → `glass.popover` tier, search field, app grid, rim. → owner: **raeen-shell-apps**.
+   bar. → `glass.popover` tier, search field, app grid, rim. → owner: **athena-shell-apps**.
 
 9. **Settings window** — spec exists (`settings.md`); should reuse the Files glass-chrome
-   pattern (frosted chrome + translucent sidebar + solid content). → owner: **raeen-shell-apps**.
+   pattern (frosted chrome + translucent sidebar + solid content). → owner: **athena-shell-apps**.
 
 10. **Context menus** — the small-surface tell that separates polished from basic; should be
-    `glass.popover` with the rim. Not shot. → owner: **raeen-shell-apps** + **raeen-gfx**.
+    `glass.popover` with the rim. Not shot. → owner: **athena-shell-apps** + **athena-gfx**.
 
 11. **Login / lock screen** — first thing a user sees; a `login-card-preview.png` exists from
     Round 1 but predates the glass system. → Re-shoot over the aurora with the glass card +
-    rim. → owner: **raeen-shell-apps**.
+    rim. → owner: **athena-shell-apps**.
 
 ### P2 — long tail
 
 12. **Toast close "x" and text-color hierarchy faint** — legible but the dismiss affordance
     and secondary text are subtle. → Strengthen the dismiss control contrast. → owner:
-    **raeen-shell-apps**.
+    **athena-shell-apps**.
 
 ---
 
@@ -330,7 +330,7 @@ the live `apps/files` render with the new glass chrome. No handoff to verifier/d
 (titlebar L20→57, toolbar L51→72, sidebar L42→81 with aurora bleed + rim-242, content
 de-tinted to near-neutral 55/57/64, selection L22→123 RaeBlue). **High** that the aurora
 peak (L148.6) and toast uniformity (L94–99) are fixed. **High** that white text on the
-brightest accent-"on" tiles is below AA (Game Mode 1.66:1, Raeen-5G 1.94:1 — glyph L204–214
+brightest accent-"on" tiles is below AA (Game Mode 1.66:1, Athena-5G 1.94:1 — glyph L204–214
 on local-bg L108–121, measured glyph-vs-local-bg not tile-mean). **High** that the CC rim
 ships cyan→violet (violet 1900–3500 on the shipped surface) but the warm-amber stop does
 not (warm 29–63, bottom edge L28–33). **Medium** on the exact parity number (74% is a

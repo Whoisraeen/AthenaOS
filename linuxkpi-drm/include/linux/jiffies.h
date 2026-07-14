@@ -4,7 +4,7 @@
  *
  * The kernel tick counter + time-comparison helpers. amdgpu's SMU/reset code uses
  * `jiffies` + time_after() for bounded waits and msecs_to_jiffies() for timeouts.
- * `jiffies` is backed by raeen_linuxkpi's timing facade at M4 (a real, advancing
+ * `jiffies` is backed by ath_linuxkpi's timing facade at M4 (a real, advancing
  * tick — a frozen counter would hang every timeout loop, SCOPE.md rule 9). The
  * conversions + comparisons are pure. License boundary (../../README.md): surface.
  */
@@ -17,7 +17,7 @@
 #define HZ 1000        /* tick rate: 1 jiffy = 1 ms */
 #endif
 
-/* the live tick counter — backed by raeen_linuxkpi (M4) */
+/* the live tick counter — backed by ath_linuxkpi (M4) */
 extern volatile unsigned long jiffies;
 u64 get_jiffies_64(void);
 

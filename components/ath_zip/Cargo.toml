@@ -1,0 +1,32 @@
+[package]
+name = "ath_zip"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS ZIP archive reader — a zero-dependency, never-panic, `no_std` decoder
+# for the PKZIP/.zip container (LEGACY_GAMING_CONCEPT.md §"The user owns the machine" /
+# daily-driver table stakes). A computer you can't double-click a downloaded .zip
+# on isn't a daily driver, and ZIP is the substrate under .docx/.xlsx/.pptx,
+# .epub, PWA bundles, `.athpkg` app packages, and countless downloads. One
+# correct, dependency-free, hostile-input ZIP core serves all of them — so this
+# crate is foundational infrastructure, deliberately wired into no consumer this
+# slice (the Files "extract here" action is the follow-up).
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_json / ath_calc / ath_tokens pattern)
+# so the lib is `no_std` + `alloc` in every shipped build and toggles to `std`
+# only under `cfg(test)` for the host KAT harness. The DEFLATE `inflate` is a
+# from-scratch reimplementation of the same algorithm `athmedia`'s PNG decoder
+# uses for IDAT — kept self-contained here (no athmedia dependency) so this crate
+# stands alone. Run the FAIL-able proof with `cargo test -p ath_zip` — no QEMU,
+# no image build.
+
+[dependencies]
+# The ZIP *writer* (method 8) compresses entry bodies with the canonical raw
+# DEFLATE compressor from `ath_deflate` (its `deflate()` emits a raw DEFLATE
+# stream with no zlib/gzip wrapper — exactly what a ZIP local-file body stores).
+# The *reader* keeps its own self-contained `inflate` (zero-dep decode); the
+# writer reuses `ath_deflate::deflate` rather than re-implementing an encoder.
+ath_deflate = { path = "../ath_deflate" }

@@ -26,7 +26,7 @@ by Settings going from a void to a populated, macOS-System-Settings-class pane a
 shell chrome (taskbar/Start) finally reading as frosted glass instead of vanishing.
 
 What now caps parity is a short, well-understood tail, and **three of the highest-leverage
-items are token-blocked** by a concurrent session that holds `components/rae_tokens/src/lib.rs`
+items are token-blocked** by a concurrent session that holds `components/ath_tokens/src/lib.rs`
 (confirmed dirty in the working tree): the danger-red ink, the RaeSans chrome font, and the
 `bg.content` token. The non-token items — Start tile-card lift, and the Phase-2 surfaces
 (lock/login/window-chrome) that have never been glassed — are doable now.
@@ -53,7 +53,7 @@ items are token-blocked** by a concurrent session that holds `components/rae_tok
 - **RESIDUAL — search-field magnifier is still a `?` placeholder.** The Settings search box
   reads `? Search settings` (the magnifier glyph slot renders the missing-glyph `?`). Same
   `?` is likely on the Start search field. Small but it's a literal placeholder in the most
-  "is this finished?" spot. **Defect carried to the list (P1 #4).** → owner: **raeen-shell-apps**.
+  "is this finished?" spot. **Defect carried to the list (P1 #4).** → owner: **athena-shell-apps**.
 
 ### 2. Settings content pane — populated, readable, macOS-class → **CONFIRMED**
 
@@ -165,16 +165,16 @@ Each: **surface → defect (measured) → fix + target → owner → [blocked?]*
    `stroke.strong` top-edge highlight so it lifts off the popover (the
    `material-and-shadow.md` contract, applied at tile scale). **Target:** tile face ≥ +8 L
    over the inter-tile gap, with a visible soft penumbra below each tile. → owner:
-   **raeen-gfx** (shadow/highlight on tile surfaces) + **raeen-shell-apps** (call sites).
+   **athena-gfx** (shadow/highlight on tile surfaces) + **athena-shell-apps** (call sites).
    **Doable now** (compositor/render-side; no token needed). *Highest leverage — depth is
    the single biggest "Win11-tier" tell still missing.*
 
 2. **Chrome frost ~55–60% of reference brightness.** CC L90 / Start L100 / Files chrome
    L57–81 / Settings L61 vs gold interior **L188**. → Push chrome-band frost +1 white-add
    step. **Target:** chrome bands ≥L90, popover/panel interiors ≥L115, while a11y re-confirms
-   text still clears 4.5:1. → owner: **raeen-gfx** (frost step) + **raeen-ui** (token) +
-   **raeen-accessibility**. **Token-blocked** for the token bake; raeen-gfx can prototype the
-   render-side lift now and bake when `rae_tokens` frees.
+   text still clears 4.5:1. → owner: **athena-gfx** (frost step) + **athena-ui** (token) +
+   **athena-accessibility**. **Token-blocked** for the token bake; athena-gfx can prototype the
+   render-side lift now and bake when `ath_tokens` frees.
 
 ### P1 — the type + color tokens (mostly token-blocked)
 
@@ -182,27 +182,27 @@ Each: **surface → defect (measured) → fix + target → owner → [blocked?]*
    taskbar Messages pill desaturated maroon. → Introduce/route a `status.danger` ink (~RaeRed
    (255,69,58)) for urgent toasts' accent strip and urgent taskbar pills; ensure it survives
    the glass legibility cap without washing to maroon. **Target:** urgent accent rgb R≥200,
-   R−G≥120, R−B≥120. → owner: **raeen-ui** (token) + **raeen-shell-apps** (apply) +
-   **raeen-gfx** (cap must not desaturate the danger hue). **TOKEN-BLOCKED** (needs a new
-   `status.danger` in `rae_tokens`, currently held).
+   R−G≥120, R−B≥120. → owner: **athena-ui** (token) + **athena-shell-apps** (apply) +
+   **athena-gfx** (cap must not desaturate the danger hue). **TOKEN-BLOCKED** (needs a new
+   `status.danger` in `ath_tokens`, currently held).
 
 4. **`?` placeholder glyph in search fields.** Settings (`? Search settings`) and likely Start
    render the missing-glyph `?` where the magnifier icon belongs. → Wire the real
-   `raegfx::icon` magnifier (same system that fixed the nav rows). **Target:** no `?` anywhere
-   in the chrome. → owner: **raeen-shell-apps**. **Doable now** (the icon exists; just unwired
+   `athgfx::icon` magnifier (same system that fixed the nav rows). **Target:** no `?` anywhere
+   in the chrome. → owner: **athena-shell-apps**. **Doable now** (the icon exists; just unwired
    in the search field).
 
 5. **Chrome type is blocky monospace, not RaeSans.** Every chrome label renders in a heavy
    mono — the largest felt-quality gap vs SF Pro / Segoe Variable. → Ship a real RaeSans UI
-   font for chrome labels (the `atom-type-ramp.png` shows raefont can render crisp grayscale
+   font for chrome labels (the `atom-type-ramp.png` shows athfont can render crisp grayscale
    AA; the chrome call sites need to use the sans ramp, not the mono fallback). **Target:**
-   chrome labels in RaeSans at the documented type scale/weights. → owner: **raeen-ui**
-   (font/token wiring) + **raeen-shell-apps** (call sites). **PARTLY TOKEN/FONT-BLOCKED** —
-   the typeface plumbing touches the shared type tokens in `rae_tokens`.
+   chrome labels in RaeSans at the documented type scale/weights. → owner: **athena-ui**
+   (font/token wiring) + **athena-shell-apps** (call sites). **PARTLY TOKEN/FONT-BLOCKED** —
+   the typeface plumbing touches the shared type tokens in `ath_tokens`.
 
 6. **`bg.content` token (Settings/Files content fields faintly cool).** Settings pane B +18
    over R; Files content B +7 over R. → Add a near-neutral `bg.content` (~L57, rgb within ±3).
-   **Target:** content rgb within ±3 across channels. → owner: **raeen-ui**. **TOKEN-BLOCKED**.
+   **Target:** content rgb within ±3 across channels. → owner: **athena-ui**. **TOKEN-BLOCKED**.
 
 ### P2 — the Phase-2 extraction surfaces (never glassed or shot)
 
@@ -211,19 +211,19 @@ Each needs a host-render shot first, then the same glass-chrome + rim + the new 
 
 7. **Lock screen** — first thing a user sees; never shot over the aurora with the glass card.
    → `glass.panel`/card over aurora, clock, auth field with the new frost + rim. → owner:
-   **raeen-shell-apps** (compose) + **raeen-gfx** (glass). **Doable now.**
+   **athena-shell-apps** (compose) + **athena-gfx** (glass). **Doable now.**
 
 8. **Login screen** — `login-card-preview.png` exists but predates the glass system. → Re-shoot
-   over the aurora with the glass card + rim + tile-lift. → owner: **raeen-shell-apps**.
+   over the aurora with the glass card + rim + tile-lift. → owner: **athena-shell-apps**.
    **Doable now.**
 
 9. **Window chrome** — a generic app window's titlebar / traffic-lights / borders have not been
    critiqued as a standalone surface (only Files inline). → Shoot a non-Files app window; apply
    the Files chrome recipe (frosted titlebar ≥ toolbar, full-perimeter rim, traffic-light
-   controls). → owner: **raeen-shell-apps** + **raeen-gfx**. **Doable now.**
+   controls). → owner: **athena-shell-apps** + **athena-gfx**. **Doable now.**
 
 10. **Context menus** — the small-surface tell separating polished from basic; never shot.
-    → `glass.popover` + rim. → owner: **raeen-shell-apps** + **raeen-gfx**. **Doable now.**
+    → `glass.popover` + rim. → owner: **athena-shell-apps** + **athena-gfx**. **Doable now.**
 
 ---
 
@@ -265,8 +265,8 @@ None. All surfaces render cleanly via the host rasterizer. No handoff to verifie
 
 ## Token-block status (for sequencing the next session)
 
-`components/rae_tokens/src/lib.rs` is **dirty in the working tree** (concurrent session).
-`components/raeshell/src/control_center.rs` is also mid-edit. **Token-blocked** items:
+`components/ath_tokens/src/lib.rs` is **dirty in the working tree** (concurrent session).
+`components/athshell/src/control_center.rs` is also mid-edit. **Token-blocked** items:
 P0 #2 frost-step token bake, P1 #3 `status.danger`, P1 #5 RaeSans type tokens, P1 #6
 `bg.content`. **Doable now (no token):** P0 #1 tile-lift (render-side shadow/highlight), P1
 #4 wire the magnifier icon, all of P2 (#7–10 shoot + glass the lock/login/window/menu

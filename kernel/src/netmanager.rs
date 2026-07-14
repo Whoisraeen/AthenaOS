@@ -961,7 +961,7 @@ pub fn init() {
 /// first non-loopback IPv4 if one is assigned. Reads a snapshot under the lock
 /// and drops it immediately (never held across the panel render).
 ///
-/// LOCK DISCIPLINE (raeen-reviewer 2026-06-17): this is reached from the
+/// LOCK DISCIPLINE (athena-reviewer 2026-06-17): this is reached from the
 /// notification-center click path in keyboard/mouse IRQ context (RFLAGS.IF=0).
 /// `NET_MANAGER` is a plain `spin::Mutex` also intended for a future preemptible
 /// net-poll thread (`apply_dhcp_lease`). To pre-empt the single-CPU IF=0

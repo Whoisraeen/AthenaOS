@@ -5,7 +5,7 @@
  * System sleep-state surface. amdgpu_device queries the target suspend state
  * (S3 vs s2idle) to pick its reset/power path. S3 suspend/resume is a separate
  * AthenaOS phase; here it is the suspend_state_t + the query, backed by
- * raeen_linuxkpi at M4 (reports the real target). suspend_state_t lives in
+ * ath_linuxkpi at M4 (reports the real target). suspend_state_t lives in
  * <linux/pm.h>. License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_SUSPEND_H
@@ -22,7 +22,7 @@
 #define PM_RESTORE_PREPARE      5
 #define PM_POST_RESTORE         6
 
-/* the in-progress system sleep target -- backed by raeen_linuxkpi (M4) */
+/* the in-progress system sleep target -- backed by ath_linuxkpi (M4) */
 suspend_state_t pm_suspend_target_state(void);
 bool pm_suspend_via_firmware(void);
 bool pm_resume_via_firmware(void);

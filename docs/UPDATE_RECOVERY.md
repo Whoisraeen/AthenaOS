@@ -30,7 +30,7 @@ Two complete system slots on disk, **A** and **B**. One is *active* (running), t
 
 ```
 update flow:
-  1. raeupdate downloads image + detached signature
+  1. athupdate downloads image + detached signature
   2. verify signature against the trust anchor (secure_boot::verify_against_anchor)
   3. write the image into the INACTIVE slot (active slot untouched, still bootable)
   4. mark inactive slot "pending", set boot-attempts = 0, flip the boot pointer
@@ -53,12 +53,12 @@ that blocks config-file boot.)
 
 ---
 
-## 3. Signed delivery (raeupdate)
+## 3. Signed delivery (athupdate)
 
-- **`raeupdate` daemon** fetches an update bundle (image + detached Ed25519 signature +
+- **`athupdate` daemon** fetches an update bundle (image + detached Ed25519 signature +
   metadata: version, slot, rollback-min).
 - **Verification reuses the built trust anchor:** `secure_boot::verify_against_anchor`
-  (embedded Ed25519 public key, offline-signed by `tools/raesign`) — the same primitive
+  (embedded Ed25519 public key, offline-signed by `tools/athsign`) — the same primitive
   proven by `[secboot] trust-anchor verify -> PASS`. A bad/forged/old image is rejected
   before it's written.
 - **Anti-rollback:** metadata carries a minimum version; the updater refuses to install an
@@ -72,7 +72,7 @@ The system half (A/B) handles the kernel + base system. User/app data uses **Ath
 snapshots**, which are **already proven** (Phase 5, one-click rollback round-trips in
 QEMU):
 
-- Before applying an update, raeupdate takes a AthFS snapshot.
+- Before applying an update, athupdate takes a AthFS snapshot.
 - "Roll back this update" = revert the boot slot **and** restore the pre-update snapshot —
   kernel and data both return to the known-good point.
 - Routine "system restore" points are the same mechanism, on a schedule.
@@ -102,7 +102,7 @@ hang, watchdog — counts as a failed attempt and feeds auto-rollback.
 
 1. **Slot-state region + a slot-aware bootloader** — read/pick/decrement/revert. The
    load-bearing prerequisite; nothing else works without it.
-2. **`raeupdate` write-to-inactive-slot + signature verify** (verify primitive exists).
+2. **`athupdate` write-to-inactive-slot + signature verify** (verify primitive exists).
 3. **Healthy-boot commit + attempt-counter auto-revert.**
 4. **Snapshot-on-update + unified "roll back update" (slot + snapshot).**
 5. **Recovery USB menu** (re-flash preserving user vaults).

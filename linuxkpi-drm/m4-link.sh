@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # linuxkpi-drm M4 link gauge — host-first (WSL/gcc + WSL cargo).
 #
-# Builds raeen_linuxkpi as a host staticlib (the `clib` feature), compiles the
+# Builds ath_linuxkpi as a host staticlib (the `clib` feature), compiles the
 # MES bring-up .c subset to objects against the shim headers, and reports the
 # undefined-symbol GAP split into:
 #   (A) amdgpu/drm-internal symbols  -> resolved by compiling MORE driver .c
-#   (B) the real LinuxKPI/drm gap    -> raeen_linuxkpi must export, or a new shim
-# This is M4 step "map every undefined symbol to a raeen_linuxkpi export".
+#   (B) the real LinuxKPI/drm gap    -> ath_linuxkpi must export, or a new shim
+# This is M4 step "map every undefined symbol to a ath_linuxkpi export".
 set -euo pipefail
 
 # REPO is derived from this script's location (linuxkpi-drm/..) so the build runs on
@@ -54,10 +54,10 @@ fi
 # CONFIG_ACPI is enabled ONLY for amdgpu_bios.c (scoped in the BRINGUP loop
 # below), not globally: Phoenix (APU) has no PCI-ROM VBIOS, so the sole ATOMBIOS
 # source is amdgpu_acpi_vfct_bios() (amdgpu_bios.c, #ifdef CONFIG_ACPI), which
-# calls acpi_get_table("VFCT") — served by raeen_linuxkpi from the bundled VFCT
+# calls acpi_get_table("VFCT") — served by ath_linuxkpi from the bundled VFCT
 # capture. Enabling CONFIG_ACPI GLOBALLY pulled in an ACPI virt-detect path in
 # other files that faulted (mutex_lock on the xgpu_nv SR-IOV stub), so we scope it.
-LIB=$TGT/$RTARGET/release/libraeen_linuxkpi.a
+LIB=$TGT/$RTARGET/release/libath_linuxkpi.a
 
 INC="-I $REPO/linuxkpi-drm/include/amd-stubs -I $REPO/linuxkpi-drm/include \
   -I $AMD/include -I $AMD/include/asic_reg -I $AMD/amdgpu -I $AMD/amdkfd \
@@ -114,8 +114,8 @@ BRINGUP_DMABUF="dma-fence-unwrap"
 BRINGUP_SMU="amdgpu_dpm swsmu/amdgpu_smu swsmu/smu_cmn swsmu/smu13/smu_v13_0 \
   swsmu/smu13/smu_v13_0_4_ppt swsmu/smu13/yellow_carp_ppt"
 
-echo "[m4] building raeen_linuxkpi host staticlib (clib feature)..."
-( cd "$REPO" && CARGO_TARGET_DIR="$TGT" cargo rustc -p raeen_linuxkpi \
+echo "[m4] building ath_linuxkpi host staticlib (clib feature)..."
+( cd "$REPO" && CARGO_TARGET_DIR="$TGT" cargo rustc -p ath_linuxkpi \
     --features clib --crate-type staticlib --target $RTARGET --release >/dev/null )
 echo "[m4] staticlib: $LIB ($(nm "$LIB" 2>/dev/null | grep -cE ' [TtWR] ') defined symbols)"
 
@@ -231,12 +231,12 @@ nm "$LIB" 2>/dev/null | awk 'NF==3 && $2!="U" {print $3}' | sort -u > def.txt
 comm -23 undef.txt def.txt > gap.txt
 # amdgpu/drm-internal prefixes (resolved by compiling more driver .c)
 # amdgpu's own + DRM-core (drm_*) + TTM + the DRM scheduler are all "compile/fetch
-# more component .c", NOT the LinuxKPI seam raeen_linuxkpi owns.
+# more component .c", NOT the LinuxKPI seam ath_linuxkpi owns.
 AMDRE='^(amdgpu|gfx_|gfx9|gfx10|gfx11|gmc|mes_|soc|nbio|nbif|psp|sdma|vcn|jpeg|vpe|umc|umsch|uvd|vce|gfxhub|mmhub|athub|hdp|smu|pp_smu|aqua|aldebaran|arct|navi|sienna|cyan|emu_soc|kgd|kfd|dce|dcn|dm_|amdkfd|cik|si_|vi_|nv_|ih_|isp|vega|polaris|imu|lsdma|mca|aca|ras_v|df_|mgpu|amdgv|amd_|drm_|drmm_|ttm_|xgpu|userq|renoir|vangogh|yellow_carp|is_support|link_speed|_GLOBAL|__stack_chk)'
 # amdgpu IP-block descriptors end in _ip_block (defined in their own IP .c file);
 # also drop CRT/compiler symbols (__stack_chk_fail, the GOT) and blank lines.
 grep -vE "$AMDRE" gap.txt | grep -vE '_ip_block$' | grep -vE '^(__stack_chk|_GLOBAL_OFFSET)' | grep -vE '^$' > kpigap.txt || true
 echo "[m4] undefined=$(wc -l < undef.txt)  staticlib-provides=$(wc -l < def.txt)"
 echo "[m4] GAP total=$(wc -l < gap.txt)  (amdgpu/drm-internal=$(($(wc -l < gap.txt)-$(wc -l < kpigap.txt))), real LinuxKPI gap=$(wc -l < kpigap.txt))"
-echo "[m4] --- real LinuxKPI gap (raeen_linuxkpi must export / new shim) ---"
+echo "[m4] --- real LinuxKPI gap (ath_linuxkpi must export / new shim) ---"
 cat kpigap.txt

@@ -4,7 +4,7 @@
 //! command-list programming with Redox `base.git` `ahcid`; AthenaOS stays
 //! in-kernel per hybrid Concept until IOMMU userspace storage daemons land.
 //!
-//! R10: `init()` + `run_boot_smoketest()` + `/proc/raeen/ahci` + this doc block.
+//! R10: `init()` + `run_boot_smoketest()` + `/proc/athena/ahci` + this doc block.
 
 extern crate alloc;
 
@@ -1389,7 +1389,7 @@ pub fn run_boot_smoketest() {
     // Athena boots NVMe, so AHCI as the FS-backing device is a SATA install.
 }
 
-/// `/proc/raeen/ahci` — controller/port summary.
+/// `/proc/athena/ahci` — controller/port summary.
 pub fn dump_text() -> String {
     let ctrls = AHCI_CONTROLLERS.lock();
     let mut out = String::from("# AthenaOS AHCI\n");

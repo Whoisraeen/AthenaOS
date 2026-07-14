@@ -8,7 +8,7 @@
 > Linux-grade ownership (clear/auto-clear under your control, no cloud by default).
 
 **All tokens below are defined in [`design-language.md`](./design-language.md)**
-and live in `rae_tokens` (ADR 0003). This spec only *assigns* them. No new magic
+and live in `ath_tokens` (ADR 0003). This spec only *assigns* them. No new magic
 numbers; surface-specific layout dimensions are local constants from `space.*`.
 
 ---
@@ -33,7 +33,7 @@ Grounded in code. There are **two layers** that already exist; this surface is t
 
 | Piece | Where | Today | This spec adds |
 |---|---|---|---|
-| Rich clipboard manager | `components/raeshell/src/clipboard.rs::ClipboardManager` | LIVE data model, **unwired** (`allow(unused)`): multi-format (`Text/RichText/Image/Files/Url/Color/Custom`), **history** (`Vec<ClipboardEntry>`), **pin/unpin**, `delete_entry`, `clear_history` (keeps pinned), `search`, `paste_at(index)`, per-entry `preview`, size/total caps + pinned-safe eviction (`enforce_limits`) | a glass panel that renders `history()` rows + a syscall so it's session-wide |
+| Rich clipboard manager | `components/athshell/src/clipboard.rs::ClipboardManager` | LIVE data model, **unwired** (`allow(unused)`): multi-format (`Text/RichText/Image/Files/Url/Color/Custom`), **history** (`Vec<ClipboardEntry>`), **pin/unpin**, `delete_entry`, `clear_history` (keeps pinned), `search`, `paste_at(index)`, per-entry `preview`, size/total caps + pinned-safe eviction (`enforce_limits`) | a glass panel that renders `history()` rows + a syscall so it's session-wide |
 | Kernel clipboard (current) | `kernel/src/clipboard.rs` (syscalls 107 GET / 108 SET) | LIVE but **single 64 KiB UTF-8 buffer, no history** | the architect adds a **history-aware** kernel surface (or promotes the `ClipboardManager` to a session service) so the panel's history survives across apps — see Handoff |
 | Entry preview | `ClipboardEntry.preview` (≤120 chars, format-aware: "PNG image 1920x1080", "3 files", "#FF8800") | LIVE | rendered as the row's preview line |
 | Pinned-safe eviction | `enforce_limits` (evicts oldest **un**pinned first; `max_history`, `max_total_size`) | LIVE | the "Recent capped, Pinned never evicted" UX |
@@ -74,7 +74,7 @@ that reads the live accent.
 
 ## AthenaOS design tokens this surface uses
 
-Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
+Pulled verbatim from `design-language.md` / `ath_tokens`. No new magic numbers.
 
 - **spacing:** `space.2` (intra-row gap, badge inset), `space.3` (row inset, row
   vertical pad), `space.4` (panel padding, section gap), `space.1` (row-to-row gap).
@@ -241,7 +241,7 @@ buried setting:
 - **Max entries shown:** the list virtualizes; render the first ~8 then scroll
   (the panel never grows unbounded on screen).
 
-**Flag to raeen-accessibility + AthGuard:** password-manager / secret fields
+**Flag to athena-accessibility + AthGuard:** password-manager / secret fields
 should be excludable from history (a `Custom` MIME or a "sensitive" hint that the
 manager honors by skipping the copy). Coordinate the exclusion mechanism.
 
@@ -251,11 +251,11 @@ manager honors by skipping the copy). Coordinate the exclusion mechanism.
 
 | Concern | Rule | Owner |
 |---|---|---|
-| Contrast | preview `type.body` ≥4.5:1; format badge text ≥4.5:1 on its `bg.elevated` chip; image-overlay badge needs a scrim behind it | raeen-accessibility |
-| Focus visibility | selected row = `accent.subtle` + 2px `accent.base` bar + `elev.focus`, never color-only | raeen-accessibility |
-| Reduced-motion | open/close opacity-only; no row fades | raeen-accessibility |
-| Hit targets | 44px rows (pointer) / 48px (couch); per-row action buttons ≥32px effective | raeen-visual-qa |
-| Destructive guard | Clear-all and delete confirm intent (the pinned-delete lock is already modeled); destructive affordances use `state.danger` | raeen-accessibility |
+| Contrast | preview `type.body` ≥4.5:1; format badge text ≥4.5:1 on its `bg.elevated` chip; image-overlay badge needs a scrim behind it | athena-accessibility |
+| Focus visibility | selected row = `accent.subtle` + 2px `accent.base` bar + `elev.focus`, never color-only | athena-accessibility |
+| Reduced-motion | open/close opacity-only; no row fades | athena-accessibility |
+| Hit targets | 44px rows (pointer) / 48px (couch); per-row action buttons ≥32px effective | athena-visual-qa |
+| Destructive guard | Clear-all and delete confirm intent (the pinned-delete lock is already modeled); destructive affordances use `state.danger` | athena-accessibility |
 
 ---
 
@@ -274,23 +274,23 @@ Ships only when:
 ## Handoff
 
 ### Implementers (two-part — the ABI then the panel)
-- **opus / raeen-architect** — the **session-wide history syscall**. The kernel
+- **opus / athena-architect** — the **session-wide history syscall**. The kernel
   clipboard (`kernel/src/clipboard.rs`, syscalls 107/108) is a single 64 KiB
   buffer with no history; the panel needs history that survives across apps.
-  Decide between (a) promoting `raeshell::ClipboardManager` to a userspace session
+  Decide between (a) promoting `athshell::ClipboardManager` to a userspace session
   service that the panel and apps talk to, or (b) a small history-aware kernel
   surface (new syscalls for `history_count` / `history_entry(i)` / `pin(i)` /
   `delete(i)` / `clear`). Whichever: it is an **[interface]** change — bump
   `ABI_VERSION`, update `docs/SYSCALL_TABLE.md` in the same commit, batch the
   syscall numbers (no one-off magic numbers). Keep the 64 KiB-per-entry / total
   caps as the kernel-side guard.
-- **raeen-shell-apps / raeen-ui** — the **panel**. Wire `ClipboardManager`
+- **athena-shell-apps / athena-ui** — the **panel**. Wire `ClipboardManager`
   (remove `allow(unused)`) to the §2 glass flyout: `Super+V` hotkey + caret
   anchoring, Pinned/Recent sections rendering `history()`, the §3 row renderer
   (text rows + image thumbnail cards + per-row pin/delete), §4 paste-on-select,
   §6 privacy controls. The entry-row and format-badge widgets consume
-  `rae_tokens` (no private palette) and are reusable.
-- **raeen-accessibility / AthGuard** (flagged) — sensitive-field exclusion;
+  `ath_tokens` (no private palette) and are reusable.
+- **athena-accessibility / AthGuard** (flagged) — sensitive-field exclusion;
   contrast + focus audit.
 
 ### FAIL-able boot-log proof line
@@ -305,7 +305,7 @@ drops a pinned entry, if `paste_at` returns the wrong content, or if the count/
 size caps are not enforced.) Plus cohesion:
 `[clipboard-history] accent=0x.. == derive_accent(seed).base -> PASS`.
 
-### Visual-QA verification list (raeen-visual-qa)
+### Visual-QA verification list (athena-visual-qa)
 - QEMU screenshot: panel open with a **Pinned** section (≥1 pinned, accent left
   edge + filled pin glyph) and a **Recent** section, glass blur visible, accent
   cohesive with the taskbar.
@@ -320,4 +320,4 @@ size caps are not enforced.) Plus cohesion:
 ### Unblocks (MasterChecklist)
 - Phase 8 (AthUI/AthKit): the entry-row + thumbnail-card widgets.
 - Phase 14 (AthShell + apps): the clipboard-history surface; activates the dead
-  `raeshell::clipboard` manager and gives the kernel clipboard a history.
+  `athshell::clipboard` manager and gives the kernel clipboard a history.

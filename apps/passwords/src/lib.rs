@@ -9,10 +9,10 @@
 //!
 //! Standalone userspace ELF launched from the start menu (`exec_path =
 //! "passwords"`). The two engines are already host-KAT'd and do ALL the work:
-//!   * `rae_keychain` — Argon2id master-key KDF + ChaCha20-Poly1305 AEAD vault,
+//!   * `ath_keychain` — Argon2id master-key KDF + ChaCha20-Poly1305 AEAD vault,
 //!     fail-closed on a wrong passphrase (the AEAD tag won't verify → Err, no
 //!     oracle).
-//!   * `rae_otp` — HOTP/TOTP (RFC 4226 / 6238), base32 + `otpauth://` import,
+//!   * `ath_otp` — HOTP/TOTP (RFC 4226 / 6238), base32 + `otpauth://` import,
 //!     skew-tolerant verify.
 //!
 //! This crate is the clickable shell over them: an unlock screen, a credential
@@ -43,22 +43,22 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use rae_keychain::{Keychain, KeychainError};
-use rae_otp::OtpAuth;
+use ath_keychain::{Keychain, KeychainError};
+use ath_otp::OtpAuth;
 
 // The render/run path is live-ELF only; under `cargo test` only the VaultModel
-// (over rae_keychain + rae_otp) is exercised, so the graphics/syscall imports are
+// (over ath_keychain + ath_otp) is exercised, so the graphics/syscall imports are
 // gated out to keep the host test warning-clean.
 #[cfg(not(test))]
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 #[cfg(not(test))]
-use rae_tokens::DARK;
+use ath_tokens::DARK;
 #[cfg(not(test))]
-use raegfx::text::FontFamily;
+use athgfx::text::FontFamily;
 #[cfg(not(test))]
-use raegfx::Canvas;
+use athgfx::Canvas;
 
 // ── Window geometry (live ELF only) ──────────────────────────────────────
 
@@ -122,13 +122,13 @@ const OK_COLOR: u32 = DARK.state_ok;
 
 #[cfg(not(test))]
 fn accent() -> u32 {
-    rae_tokens::derive_accent(raekit::sys::theme_accent(), &DARK).base
+    ath_tokens::derive_accent(athkit::sys::theme_accent(), &DARK).base
 }
 
 // ── Wall clock (SYS_WALL_CLOCK = 40, unix-epoch ns) ───────────────────────
 //
-// raekit has no wrapper for SYS_WALL_CLOCK, so we issue the raw syscall through
-// the public `raekit::sys::syscall0` — the EXACT pattern the Clock app uses
+// athkit has no wrapper for SYS_WALL_CLOCK, so we issue the raw syscall through
+// the public `athkit::sys::syscall0` — the EXACT pattern the Clock app uses
 // (no new ABI surface for this slice). 0 means "unavailable" → TOTP shows
 // `------`. Only compiled into the live ELF; the host test injects a fixed time.
 #[cfg(not(test))]
@@ -136,7 +136,7 @@ const SYS_WALL_CLOCK: u64 = 40;
 
 #[cfg(not(test))]
 fn wall_secs() -> u64 {
-    let ns = unsafe { raekit::sys::syscall0(SYS_WALL_CLOCK) };
+    let ns = unsafe { athkit::sys::syscall0(SYS_WALL_CLOCK) };
     ns / 1_000_000_000
 }
 
@@ -239,7 +239,7 @@ impl VaultModel {
         existing: Option<&[u8]>,
         passphrase: &str,
         seed: &[u8],
-        kdf: rae_keychain::KdfParams,
+        kdf: ath_keychain::KdfParams,
     ) -> UnlockOutcome {
         match existing {
             Some(blob) => match Keychain::open(blob, passphrase) {
@@ -557,9 +557,9 @@ impl App {
         let mut seed = [0u8; 32];
         // Best-effort entropy: kernel monotonic time ^ wall clock ^ pid, spread
         // across the seed. Only used when CREATING a fresh vault.
-        let t = raekit::sys::time_ns();
+        let t = athkit::sys::time_ns();
         let w = wall_secs();
-        let pid = raekit::sys::getpid();
+        let pid = athkit::sys::getpid();
         for (i, b) in seed.iter_mut().enumerate() {
             let mix = t
                 .wrapping_mul(0x9E37_79B9_7F4A_7C15)
@@ -597,9 +597,9 @@ impl App {
     #[cfg(not(test))]
     fn fresh_save_seed(&mut self) -> [u8; 32] {
         self.save_counter = self.save_counter.wrapping_add(1);
-        let t = raekit::sys::time_ns();
+        let t = athkit::sys::time_ns();
         let w = wall_secs();
-        let pid = raekit::sys::getpid();
+        let pid = athkit::sys::getpid();
         let ctr = self.save_counter;
         let mut seed = [0u8; 32];
         for (i, b) in seed.iter_mut().enumerate() {
@@ -730,8 +730,8 @@ impl App {
 fn vault_path() -> String {
     let mut p = String::new();
     let mut info = [0u8; 96];
-    if raekit::sys::session_info(&mut info).is_some() {
-        if let Some(home) = raekit::sys::session_home_from(&info) {
+    if athkit::sys::session_info(&mut info).is_some() {
+        if let Some(home) = athkit::sys::session_home_from(&info) {
             p.push_str(home);
             p.push_str("/.config/");
             p.push_str(VAULT_FILE);
@@ -747,8 +747,8 @@ fn vault_path() -> String {
 fn config_dir() -> String {
     let mut p = String::new();
     let mut info = [0u8; 96];
-    if raekit::sys::session_info(&mut info).is_some() {
-        if let Some(home) = raekit::sys::session_home_from(&info) {
+    if athkit::sys::session_info(&mut info).is_some() {
+        if let Some(home) = athkit::sys::session_home_from(&info) {
             p.push_str(home);
             p.push_str("/.config");
             return p;
@@ -763,7 +763,7 @@ fn config_dir() -> String {
 #[cfg(not(test))]
 fn load_vault_blob() -> Option<Vec<u8>> {
     let path = vault_path();
-    let fd = raekit::sys::open(path.as_str(), 0);
+    let fd = athkit::sys::open(path.as_str(), 0);
     if fd == u64::MAX {
         return None;
     }
@@ -774,13 +774,13 @@ fn load_vault_blob() -> Option<Vec<u8>> {
         if data.len() > 16 * 1024 * 1024 {
             break;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     if data.is_empty() {
         None
     } else {
@@ -791,23 +791,23 @@ fn load_vault_blob() -> Option<Vec<u8>> {
 /// Write the encrypted vault blob (O_WRONLY|O_CREAT|O_TRUNC). Returns success.
 #[cfg(not(test))]
 fn save_vault_blob(blob: &[u8]) -> bool {
-    let _ = raekit::sys::mkdir(config_dir().as_str());
+    let _ = athkit::sys::mkdir(config_dir().as_str());
     let path = vault_path();
-    let fd = raekit::sys::open(path.as_str(), 0x0241);
+    let fd = athkit::sys::open(path.as_str(), 0x0241);
     if fd == u64::MAX {
         return false;
     }
     let mut off = 0usize;
     while off < blob.len() {
         let end = (off + 4096).min(blob.len());
-        let n = raekit::sys::write(fd, &blob[off..end]) as usize;
+        let n = athkit::sys::write(fd, &blob[off..end]) as usize;
         if n == 0 {
-            let _ = raekit::sys::close(fd);
+            let _ = athkit::sys::close(fd);
             return false;
         }
         off += n;
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     true
 }
 
@@ -821,9 +821,9 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect(0, 0, WIN_W, TITLE_H, PANEL);
     canvas.draw_text_aa(
         10,
-        ((TITLE_H - rae_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
+        ((TITLE_H - ath_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
         "Passwords & Authenticator",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_SECONDARY,
         FontFamily::Sans,
     );
@@ -862,12 +862,12 @@ fn render_unlock(app: &App, canvas: &mut Canvas) {
     } else {
         "Create a master passphrase for your new vault"
     };
-    let pw = canvas.measure_text_aa(prompt, rae_tokens::TYPE_BODY, FontFamily::Sans);
+    let pw = canvas.measure_text_aa(prompt, ath_tokens::TYPE_BODY, FontFamily::Sans);
     canvas.draw_text_aa(
         (cx as i32) - pw / 2,
         cy as i32,
         prompt,
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         TEXT_SECONDARY,
         FontFamily::Sans,
     );
@@ -882,7 +882,7 @@ fn render_unlock(app: &App, canvas: &mut Canvas) {
         fy,
         field_w,
         field_h,
-        rae_tokens::RADIUS_SM as usize,
+        ath_tokens::RADIUS_SM as usize,
         PANEL,
     );
     let masked: String = core::iter::repeat('•')
@@ -900,9 +900,9 @@ fn render_unlock(app: &App, canvas: &mut Canvas) {
     };
     canvas.draw_text_aa(
         fx as i32 + 12,
-        fy as i32 + ((field_h - rae_tokens::TYPE_BODY.line_height as usize) / 2) as i32,
+        fy as i32 + ((field_h - ath_tokens::TYPE_BODY.line_height as usize) / 2) as i32,
         shown,
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         fg,
         FontFamily::Sans,
     );
@@ -927,12 +927,12 @@ fn render_tabs(app: &App, canvas: &mut Canvas) {
             canvas.fill_rect(tx, y + TABBAR_H - 3, half, 3, accent());
         }
         let fg = if active { TEXT_PRIMARY } else { TEXT_SECONDARY };
-        let lw = canvas.measure_text_aa(label, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+        let lw = canvas.measure_text_aa(label, ath_tokens::TYPE_LABEL, FontFamily::Sans);
         canvas.draw_text_aa(
             (tx + half / 2) as i32 - lw / 2,
-            (y + (TABBAR_H - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
+            (y + (TABBAR_H - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
             label,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             fg,
             FontFamily::Sans,
         );
@@ -948,12 +948,12 @@ fn render_list(app: &App, canvas: &mut Canvas) {
             Tab::Passwords => "No saved passwords yet.  Press A to add one.",
             Tab::Authenticator => "No 2FA codes yet.  Press I to import an otpauth:// URI.",
         };
-        let lw = canvas.measure_text_aa(msg, rae_tokens::TYPE_BODY, FontFamily::Sans);
+        let lw = canvas.measure_text_aa(msg, ath_tokens::TYPE_BODY, FontFamily::Sans);
         canvas.draw_text_aa(
             (WIN_W as i32 - lw) / 2,
             (top + 40) as i32,
             msg,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_TERTIARY,
             FontFamily::Sans,
         );
@@ -971,7 +971,7 @@ fn render_list(app: &App, canvas: &mut Canvas) {
             ry,
             WIN_W - 16,
             ROW_H - 6,
-            rae_tokens::RADIUS_SM as usize,
+            ath_tokens::RADIUS_SM as usize,
             bg,
         );
 
@@ -980,7 +980,7 @@ fn render_list(app: &App, canvas: &mut Canvas) {
             18,
             ry as i32 + 6,
             &row.service,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_PRIMARY,
             FontFamily::Sans,
         );
@@ -988,7 +988,7 @@ fn render_list(app: &App, canvas: &mut Canvas) {
             18,
             ry as i32 + 24,
             &row.account,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_SECONDARY,
             FontFamily::Sans,
         );
@@ -1000,13 +1000,13 @@ fn render_list(app: &App, canvas: &mut Canvas) {
                 {
                     // The big monospace code.
                     let code_w =
-                        canvas.measure_text_aa(&code, rae_tokens::TYPE_TITLE, FontFamily::Mono);
+                        canvas.measure_text_aa(&code, ath_tokens::TYPE_TITLE, FontFamily::Mono);
                     let code_x = (WIN_W as i32) - 16 - 44 - code_w;
                     canvas.draw_text_aa(
                         code_x,
                         ry as i32 + 8,
                         &code,
-                        rae_tokens::TYPE_TITLE,
+                        ath_tokens::TYPE_TITLE,
                         accent(),
                         FontFamily::Mono,
                     );
@@ -1022,12 +1022,12 @@ fn render_list(app: &App, canvas: &mut Canvas) {
                     canvas.fill_circle(ring_cx, ring_cy, frac.saturating_sub(4), bg);
                     let secs = num_str(remaining);
                     let sw =
-                        canvas.measure_text_aa(&secs, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+                        canvas.measure_text_aa(&secs, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
                     canvas.draw_text_aa(
                         ring_cx as i32 - sw / 2,
-                        ring_cy as i32 - (rae_tokens::TYPE_CAPTION.line_height as i32) / 2,
+                        ring_cy as i32 - (ath_tokens::TYPE_CAPTION.line_height as i32) / 2,
                         &secs,
-                        rae_tokens::TYPE_CAPTION,
+                        ath_tokens::TYPE_CAPTION,
                         TEXT_PRIMARY,
                         FontFamily::Sans,
                     );
@@ -1050,12 +1050,12 @@ fn render_list(app: &App, canvas: &mut Canvas) {
                 } else {
                     (String::from("••••••••"), TEXT_TERTIARY)
                 };
-                let tw = canvas.measure_text_aa(&text, rae_tokens::TYPE_BODY, FontFamily::Mono);
+                let tw = canvas.measure_text_aa(&text, ath_tokens::TYPE_BODY, FontFamily::Mono);
                 canvas.draw_text_aa(
                     (WIN_W as i32) - 18 - tw,
                     ry as i32 + 14,
                     &text,
-                    rae_tokens::TYPE_BODY,
+                    ath_tokens::TYPE_BODY,
                     fg,
                     FontFamily::Mono,
                 );
@@ -1084,7 +1084,7 @@ fn total_period(vault: &VaultModel, service: &str, account: &str) -> u64 {
 #[cfg(not(test))]
 fn render_modal(app: &App, canvas: &mut Canvas) {
     // Scrim.
-    canvas.fill_rect(0, 0, WIN_W, WIN_H, rae_tokens::SCRIM_CAPTURE);
+    canvas.fill_rect(0, 0, WIN_W, WIN_H, ath_tokens::SCRIM_CAPTURE);
     let mw = 400;
     let mh = if app.modal == Modal::AddPassword {
         230
@@ -1093,7 +1093,7 @@ fn render_modal(app: &App, canvas: &mut Canvas) {
     };
     let mx = (WIN_W - mw) / 2;
     let my = (WIN_H - mh) / 2;
-    canvas.fill_rounded_rect(mx, my, mw, mh, rae_tokens::RADIUS_MD as usize, PANEL);
+    canvas.fill_rounded_rect(mx, my, mw, mh, ath_tokens::RADIUS_MD as usize, PANEL);
 
     let title = match app.modal {
         Modal::AddPassword => "Add password",
@@ -1104,7 +1104,7 @@ fn render_modal(app: &App, canvas: &mut Canvas) {
         mx as i32 + 16,
         my as i32 + 14,
         title,
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_PRIMARY,
         FontFamily::Sans,
     );
@@ -1115,14 +1115,14 @@ fn render_modal(app: &App, canvas: &mut Canvas) {
                 mx as i32 + 16,
                 y as i32,
                 label,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_TERTIARY,
                 FontFamily::Sans,
             );
             let fh = 30;
             let fw = mw - 32;
             let stroke = if focused { accent() } else { STROKE };
-            canvas.fill_rounded_rect(mx + 16, y + 16, fw, fh, rae_tokens::RADIUS_SM as usize, BG);
+            canvas.fill_rounded_rect(mx + 16, y + 16, fw, fh, ath_tokens::RADIUS_SM as usize, BG);
             canvas.fill_rect(mx + 16, y + 16 + fh - 2, fw, 2, stroke);
             let shown: String = if mask {
                 core::iter::repeat('•')
@@ -1133,9 +1133,9 @@ fn render_modal(app: &App, canvas: &mut Canvas) {
             };
             canvas.draw_text_aa(
                 mx as i32 + 26,
-                (y + 16 + (fh - rae_tokens::TYPE_BODY.line_height as usize) / 2) as i32,
+                (y + 16 + (fh - ath_tokens::TYPE_BODY.line_height as usize) / 2) as i32,
                 &shown,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 TEXT_PRIMARY,
                 FontFamily::Mono,
             );
@@ -1171,7 +1171,7 @@ fn render_modal(app: &App, canvas: &mut Canvas) {
                 mx as i32 + 16,
                 my as i32 + mh as i32 - 22,
                 "Tab: next field   Enter: save   Esc: cancel",
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_TERTIARY,
                 FontFamily::Sans,
             );
@@ -1189,7 +1189,7 @@ fn render_modal(app: &App, canvas: &mut Canvas) {
                 mx as i32 + 16,
                 my as i32 + mh as i32 - 22,
                 "Enter: import   Esc: cancel",
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_TERTIARY,
                 FontFamily::Sans,
             );
@@ -1212,13 +1212,13 @@ fn render_footer(app: &App, canvas: &mut Canvas) {
     };
     canvas.draw_text_aa(
         10,
-        fy as i32 + ((FOOTER_H - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
+        fy as i32 + ((FOOTER_H - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
         if app.toast.text.is_empty() {
             hint
         } else {
             app.toast.text.as_str()
         },
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         if app.toast.text.is_empty() {
             TEXT_TERTIARY
         } else {
@@ -1360,15 +1360,15 @@ fn backspace(app: &mut App) {
 /// vault drops to the unlock screen; an unlocked vault shows the tabs.
 #[cfg(not(test))]
 pub fn run() -> ! {
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
     let mut app = App::new();
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     let mut extended = false;
     // Re-present the TOTP view once a second so codes/countdowns stay live even
@@ -1381,7 +1381,7 @@ pub fn run() -> ! {
         let mut left_down = false;
         let mut mouse_edge = false;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -1392,9 +1392,9 @@ pub fn run() -> ! {
             left_down = now_down;
         }
         if mouse_edge && app.unlocked && app.modal == Modal::None {
-            let (cx, cy, _btn) = raekit::sys::cursor_pos();
+            let (cx, cy, _btn) = athkit::sys::cursor_pos();
             let (ox, oy) =
-                raekit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
+                athkit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
             let lx = (cx as i32).saturating_sub(ox as i32);
             let ly = (cy as i32).saturating_sub(oy as i32);
             let tab_top = TITLE_H as i32;
@@ -1408,20 +1408,20 @@ pub fn run() -> ! {
                 app.revealed = None;
                 app.toast.clear();
                 render(&app, &mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
             }
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
             // Idle: keep the authenticator's live codes ticking.
             let now = wall_secs();
             if app.unlocked && app.tab == Tab::Authenticator && now != last_tick {
                 last_tick = now;
                 render(&app, &mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
             }
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
 
@@ -1452,7 +1452,7 @@ pub fn run() -> ! {
             } else if app.unlocked {
                 app.lock();
             } else {
-                raekit::sys::exit(0);
+                athkit::sys::exit(0);
             }
         }
         // Enter (0x1C): unlock / commit modal.
@@ -1559,7 +1559,7 @@ pub fn run() -> ! {
 
         if changed {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
     }
 }
@@ -1572,7 +1572,7 @@ pub fn run() -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rae_keychain::KdfParams;
+    use ath_keychain::KdfParams;
 
     // RFC 6238 Appendix B SHA-1 vector secret (ASCII "12345678901234567890"),
     // base32-encoded for the otpauth:// URI. At unix_time = 59, the 6-digit TOTP
@@ -1705,23 +1705,23 @@ mod tests {
     /// `magic[8] | version[2] | t_cost[4] | m_kib[4] | par[1] | salt_len[1] |
     ///  salt[16] | nonce[12] | ct+tag[..]` — so the nonce begins at offset
     /// `8+2+4+4+1+1 + 16 = 36`. Asserts the magic + salt_len first so a layout
-    /// drift in rae_keychain trips this helper instead of silently reading the
+    /// drift in ath_keychain trips this helper instead of silently reading the
     /// wrong bytes (keeps the differ-nonce test honest).
-    fn nonce_of(blob: &[u8]) -> [u8; rae_keychain::NONCE_LEN] {
-        assert!(blob.len() >= 36 + rae_keychain::NONCE_LEN, "blob too short");
+    fn nonce_of(blob: &[u8]) -> [u8; ath_keychain::NONCE_LEN] {
+        assert!(blob.len() >= 36 + ath_keychain::NONCE_LEN, "blob too short");
         assert_eq!(
             &blob[..8],
-            &rae_keychain::MAGIC,
+            &ath_keychain::MAGIC,
             "unexpected keychain magic"
         );
         assert_eq!(
             blob[19] as usize,
-            rae_keychain::SALT_LEN,
+            ath_keychain::SALT_LEN,
             "unexpected salt_len — header layout drifted"
         );
-        let off = 8 + 2 + 4 + 4 + 1 + 1 + rae_keychain::SALT_LEN; // = 36
-        let mut n = [0u8; rae_keychain::NONCE_LEN];
-        n.copy_from_slice(&blob[off..off + rae_keychain::NONCE_LEN]);
+        let off = 8 + 2 + 4 + 4 + 1 + 1 + ath_keychain::SALT_LEN; // = 36
+        let mut n = [0u8; ath_keychain::NONCE_LEN];
+        n.copy_from_slice(&blob[off..off + ath_keychain::NONCE_LEN]);
         n
     }
 

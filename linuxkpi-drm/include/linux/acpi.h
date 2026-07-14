@@ -6,7 +6,7 @@
  * embedded in an ACPI table — one VBIOS fallback) and the ATPX/ATCS hybrid-gfx
  * methods (out of the bring-up subset, AthGuard owns GPU arbitration). The
  * AthenaOS ACPI namespace is owned by the kernel; the userspace bring-up daemon
- * gets tables via the host, so acpi_get_table is backed by raeen_linuxkpi at M4
+ * gets tables via the host, so acpi_get_table is backed by ath_linuxkpi at M4
  * (reports "absent" until wired — the PCI-ROM VBIOS path is primary). License
  * boundary (../../README.md): API surface.
  */
@@ -81,7 +81,7 @@ struct acpi_object_list {
 #define ACPI_HANDLE(dev) ((acpi_handle)NULL)
 acpi_handle acpi_device_handle(struct device *dev);
 
-/* table + method access — backed by raeen_linuxkpi (M4) */
+/* table + method access — backed by ath_linuxkpi (M4) */
 acpi_status acpi_get_table(char *signature, u32 instance, struct acpi_table_header **out);
 void        acpi_put_table(struct acpi_table_header *table);
 acpi_status acpi_evaluate_object(acpi_handle handle, char *pathname,

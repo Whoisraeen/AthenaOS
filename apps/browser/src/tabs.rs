@@ -12,7 +12,7 @@
 //! per-tab unit means every tab inherits the proven history/back/forward/fetch
 //! logic for free, and the whole [`TabManager`] stays linkable in the host KAT
 //! (`cargo test -p browser --features host`) with no kernel — the model feeds on
-//! in-memory HTML/CSS strings and an injectable [`raenet::http1::HttpTransport`].
+//! in-memory HTML/CSS strings and an injectable [`athnet::http1::HttpTransport`].
 //!
 //! The [`TabManager`] owns N tabs and an active index. It guarantees the invariant
 //! a tab strip relies on: **there is always at least one tab** (closing the last
@@ -123,8 +123,8 @@ impl Tab {
     /// the navigation. Mirrors [`Tab::navigate`] but sources the document from the
     /// network ([`BrowserModel::fetch_and_render`], which always yields a renderable
     /// page — an honest error page on failure, never a panic). The host KAT drives this
-    /// with a [`raenet::http1::MockTransport`]/`RoutingMock`.
-    pub fn navigate_fetch<T: raenet::http1::HttpTransport>(
+    /// with a [`athnet::http1::MockTransport`]/`RoutingMock`.
+    pub fn navigate_fetch<T: athnet::http1::HttpTransport>(
         &mut self,
         url: &str,
         transport: &mut T,
@@ -189,11 +189,11 @@ impl Tab {
 }
 
 /// Derive a tab's title from its loaded page: the document `<title>` (parsed via
-/// raeweb's public DOM), falling back to the URL's host, falling back to the URL
+/// athweb's public DOM), falling back to the URL's host, falling back to the URL
 /// itself, falling back to [`EMPTY_TAB_TITLE`]. Never empty.
 fn derive_title(page: &LoadedPage) -> String {
-    let dom = raeweb::parse_html(&page.html);
-    if let Some(t) = raeweb::document_title(&dom) {
+    let dom = athweb::parse_html(&page.html);
+    if let Some(t) = athweb::document_title(&dom) {
         let t = t.trim();
         if !t.is_empty() {
             return String::from(t);
@@ -376,7 +376,7 @@ impl TabManager {
 }
 
 // ===========================================================================
-// Host KAT — links the LIVE raeweb + rae_js engines through BrowserModel, no
+// Host KAT — links the LIVE athweb + ath_js engines through BrowserModel, no
 // kernel. Each test asserts CONCRETE values so it can actually FAIL.
 // ===========================================================================
 

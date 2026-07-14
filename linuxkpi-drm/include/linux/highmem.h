@@ -5,7 +5,7 @@
  * Temporary page mappings. On x86_64 there is no highmem — every page is in the
  * linear map — so kmap/kmap_local are just page_address() and the unmaps are
  * no-ops. TTM's pool/tt use these to zero and copy BO pages. REAL for the
- * bring-up page facade (page_address is exported by raeen_linuxkpi). License
+ * bring-up page facade (page_address is exported by ath_linuxkpi). License
  * boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_HIGHMEM_H

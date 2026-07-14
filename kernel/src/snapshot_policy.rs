@@ -107,7 +107,7 @@ pub fn retention_victims(snapshots: &[(u32, u64)], now_ms: u64) -> Vec<u32> {
 /// thinned. No-ops cleanly when nothing is mounted.
 pub fn enforce() -> usize {
     let snapshots: Vec<(u32, u64)> = {
-        let guard = crate::raefs::RAEFS.lock();
+        let guard = crate::athfs::ATHFS.lock();
         match guard.as_ref() {
             Some(fs) => fs
                 .list_snapshots()
@@ -116,13 +116,13 @@ pub fn enforce() -> usize {
                 .collect(),
             None => return 0,
         }
-    }; // RAEFS released before snapshot_delete re-locks it.
+    }; // ATHFS released before snapshot_delete re-locks it.
 
     let now_ms = crate::hpet::read_millis().unwrap_or(0) as u64;
     let victims = retention_victims(&snapshots, now_ms);
     let mut thinned = 0usize;
     for id in victims {
-        if crate::raefs::snapshot_delete(id) == 0 {
+        if crate::athfs::snapshot_delete(id) == 0 {
             thinned += 1;
         }
     }
@@ -206,7 +206,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/snap_policy` — retention/quota counters.
+/// `/proc/athena/snap_policy` — retention/quota counters.
 pub fn dump_text() -> String {
     alloc::format!(
         "# snapshot retention policy (1h all / 24h hourly / 7d daily / 4w weekly)\ncount_quota: {}\nretention_runs: {}\nsnapshots_thinned: {}\n",

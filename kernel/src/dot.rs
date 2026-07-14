@@ -171,7 +171,7 @@ pub fn run_boot_smoketest() {
 
     // Client: build the DNS query, frame it (RFC 7858), encrypt it.
     let mut resolver = DnsResolver::new();
-    let query_wire = resolver.build_query("dot.raeen.test", DnsQueryType::A);
+    let query_wire = resolver.build_query("dot.athena.test", DnsQueryType::A);
     let query_id = u16::from_be_bytes([query_wire[0], query_wire[1]]);
     QUERIES_FRAMED.fetch_add(1, Ordering::Relaxed);
 
@@ -235,7 +235,7 @@ pub fn run_boot_smoketest() {
         .and_then(|m| resolver.parse_response(m))
         .map(|r| {
             r.id == query_id
-                && r.query_name == "dot.raeen.test"
+                && r.query_name == "dot.athena.test"
                 && r.answers
                     .iter()
                     .any(|a| matches!(a, DnsRecord::A(addr) if *addr == [10, 0, 0, 53]))
@@ -263,7 +263,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/dot` — DoT transport state.
+/// `/proc/athena/dot` — DoT transport state.
 pub fn dump_text() -> String {
     let mut out = String::from("# DNS over TLS (RFC 7858)\n");
     for up in UPSTREAMS.iter() {

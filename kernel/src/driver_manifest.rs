@@ -7,7 +7,7 @@
 //! (e.g. `amdgpud.elf` for a Radeon 780M, `iwlwifi.elf` for an Intel Wi-Fi part)
 //! onto the target drive. At boot, the driver-manager daemon reads the hardware
 //! list, launches those exact executables, and each one calls `sys_claim_device`
-//! (syscall 111, `rae_abi::SYS_DRIVER_CLAIM_DEVICE`) to take its device from the
+//! (syscall 111, `ath_abi::SYS_DRIVER_CLAIM_DEVICE`) to take its device from the
 //! kernel.
 //!
 //! This module is the **Scan + Match** half of that pipeline (the kernel side).
@@ -20,7 +20,7 @@
 //!                                (amdgpud, i915d, iwlwifi, …).
 //!   - [`DriverKind::None`]     — no driver required (host bridges, etc.).
 //!
-//! R10: `init()` + `run_boot_smoketest()` + `/proc/raeen/drivers` (`dump_text`) +
+//! R10: `init()` + `run_boot_smoketest()` + `/proc/athena/drivers` (`dump_text`) +
 //! this Concept docstring.
 
 #![allow(dead_code)]
@@ -285,7 +285,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/drivers` body: the hardware list + matched driver per device,
+/// `/proc/athena/drivers` body: the hardware list + matched driver per device,
 /// plus the LinuxKPI install set. This is the literal artifact the installer
 /// and the driver-manager daemon consume.
 pub fn dump_text() -> String {

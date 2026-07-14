@@ -6,7 +6,7 @@
  * (the PCI device's embedded `dev`): dev_err/dev_warn diagnostics, dev_drvdata
  * for its adev back-pointer, and devm_* managed allocations tied to the device
  * lifetime. The struct carries the members amdgpu actually reaches; the
- * registration, logging, and managed-alloc machinery is backed by raeen_linuxkpi
+ * registration, logging, and managed-alloc machinery is backed by ath_linuxkpi
  * at M4 (a no-op devm_kzalloc returning NULL, or a dev_err that dropped the
  * message, would both be silent failures — SCOPE.md rule 9). License boundary
  * (../../README.md): API surface only.
@@ -61,7 +61,7 @@ void device_remove_file(struct device *dev, const struct device_attribute *attr)
 static inline void *dev_get_drvdata(const struct device *dev) { return dev->driver_data; }
 static inline void  dev_set_drvdata(struct device *dev, void *data) { dev->driver_data = data; }
 
-/* name: registered through raeen_linuxkpi (M4). */
+/* name: registered through ath_linuxkpi (M4). */
 const char *dev_name(const struct device *dev);
 int dev_set_name(struct device *dev, const char *fmt, ...) __printf(2, 3);
 
@@ -82,7 +82,7 @@ __printf(3, 4) void _dev_printk(const char *level, const struct device *dev, con
 #define dev_info_ratelimited(dev, fmt, ...) dev_info(dev, fmt, ##__VA_ARGS__)
 #define dev_WARN(dev, fmt, ...)   dev_warn(dev, fmt, ##__VA_ARGS__)
 
-/* lifetime (refcounted) — backed by raeen_linuxkpi (M4). */
+/* lifetime (refcounted) — backed by ath_linuxkpi (M4). */
 struct device *get_device(struct device *dev);
 void put_device(struct device *dev);
 

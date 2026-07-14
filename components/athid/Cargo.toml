@@ -1,0 +1,12 @@
+[package]
+name = "athid"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "AthID — account system. Passkeys first, optional, never required for local use."
+
+[dependencies]
+# Shared memory-hard KDF (Argon2id, RFC 9106) — account passwords hash here
+# instead of athid's former homebrew mixing function.
+ath_crypto = { path = "../ath_crypto" }

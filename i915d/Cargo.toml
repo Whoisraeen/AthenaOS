@@ -8,9 +8,9 @@ repository.workspace = true
 description = "i915d — AthenaOS userspace Intel GPU driver daemon (Path C). Runs the i915 bring-up pipeline (PCI → VBT → GGTT → rings → modeset) on the LinuxKPI host."
 
 [dependencies]
-rae_abi = { path = "../components/rae_abi" }
-raeen_linuxkpi = { path = "../components/raeen_linuxkpi" }
-raeen_drm = { path = "../components/raeen_drm" }
+ath_abi = { path = "../components/ath_abi" }
+ath_linuxkpi = { path = "../components/ath_linuxkpi" }
+ath_drm = { path = "../components/ath_drm" }
 
 [[bin]]
 name = "i915d"

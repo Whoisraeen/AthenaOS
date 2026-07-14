@@ -4,10 +4,10 @@
 extern crate alloc;
 use alloc::boxed::Box;
 use core::panic::PanicInfo;
-use raegfx::Canvas;
+use athgfx::Canvas;
 #[allow(unused_imports)]
-use raekit;
-use raeui::{Button, Label, Widget};
+use athkit;
+use athui::{Button, Label, Widget};
 
 // ── Syscall numbers ───────────────────
 const SYS_PRINT: u64 = 1;
@@ -279,11 +279,11 @@ unsafe fn sys_net_close(fd: u64) -> u64 {
     r
 }
 
-/// Dev-only boot demos (raebridge test-exe build, linux_hello/relibc/linuxkpi
+/// Dev-only boot demos (athbridge test-exe build, linux_hello/relibc/linuxkpi
 /// fixtures, the VFS/AthUI/triangle/input/spawn session demos). These are
 /// self-tests that ran every boot to prove subsystems on QEMU — they are NOT
 /// daily-driver features and just add post-desktop time + log noise on iron
-/// (raebridge alone maps its embedded PE page-by-page = ~370 mmap syscalls).
+/// (athbridge alone maps its embedded PE page-by-page = ~370 mmap syscalls).
 /// Gated OUT of the production boot for v0.1 polish; flip to `true` for the dev
 /// bring-up sequence. Real daemons (amdgpud, i915d, driver_supervisor) stay
 /// unconditional below. MasterChecklist Milestone A / v0.1 production polish.
@@ -298,7 +298,7 @@ const RUN_BOOT_DEMOS: bool = false;
 /// `false` so a normal/production boot is completely unaffected.
 const RUN_SELFTEST: bool = false;
 
-// PASS/FAIL row colors for the on-screen report (ARGB, matching raeui::theme).
+// PASS/FAIL row colors for the on-screen report (ARGB, matching athui::theme).
 const SELFTEST_PASS_FG: u32 = 0xFF_2E_CC_71; // emerald
 const SELFTEST_FAIL_FG: u32 = 0xFF_E7_4C_3C; // alizarin
 
@@ -356,7 +356,7 @@ unsafe fn run_selftest() -> ! {
 
     // 4-6. Filesystem — write/stat/read+verify round trip through the VFS/AthFS.
     {
-        let path = b"/home/raeen/selftest.dat";
+        let path = b"/home/athena/selftest.dat";
         let payload = b"AthenaOS self-test payload 0123456789 abcdef";
         let mut wrote = false;
         let mut stat_ok = false;
@@ -425,17 +425,17 @@ unsafe fn run_selftest() -> ! {
     // Render the report (only if we actually got a surface).
     if graphics_ok {
         let mut canvas = Canvas::new(SURFACE_VIRT as *mut u8, width as usize, height as usize, 4);
-        canvas.clear(raeui::theme::WINDOW_BG);
+        canvas.clear(athui::theme::WINDOW_BG);
         let chrome_h: usize = 28;
-        canvas.fill_rect(0, 0, width as usize, chrome_h, raeui::theme::CHROME_BG);
+        canvas.fill_rect(0, 0, width as usize, chrome_h, athui::theme::CHROME_BG);
         canvas.draw_text(
             12,
             (chrome_h - 8) / 2,
             "AthenaOS - Bare-Metal Self-Test",
-            raeui::theme::TITLE_FG,
+            athui::theme::TITLE_FG,
             None,
         );
-        canvas.draw_rect_outline(0, 0, width as usize, height as usize, raeui::theme::BORDER);
+        canvas.draw_rect_outline(0, 0, width as usize, height as usize, athui::theme::BORDER);
 
         let left = 24usize;
         let status_x = width as usize - 96;
@@ -448,7 +448,7 @@ unsafe fn run_selftest() -> ! {
             } else {
                 (SELFTEST_FAIL_FG, "FAIL")
             };
-            canvas.draw_text(left, y, names[i], raeui::theme::TITLE_FG, None);
+            canvas.draw_text(left, y, names[i], athui::theme::TITLE_FG, None);
             canvas.draw_text(status_x, y, label, fg, None);
         }
 
@@ -465,7 +465,7 @@ unsafe fn run_selftest() -> ! {
             summary_y - 6,
             width as usize,
             row_h,
-            raeui::theme::CHROME_BG,
+            athui::theme::CHROME_BG,
         );
         // Build "N / M checks passed" without alloc-format heavy machinery.
         let mut buf = [0u8; 32];
@@ -552,12 +552,12 @@ pub extern "C" fn _start() -> ! {
         // The host is a two-phase harness in one process:
         //   1. hello-world PE — GetStdHandle → WriteFile("Hello from Windows\n")
         //      → ret. Emits, from GUEST Windows code:
-        //      `[raebridge] smoketest: hello-world exe -> stdout
+        //      `[athbridge] smoketest: hello-world exe -> stdout
         //       "Hello from Windows" + exit 0 PASS`  (FAIL on captured mismatch)
         //   1.5 api-exercise PE — calls GetModuleHandleW/GetProcAddress/Heap*/
         //      Tls*/WriteConsoleW from guest code, self-verifies each, returns a
         //      step code in RAX. Emits:
-        //      `[raebridge] smoketest: api-exercise exe -> GetModuleHandle/
+        //      `[athbridge] smoketest: api-exercise exe -> GetModuleHandle/
         //       GetProcAddress/Heap/TLS/Console all OK + exit 0 PASS`
         //      (FAIL naming the exact failing step otherwise).
         //   2. exit-code PE — ExitProcess IAT check (mapped + resolved; the host
@@ -565,7 +565,7 @@ pub extern "C" fn _start() -> ! {
         //   3. REAL MSVC /MT WriteFile + printf PEs — each mapped + every import
         //      resolved to a real shim (no longer executed; the C++ exe is the
         //      terminator). Emit:
-        //      `[raebridge] smoketest: real MSVC /MT exe -> all imports resolved
+        //      `[athbridge] smoketest: real MSVC /MT exe -> all imports resolved
         //       to shims PASS` and `... printf exe -> all imports resolved to
         //       shims PASS`.
         //   4. REAL MSVC /MT C++ PE (THE C++-runtime milestone) — the genuine
@@ -573,17 +573,17 @@ pub extern "C" fn _start() -> ! {
         //      g_init's ctor → "ctor ran") BEFORE main, then main → "hello from
         //      c++ 7", returns 0, and the CRT ExitProcess(0)'s. The host (armed,
         //      kind=3) asserts BOTH lines in order and emits:
-        //      `[raebridge] smoketest: real MSVC /MT C++ exe -> static-ctor ran
+        //      `[athbridge] smoketest: real MSVC /MT C++ exe -> static-ctor ran
         //       + main + exit 0 PASS` and terminates with exit 0. This is the
         //      broadening of "real Windows software runs" to C++.
         // Sentinels:
-        //   9700        spawning raebridge_host
+        //   9700        spawning athbridge_host
         //   9700        real-exe milestone round-trip OK (9700 + 0)  → PASS
         //   9700+other  bridge exited non-zero (a phase FAIL'd)      → FAIL
         //   9790        spawn failed                                 → FAIL
         // ─────────────────────────────────────────────────────────────────
         sys_print(9700);
-        let bridge_pid = sys_spawn(b"raebridge_host");
+        let bridge_pid = sys_spawn(b"athbridge_host");
         if bridge_pid != u64::MAX && bridge_pid < 0xFF00_0000_0000_0000 {
             let bridge_code = sys_wait(bridge_pid);
             sys_print(9700 + (bridge_code & 0xFF));
@@ -593,30 +593,30 @@ pub extern "C" fn _start() -> ! {
             if (bridge_code & 0xFF) == 0 {
                 let _ = sys_write_fd(
                     1,
-                    b"[raebridge] smoketest: real-exe milestone -> bridge exit 0 PASS\n",
+                    b"[athbridge] smoketest: real-exe milestone -> bridge exit 0 PASS\n",
                 );
             } else {
                 let _ = sys_write_fd(
                     1,
-                    b"[raebridge] smoketest: real-exe milestone -> bridge exit NONZERO FAIL\n",
+                    b"[athbridge] smoketest: real-exe milestone -> bridge exit NONZERO FAIL\n",
                 );
             }
         } else {
             sys_print(9790);
-            let _ = sys_write_fd(1, b"[raebridge] smoketest: raebridge_host spawn FAIL\n");
+            let _ = sys_write_fd(1, b"[athbridge] smoketest: athbridge_host spawn FAIL\n");
         }
 
         // ── AthBridge guest-process ISOLATION proof (per-process model) ───────
-        // docs/components/raebridge-process-model.md option (b): each Windows
-        // .exe runs as its OWN AthenaOS process (raebridge_run), so a guest
+        // docs/components/athbridge-process-model.md option (b): each Windows
+        // .exe runs as its OWN AthenaOS process (athbridge_run), so a guest
         // ExitProcess kills only that child and WE (the parent) reap the code.
         // The in-host harness above can run only ONE real CRT exe to ExitProcess
         // per process; THIS runs TWO fixtures as SEPARATE PIDs with DIFFERENT
         // exit codes (42 vs 0 — distinct codes prove the reaped values are real,
         // not a sentinel). Handoff = no-ABI VFS rendezvous: write the target to
-        // a well-known home path, spawn raebridge_run, it reads + runs it.
+        // a well-known home path, spawn athbridge_run, it reads + runs it.
         //
-        // Wire format mirrors `raebridge::handoff` (host-KAT'd): a fixed
+        // Wire format mirrors `athbridge::handoff` (host-KAT'd): a fixed
         // 64-byte, newline-padded token record (padding so a shorter second
         // write fully overwrites the first in the non-truncating RAM VFS).
         // Path = HANDOFF_PATH; tokens = "bundled:exit42" / "bundled:cpp".
@@ -626,7 +626,7 @@ pub extern "C" fn _start() -> ! {
         // 9650+(code&0xFF) childB reaped (9650+0) · 9690 a spawn failed.
         sys_print(9600);
         {
-            const HANDOFF_PATH: &[u8] = b"/home/raeen/.rae-launch-target";
+            const HANDOFF_PATH: &[u8] = b"/home/athena/.rae-launch-target";
             const REC_WIDTH: usize = 64;
 
             // A real MSVC /MT console .exe compiled on the dev box (its .c source
@@ -635,7 +635,7 @@ pub extern "C" fn _start() -> ! {
             // Target::Pe route — proving AthBridge runs a real .exe read off the
             // filesystem, not just an in-binary fixture blob.
             const REAL_HELLO_EXE: &[u8] =
-                include_bytes!("../../components/raebridge/fixtures/real_msvc_mt_hello.exe");
+                include_bytes!("../../components/athbridge/fixtures/real_msvc_mt_hello.exe");
 
             // Build a 64-byte newline-padded record for a token.
             fn make_record(token: &[u8]) -> [u8; REC_WIDTH] {
@@ -668,7 +668,7 @@ pub extern "C" fn _start() -> ! {
                 if !write_target(&make_record(token)) {
                     return None;
                 }
-                let pid = sys_spawn(b"raebridge_run");
+                let pid = sys_spawn(b"athbridge_run");
                 if pid == u64::MAX || pid >= 0xFF00_0000_0000_0000 {
                     return None;
                 }
@@ -719,7 +719,7 @@ pub extern "C" fn _start() -> ! {
                     if distinct && codes_ok {
                         let _ = sys_write_fd(
                             1,
-                            b"[raebridge] smoketest: process-isolation -> 2 PIDs (childA exit=42, childB exit=0) reaped PASS\n",
+                            b"[athbridge] smoketest: process-isolation -> 2 PIDs (childA exit=42, childB exit=0) reaped PASS\n",
                         );
                     } else if !distinct {
                         // The exact regression this proof exists to catch: a
@@ -727,12 +727,12 @@ pub extern "C" fn _start() -> ! {
                         // processes (or the first killed the second).
                         let _ = sys_write_fd(
                             1,
-                            b"[raebridge] smoketest: process-isolation -> SAME PID (not isolated) FAIL\n",
+                            b"[athbridge] smoketest: process-isolation -> SAME PID (not isolated) FAIL\n",
                         );
                     } else {
                         let _ = sys_write_fd(
                             1,
-                            b"[raebridge] smoketest: process-isolation -> wrong exit codes (want A=42 B=0) FAIL\n",
+                            b"[athbridge] smoketest: process-isolation -> wrong exit codes (want A=42 B=0) FAIL\n",
                         );
                     }
                 }
@@ -740,7 +740,7 @@ pub extern "C" fn _start() -> ! {
                     sys_print(9690);
                     let _ = sys_write_fd(
                         1,
-                        b"[raebridge] smoketest: process-isolation -> launch/reap FAIL\n",
+                        b"[athbridge] smoketest: process-isolation -> launch/reap FAIL\n",
                     );
                 }
             }
@@ -752,10 +752,10 @@ pub extern "C" fn _start() -> ! {
             // fixture. hello.exe does WriteFile(stdout,"real windows exe") then
             // returns 0, so the /MT CRT ExitProcess(0)'s and we reap 0. This
             // generalizes "a real .exe runs" from bundled bytes to a real file
-            // the loader reads off the filesystem (raebridge_run::read_pe_file).
+            // the loader reads off the filesystem (athbridge_run::read_pe_file).
             // Sentinels: 9670 write-exe failed · 9671 launch/reap failed ·
             // 9672+(code&0xFF) reaped (9672 = clean exit 0).
-            const REAL_APP_PATH: &[u8] = b"/home/raeen/rae-app.exe";
+            const REAL_APP_PATH: &[u8] = b"/home/athena/rae-app.exe";
             if unsafe { write_blob(REAL_APP_PATH, REAL_HELLO_EXE) } {
                 // token = "pe:" ++ REAL_APP_PATH (26 bytes, < REC_WIDTH).
                 let mut tok = [0u8; 3 + REAL_APP_PATH.len()];
@@ -767,12 +767,12 @@ pub extern "C" fn _start() -> ! {
                         if (code & 0xFF) == 0 {
                             let _ = sys_write_fd(
                                 1,
-                                b"[raebridge] smoketest: real external .exe via VFS (pe:/home/raeen/rae-app.exe) -> executed + exit 0 PASS\n",
+                                b"[athbridge] smoketest: real external .exe via VFS (pe:/home/athena/rae-app.exe) -> executed + exit 0 PASS\n",
                             );
                         } else {
                             let _ = sys_write_fd(
                                 1,
-                                b"[raebridge] smoketest: real external .exe via VFS -> NONZERO exit FAIL\n",
+                                b"[athbridge] smoketest: real external .exe via VFS -> NONZERO exit FAIL\n",
                             );
                         }
                     }
@@ -780,7 +780,7 @@ pub extern "C" fn _start() -> ! {
                         sys_print(9671);
                         let _ = sys_write_fd(
                             1,
-                            b"[raebridge] smoketest: real external .exe via VFS -> launch/reap FAIL\n",
+                            b"[athbridge] smoketest: real external .exe via VFS -> launch/reap FAIL\n",
                         );
                     }
                 }
@@ -788,7 +788,7 @@ pub extern "C" fn _start() -> ! {
                 sys_print(9670);
                 let _ = sys_write_fd(
                     1,
-                    b"[raebridge] smoketest: real external .exe via VFS -> exe write FAIL\n",
+                    b"[athbridge] smoketest: real external .exe via VFS -> exe write FAIL\n",
                 );
             }
         }
@@ -814,7 +814,7 @@ pub extern "C" fn _start() -> ! {
         // nvidiad — native NVIDIA GPU daemon (chip identification bring-up).
         // QEMU has no NVIDIA GPU, so the probe exits immediately (daemon prints
         // 9400 then 9499). On real NVIDIA silicon it maps BAR0, decodes
-        // NV_PMC_BOOT_0 (host-tested raeen_nvidia logic) and reports the part +
+        // NV_PMC_BOOT_0 (host-tested ath_nvidia logic) and reports the part +
         // its firmware-requirement tier (where GSP-RM walls a native driver).
         // Sentinels (78xx): 7800 spawning · 7801+(pid&0x1F) spawned ·
         // 7835+(code&0x0F) reaped (7835 = clean exit) · 7890 spawn failed.
@@ -828,7 +828,7 @@ pub extern "C" fn _start() -> ! {
             sys_print(7890);
         }
 
-        // raelangd — userspace Rae-script interpreter daemon (Concept
+        // athlangd — userspace Rae-script interpreter daemon (Concept
         // §Customization Engine). PERSISTENT: spawned WITHOUT wait — it
         // loops draining queued >64 KiB scripts via SCRIPT_FETCH/COMPLETE.
         // Proof: submit an over-inline-limit script (64 KiB of whitespace
@@ -837,9 +837,9 @@ pub extern "C" fn _start() -> ! {
         // spawned · 8860 daemon completed the big script (exit 9) · 8865
         // wrong exit/state · 8869 poll timeout · 8890 spawn failed.
         sys_print(8850);
-        let raelangd_pid = sys_spawn(b"raelangd");
-        if raelangd_pid != u64::MAX && raelangd_pid < 0xFF00_0000_0000_0000 {
-            sys_print(8851 + (raelangd_pid & 7));
+        let athlangd_pid = sys_spawn(b"athlangd");
+        if athlangd_pid != u64::MAX && athlangd_pid < 0xFF00_0000_0000_0000 {
+            sys_print(8851 + (athlangd_pid & 7));
             // 64 KiB + 8 of source: spaces are lexer whitespace, the tail
             // is the program. One byte over the kernel's inline ceiling.
             static mut BIG_SCRIPT: [u8; 65_544] = [b' '; 65_544];
@@ -912,7 +912,7 @@ pub extern "C" fn _start() -> ! {
         }
 
         // hello_relibc — native relibc port smoke test (relibc speaks NATIVE
-        // AthenaOS syscalls — see raeenOS_syscall.rs — so xtask stamps it
+        // AthenaOS syscalls — see athenaOS_syscall.rs — so xtask stamps it
         // ELFOSABI_ATHENAOS and it spawns natively). TLS now persists across
         // switches via SYS_SET_FS_BASE (126) + Task::fs_base, so relibc
         // startup gets further than the old PAUSED state; the kernel cleanly
@@ -973,7 +973,7 @@ pub extern "C" fn _start() -> ! {
 
         // ─────────────────────────────────────────────────────────────────
         // Session 3 demo: persistent file I/O through the VFS layer to
-        // AthFS-on-virtio-blk (or `/home/raeen/` RAM file when block FS absent).
+        // AthFS-on-virtio-blk (or `/home/athena/` RAM file when block FS absent).
         //
         // Sentinel encoding so the serial log is human-decodable at a glance:
         //   3000             "begin VFS demo"
@@ -986,7 +986,7 @@ pub extern "C" fn _start() -> ! {
         // ─────────────────────────────────────────────────────────────────
         sys_print(3000);
 
-        let path = b"/home/raeen/hello.txt";
+        let path = b"/home/athena/hello.txt";
         let payload = b"Hello from Session 3!";
 
         let fd = sys_open(path, 0);
@@ -1023,7 +1023,7 @@ pub extern "C" fn _start() -> ! {
         //
         // We allocate a 480x320 surface, build a Frame("Hello AthenaOS")
         // containing a Label + Button("Click me"), render the widget tree
-        // into the surface via raegfx::Canvas, present at (160, 120).
+        // into the surface via athgfx::Canvas, present at (160, 120).
         // Then we fire a few synthetic KeyPress events at the Button to
         // toggle its color and re-render — proving the widget event path
         // works end-to-end.
@@ -1059,8 +1059,8 @@ pub extern "C" fn _start() -> ! {
 
         let label = Label::new(
             "Welcome to AthenaOS",
-            raeui::body_y_start(),
-            raeui::body_y_start(),
+            athui::body_y_start(),
+            athui::body_y_start(),
         );
         let mut button = Button::new(
             "Click me",
@@ -1073,26 +1073,26 @@ pub extern "C" fn _start() -> ! {
         // Manually draw a Frame's chrome — same shape as Frame::render but
         // without the dyn-dispatch body callout.
         let chrome_h: usize = 24;
-        canvas.clear(raeui::theme::WINDOW_BG);
-        canvas.fill_rect(0, 0, width as usize, chrome_h, raeui::theme::CHROME_BG);
+        canvas.clear(athui::theme::WINDOW_BG);
+        canvas.fill_rect(0, 0, width as usize, chrome_h, athui::theme::CHROME_BG);
         canvas.draw_text(
             8,
             (chrome_h - 8) / 2,
             "Hello AthenaOS",
-            raeui::theme::TITLE_FG,
+            athui::theme::TITLE_FG,
             None,
         );
         canvas.draw_text(
             width as usize - 16,
             (chrome_h - 8) / 2,
             "x",
-            raeui::theme::BUTTON_HOT,
+            athui::theme::BUTTON_HOT,
             None,
         );
         for x in 0..width as usize {
-            canvas.draw_pixel(x, chrome_h - 1, raeui::theme::BORDER);
+            canvas.draw_pixel(x, chrome_h - 1, athui::theme::BORDER);
         }
-        canvas.draw_rect_outline(0, 0, width as usize, height as usize, raeui::theme::BORDER);
+        canvas.draw_rect_outline(0, 0, width as usize, height as usize, athui::theme::BORDER);
         label.render(&mut canvas);
         button.render(&mut canvas);
 
@@ -1108,7 +1108,7 @@ pub extern "C" fn _start() -> ! {
             for _ in 0..30_000 {
                 core::hint::spin_loop();
             }
-            button.on_event(&raeui::Event::KeyPress(i as u8));
+            button.on_event(&athui::Event::KeyPress(i as u8));
             // Only re-render the button — the rest of the window is unchanged.
             button.render(&mut canvas);
             let _ = sys_surface_present(id, 160, 120);
@@ -1143,7 +1143,7 @@ pub extern "C" fn _start() -> ! {
             chrome_h,
             width as usize,
             height as usize - chrome_h,
-            raeui::theme::WINDOW_BG,
+            athui::theme::WINDOW_BG,
         );
         sys_print(6100);
 
@@ -1166,7 +1166,7 @@ pub extern "C" fn _start() -> ! {
             8,
             chrome_h + 4,
             "Year-1 demo: software-rasterized triangle",
-            raeui::theme::TITLE_FG,
+            athui::theme::TITLE_FG,
             None,
         );
 
@@ -1196,7 +1196,7 @@ pub extern "C" fn _start() -> ! {
                 chrome_h,
                 width as usize,
                 height as usize - chrome_h,
-                raeui::theme::WINDOW_BG,
+                athui::theme::WINDOW_BG,
             );
             canvas.draw_triangle(
                 (cx, body_top, c0),
@@ -1207,7 +1207,7 @@ pub extern "C" fn _start() -> ! {
                 8,
                 chrome_h + 4,
                 "Year-1 demo: software-rasterized triangle",
-                raeui::theme::TITLE_FG,
+                athui::theme::TITLE_FG,
                 None,
             );
             let _ = sys_surface_present(id, 160, 120);
@@ -1232,7 +1232,7 @@ pub extern "C" fn _start() -> ! {
         // ─────────────────────────────────────────────────────────────────
         sys_print(8000);
 
-        use raegfx::vulkan::*;
+        use athgfx::vulkan::*;
 
         let app_info = VkApplicationInfo {
             app_name: alloc::string::String::from("VkDemo"),
@@ -1416,12 +1416,12 @@ pub extern "C" fn _start() -> ! {
             sys_print(7100 + scancode);
 
             // Update the on-screen label. Erase the previous label band first.
-            canvas.fill_rect(0, key_y, width as usize, 16, raeui::theme::WINDOW_BG);
+            canvas.fill_rect(0, key_y, width as usize, 16, athui::theme::WINDOW_BG);
             canvas.draw_text(
                 8,
                 key_y,
                 "Last key scancode: 0x",
-                raeui::theme::TEXT_FG,
+                athui::theme::TEXT_FG,
                 None,
             );
             // Two hex digits of the scancode.
@@ -1440,32 +1440,32 @@ pub extern "C" fn _start() -> ! {
                 8 + 21 * 8,
                 key_y,
                 tmp[0] as char,
-                raeui::theme::BUTTON_HOT,
+                athui::theme::BUTTON_HOT,
                 None,
             );
             canvas.draw_glyph(
                 8 + 22 * 8,
                 key_y,
                 tmp[1] as char,
-                raeui::theme::BUTTON_HOT,
+                athui::theme::BUTTON_HOT,
                 None,
             );
 
             // Also print a per-key counter in the upper-right of the body.
-            canvas.fill_rect(width as usize - 80, key_y, 80, 16, raeui::theme::WINDOW_BG);
+            canvas.fill_rect(width as usize - 80, key_y, 80, 16, athui::theme::WINDOW_BG);
             tmp[0] = b'0' + (i as u8);
             canvas.draw_text(
                 width as usize - 64,
                 key_y,
                 "key #",
-                raeui::theme::TEXT_FG,
+                athui::theme::TEXT_FG,
                 None,
             );
             canvas.draw_glyph(
                 width as usize - 64 + 5 * 8,
                 key_y,
                 tmp[0] as char,
-                raeui::theme::BUTTON_HOT,
+                athui::theme::BUTTON_HOT,
                 None,
             );
 

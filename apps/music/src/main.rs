@@ -4,12 +4,12 @@
 //! Windows Media Player / macOS Music on day one: a **track list** of a Music
 //! directory (`.wav` files), **transport controls** (play/pause/next/prev/stop),
 //! a **seek/progress indicator**, and keyboard control. Built on the proven
-//! from-scratch `raemedia::wav` decoder and the wired audio path
-//! `raekit::audio_submit` → SYS_AUDIO_SUBMIT (267) → AudioMixer → AUDIO_RING → HDA.
+//! from-scratch `athmedia::wav` decoder and the wired audio path
+//! `athkit::audio_submit` → SYS_AUDIO_SUBMIT (267) → AudioMixer → AUDIO_RING → HDA.
 //!
 //! Standalone userspace ELF (`exec_path = "music"`). Chrome is on the shared
-//! `rae_tokens` design language; the live desktop accent comes through
-//! `SYS_THEME_GET` (raekit::sys::theme_accent) at launch so Music matches the
+//! `ath_tokens` design language; the live desktop accent comes through
+//! `SYS_THEME_GET` (athkit::sys::theme_accent) at launch so Music matches the
 //! desktop 1:1 (whole-OS cohesion).
 //!
 //! AUDIO CONTRACT: the mixer takes interleaved 48 kHz i16 **stereo** PCM, at most
@@ -20,14 +20,14 @@
 //! we never overrun the ring (back off + retry the remainder next loop tick).
 //!
 //! HOSTILE-INPUT POSTURE: a media file is untrusted data. Every decode goes
-//! through the host-KAT'd `raemedia::wav` decoder which returns `Err` (never
+//! through the host-KAT'd `athmedia::wav` decoder which returns `Err` (never
 //! panics) on malformed input; a decode failure skips the track + shows an error
 //! and the app stays alive. The whole pipeline never panics.
 //!
 //! PROOF: this ELF can't run `cargo test`, so `design_proof()` (a fail-able
 //! runtime gate at `_start`) decodes a built-in tiny WAV fixture, asserts exact
 //! samples, and asserts the mono→stereo + 24kHz→48kHz resample helper produces
-//! the expected frames — exit(3) on any drift. `raemedia`'s WAV host KATs are the
+//! the expected frames — exit(3) on any drift. `athmedia`'s WAV host KATs are the
 //! decode-logic proof.
 
 #![no_std]
@@ -38,14 +38,14 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 use alloc::string::String;
-use rae_tokens::{DARK, RAEBLUE};
-use rae_toml::Toml;
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
-use raemedia::wav::{decode_wav, DecodedAudio};
+use ath_tokens::{DARK, RAEBLUE};
+use ath_toml::Toml;
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
+use athmedia::wav::{decode_wav, DecodedAudio};
 
 // ── Window geometry ─────────────────────────────────────────────────────
 
@@ -245,13 +245,13 @@ fn vol_up_rect() -> Rect {
 // ── Audio contract ───────────────────────────────────────────────────────
 //
 // The mixer is fixed 48 kHz i16 stereo and accepts at most 512 frames per
-// `audio_submit` call (raekit::sys::audio_submit doc). We hold a decoded,
+// `audio_submit` call (athkit::sys::audio_submit doc). We hold a decoded,
 // resampled, stereo-interleaved PCM buffer and stream a window of it per tick.
 
 const MIX_RATE: u32 = 48_000;
 const AUDIO_SUBMIT_MAX_FRAMES: usize = 512;
 
-// ── Palette (rae_tokens, docs/design/design-language.md) ──────────────────
+// ── Palette (ath_tokens, docs/design/design-language.md) ──────────────────
 
 const BG: u32 = DARK.bg_raised;
 const TITLE_BG: u32 = DARK.bg_base;
@@ -266,17 +266,17 @@ const STROKE_HL: u32 = DARK.stroke_strong;
 const TRACK_BG: u32 = DARK.bg_base; // progress trough
 
 fn theme_seed() -> u32 {
-    raekit::sys::theme_accent()
+    athkit::sys::theme_accent()
 }
 
 /// Accent base, derived through the shared ramp from the live theme seed.
 fn accent() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).base
+    ath_tokens::derive_accent(theme_seed(), &DARK).base
 }
 
 /// Opaque selection fill: the accent's pressed/active shade.
 fn sel_fill() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).active
+    ath_tokens::derive_accent(theme_seed(), &DARK).active
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -475,7 +475,7 @@ impl Repeat {
     }
 }
 
-// ── Persistent preferences (rae_toml) ─────────────────────────────────────────
+// ── Persistent preferences (ath_toml) ─────────────────────────────────────────
 //
 // LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. Music persists its user-visible state to `<home>/.config/music.toml` and
@@ -545,7 +545,7 @@ impl Prefs {
     }
 
     /// Serialize the live preferences into an order-stable `Toml::Table` ready for
-    /// `rae_toml::to_string`. The schema is flat (no headers) so a round-trip is
+    /// `ath_toml::to_string`. The schema is flat (no headers) so a round-trip is
     /// trivial and human-editable.
     fn to_toml(&self) -> Toml {
         let mut table: alloc::vec::Vec<(String, Toml)> = alloc::vec::Vec::new();
@@ -573,8 +573,8 @@ impl Prefs {
 fn prefs_path() -> PathBuf {
     let mut p = PathBuf::new();
     let mut info = [0u8; 96];
-    if raekit::sys::session_info(&mut info).is_some() {
-        if let Some(home) = raekit::sys::session_home_from(&info) {
+    if athkit::sys::session_info(&mut info).is_some() {
+        if let Some(home) = athkit::sys::session_home_from(&info) {
             p.set(home);
             p.push_component(".config");
             return p;
@@ -585,12 +585,12 @@ fn prefs_path() -> PathBuf {
 }
 
 /// Load preferences from `<home>/.config/music.toml`. On ANY failure — file
-/// absent, unreadable, not UTF-8, or a `rae_toml::parse` error — returns the typed
+/// absent, unreadable, not UTF-8, or a `ath_toml::parse` error — returns the typed
 /// defaults. Never panics, never blocks the app from launching.
 fn load_prefs() -> Prefs {
     let mut dir = prefs_path();
     dir.push_component("music.toml");
-    let fd = raekit::sys::open(dir.as_str(), 0);
+    let fd = athkit::sys::open(dir.as_str(), 0);
     if fd == u64::MAX {
         return Prefs::defaults();
     }
@@ -601,34 +601,34 @@ fn load_prefs() -> Prefs {
         if data.len() > 64 * 1024 {
             break;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     let text = match core::str::from_utf8(&data) {
         Ok(s) => s,
         Err(_) => return Prefs::defaults(),
     };
-    match rae_toml::parse(text) {
+    match ath_toml::parse(text) {
         Ok(t) => Prefs::from_toml(&t),
         Err(_) => Prefs::defaults(),
     }
 }
 
 /// Persist `prefs` to `<home>/.config/music.toml` (best effort). Creates the
-/// `.config` directory if missing, serializes via `rae_toml::to_string`, and
+/// `.config` directory if missing, serializes via `ath_toml::to_string`, and
 /// writes O_CREAT|O_TRUNC. A failure is silent — the app keeps running.
 fn save_prefs(prefs: &Prefs) {
     let dir = prefs_path();
-    let _ = raekit::sys::mkdir(dir.as_str());
+    let _ = athkit::sys::mkdir(dir.as_str());
     let mut path = dir;
     path.push_component("music.toml");
-    let text = rae_toml::to_string(&prefs.to_toml());
+    let text = ath_toml::to_string(&prefs.to_toml());
     // O_WRONLY | O_CREAT | O_TRUNC = 0x0241 (matches the Notes/Text Editor path).
-    let fd = raekit::sys::open(path.as_str(), 0x0241);
+    let fd = athkit::sys::open(path.as_str(), 0x0241);
     if fd == u64::MAX {
         return;
     }
@@ -636,13 +636,13 @@ fn save_prefs(prefs: &Prefs) {
     let mut off = 0usize;
     while off < bytes.len() {
         let end = (off + 4096).min(bytes.len());
-        let n = raekit::sys::write(fd, &bytes[off..end]) as usize;
+        let n = athkit::sys::write(fd, &bytes[off..end]) as usize;
         if n == 0 {
             break;
         }
         off += n;
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
 }
 
 /// Return a prefix of `s` no longer than `max` bytes, cut on a UTF-8 char
@@ -683,8 +683,8 @@ impl App {
     fn music_dir() -> PathBuf {
         // Prefer <session home>/Music; fall back to a system bucket.
         let mut info = [0u8; 96];
-        if raekit::sys::session_info(&mut info).is_some() {
-            if let Some(home) = raekit::sys::session_home_from(&info) {
+        if athkit::sys::session_info(&mut info).is_some() {
+            if let Some(home) = athkit::sys::session_home_from(&info) {
                 let mut p = PathBuf::new();
                 p.set(home);
                 p.push_component("Music");
@@ -709,11 +709,11 @@ impl App {
             p.set(&prefs.last_folder);
             p
         };
-        let _ = raekit::sys::mkdir(dir.as_str());
+        let _ = athkit::sys::mkdir(dir.as_str());
 
         // Seed the shuffle RNG from the clock so successive launches differ; a
         // zero seed is replaced (xorshift fixed-points at 0).
-        let mut seed = raekit::sys::time_ns();
+        let mut seed = athkit::sys::time_ns();
         if seed == 0 {
             seed = 0x9E37_79B9_7F4A_7C15;
         }
@@ -822,7 +822,7 @@ impl App {
         dirbuf[..dn].copy_from_slice(&self.dir.as_str().as_bytes()[..dn]);
         let dir = core::str::from_utf8(&dirbuf[..dn]).unwrap_or("/");
 
-        let count = raekit::sys::readdir_at(dir, &mut buf) as usize;
+        let count = athkit::sys::readdir_at(dir, &mut buf) as usize;
         let mut off = 0usize;
         for _ in 0..count {
             if off + 6 > buf.len() || self.tracks.len() >= MAX_TRACKS {
@@ -858,7 +858,7 @@ impl App {
         let mut path = PathBuf::new();
         path.set(self.dir.as_str());
         path.push_component(t.name());
-        let fd = raekit::sys::open(path.as_str(), 0);
+        let fd = athkit::sys::open(path.as_str(), 0);
         if fd == u64::MAX {
             return None;
         }
@@ -866,16 +866,16 @@ impl App {
         let mut chunk = [0u8; 8192];
         loop {
             if data.len() > DECODE_CAP {
-                let _ = raekit::sys::close(fd);
+                let _ = athkit::sys::close(fd);
                 return None;
             }
-            let n = raekit::sys::read(fd, &mut chunk) as usize;
+            let n = athkit::sys::read(fd, &mut chunk) as usize;
             if n == 0 || n > chunk.len() {
                 break;
             }
             data.extend_from_slice(&chunk[..n]);
         }
-        let _ = raekit::sys::close(fd);
+        let _ = athkit::sys::close(fd);
         if data.is_empty() {
             None
         } else {
@@ -1049,14 +1049,14 @@ impl App {
             // unity (submit the slice as-is, zero copy). Anything less builds a
             // scaled scratch buffer so the saved volume is audible.
             let accepted = if self.volume >= VOL_MAX {
-                raekit::sys::audio_submit(&self.pcm[start..end]) as usize
+                athkit::sys::audio_submit(&self.pcm[start..end]) as usize
             } else {
                 let mut scratch: Vec<i16> = Vec::with_capacity(chunk_frames * 2);
                 let vol = self.volume as i32;
                 for &s in &self.pcm[start..end] {
                     scratch.push(((s as i32 * vol) / VOL_MAX as i32) as i16);
                 }
-                raekit::sys::audio_submit(&scratch) as usize
+                athkit::sys::audio_submit(&scratch) as usize
             };
             if accepted == 0 {
                 // Ring full or audio unavailable: back off, retry next tick.
@@ -1258,7 +1258,7 @@ impl App {
                 self.adjust_volume(VOL_STEP as i32);
                 true
             }
-            Action::Close => raekit::sys::exit(0),
+            Action::Close => athkit::sys::exit(0),
             Action::None => false,
         }
     }
@@ -1273,9 +1273,9 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect_gradient(0, 0, WIN_W, TITLE_H, DARK.bg_elevated, TITLE_BG);
     canvas.draw_text_aa(
         12,
-        ((TITLE_H.saturating_sub(rae_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
+        ((TITLE_H.saturating_sub(ath_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
         "Music",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -1284,15 +1284,15 @@ fn render(app: &App, canvas: &mut Canvas) {
         4,
         20,
         20,
-        rae_tokens::RADIUS_XS as usize,
+        ath_tokens::RADIUS_XS as usize,
         DARK.state_danger,
     );
-    let x_w = canvas.measure_text_aa("X", rae_tokens::TYPE_LABEL, FontFamily::Sans);
+    let x_w = canvas.measure_text_aa("X", ath_tokens::TYPE_LABEL, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 18) as i32 - x_w / 2,
-        (4 + (20 - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
+        (4 + (20 - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
         "X",
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         0xFF_FF_FF_FF,
         FontFamily::Sans,
     );
@@ -1301,13 +1301,13 @@ fn render(app: &App, canvas: &mut Canvas) {
     let tb_y = TITLE_H;
     canvas.fill_rect(0, tb_y, WIN_W, TOOLBAR_H, TOOLBAR_BG);
     let tb_ty = (tb_y
-        + (TOOLBAR_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+        + (TOOLBAR_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
         as i32;
     let lbl_w = canvas.draw_text_aa(
         12,
         tb_ty,
         "Library:",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -1331,14 +1331,14 @@ fn render(app: &App, canvas: &mut Canvas) {
     let st_y = WIN_H - STATUS_H;
     canvas.fill_rect(0, st_y, WIN_W, STATUS_H, STATUS_BG);
     let st_ty = (st_y
-        + (STATUS_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+        + (STATUS_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
         as i32;
     if !app.toast_str().is_empty() {
         canvas.draw_text_aa(
             12,
             st_ty,
             app.toast_str(),
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             DARK.state_danger,
             FontFamily::Sans,
         );
@@ -1350,7 +1350,7 @@ fn render(app: &App, canvas: &mut Canvas) {
                 12,
                 st_ty,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_MUTED,
                 FontFamily::Sans,
             );
@@ -1358,12 +1358,12 @@ fn render(app: &App, canvas: &mut Canvas) {
     }
     let hint =
         "Space:play  Up/Dn:select  L/R:seek  N/P:next/prev  T:repeat  H:shuffle  [/]:vol  Esc:quit";
-    let hw = canvas.measure_text_aa(hint, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let hw = canvas.measure_text_aa(hint, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 12) as i32 - hw,
         st_ty,
         hint,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -1375,14 +1375,14 @@ fn render(app: &App, canvas: &mut Canvas) {
 fn render_toolbar_controls(app: &App, canvas: &mut Canvas) {
     let draw_pill = |canvas: &mut Canvas, r: Rect, label: &str, active: bool| {
         let fill = if active { sel_fill() } else { DARK.bg_elevated };
-        canvas.fill_rounded_rect(r.x, r.y, r.w, r.h, rae_tokens::RADIUS_XS as usize, fill);
-        let lw = canvas.measure_text_aa(label, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
-        let ly = (r.y + (r.h - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32;
+        canvas.fill_rounded_rect(r.x, r.y, r.w, r.h, ath_tokens::RADIUS_XS as usize, fill);
+        let lw = canvas.measure_text_aa(label, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
+        let ly = (r.y + (r.h - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32;
         canvas.draw_text_aa(
             r.x as i32 + (r.w as i32 - lw) / 2,
             ly,
             label,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             if active { TEXT_FG } else { TEXT_MUTED },
             FontFamily::Sans,
         );
@@ -1417,13 +1417,13 @@ fn render_toolbar_controls(app: &App, canvas: &mut Canvas) {
         n += 1;
     }
     if let Ok(s) = core::str::from_utf8(&buf[..n]) {
-        let lw = canvas.measure_text_aa(s, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
-        let ly = (vr.y + (vr.h - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32;
+        let lw = canvas.measure_text_aa(s, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
+        let ly = (vr.y + (vr.h - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32;
         canvas.draw_text_aa(
             vr.x as i32 + (vr.w as i32 - lw) / 2,
             ly,
             s,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             accent(),
             FontFamily::Sans,
         );
@@ -1440,7 +1440,7 @@ fn render_list(app: &App, canvas: &mut Canvas) {
             24,
             (list_y + 24) as i32,
             "No .wav tracks in your Music library yet.",
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -1463,7 +1463,7 @@ fn render_list(app: &App, canvas: &mut Canvas) {
         }
 
         // Play marker for the loaded track.
-        let ty = (ry + (ROW_H - rae_tokens::TYPE_BODY.line_height as usize) / 2) as i32;
+        let ty = (ry + (ROW_H - ath_tokens::TYPE_BODY.line_height as usize) / 2) as i32;
         let marker = match (playing, app.state) {
             (true, Playback::Playing) => ">",
             (true, Playback::Paused) => "=",
@@ -1473,7 +1473,7 @@ fn render_list(app: &App, canvas: &mut Canvas) {
             12,
             ty,
             marker,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             accent(),
             FontFamily::Sans,
         );
@@ -1500,7 +1500,7 @@ fn render_transport(app: &App, canvas: &mut Canvas) {
         16,
         (tr_y + 10) as i32,
         title,
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -1522,16 +1522,16 @@ fn render_transport(app: &App, canvas: &mut Canvas) {
             by,
             TRANSPORT_BTN_W,
             TRANSPORT_BTN_H,
-            rae_tokens::RADIUS_XS as usize,
+            ath_tokens::RADIUS_XS as usize,
             fill,
         );
-        let lw = canvas.measure_text_aa(shown, rae_tokens::TYPE_LABEL, FontFamily::Sans);
-        let ly = (by + (TRANSPORT_BTN_H - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32;
+        let lw = canvas.measure_text_aa(shown, ath_tokens::TYPE_LABEL, FontFamily::Sans);
+        let ly = (by + (TRANSPORT_BTN_H - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32;
         canvas.draw_text_aa(
             bx as i32 + (TRANSPORT_BTN_W as i32 - lw) / 2,
             ly,
             shown,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             if active { TEXT_FG } else { TEXT_MUTED },
             FontFamily::Sans,
         );
@@ -1543,12 +1543,12 @@ fn render_transport(app: &App, canvas: &mut Canvas) {
         Playback::Paused => "Paused",
         Playback::Stopped => "Stopped",
     };
-    let sw = canvas.measure_text_aa(state_lbl, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let sw = canvas.measure_text_aa(state_lbl, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (transport_btn_x(0) as i32 - 12) - sw,
         (tr_y + 12) as i32,
         state_lbl,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         accent(),
         FontFamily::Sans,
     );
@@ -1573,7 +1573,7 @@ fn render_transport(app: &App, canvas: &mut Canvas) {
                 bar_x as i32,
                 (bar_y + bar_h + 4) as i32,
                 s,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_MUTED,
                 FontFamily::Sans,
             );
@@ -1583,13 +1583,13 @@ fn render_transport(app: &App, canvas: &mut Canvas) {
 
 /// Draw a name clipped to `max_w` pixels (ellipsis when it overflows).
 fn draw_label_clipped(canvas: &mut Canvas, name: &str, x: usize, y: usize, max_w: usize, fg: u32) {
-    let full_w = canvas.measure_text_aa(name, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let full_w = canvas.measure_text_aa(name, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     if (full_w as usize) <= max_w {
         canvas.draw_text_aa(
             x as i32,
             y as i32,
             name,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             fg,
             FontFamily::Sans,
         );
@@ -1604,13 +1604,13 @@ fn draw_label_clipped(canvas: &mut Canvas, name: &str, x: usize, y: usize, max_w
         buf[t] = b'.';
         buf[t + 1] = b'.';
         if let Ok(s) = core::str::from_utf8(&buf[..t + 2]) {
-            let w = canvas.measure_text_aa(s, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+            let w = canvas.measure_text_aa(s, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
             if (w as usize) <= max_w {
                 canvas.draw_text_aa(
                     x as i32,
                     y as i32,
                     s,
-                    rae_tokens::TYPE_CAPTION,
+                    ath_tokens::TYPE_CAPTION,
                     fg,
                     FontFamily::Sans,
                 );
@@ -1684,15 +1684,15 @@ fn fmt_u64(mut v: u64, out: &mut [u8]) -> usize {
 /// True iff Music's chrome is wired to the shared design tokens, the audio
 /// pipeline (decode → mono→stereo upmix → 48 kHz resample) produces the expected
 /// frames, the mouse hit-test invariant holds, AND the persistent-preferences
-/// schema round-trips through `rae_toml` (volume/repeat/shuffle/last-track) while
+/// schema round-trips through `ath_toml` (volume/repeat/shuffle/last-track) while
 /// a corrupt/missing config resolves to the typed defaults (never a panic).
 /// Deliberately fail-able: a regression in token wiring, the WAV decoder, the
 /// upmix, the resample math, the prefs schema, or the defaulting flips this to
-/// `false` (exit code 3 at startup). `raemedia`'s WAV host KATs prove the decode
-/// logic and `rae_toml`'s KATs prove the parser; this proves Music's own wiring.
+/// `false` (exit code 3 at startup). `athmedia`'s WAV host KATs prove the decode
+/// logic and `ath_toml`'s KATs prove the parser; this proves Music's own wiring.
 #[must_use]
 pub fn design_proof() -> bool {
-    let ramp = rae_tokens::derive_accent(theme_seed(), &DARK);
+    let ramp = ath_tokens::derive_accent(theme_seed(), &DARK);
     let tokens_ok = accent() == ramp.base
         && sel_fill() == ramp.active
         && BG == DARK.bg_raised
@@ -1701,7 +1701,7 @@ pub fn design_proof() -> bool {
         && TEXT_FG == DARK.text_primary
         && TEXT_MUTED == DARK.text_secondary
         && STROKE_HL == DARK.stroke_strong
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
 
     let audio_ok = audio_pipeline_ok();
 
@@ -1835,10 +1835,10 @@ fn hit_test_proof() -> bool {
     prefs_round_trip_ok()
 }
 
-/// Prove the Music PREFS SCHEMA: a known `Prefs` serialized via `rae_toml` then
+/// Prove the Music PREFS SCHEMA: a known `Prefs` serialized via `ath_toml` then
 /// re-parsed restores every field exactly, AND a corrupt / missing-key document
 /// resolves to the typed defaults (NOT a panic, NOT a wrong value). This proves
-/// the per-app prefs contract on top of `rae_toml`'s own parser KATs. Returns
+/// the per-app prefs contract on top of `ath_toml`'s own parser KATs. Returns
 /// `false` on any drift (→ exit(3) at startup).
 #[must_use]
 fn prefs_round_trip_ok() -> bool {
@@ -1850,8 +1850,8 @@ fn prefs_round_trip_ok() -> bool {
         last_track: String::from("song two.wav"),
         last_folder: String::from("/home/rae/Music"),
     };
-    let text = rae_toml::to_string(&p.to_toml());
-    let parsed = match rae_toml::parse(&text) {
+    let text = ath_toml::to_string(&p.to_toml());
+    let parsed = match ath_toml::parse(&text) {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -1874,7 +1874,7 @@ fn prefs_round_trip_ok() -> bool {
 
     // (c) A corrupt document → typed defaults (parse FAILS, we don't panic).
     let corrupt = "volume = = oops\n[unterminated\n";
-    let d = match rae_toml::parse(corrupt) {
+    let d = match ath_toml::parse(corrupt) {
         Ok(t) => Prefs::from_toml(&t), // shouldn't reach here for this input
         Err(_) => Prefs::defaults(),
     };
@@ -1883,7 +1883,7 @@ fn prefs_round_trip_ok() -> bool {
     }
 
     // (d) A well-formed doc MISSING every prefs key → typed defaults per field.
-    let empty = match rae_toml::parse("unrelated = 1\n") {
+    let empty = match ath_toml::parse("unrelated = 1\n") {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -1898,7 +1898,7 @@ fn prefs_round_trip_ok() -> bool {
     }
 
     // (e) An out-of-range volume is CLAMPED, not rejected (stays usable).
-    let oor = match rae_toml::parse("volume = 9999\nrepeat = \"bogus\"\n") {
+    let oor = match ath_toml::parse("volume = 9999\nrepeat = \"bogus\"\n") {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -1911,7 +1911,7 @@ fn prefs_round_trip_ok() -> bool {
 }
 
 /// Build a tiny 24 kHz MONO 16-bit WAV with known samples, decode it through
-/// `raemedia::wav`, then assert:
+/// `athmedia::wav`, then assert:
 ///   (1) the decoded samples are exact (mono, 24 kHz),
 ///   (2) `prepare_for_mixer` upmixes mono→stereo (L==R per frame) AND resamples
 ///       24 kHz → 48 kHz (output frame count = 2x input, anchors preserved).
@@ -1997,32 +1997,32 @@ fn build_mono_wav(sample_rate: u32, samples: &[i16]) -> Vec<u8> {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     if !design_proof() {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
 
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
     let mut app = App::new();
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     let mut extended = false;
     // Live left-button state for click-EDGE detection (fire on up->down).
     let mut left_was_down = false;
 
     loop {
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         let mut dirty = false;
 
         // ── Mouse: drain button events, hit-test the cursor on a click edge ──
         let mut mouse_activity = false;
         let mut left_down = left_was_down;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -2031,13 +2031,13 @@ pub extern "C" fn _start() -> ! {
         }
         if mouse_activity || left_down != left_was_down {
             if left_down && !left_was_down {
-                let (cx, cy, _btn) = raekit::sys::cursor_pos();
+                let (cx, cy, _btn) = athkit::sys::cursor_pos();
                 // Subtract the LIVE window origin (not the stale present-time
                 // PRESENT_X/Y) so clicks land correctly after the window manager
                 // moves the window (Overview / Spaces / tiling). Falls back to the
                 // present origin if the surface isn't found. Saturating-sub keeps a
                 // cursor above/left of the window from underflowing.
-                let (ox, oy) = raekit::sys::surface_origin(sid)
+                let (ox, oy) = athkit::sys::surface_origin(sid)
                     .unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
                 let lx = (cx as i32).saturating_sub(ox as i32);
                 let ly = (cy as i32).saturating_sub(oy as i32);
@@ -2123,7 +2123,7 @@ pub extern "C" fn _start() -> ! {
                         dirty = true;
                     } // ']' = volume up
                     (false, 0x01) => {
-                        raekit::sys::exit(0);
+                        athkit::sys::exit(0);
                     } // Esc = quit
                     _ => {}
                 }
@@ -2137,13 +2137,13 @@ pub extern "C" fn _start() -> ! {
 
         if dirty {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
 
         // Yield when idle so we don't spin a core; the audio pump rate is fine at
         // event-loop cadence because each pump submits up to 8*512 frames.
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
         }
     }
 }

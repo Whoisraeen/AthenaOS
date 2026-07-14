@@ -17,10 +17,10 @@ Evaluated against `LEGACY_GAMING_CONCEPT.md` and existing tree state. Updated 20
 | Project | What we use | Where |
 |---------|-------------|-------|
 | Phil Opp "Writing an OS in Rust" | bootloader_api, GDT/IDT, paging, heap | Entire kernel foundation |
-| RedoxFS | CoW FS design, extent system, snapshot model | `redox_reference/`, `components/raefs/vendor/redoxfs/` |
+| RedoxFS | CoW FS design, extent system, snapshot model | `redox_reference/`, `components/athfs/vendor/redoxfs/` |
 | smoltcp | L2/L3 TCP/IP stack | `kernel/Cargo.toml`, `net_drivers.rs`, `virtio_net.rs` |
-| wgpu | 3D GPU effects in compositor (behind `gpu_userspace` feature) | `components/raegfx/`, `components/raeui/` |
-| Skia (skia-safe) | 2D rendering, text, vectors | `components/raeui/` (behind `gpu_userspace`) |
+| wgpu | 3D GPU effects in compositor (behind `gpu_userspace` feature) | `components/athgfx/`, `components/athui/` |
+| Skia (skia-safe) | 2D rendering, text, vectors | `components/athui/` (behind `gpu_userspace`) |
 
 ---
 
@@ -197,15 +197,15 @@ shows how to handle Linux ABI without being Linux.
 
 **Constraint:** gilrs requires `std` (uses threads and platform I/O). It **cannot** run in the kernel.
 
-**Architecture:** The kernel passes raw USB HID reports (already done in `usb_hid.rs`) up to a sandboxed userspace `raeinput` daemon. That daemon links gilrs, normalizes all gamepad state, and pushes `RaeGamepadEvent` structs back to the kernel via IPC for SCHED_BODY dispatch.
+**Architecture:** The kernel passes raw USB HID reports (already done in `usb_hid.rs`) up to a sandboxed userspace `athinput` daemon. That daemon links gilrs, normalizes all gamepad state, and pushes `RaeGamepadEvent` structs back to the kernel via IPC for SCHED_BODY dispatch.
 
 ```toml
-# In components/raeinput/Cargo.toml (userspace daemon — NOT the kernel)
+# In components/athinput/Cargo.toml (userspace daemon — NOT the kernel)
 gilrs = { version = "0.10", default-features = false, features = ["serde-serialize"] }
 ```
 
 **What to build (Phase 12.2):**
-- `components/raeinput/` — userspace daemon: reads USB HID from kernel IPC, feeds into gilrs, pushes `RaeGamepadEvent` to SCHED_BODY queue
+- `components/athinput/` — userspace daemon: reads USB HID from kernel IPC, feeds into gilrs, pushes `RaeGamepadEvent` to SCHED_BODY queue
 - Kernel IPC channel: `SYS_GAMEPAD_EVENT_PUSH` syscall (add to `docs/SYSCALL_TABLE.md`)
 - gilrs handles: DualSense haptics via HID output reports, Xbox GIP protocol, generic mapping
 
@@ -226,12 +226,12 @@ gilrs = { version = "0.10", default-features = false, features = ["serde-seriali
 **Architecture:** AthAudio userspace daemon decodes via symphonia, then pushes raw PCM to the kernel's DMA ring buffer via `SYS_AUDIO_WRITE` syscall.
 
 ```toml
-# In components/raeaudio/Cargo.toml (userspace daemon — NOT the kernel)
+# In components/athaudio/Cargo.toml (userspace daemon — NOT the kernel)
 symphonia = { version = "0.5", features = ["wav", "flac", "ogg", "mp3"] }
 ```
 
 **What to build (Phase 7.2):**
-- `components/raeaudio/` — extends existing component with symphonia decode path
+- `components/athaudio/` — extends existing component with symphonia decode path
 - `Decoder::new(format)` → `DecodeResult::Samples` → convert to f32 → push via IPC to kernel ring
 - Kernel ring buffer (`AUDIO_RING` in `audio.rs`) already wired
 
@@ -252,10 +252,10 @@ symphonia = { version = "0.5", features = ["wav", "flac", "ogg", "mp3"] }
 - `cosmic-text/src/font.rs` — `FontSystem` for font discovery and fallback chains
 - `cosmic-text/src/shaping.rs` — HarfBuzz shaping producing glyph runs
 
-**What this means for AthUI:** When implementing `components/raeui/src/text.rs` (Phase 8.1), use cosmic-text's layout engine rather than implementing BiDi/ligature shaping from scratch. cosmic-text sits cleanly on top of wgpu via its `Canvas` API.
+**What this means for AthUI:** When implementing `components/athui/src/text.rs` (Phase 8.1), use cosmic-text's layout engine rather than implementing BiDi/ligature shaping from scratch. cosmic-text sits cleanly on top of wgpu via its `Canvas` API.
 
 ```toml
-# In components/raeui/Cargo.toml (behind gpu_userspace feature)
+# In components/athui/Cargo.toml (behind gpu_userspace feature)
 cosmic-text = { version = "0.12", optional = true }
 ```
 
@@ -311,11 +311,11 @@ cosmic-text = { version = "0.12", optional = true }
 | Priority | Action | Closes checklist items |
 |----------|--------|------------------------|
 | **High** | `kernel/Cargo.toml`: `x25519-dalek`, `blake2`, `chacha20poly1305`, `ruzstd` ✅ done | Phase 10: X25519, Blake2s |
-| **High** | `components/raeaudio/Cargo.toml`: add symphonia for userspace decode | Phase 7.2: audio routing |
-| **High** | `components/raeinput/Cargo.toml`: add gilrs for gamepad daemon | Phase 12.2: controller support |
+| **High** | `components/athaudio/Cargo.toml`: add symphonia for userspace decode | Phase 7.2: audio routing |
+| **High** | `components/athinput/Cargo.toml`: add gilrs for gamepad daemon | Phase 12.2: controller support |
 | **Medium** | Study boringtun for `wireguard.rs` peer mgmt + rekeying | Phase 10: full WireGuard |
 | **Medium** | Study Iced + Xilem for AthKit state model | Phase 8: AthKit API |
-| **Medium** | Study cosmic-text for `raeui/text.rs` layout engine | Phase 8.1: text quality |
+| **Medium** | Study cosmic-text for `athui/text.rs` layout engine | Phase 8.1: text quality |
 | **Medium** | Study embassy executor for static task arena in driver IPC | Phase 2 driver stability |
 | **Low** | Study cap-std for AthKit capability token API | Phase 9: AthGuard |
 | **Low** | Study Slint compiler for `.rae` widget format design | Phase 8: AthKit widget files |
@@ -327,7 +327,7 @@ cosmic-text = { version = "0.12", optional = true }
 
 Researched 2026-06-11. AthUI already has the LOGIC (retained `tree.rs`,
 `animation.rs`, flexbox `layout.rs`, reactive `binding.rs`) but renders
-immediate-mode through the software `raegfx::Canvas` with a placeholder font
+immediate-mode through the software `athgfx::Canvas` with a placeholder font
 rasterizer. These crates supply the *content rendering* + *layout* so the
 existing logic can be re-wired into the Core-Animation model. The *feel*
 (layer backing + off-thread compositor animation) is AthenaOS code, not a crate.

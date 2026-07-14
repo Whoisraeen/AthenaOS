@@ -172,7 +172,7 @@ As of 2026-06-25 KVM session: `System successfully booted`, 0 panics, `boot heal
 - [ ] Sound Open Firmware (SoF) DSP loading for newer Intel chips
 - [ ] Bluetooth audio (requires BT stack)
 - [ ] USB audio class (UAC1 / UAC2 via xHCI isochronous)
-- [ ] Reports round-trip latency measurement to `/proc/raeen/perf`
+- [ ] Reports round-trip latency measurement to `/proc/athena/perf`
 
 ---
 
@@ -257,7 +257,7 @@ As of 2026-06-25 KVM session: `System successfully booted`, 0 panics, `boot heal
 
 ## §12 — Gaming-First Features
 
-- [~] SCHED_BODY hard real-time class — EDF exists; deadline telemetry wired to `/proc/raeen/perf`
+- [~] SCHED_BODY hard real-time class — EDF exists; deadline telemetry wired to `/proc/athena/perf`
 - [~] GameOS Mode (couch UI, 1633 lines, controller nav) — QEMU-proven; iron interactive pending
 - [~] Per-game CPU power cap — iron-proven via KVM session
 - [~] Per-game refresh rate switch — iron-proven via KVM session
@@ -284,7 +284,7 @@ As of 2026-06-25 KVM session: `System successfully booted`, 0 panics, `boot heal
 
 - [~] Vibe Mode (12 theme presets, smooth ARGB transitions, time-based auto-switch) — QEMU-proven
 - [~] Theme engine at compositor level (WGSL → SPIR-V shaders) — host-KAT'd; live GPU submit pending
-- [~] raelang scripting interpreter (sandboxed Swift-flavored automation) — structural
+- [~] athlang scripting interpreter (sandboxed Swift-flavored automation) — structural
 - [~] RGB unified API (`RgbManager`, `RgbDevice`, `RgbEffect`) — structural
 - [~] Fan curve / power management at OS level — structural
 - [~] Swappable window managers (tile/stack/float/hybrid) — tiling WM and resize iron-proven
@@ -324,16 +324,16 @@ As of 2026-06-25 KVM session: `System successfully booted`, 0 panics, `boot heal
 - [~] **Terminal** (full VT100/xterm emulator, SGR-color) — QEMU-proven
 - [~] **Settings** (basic) — QEMU-proven; full catalog in `docs/SETTINGS_CATALOG.md`
 - [~] **Text Editor** — QEMU-proven
-- [~] **Calculator** (`rae_calc` 17 KATs) — QEMU-proven
+- [~] **Calculator** (`ath_calc` 17 KATs) — QEMU-proven
 - [~] **Photos** (full decode stack BMP/GIF/PNG/JPEG/WebP, encode PNG/JPEG) — host-KAT'd; app-wiring + iron pending
-- [~] **Music player** (WAV/FLAC/MP3/AAC/Opus decoders, `rae_mp4` demux, SCHED_BODY GameMixer) — host-KAT'd; iron HDA + app-wiring pending
-- [~] **System Monitor** (`/proc/raeen/*` data exists; no app)
+- [~] **Music player** (WAV/FLAC/MP3/AAC/Opus decoders, `ath_mp4` demux, SCHED_BODY GameMixer) — host-KAT'd; iron HDA + app-wiring pending
+- [~] **System Monitor** (`/proc/athena/*` data exists; no app)
 - [~] **Clock / Alarms** — QEMU-proven
-- [~] **Notes** (md edit + live `rae_markdown` preview) — QEMU-proven
-- [~] **Office** (`rae_docx`/`rae_xlsx`/`rae_pdf` + XLSX formula compute + `rae_print` PDF-1.7) — host-KAT'd; app UI + iron pending
-- [~] **Mail / Calendar** (`rae_mail` SMTP/IMAP/POP3 + `rae_pim` iCal/vCard/RRULE) — host-KAT'd; live TLS/TCP wiring + app UI + iron pending
-- [~] **Web browser** (`rae_js` parse+execute+Map/Set/RegExp+Promise/event-loop + raeweb HTML/CSS) — host-KAT'd; layout/render + DOM bindings + app-wiring pending
-- [~] **PWA install** (`rae_pwa` URL resolution + InstallDescriptor) — host-KAT'd; render + launch wiring pending
+- [~] **Notes** (md edit + live `ath_markdown` preview) — QEMU-proven
+- [~] **Office** (`ath_docx`/`ath_xlsx`/`ath_pdf` + XLSX formula compute + `rae_print` PDF-1.7) — host-KAT'd; app UI + iron pending
+- [~] **Mail / Calendar** (`ath_mail` SMTP/IMAP/POP3 + `ath_pim` iCal/vCard/RRULE) — host-KAT'd; live TLS/TCP wiring + app UI + iron pending
+- [~] **Web browser** (`ath_js` parse+execute+Map/Set/RegExp+Promise/event-loop + athweb HTML/CSS) — host-KAT'd; layout/render + DOM bindings + app-wiring pending
+- [~] **PWA install** (`ath_pwa` URL resolution + InstallDescriptor) — host-KAT'd; render + launch wiring pending
 - [~] **AthPlay** (Steam/Epic/GOG/AthStore unified launcher, playtime, achievements) — compiled; no live game launching
 - [ ] Screenshot / screen record app (compositor capture — `[ ]`)
 - [ ] File associations / default apps
@@ -345,11 +345,11 @@ As of 2026-06-25 KVM session: `System successfully booted`, 0 panics, `boot heal
 
 ## §15 — Services (AthStore, AthID, AthSync)
 
-- [~] AthStore `.raepkg` bounds-checked TLV codec + fail-closed Ed25519 verify + transactional dep-correct install/GC — host-KAT'd; client UI + iron pending
+- [~] AthStore `.athpkg` bounds-checked TLV codec + fail-closed Ed25519 verify + transactional dep-correct install/GC — host-KAT'd; client UI + iron pending
 - [~] AthID WebAuthn EdDSA+ES256 ceremony core + sessions + guest — host-KAT'd; authenticator UX + iron pending
 - [~] AthSync E2E (device enroll, wrapped group key, AEAD SyncBlob, LWW-CRDT convergence) — host-KAT'd; **server + drive UX + iron pending**
-- [~] `rae_keychain` (Argon2id KDF + ChaCha20Poly1305 AEAD, fail-closed, zeroized) — host-KAT'd; OS integration + UI pending
-- [~] `rae_otp` HOTP/TOTP — host-KAT'd; authenticator UX pending
+- [~] `ath_keychain` (Argon2id KDF + ChaCha20Poly1305 AEAD, fail-closed, zeroized) — host-KAT'd; OS integration + UI pending
+- [~] `ath_otp` HOTP/TOTP — host-KAT'd; authenticator UX pending
 - [ ] AthStore server backend (API, CDN, payment processor — out of scope for kernel work; in scope for OS shipping)
 - [ ] 12% revenue share infrastructure
 - [ ] Sideloading UX (allowed + supported by Concept; no UX built)
@@ -357,7 +357,7 @@ As of 2026-06-25 KVM session: `System successfully booted`, 0 panics, `boot heal
 - [ ] Delta / efficient OS updates
 - [ ] Driver update pipeline (signed)
 - [ ] Sign up with AthID → install app on device A → suggested on device B (the sync proof)
-- [ ] `rae_otp` authenticator UX wired to system login
+- [ ] `ath_otp` authenticator UX wired to system login
 
 ---
 
@@ -425,7 +425,7 @@ Most of the a11y stack is **built but not wired.** The remaining work is integra
 - [~] On-switches: Super+Alt+M/H/C/R hotkeys + Control Center Accessibility tile — **SHIPPED**
 - [~] Keyboard-only nav + visible focus ring — partial (`focusable_nodes()` + `FocusRing` exist)
 - [~] Sticky/slow/bounce keys + repeat filters — iron-proven via KVM session
-- [ ] **Widget-provider wiring** — `a11y::publish_window_widgets` + `raeui::provider_nodes_for_window` exist but have ZERO callers; every app is an anonymous "Window" node to a screen reader (P0)
+- [ ] **Widget-provider wiring** — `a11y::publish_window_widgets` + `athui::provider_nodes_for_window` exist but have ZERO callers; every app is an anonymous "Window" node to a screen reader (P0)
 - [ ] Unified desktop keyboard focus order across shell chrome (taskbar/start/tray/notifications)
 - [ ] Modal focus-trap contract
 - [ ] FAIL-able "no-mouse" audit: a complete task done with keyboard only
@@ -433,7 +433,7 @@ Most of the a11y stack is **built but not wired.** The remaining work is integra
 - [ ] Real TTS→AthAudio `AudioSpeechSink` (iron/Phase 7 gated)
 - [ ] Global text scaling (type ramp exists; no global scale factor honored by layout)
 - [ ] Per-app screen-reader nav verbs on live keys
-- [ ] Demote / harvest `components/raeaccessibility` (2268 lines, nothing imports it — duplicates live `a11y.rs`) — **do not invest in it as-is**
+- [ ] Demote / harvest `components/athaccessibility` (2268 lines, nothing imports it — duplicates live `a11y.rs`) — **do not invest in it as-is**
 
 ---
 

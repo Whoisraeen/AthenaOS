@@ -235,7 +235,7 @@ pub struct DeviceAbi {
 struct Registry {
     devices: BTreeMap<u64, Device>,
     next_id: u64,
-    /// Aggregate command counter for /proc/raeen/rgb.
+    /// Aggregate command counter for /proc/athena/rgb.
     commands_total: u64,
 }
 
@@ -443,7 +443,7 @@ pub fn sys_effect(dev_id: u64, effect_id: u64, speed: u64, color: u64) -> u64 {
     }
 }
 
-// ── /proc/raeen/rgb ────────────────────────────────────────────────────
+// ── /proc/athena/rgb ────────────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let g = REGISTRY.lock();

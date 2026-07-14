@@ -1618,8 +1618,8 @@ pub struct HidInterface {
     /// Report-descriptor decoder for NON-boot-protocol interfaces (gaming
     /// devices that don't implement boot protocol). `Some` only in report
     /// protocol; boot interfaces keep this `None` and use the fixed boot-layout
-    /// parser. Built via `raehid` (wraps Redox's `hidreport`).
-    pub hid_device: Option<raehid::HidDevice>,
+    /// parser. Built via `athhid` (wraps Redox's `hidreport`).
+    pub hid_device: Option<athhid::HidDevice>,
     /// Round-robin index into the `HID_TD_RING` report slots. The xHC completes a
     /// transfer ring's TDs IN ORDER, so completion N drains slot `N % HID_TD_RING`
     /// and re-arms a TD into that same slot — keeping `HID_TD_RING` outstanding.
@@ -2931,7 +2931,7 @@ impl XhciController {
     /// Fetch a HID REPORT descriptor (type 0x22) from an interface. Unlike the
     /// standard device-targeted GET_DESCRIPTOR, this is an INTERFACE request
     /// (bmRequestType 0x81, wIndex = interface number) per USB HID 1.11 §7.1.1.
-    /// Returns the raw report-descriptor bytes for `raehid` to parse.
+    /// Returns the raw report-descriptor bytes for `athhid` to parse.
     pub fn get_hid_report_descriptor(
         &mut self,
         slot_id: u8,
@@ -3299,7 +3299,7 @@ impl XhciController {
                         // Boot-protocol devices (hid_device == None) take the
                         // unchanged path — iron-proven flow preserved.
                         enum Decoded {
-                            Mouse(raehid::MouseDelta),
+                            Mouse(athhid::MouseDelta),
                             Keyboard([u8; 8]),
                         }
                         let decoded: Option<Option<Decoded>> = self.device_slots
@@ -3310,7 +3310,7 @@ impl XhciController {
                             })
                             .and_then(|i| i.hid_device.as_ref())
                             .map(|dev| match dev.kind() {
-                                raehid::HidKind::Mouse => {
+                                athhid::HidKind::Mouse => {
                                     dev.extract_mouse(report).map(Decoded::Mouse)
                                 }
                                 _ => dev
@@ -3885,7 +3885,7 @@ impl XhciController {
             // Boot-capable = Boot Interface Subclass (1) AND a boot protocol
             // (1=keyboard, 2=mouse): only these accept SET_PROTOCOL(boot)/SET_IDLE
             // and emit the fixed boot-report layout. Everything else stays in
-            // REPORT protocol and is decoded via the report descriptor (`raehid`,
+            // REPORT protocol and is decoded via the report descriptor (`athhid`,
             // Redox's `hidreport`) — sending SET_PROTOCOL(boot) to a non-boot
             // interface STALLs EP0.
             let boot_capable = hid_ep.subclass == 1
@@ -3893,7 +3893,7 @@ impl XhciController {
                     || hid_ep.protocol == crate::xhci_desc::HID_PROTO_MOUSE);
             let iface = hid_ep.interface_number as u16;
 
-            let mut parsed: Option<raehid::HidDevice> = None;
+            let mut parsed: Option<athhid::HidDevice> = None;
             if boot_capable {
                 // SET_PROTOCOL(boot=0): bmRequestType=0x21 (host→iface, class), bRequest=0x0B.
                 if let Err(e) = self.control_out_nodata(slot_id, 0x21, 0x0B, 0x0000, iface) {
@@ -3914,7 +3914,7 @@ impl XhciController {
                 // Report-protocol interface: fetch + parse its report descriptor.
                 // Best-effort — any failure falls back to boot-layout parsing.
                 match self.get_hid_report_descriptor(slot_id, iface, hid_ep.report_desc_len) {
-                    Ok(bytes) => match raehid::HidDevice::parse(&bytes) {
+                    Ok(bytes) => match athhid::HidDevice::parse(&bytes) {
                         Some(dev) => {
                             crate::serial_println!(
                                 "[xhci] HID: report-protocol iface {} — parsed {}-byte report descriptor, kind={:?}",
@@ -3940,7 +3940,7 @@ impl XhciController {
             }
 
             let kind_is_mouse = match parsed.as_ref() {
-                Some(dev) => dev.kind() == raehid::HidKind::Mouse,
+                Some(dev) => dev.kind() == athhid::HidKind::Mouse,
                 None => is_mouse,
             };
 
@@ -6129,7 +6129,7 @@ pub fn spawn_hid_input_thread() {
     // userspace — a 1 ms period would be runnable every tick and starve the
     // Normal queue, the documented pick_next hazard), runtime 0.2 ms = 100
     // milli-cores, far under the 80% EDF admission gate even alongside audio.
-    // Deadline-miss telemetry flows into /proc/raeen/gaming for free.
+    // Deadline-miss telemetry flows into /proc/athena/gaming for free.
     task.priority = crate::task::TaskPriority::Game;
     task.deadline = Some(crate::task::DeadlineTask::new(2_000, 2_000, 200));
     let task_id = task.id;

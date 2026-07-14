@@ -621,10 +621,10 @@ impl SoftTpm {
     /// Derive the sealing key from the root + policy digest (HKDF-SHA256).
     fn seal_key(&self, policy_digest: &[u8; 32]) -> [u8; 32] {
         let mut okm = [0u8; 32];
-        rae_crypto::sha256::hkdf(
+        ath_crypto::sha256::hkdf(
             policy_digest,
             &self.seal_root,
-            b"raeen-tpm-seal-v1",
+            b"athena-tpm-seal-v1",
             &mut okm,
         );
         okm
@@ -640,7 +640,7 @@ impl SoftTpm {
             let tsc = unsafe { core::arch::x86_64::_rdtsc() };
             nonce[..8].copy_from_slice(&tsc.to_le_bytes());
         }
-        let blob = rae_crypto::chacha20poly1305::seal(&key, &nonce, &policy_digest, secret);
+        let blob = ath_crypto::chacha20poly1305::seal(&key, &nonce, &policy_digest, secret);
         let mut sel: Vec<u32> = pcr_selection
             .iter()
             .copied()
@@ -669,7 +669,7 @@ impl SoftTpm {
             return None;
         }
         let key = self.seal_key(&current_policy);
-        rae_crypto::chacha20poly1305::open(&key, &sealed.nonce, &sealed.policy_digest, &sealed.blob)
+        ath_crypto::chacha20poly1305::open(&key, &sealed.nonce, &sealed.policy_digest, &sealed.blob)
     }
 
     pub fn extend_pcr(&mut self, index: usize, digest: &[u8; 32]) {
@@ -1018,7 +1018,7 @@ pub fn run_seal_smoketest() {
     t.extend_pcr(0, &sha256(b"firmware-v1"));
     t.extend_pcr(4, &sha256(b"kernel-image-A"));
 
-    let secret: &[u8] = b"raefs-fde-master-key-0123456789!";
+    let secret: &[u8] = b"athfs-fde-master-key-0123456789!";
     let sealed = t.seal(secret, &[0, 4]);
 
     // 1. Same measured state -> unseal returns the EXACT secret.
@@ -1061,7 +1061,7 @@ pub fn run_seal_smoketest() {
     );
 }
 
-/// `/proc/raeen/tpm` — TPM backend + measured-boot sealing status.
+/// `/proc/athena/tpm` — TPM backend + measured-boot sealing status.
 pub fn tpm_dump_text() -> alloc::string::String {
     use alloc::string::String;
     use core::fmt::Write;

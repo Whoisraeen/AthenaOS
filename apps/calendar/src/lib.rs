@@ -9,7 +9,7 @@
 //! app imports both off disk and makes them clickable — the offline on-ramp.
 //!
 //! Standalone userspace ELF launched from the start menu (`exec_path =
-//! "calendar"`). The already-host-KAT'd [`rae_pim`] engine does ALL the parsing,
+//! "calendar"`). The already-host-KAT'd [`ath_pim`] engine does ALL the parsing,
 //! recurrence, and timezone work:
 //!   * `parse_ics` / `parse_vcf` — the line-folded RFC grammars → typed models.
 //!   * `VEvent::occurrences` / `recur::expand` — RRULE recurrence expansion over a
@@ -46,7 +46,7 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use rae_pim::{
+use ath_pim::{
     civil_from_days, days_from_civil, days_in_month, parse_ics, parse_vcf, tz, AddressBook,
     Calendar, DateTime, PimError, VCard,
 };
@@ -54,21 +54,21 @@ use rae_pim::{
 // `weekday_from_days` builds the month grid's first-column offset — render/click
 // path only, so it would be an unused import under `cargo test`.
 #[cfg(not(test))]
-use rae_pim::weekday_from_days;
+use ath_pim::weekday_from_days;
 
 // The render/run path is live-ELF only; under `cargo test` only the PimModel
-// (over rae_pim) is exercised, so the graphics/syscall imports are gated out to
+// (over ath_pim) is exercised, so the graphics/syscall imports are gated out to
 // keep the host test warning-clean.
 #[cfg(not(test))]
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 #[cfg(not(test))]
-use rae_tokens::DARK;
+use ath_tokens::DARK;
 #[cfg(not(test))]
-use raegfx::text::FontFamily;
+use athgfx::text::FontFamily;
 #[cfg(not(test))]
-use raegfx::Canvas;
+use athgfx::Canvas;
 
 // ── Window geometry (live ELF only) ──────────────────────────────────────
 
@@ -93,12 +93,12 @@ const PRESENT_X: i32 = 160;
 const PRESENT_Y: i32 = 60;
 
 /// How many recurrence occurrences we expand for a single visible month — a hard
-/// cap so a pathological `FREQ=SECONDLY` rule can never flood the agenda (rae_pim
+/// cap so a pathological `FREQ=SECONDLY` rule can never flood the agenda (ath_pim
 /// also bounds internally via `MAX_STEPS`). One per day of a long month is plenty.
 const MAX_OCCURRENCES_PER_WINDOW: usize = 512;
 
 /// The local zone the app renders event times in. v1 ships a single configurable
-/// IANA name (no system-locale syscall yet); the rae_pim POSIX-TZ engine resolves
+/// IANA name (no system-locale syscall yet); the ath_pim POSIX-TZ engine resolves
 /// it across DST. A real `.ics` carries its own `TZID` per event, which is what
 /// gets converted FROM; this is the zone converted TO. (Render-path only; the
 /// host KAT passes the zone explicitly to [`PimModel::agenda`].)
@@ -117,7 +117,7 @@ BEGIN:VCALENDAR\r
 VERSION:2.0\r
 PRODID:-//AthenaOS//calendar//EN\r
 BEGIN:VEVENT\r
-UID:welcome-001@raeen.os\r
+UID:welcome-001@athena.os\r
 DTSTART;TZID=America/New_York:20260601T090000\r
 DTEND;TZID=America/New_York:20260601T093000\r
 SUMMARY:Welcome to AthenaOS Calendar\r
@@ -125,7 +125,7 @@ LOCATION:AthShell\r
 RRULE:FREQ=WEEKLY;BYDAY=MO;COUNT=12\r
 END:VEVENT\r
 BEGIN:VEVENT\r
-UID:welcome-002@raeen.os\r
+UID:welcome-002@athena.os\r
 DTSTART;VALUE=DATE:20260615\r
 SUMMARY:Import your .ics and .vcf\r
 END:VEVENT\r
@@ -138,7 +138,7 @@ BEGIN:VCARD\r
 VERSION:4.0\r
 FN:Rae Support\r
 N:Support;Rae;;;\r
-EMAIL;TYPE=work:hello@raeen.os\r
+EMAIL;TYPE=work:hello@athena.os\r
 TEL;TYPE=cell:+1-555-0100\r
 ORG:AthenaOS\r
 END:VCARD\r
@@ -165,13 +165,13 @@ const TEXT_TERTIARY: u32 = DARK.text_tertiary;
 
 #[cfg(not(test))]
 fn accent() -> u32 {
-    rae_tokens::derive_accent(raekit::sys::theme_accent(), &DARK).base
+    ath_tokens::derive_accent(athkit::sys::theme_accent(), &DARK).base
 }
 
 // ── Wall clock (SYS_WALL_CLOCK = 40, unix-epoch ns) ───────────────────────
 //
-// raekit has no wrapper for SYS_WALL_CLOCK, so we issue the raw syscall through
-// the public `raekit::sys::syscall0` — the EXACT pattern the Clock + Passwords
+// athkit has no wrapper for SYS_WALL_CLOCK, so we issue the raw syscall through
+// the public `athkit::sys::syscall0` — the EXACT pattern the Clock + Passwords
 // apps use (no new ABI surface for this slice). 0 means "unavailable" → fall back
 // to the sample's month. Only compiled into the live ELF.
 #[cfg(not(test))]
@@ -179,12 +179,12 @@ const SYS_WALL_CLOCK: u64 = 40;
 
 #[cfg(not(test))]
 fn wall_secs() -> u64 {
-    let ns = unsafe { raekit::sys::syscall0(SYS_WALL_CLOCK) };
+    let ns = unsafe { athkit::sys::syscall0(SYS_WALL_CLOCK) };
     ns / 1_000_000_000
 }
 
 // ===========================================================================
-// PimModel — the syscall-free heart (host-KAT'd against the live rae_pim).
+// PimModel — the syscall-free heart (host-KAT'd against the live ath_pim).
 // ===========================================================================
 
 /// One agenda row: an expanded occurrence's local-time start plus the event's
@@ -213,7 +213,7 @@ pub struct ContactRow {
 }
 
 /// The in-memory PIM state: the imported calendar + address book over the LIVE
-/// rae_pim engine. All query logic (recurrence expansion into a visible window,
+/// ath_pim engine. All query logic (recurrence expansion into a visible window,
 /// local-time conversion, contact summarisation) is here and syscall-free, so the
 /// host KAT drives it directly.
 pub struct PimModel {
@@ -424,9 +424,9 @@ fn day_end(d: &DateTime) -> DateTime {
 }
 
 /// The civil `(year, month, day)` for a unix timestamp (UTC). Used by the live app
-/// to pick the initial month; the conversion is pure rae_pim civil math.
+/// to pick the initial month; the conversion is pure ath_pim civil math.
 pub fn civil_from_unix(unix_secs: u64) -> (u16, u8, u8) {
-    // Days since the civil epoch 1970-01-01 (rae_pim's `days_from_civil` epoch).
+    // Days since the civil epoch 1970-01-01 (ath_pim's `days_from_civil` epoch).
     let days = (unix_secs / 86_400) as i64;
     let (y, m, d) = civil_from_days(days);
     (y as u16, m, d)
@@ -574,8 +574,8 @@ impl App {
 fn read_home_file(name: &str) -> Option<String> {
     let mut path = String::new();
     let mut info = [0u8; 96];
-    if raekit::sys::session_info(&mut info).is_some() {
-        if let Some(home) = raekit::sys::session_home_from(&info) {
+    if athkit::sys::session_info(&mut info).is_some() {
+        if let Some(home) = athkit::sys::session_home_from(&info) {
             path.push_str(home);
             path.push('/');
             path.push_str(name);
@@ -586,7 +586,7 @@ fn read_home_file(name: &str) -> Option<String> {
         path.push_str(name);
     }
 
-    let fd = raekit::sys::open(path.as_str(), 0);
+    let fd = athkit::sys::open(path.as_str(), 0);
     if fd == u64::MAX {
         return None;
     }
@@ -597,13 +597,13 @@ fn read_home_file(name: &str) -> Option<String> {
         if data.len() > 16 * 1024 * 1024 {
             break;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     if data.is_empty() {
         None
     } else {
@@ -673,9 +673,9 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect(0, 0, WIN_W, TITLE_H, PANEL);
     canvas.draw_text_aa(
         10,
-        ((TITLE_H - rae_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
+        ((TITLE_H - ath_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
         "Calendar & Contacts",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_SECONDARY,
         FontFamily::Sans,
     );
@@ -704,12 +704,12 @@ fn render_tabs(app: &App, canvas: &mut Canvas) {
             canvas.fill_rect(tx, y + TABBAR_H - 3, half, 3, accent());
         }
         let fg = if active { TEXT_PRIMARY } else { TEXT_SECONDARY };
-        let lw = canvas.measure_text_aa(label, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+        let lw = canvas.measure_text_aa(label, ath_tokens::TYPE_LABEL, FontFamily::Sans);
         canvas.draw_text_aa(
             (tx + half / 2) as i32 - lw / 2,
-            (y + (TABBAR_H - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
+            (y + (TABBAR_H - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
             label,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             fg,
             FontFamily::Sans,
         );
@@ -729,7 +729,7 @@ fn render_calendar(app: &App, canvas: &mut Canvas) {
         16,
         top as i32,
         &header,
-        rae_tokens::TYPE_TITLE,
+        ath_tokens::TYPE_TITLE,
         TEXT_PRIMARY,
         FontFamily::Sans,
     );
@@ -744,7 +744,7 @@ fn render_calendar(app: &App, canvas: &mut Canvas) {
             (grid_left + i * col_w + 4) as i32,
             grid_top as i32,
             name,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_TERTIARY,
             FontFamily::Sans,
         );
@@ -774,7 +774,7 @@ fn render_calendar(app: &App, canvas: &mut Canvas) {
             cy,
             col_w - 4,
             row_h - 4,
-            rae_tokens::RADIUS_SM as usize,
+            ath_tokens::RADIUS_SM as usize,
             bg,
         );
         if selected {
@@ -787,7 +787,7 @@ fn render_calendar(app: &App, canvas: &mut Canvas) {
             (cx + 6) as i32,
             (cy + 4) as i32,
             &ds,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             if selected {
                 TEXT_PRIMARY
             } else {
@@ -818,7 +818,7 @@ fn render_agenda(app: &App, canvas: &mut Canvas, top: usize) {
         16,
         top as i32,
         &hdr,
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         TEXT_SECONDARY,
         FontFamily::Sans,
     );
@@ -832,7 +832,7 @@ fn render_agenda(app: &App, canvas: &mut Canvas, top: usize) {
             16,
             list_top as i32,
             "No events.  Press I to import ~/import.ics.",
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_TERTIARY,
             FontFamily::Sans,
         );
@@ -847,7 +847,7 @@ fn render_agenda(app: &App, canvas: &mut Canvas, top: usize) {
             ry,
             WIN_W - 24,
             row_h - 4,
-            rae_tokens::RADIUS_SM as usize,
+            ath_tokens::RADIUS_SM as usize,
             CELL_BG,
         );
         // Time chip.
@@ -864,7 +864,7 @@ fn render_agenda(app: &App, canvas: &mut Canvas, top: usize) {
             20,
             (ry + 5) as i32,
             &time,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             accent(),
             FontFamily::Mono,
         );
@@ -872,7 +872,7 @@ fn render_agenda(app: &App, canvas: &mut Canvas, top: usize) {
             96,
             (ry + 5) as i32,
             &item.summary,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_PRIMARY,
             FontFamily::Sans,
         );
@@ -888,7 +888,7 @@ fn render_contacts(app: &App, canvas: &mut Canvas) {
             16,
             top as i32,
             "No contacts.  Press I to import ~/import.vcf.",
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_TERTIARY,
             FontFamily::Sans,
         );
@@ -909,14 +909,14 @@ fn render_contacts(app: &App, canvas: &mut Canvas) {
             ry,
             list_w - 16,
             row_h - 6,
-            rae_tokens::RADIUS_SM as usize,
+            ath_tokens::RADIUS_SM as usize,
             bg,
         );
         canvas.draw_text_aa(
             18,
             (ry + 5) as i32,
             &row.name,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_PRIMARY,
             FontFamily::Sans,
         );
@@ -929,7 +929,7 @@ fn render_contacts(app: &App, canvas: &mut Canvas) {
             18,
             (ry + 23) as i32,
             sub,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_SECONDARY,
             FontFamily::Sans,
         );
@@ -940,7 +940,7 @@ fn render_contacts(app: &App, canvas: &mut Canvas) {
     let cw = WIN_W - cx - 12;
     let cy = top;
     let ch = WIN_H - top - FOOTER_H - 8;
-    canvas.fill_rounded_rect(cx, cy, cw, ch, rae_tokens::RADIUS_MD as usize, PANEL);
+    canvas.fill_rounded_rect(cx, cy, cw, ch, ath_tokens::RADIUS_MD as usize, PANEL);
     canvas.fill_rect(cx, cy, cw, 1, STROKE);
     if let Some(card) = app.model.contact(sel) {
         let mut y = cy + 16;
@@ -953,7 +953,7 @@ fn render_contacts(app: &App, canvas: &mut Canvas) {
             (cx + 16) as i32,
             y as i32,
             name,
-            rae_tokens::TYPE_TITLE,
+            ath_tokens::TYPE_TITLE,
             TEXT_PRIMARY,
             FontFamily::Sans,
         );
@@ -963,7 +963,7 @@ fn render_contacts(app: &App, canvas: &mut Canvas) {
                 (cx + 16) as i32,
                 y as i32,
                 &card.org,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_TERTIARY,
                 FontFamily::Sans,
             );
@@ -987,7 +987,7 @@ fn detail_line(canvas: &mut Canvas, x: usize, y: &mut usize, label: &str, value:
         x as i32,
         *y as i32,
         label,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_TERTIARY,
         FontFamily::Sans,
     );
@@ -995,7 +995,7 @@ fn detail_line(canvas: &mut Canvas, x: usize, y: &mut usize, label: &str, value:
         x as i32,
         (*y + 14) as i32,
         value,
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         TEXT_PRIMARY,
         FontFamily::Sans,
     );
@@ -1012,13 +1012,13 @@ fn render_footer(app: &App, canvas: &mut Canvas) {
     };
     canvas.draw_text_aa(
         10,
-        fy as i32 + ((FOOTER_H - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
+        fy as i32 + ((FOOTER_H - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
         if app.toast.text.is_empty() {
             hint
         } else {
             app.toast.text.as_str()
         },
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         if app.toast.text.is_empty() {
             TEXT_TERTIARY
         } else {
@@ -1065,15 +1065,15 @@ fn two_digit(s: &mut String, n: u64) {
 /// redraws on change.
 #[cfg(not(test))]
 pub fn run() -> ! {
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
     let mut app = App::new();
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     let mut extended = false;
 
@@ -1083,7 +1083,7 @@ pub fn run() -> ! {
         let mut left_down = false;
         let mut mouse_edge = false;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -1094,20 +1094,20 @@ pub fn run() -> ! {
             left_down = now_down;
         }
         if mouse_edge {
-            let (cx, cy, _btn) = raekit::sys::cursor_pos();
+            let (cx, cy, _btn) = athkit::sys::cursor_pos();
             let (ox, oy) =
-                raekit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
+                athkit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
             let lx = (cx as i32).saturating_sub(ox as i32);
             let ly = (cy as i32).saturating_sub(oy as i32);
             if handle_click(&mut app, lx, ly) {
                 render(&app, &mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
             }
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
 
@@ -1127,7 +1127,7 @@ pub fn run() -> ! {
 
         // Esc → quit.
         if code == 0x01 {
-            raekit::sys::exit(0);
+            athkit::sys::exit(0);
         }
         // Arrow keys (extended).
         else if ext && code == 0x4B {
@@ -1195,7 +1195,7 @@ pub fn run() -> ! {
 
         if changed {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
     }
 }
@@ -1267,14 +1267,14 @@ fn handle_click(app: &mut App, lx: i32, ly: i32) -> bool {
 }
 
 // ===========================================================================
-// Host KAT — links the LIVE rae_pim engine, no kernel. `cargo test -p calendar
+// Host KAT — links the LIVE ath_pim engine, no kernel. `cargo test -p calendar
 // --features host`.
 // ===========================================================================
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rae_pim::tz::tzinfo_for_iana;
+    use ath_pim::tz::tzinfo_for_iana;
 
     // A known .ics: a WEEKLY-on-Monday event seeded 2026-06-01 (a Monday),
     // COUNT=12, plus an all-day DATE event on 2026-06-15. The weekly RRULE is the
@@ -1284,7 +1284,7 @@ BEGIN:VCALENDAR\r
 VERSION:2.0\r
 PRODID:-//AthenaOS//calendar-test//EN\r
 BEGIN:VEVENT\r
-UID:standup@raeen.os\r
+UID:standup@athena.os\r
 DTSTART;TZID=America/New_York:20260601T093000\r
 DTEND;TZID=America/New_York:20260601T094500\r
 SUMMARY:Daily Standup\r
@@ -1292,7 +1292,7 @@ LOCATION:War Room\r
 RRULE:FREQ=WEEKLY;BYDAY=MO;COUNT=12\r
 END:VEVENT\r
 BEGIN:VEVENT\r
-UID:allhands@raeen.os\r
+UID:allhands@athena.os\r
 DTSTART;VALUE=DATE:20260615\r
 SUMMARY:All Hands\r
 END:VEVENT\r

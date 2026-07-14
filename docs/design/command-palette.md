@@ -8,7 +8,7 @@
 > action-running power** layered on top.
 
 **All tokens below are defined in [`design-language.md`](./design-language.md)**
-and live in `rae_tokens` (ADR 0003). This spec only *assigns* them; it introduces
+and live in `ath_tokens` (ADR 0003). This spec only *assigns* them; it introduces
 no new magic numbers. Where a number is surface-specific layout (panel width), it
 is a local constant composed from `space.*`, explicitly NOT a new global token.
 
@@ -35,12 +35,12 @@ build a search engine.
 
 | Piece | Where | Today | This spec adds |
 |---|---|---|---|
-| Search engine | `components/raeshell/src/search_indexer.rs::SearchEngine` / `SearchIndexer` | LIVE data model, **unwired** (`allow(unused)`). `quick_search(&str)`, TF-IDF + trigram + Levenshtein fuzzy, app/settings/file/contact/bookmark indices, **inline calculator** (`evaluate_calculator`), latency tracking (`p99_latency_us`, target 100ms) | a window that calls `quick_search` per keystroke and renders `SearchResult` rows |
+| Search engine | `components/athshell/src/search_indexer.rs::SearchEngine` / `SearchIndexer` | LIVE data model, **unwired** (`allow(unused)`). `quick_search(&str)`, TF-IDF + trigram + Levenshtein fuzzy, app/settings/file/contact/bookmark indices, **inline calculator** (`evaluate_calculator`), latency tracking (`p99_latency_us`, target 100ms) | a window that calls `quick_search` per keystroke and renders `SearchResult` rows |
 | Result model | `search_indexer.rs::SearchResult { entry_type, title, subtitle, icon, path, score, highlights, action }` | LIVE — already carries `highlights: Vec<(usize,usize)>` for match-span emphasis and a typed `SearchAction` | rendered directly; no new fields needed |
 | Action dispatch | `SearchAction::{Open, Launch, Navigate, Calculate, WebSearch}` | LIVE enum | the Enter handler maps each variant to the shell's existing launch / settings-nav / clipboard handlers (§ Dispatch) |
 | Result categories | `SearchResultType::{Application, Setting, File, Folder, Calculator, …}` | LIVE | drives the category label + icon role per row |
 | Glass material / blur / shadow | `compositor::set_surface_blur`, `SurfaceEffect::DropShadow` | LIVE | reused as `material.glass` + `elev.3` |
-| Crisp AA text | `raegfx::Canvas::draw_text` (Inter) | LIVE | the query field + rows render with it (not the 8px block path) |
+| Crisp AA text | `athgfx::Canvas::draw_text` (Inter) | LIVE | the query field + rows render with it (not the 8px block path) |
 
 **This is a wire-up, not a rebuild.** The engine, fuzzy ranking, calculator, and
 the typed result/action model already exist; what is missing is (a) a global
@@ -78,7 +78,7 @@ glass surface that reads the live accent — no mode prefixes, local-first ranki
 
 ## AthenaOS design tokens this surface uses
 
-Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
+Pulled verbatim from `design-language.md` / `ath_tokens`. No new magic numbers.
 
 - **spacing:** `space.2` (icon→text gap, row inset), `space.3` (row vertical pad,
   field inset), `space.4` (panel padding), `space.5` (gap between field and list).
@@ -89,7 +89,7 @@ Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 - **type:** `type.subtitle` (the query text the user types — large and legible),
   `type.body` (result title), `type.caption` (result subtitle/path + category
   label + the "↩ open / ⏎ run" hint footer).
-- **accent model:** seed is `ThemeAbi.accent_argb`; `rae_tokens::derive_accent`
+- **accent model:** seed is `ThemeAbi.accent_argb`; `ath_tokens::derive_accent`
   yields the ramp. Selected row = `accent.subtle` fill; match-span emphasis =
   `accent.text`; selection ring/glow = `accent.base` + `accent.glow`. **No private
   `const ACCENT`.**
@@ -268,13 +268,13 @@ capability-checked launch/open handlers — the palette never bypasses `AthGuard
 
 | Concern | Rule | Owner |
 |---|---|---|
-| Contrast | query text `type.subtitle` ≥7:1; subtitles ≥4.5:1; match-emphasis `accent.text` must itself clear 4.5:1 on `accent.subtle` (use the `derive_accent` contrast fallback) | raeen-accessibility |
-| Focus visibility | selected row is **never color-only**: `accent.subtle` fill **+** 2px `accent.base` left bar **+** `elev.focus` glow | raeen-accessibility |
-| Reduced-motion | open/close opacity-only; selection jumps; no scale/translate | raeen-accessibility |
-| Hit targets | 44px rows (pointer) / 48px (couch); query field 52px | raeen-visual-qa |
-| Keyboard-complete | every action reachable with no pointer (the surface is keyboard-first by design) | raeen-accessibility |
+| Contrast | query text `type.subtitle` ≥7:1; subtitles ≥4.5:1; match-emphasis `accent.text` must itself clear 4.5:1 on `accent.subtle` (use the `derive_accent` contrast fallback) | athena-accessibility |
+| Focus visibility | selected row is **never color-only**: `accent.subtle` fill **+** 2px `accent.base` left bar **+** `elev.focus` glow | athena-accessibility |
+| Reduced-motion | open/close opacity-only; selection jumps; no scale/translate | athena-accessibility |
+| Hit targets | 44px rows (pointer) / 48px (couch); query field 52px | athena-visual-qa |
+| Keyboard-complete | every action reachable with no pointer (the surface is keyboard-first by design) | athena-accessibility |
 
-Flag to **raeen-accessibility:** confirm the match-span `accent.text` emphasis
+Flag to **athena-accessibility:** confirm the match-span `accent.text` emphasis
 stays legible when the accent is re-seeded via Vibe Mode (low-saturation accents
 must fall back to a bold weight, not just color).
 
@@ -296,17 +296,17 @@ The palette ships only when:
 ## Handoff
 
 ### Implementer
-- **raeen-shell-apps** — owns the surface. Wire `search_indexer::SearchEngine`
+- **athena-shell-apps** — owns the surface. Wire `search_indexer::SearchEngine`
   (remove its `allow(unused)` dead status) to a new floating palette window:
   global `Super+Space` hotkey, the glass field + result list render via
   `Canvas` + `set_surface_blur` + `elev.3`, per-keystroke `quick_search`, the
   §3 row renderer reading `SearchResult.highlights`, and the §5 `SearchAction`
   dispatch into the existing launch/Settings-nav/clipboard handlers.
-- **raeen-ui** (supporting) — the result-row widget (icon + emphasized title +
+- **athena-ui** (supporting) — the result-row widget (icon + emphasized title +
   subtitle + category tag + selection state) is reusable; expose it from
-  `raeui::tokens`-consuming widgets so Settings search (`settings.md` §3) and the
+  `athui::tokens`-consuming widgets so Settings search (`settings.md` §3) and the
   Start search share it.
-- **raeen-accessibility** (flagged) — match-emphasis contrast under re-seeded
+- **athena-accessibility** (flagged) — match-emphasis contrast under re-seeded
   accents; focus-state and reduced-motion audit.
 
 ### FAIL-able boot-log proof line
@@ -322,7 +322,7 @@ not top-ranked for an arithmetic query, or if a `Launch`/`Navigate` dispatch
 returns an error.) A second line asserts cohesion:
 `[cmdpalette] accent=0x.. == derive_accent(seed).base -> PASS`.
 
-### Visual-QA verification list (raeen-visual-qa)
+### Visual-QA verification list (athena-visual-qa)
 - QEMU screenshot: palette open over wallpaper — glass blur visible, 640px field
   at ~28% height, scrim dimming the desktop, placeholder text crisp.
 - Screenshot: a query showing ≥3 rows across categories (an app, a setting, a

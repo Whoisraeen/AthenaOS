@@ -55,7 +55,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// procfs body for `/proc/raeen/compress`.
+/// procfs body for `/proc/athena/compress`.
 pub fn dump_text() -> alloc::string::String {
     let sample = b"AthenaOS transparent compression self-describe sample block.";
     let packed = compress(sample);

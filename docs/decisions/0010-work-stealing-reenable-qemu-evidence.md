@@ -52,7 +52,7 @@ path really parks on a futex.
 ## Decision
 
 Option 2. Run the soak the docstring demands, adapted to QEMU while iron is
-paused: >=10 CI boots across `RAEEN_SMP=2` (x5), `=4` (x3), `=1` (x2), each
+paused: >=10 CI boots across `ATHENA_SMP=2` (x5), `=4` (x3), `=1` (x2), each
 required to reach `[ OS ] System successfully booted.` with 0 KERNEL PANIC,
 0 DOUBLE FAULT, 0 `[sched] ABORT` events, `switch_aborts: 0`, and (at SMP>=2)
 nonzero `PER_CPU_STEALS` proving the steal path actually exercised. Land
@@ -74,6 +74,6 @@ serial diagnostic to root-cause which wake path produced the insane frame.
 ## Verification artifacts
 
 - Soak tally: MasterChecklist "Latent kernel bugs" row (per-boot table).
-- Live counters: `/proc/raeen/sched` (`switch_aborts`, per-CPU `steals=`),
+- Live counters: `/proc/athena/sched` (`switch_aborts`, per-CPU `steals=`),
   `[sched] stack-sanity guard ... live_switch_aborts=0 -> PASS` smoketest.
 - Iron gate for `[x]`: >=5 KVM/iron boots at SMP=1 and =2, `switch_aborts: 0`.

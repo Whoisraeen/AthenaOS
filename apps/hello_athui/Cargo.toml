@@ -1,0 +1,13 @@
+[package]
+name = "hello_athui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+athui = { path = "../../components/athui" }
+wgpu = { version = "0.19", default-features = false }
+skia-safe = { version = "0.73.0", features = ["gpu", "gl", "vulkan", "textlayout"] }
+tokio = { version = "1.0", features = ["full"] }

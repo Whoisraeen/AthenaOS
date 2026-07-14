@@ -3,7 +3,7 @@
 //! never a modal interruption, never a mystery beep"; §"The user owns the
 //! machine" — no nag; §Unified Settings — "every option searchable… no ads,
 //! no bloat"). MasterChecklist Phase 14.1 — "Notifications surface" + the
-//! raeen-parity #1 gap (2026-06-17): the everyday pull-down a Windows 11 /
+//! athena-parity #1 gap (2026-06-17): the everyday pull-down a Windows 11 /
 //! macOS switcher reaches for reflexively.
 //!
 //! Three layers, all kernel-drawn (mirroring the live `SettingsPanel`):
@@ -28,7 +28,7 @@
 //! `Opacity`, suppressed under reduced-motion) and consume the compositor's
 //! **soft-ambient** drop shadow (`material-and-shadow.md` — the blur-silhouette
 //! `render_drop_shadow`, never a hard offset block). Every colour/space/type is
-//! a `rae_tokens` value, so a Vibe re-skin recolours the whole surface.
+//! a `ath_tokens` value, so a Vibe re-skin recolours the whole surface.
 //!
 //! Expiry is enforced lazily on every post and by `expire_tick` from the
 //! shell's repaint path (`shell_runner::render_shell`, which runs on every
@@ -49,18 +49,18 @@ pub use crate::shell_api::NotificationUrgency;
 const TOAST_W: u32 = 320;
 const TOAST_H: u32 = 72;
 // desktop-shell.md §5: SPACE_2 (8px) vertical gap, SPACE_4 (16px) margin.
-const TOAST_GAP: i32 = rae_tokens::SPACE_2 as i32;
-const TOAST_MARGIN: i32 = rae_tokens::SPACE_4 as i32;
+const TOAST_GAP: i32 = ath_tokens::SPACE_2 as i32;
+const TOAST_MARGIN: i32 = ath_tokens::SPACE_4 as i32;
 pub const MAX_VISIBLE: usize = 3;
 pub const TOAST_TTL_MS: u64 = 5_000;
 
-// ── Design tokens (docs/design/design-language.md, via rae_tokens) ─────────
+// ── Design tokens (docs/design/design-language.md, via ath_tokens) ─────────
 // desktop-shell.md §5: toasts are `material.glass` (radius.md, elev.2) with a
 // 1px stroke.strong top-edge highlight; the urgency bar maps to state tokens.
-// Every colour below is a rae_tokens value flowed from the dark palette + the
+// Every colour below is a ath_tokens value flowed from the dark palette + the
 // derived accent ramp, so a Vibe-Mode re-skin recolours toasts with the rest
 // of the shell.
-const PALETTE: &rae_tokens::Palette = &rae_tokens::DARK;
+const PALETTE: &ath_tokens::Palette = &ath_tokens::DARK;
 
 /// The LIVE accent seed for the derived ramp — `theme_engine::active_accent()`,
 /// the single source of truth shared with the window chrome and the shell.
@@ -73,7 +73,7 @@ fn accent_seed() -> u32 {
 
 #[inline]
 fn accent_base() -> u32 {
-    rae_tokens::derive_accent(accent_seed(), PALETTE).base
+    ath_tokens::derive_accent(accent_seed(), PALETTE).base
 }
 
 /// The normal-urgency bar accent actually painted — public so the cross-surface
@@ -85,9 +85,9 @@ pub fn proof_accent() -> u32 {
 }
 
 /// `material.glass` tint over the dark palette (design-language §5.1).
-const CARD_BG: u32 = rae_tokens::GLASS_TINT_DARK;
+const CARD_BG: u32 = ath_tokens::GLASS_TINT_DARK;
 /// Toast corner radius — `radius.md` (12px).
-const TOAST_RADIUS: usize = rae_tokens::RADIUS_MD as usize;
+const TOAST_RADIUS: usize = ath_tokens::RADIUS_MD as usize;
 /// 1px top-edge highlight (the glass top-edge rule).
 const TOP_EDGE: u32 = PALETTE.stroke_strong;
 /// Title text — `type.label` `text.primary`.
@@ -167,7 +167,7 @@ static NEXT_HISTORY_ID: AtomicU64 = AtomicU64::new(1);
 /// [`MAX_TOAST_ACTIONS`] buttons) renders at the bottom when the source declared
 /// actions.
 fn render_toast(ptr: *mut u8, toast: &Toast, peers: &[Toast]) {
-    let mut canvas = unsafe { raegfx::Canvas::new(ptr, TOAST_W as usize, TOAST_H as usize, 4) };
+    let mut canvas = unsafe { athgfx::Canvas::new(ptr, TOAST_W as usize, TOAST_H as usize, 4) };
     // material.glass card. We fill the full rect with the glass TINT (its own
     // alpha PRESERVED — GLASS_TINT_DARK is ~62% over bg.overlay): `fill_rect`
     // does a direct u32 write, so unlike the AA `fill_rounded_rect` (which
@@ -190,7 +190,7 @@ fn render_toast(ptr: *mut u8, toast: &Toast, peers: &[Toast]) {
     // Urgency bar: 4px down the left edge, inset to clear the rounded corner.
     canvas.fill_rect(0, TOAST_RADIUS, 4, TOAST_H as usize - 2 * TOAST_RADIUS, bar);
 
-    let text_x = rae_tokens::SPACE_4 as i32; // 16px content inset.
+    let text_x = ath_tokens::SPACE_4 as i32; // 16px content inset.
                                              // Available text width: content inset on both sides.
                                              // Per-app collapse badge: when ≥2 unexpired toasts share this source, the
                                              // front card shows a `+N` count pill (accent.subtle, type.caption) — the
@@ -202,11 +202,11 @@ fn render_toast(ptr: *mut u8, toast: &Toast, peers: &[Toast]) {
         let label = alloc::format!("+{}", n);
         let lw = canvas.measure_text_aa(
             &label,
-            rae_tokens::TYPE_CAPTION,
-            raegfx::text::FontFamily::Sans,
+            ath_tokens::TYPE_CAPTION,
+            athgfx::text::FontFamily::Sans,
         );
-        let pill_w = (lw + 2 * rae_tokens::SPACE_2 as i32) as usize;
-        let pill_h = (rae_tokens::TYPE_CAPTION.line_height as i32 + 4) as usize;
+        let pill_w = (lw + 2 * ath_tokens::SPACE_2 as i32) as usize;
+        let pill_h = (ath_tokens::TYPE_CAPTION.line_height as i32 + 4) as usize;
         let pill_x = TOAST_W as usize - text_x as usize - pill_w;
         let pill_y = 10usize;
         canvas.fill_rounded_rect(
@@ -214,40 +214,40 @@ fn render_toast(ptr: *mut u8, toast: &Toast, peers: &[Toast]) {
             pill_y,
             pill_w,
             pill_h,
-            rae_tokens::RADIUS_XS as usize,
+            ath_tokens::RADIUS_XS as usize,
             accent_subtle(),
         );
         canvas.draw_text_aa(
-            (pill_x + rae_tokens::SPACE_2 as usize) as i32,
+            (pill_x + ath_tokens::SPACE_2 as usize) as i32,
             pill_y as i32 + 2,
             &label,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             FG,
-            raegfx::text::FontFamily::Sans,
+            athgfx::text::FontFamily::Sans,
         );
-        right_inset = text_x + pill_w as i32 + rae_tokens::SPACE_2 as i32;
+        right_inset = text_x + pill_w as i32 + ath_tokens::SPACE_2 as i32;
     }
     // Available text width: content inset on the left, badge-aware on the right.
     let avail_px = TOAST_W as i32 - text_x - right_inset;
     // Source/time line — `type.caption` `text.tertiary` (the quieter body row).
-    let source = fit_aa(&canvas, &toast.source, rae_tokens::TYPE_CAPTION, avail_px);
+    let source = fit_aa(&canvas, &toast.source, ath_tokens::TYPE_CAPTION, avail_px);
     canvas.draw_text_aa(
         text_x,
         14,
         &source,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         FG_DIM,
-        raegfx::text::FontFamily::Sans,
+        athgfx::text::FontFamily::Sans,
     );
     // Title line — `type.label` `text.primary` (the toast headline).
-    let title = fit_aa(&canvas, &toast.title, rae_tokens::TYPE_LABEL, avail_px);
+    let title = fit_aa(&canvas, &toast.title, ath_tokens::TYPE_LABEL, avail_px);
     canvas.draw_text_aa(
         text_x,
         38,
         &title,
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         FG,
-        raegfx::text::FontFamily::Sans,
+        athgfx::text::FontFamily::Sans,
     );
 
     // Inline-action row (notifications.md §5): up to MAX_TOAST_ACTIONS chips,
@@ -255,16 +255,16 @@ fn render_toast(ptr: *mut u8, toast: &Toast, peers: &[Toast]) {
     // (accent.subtle fill + text.primary), the rest secondary (bg.elevated). A
     // glance surface — deep actions live in the Center item row.
     if !toast.actions.is_empty() {
-        let chip_h = (rae_tokens::TYPE_CAPTION.line_height as i32 + 6) as usize;
-        let chip_y = TOAST_H as usize - chip_h - rae_tokens::SPACE_2 as usize;
+        let chip_h = (ath_tokens::TYPE_CAPTION.line_height as i32 + 6) as usize;
+        let chip_y = TOAST_H as usize - chip_h - ath_tokens::SPACE_2 as usize;
         let mut chip_right = TOAST_W as i32 - text_x;
         for (i, action) in toast.actions.iter().take(MAX_TOAST_ACTIONS).enumerate() {
             let lw = canvas.measure_text_aa(
                 action,
-                rae_tokens::TYPE_CAPTION,
-                raegfx::text::FontFamily::Sans,
+                ath_tokens::TYPE_CAPTION,
+                athgfx::text::FontFamily::Sans,
             );
-            let chip_w = (lw + 2 * rae_tokens::SPACE_3 as i32) as usize;
+            let chip_w = (lw + 2 * ath_tokens::SPACE_3 as i32) as usize;
             let chip_x = chip_right - chip_w as i32;
             if chip_x < text_x {
                 break;
@@ -280,18 +280,18 @@ fn render_toast(ptr: *mut u8, toast: &Toast, peers: &[Toast]) {
                 chip_y,
                 chip_w,
                 chip_h,
-                rae_tokens::RADIUS_XS as usize,
+                ath_tokens::RADIUS_XS as usize,
                 bg,
             );
             canvas.draw_text_aa(
-                chip_x + rae_tokens::SPACE_3 as i32,
+                chip_x + ath_tokens::SPACE_3 as i32,
                 chip_y as i32 + 3,
                 action,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 FG,
-                raegfx::text::FontFamily::Sans,
+                athgfx::text::FontFamily::Sans,
             );
-            chip_right = chip_x - rae_tokens::SPACE_2 as i32;
+            chip_right = chip_x - ath_tokens::SPACE_2 as i32;
         }
     }
 }
@@ -301,7 +301,7 @@ fn render_toast(ptr: *mut u8, toast: &Toast, peers: &[Toast]) {
 /// re-skin recolours these with the shell.
 #[inline]
 fn accent_subtle() -> u32 {
-    rae_tokens::derive_accent(accent_seed(), PALETTE).subtle
+    ath_tokens::derive_accent(accent_seed(), PALETTE).subtle
 }
 
 /// Truncate `s` (on a char boundary) to the longest prefix whose AA advance at
@@ -309,15 +309,15 @@ fn accent_subtle() -> u32 {
 /// now that text is proportional (`draw_text_aa`). The 8×8 fallback path inside
 /// `draw_text_aa`/`measure_text_aa` keeps this honest during early boot.
 fn fit_aa<'a>(
-    canvas: &raegfx::Canvas,
+    canvas: &athgfx::Canvas,
     s: &'a str,
-    style: rae_tokens::TypeStyle,
+    style: ath_tokens::TypeStyle,
     avail_px: i32,
 ) -> &'a str {
     if avail_px <= 0 {
         return "";
     }
-    if canvas.measure_text_aa(s, style, raegfx::text::FontFamily::Sans) <= avail_px {
+    if canvas.measure_text_aa(s, style, athgfx::text::FontFamily::Sans) <= avail_px {
         return s;
     }
     let mut end = s.len();
@@ -328,7 +328,7 @@ fn fit_aa<'a>(
         if end == 0 {
             break;
         }
-        if canvas.measure_text_aa(&s[..end], style, raegfx::text::FontFamily::Sans) <= avail_px {
+        if canvas.measure_text_aa(&s[..end], style, athgfx::text::FontFamily::Sans) <= avail_px {
             return &s[..end];
         }
         end -= 1;
@@ -491,9 +491,9 @@ pub fn post_at_with_actions(
         id,
         crate::compositor::SurfaceEffect::DropShadow {
             offset_x: 0,
-            offset_y: rae_tokens::ELEV_2.offset_y,
-            radius: rae_tokens::ELEV_2.radius,
-            color: rae_tokens::ELEV_2.color,
+            offset_y: ath_tokens::ELEV_2.offset_y,
+            radius: ath_tokens::ELEV_2.radius,
+            color: ath_tokens::ELEV_2.color,
         },
     );
     // Present off-screen-agnostic first; restack pins the real slot.
@@ -558,7 +558,7 @@ pub fn badge_count() -> usize {
 /// CPU0 IF=0 context that posts, so `TOASTS` has no preemptible acquirer and
 /// needs no IF=0 RAII guard today.
 ///
-/// LOCK NOTE (raeen-reviewer 2026-06-17): if `expire_tick` is ever moved to a
+/// LOCK NOTE (athena-reviewer 2026-06-17): if `expire_tick` is ever moved to a
 /// *preemptible* kernel thread (a free-running tick), `TOASTS` would then be
 /// acquired by both that thread and the IF=0 `post_at` — route it through a
 /// `lock_compositor`-style IF=0 guard FIRST (same footgun class as `lock_audio`).
@@ -650,7 +650,7 @@ pub mod quick_settings {
     }
 
     fn night_light_on() -> bool {
-        // IF=0 lock discipline (raeen-reviewer 2026-06-17): the config registry
+        // IF=0 lock discipline (athena-reviewer 2026-06-17): the config registry
         // is a plain spin::Mutex and this runs in the keyboard/mouse IRQ click
         // path (IF=0); disable interrupts for the brief access so an IRQ can't
         // land mid-hold and a future preemptible registry writer can't strand it.
@@ -721,7 +721,7 @@ pub mod quick_settings {
             Control::VibeAccent => {
                 if vibe_accent_on() {
                     // Back to the theme default (RAEBLUE clears the override).
-                    crate::theme_engine::set_active_accent(rae_tokens::RAEBLUE);
+                    crate::theme_engine::set_active_accent(ath_tokens::RAEBLUE);
                     false
                 } else {
                     crate::theme_engine::set_active_accent(VIBE_ACCENT);
@@ -761,7 +761,7 @@ const HIST_ROW_H: i32 = 52;
 const GROUP_HEADER_H: i32 = 32;
 /// Inline-action row height appended under an expanded item that declares actions.
 const ACTION_ROW_H: i32 = 28;
-const CENTER_MARGIN: i32 = rae_tokens::SPACE_4 as i32;
+const CENTER_MARGIN: i32 = ath_tokens::SPACE_4 as i32;
 
 /// Sources whose group is currently COLLAPSED in the Center (chevron up). A group
 /// not listed is expanded (the default — newest items visible). Click the group
@@ -860,7 +860,7 @@ fn center_height(screen_h: u32) -> u32 {
     let hist_top = QS_HEADER_H * 2; // header + clear-all band the renderer reserves
     let hist_body = if history_count() == 0 {
         // Empty-state block needs a comfortable calm area.
-        rae_tokens::SPACE_8 as i32 * 2
+        ath_tokens::SPACE_8 as i32 * 2
     } else {
         // Lay out against a tall ceiling to get the natural content height.
         let rows = layout_history(0, i32::MAX / 2);
@@ -908,16 +908,16 @@ pub fn toggle_center() -> bool {
     let _ = crate::compositor::add_surface_effect(
         id,
         crate::compositor::SurfaceEffect::RoundedCorners {
-            radius: rae_tokens::RADIUS_LG,
+            radius: ath_tokens::RADIUS_LG,
         },
     );
     let _ = crate::compositor::add_surface_effect(
         id,
         crate::compositor::SurfaceEffect::DropShadow {
             offset_x: 0,
-            offset_y: rae_tokens::ELEV_3.offset_y,
-            radius: rae_tokens::ELEV_3.radius,
-            color: rae_tokens::ELEV_3.color,
+            offset_y: ath_tokens::ELEV_3.offset_y,
+            radius: ath_tokens::ELEV_3.radius,
+            color: ath_tokens::ELEV_3.color,
         },
     );
     // Anchor bottom-right above the taskbar/tray.
@@ -1045,12 +1045,12 @@ fn layout_history(y0: i32, max_y: i32) -> Vec<CenterRow> {
 
 fn render_center(panel: &CenterPanel) {
     let mut canvas =
-        unsafe { raegfx::Canvas::new(panel.ptr, panel.w as usize, panel.h as usize, 4) };
+        unsafe { athgfx::Canvas::new(panel.ptr, panel.w as usize, panel.h as usize, 4) };
     let p = PALETTE;
     let w = panel.w as usize;
     let h = panel.h as usize;
-    let radius = rae_tokens::RADIUS_LG as usize;
-    let pad = rae_tokens::SPACE_4 as usize;
+    let radius = ath_tokens::RADIUS_LG as usize;
+    let pad = ath_tokens::SPACE_4 as usize;
 
     // Glass panel: translucent tint (direct write preserves alpha) + 1px top edge.
     canvas.fill_rect(0, 0, w, h, CARD_BG);
@@ -1063,9 +1063,9 @@ fn render_center(panel: &CenterPanel) {
         pad as i32,
         y,
         "Control Center",
-        rae_tokens::TYPE_TITLE,
+        ath_tokens::TYPE_TITLE,
         FG,
-        raegfx::text::FontFamily::Sans,
+        athgfx::text::FontFamily::Sans,
     );
     y += QS_HEADER_H;
 
@@ -1094,46 +1094,46 @@ fn render_center(panel: &CenterPanel) {
             FG,
         );
         // Label + the live value caption.
-        let label_y = row_y + (QS_ROW_H - rae_tokens::TYPE_LABEL.line_height as i32) / 2;
+        let label_y = row_y + (QS_ROW_H - ath_tokens::TYPE_LABEL.line_height as i32) / 2;
         canvas.draw_text_aa(
             pad as i32,
             label_y,
             quick_settings::label(c),
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             FG,
-            raegfx::text::FontFamily::Sans,
+            athgfx::text::FontFamily::Sans,
         );
         y += QS_ROW_H;
     }
 
     // ── History header + Clear-all ──────────────────────────────────────
-    y += rae_tokens::SPACE_2 as i32;
+    y += ath_tokens::SPACE_2 as i32;
     // hairline separator
     canvas.fill_rect(pad, y as usize, w - 2 * pad, 1, p.stroke_subtle);
-    y += rae_tokens::SPACE_2 as i32;
+    y += ath_tokens::SPACE_2 as i32;
     canvas.draw_text_aa(
         pad as i32,
         y,
         "Notifications",
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         FG,
-        raegfx::text::FontFamily::Sans,
+        athgfx::text::FontFamily::Sans,
     );
     let clear_label = "Clear all";
     let clear_w = canvas.measure_text_aa(
         clear_label,
-        rae_tokens::TYPE_CAPTION,
-        raegfx::text::FontFamily::Sans,
+        ath_tokens::TYPE_CAPTION,
+        athgfx::text::FontFamily::Sans,
     );
     canvas.draw_text_aa(
         (w - pad) as i32 - clear_w,
         y,
         clear_label,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         accent_base(),
-        raegfx::text::FontFamily::Sans,
+        athgfx::text::FontFamily::Sans,
     );
-    y += QS_HEADER_H - rae_tokens::SPACE_2 as i32;
+    y += QS_HEADER_H - ath_tokens::SPACE_2 as i32;
 
     // ── Grouped history list ────────────────────────────────────────────
     if history_count() == 0 {
@@ -1143,43 +1143,43 @@ fn render_center(panel: &CenterPanel) {
         let line1 = "You're all caught up";
         let line2 = "Notifications you receive will appear here.";
         let w1 =
-            canvas.measure_text_aa(line1, rae_tokens::TYPE_BODY, raegfx::text::FontFamily::Sans);
+            canvas.measure_text_aa(line1, ath_tokens::TYPE_BODY, athgfx::text::FontFamily::Sans);
         let w2 = canvas.measure_text_aa(
             line2,
-            rae_tokens::TYPE_CAPTION,
-            raegfx::text::FontFamily::Sans,
+            ath_tokens::TYPE_CAPTION,
+            athgfx::text::FontFamily::Sans,
         );
         // A soft bell-off glyph (text.tertiary) above the lines.
         let glyph = "( )";
         let wg = canvas.measure_text_aa(
             glyph,
-            rae_tokens::TYPE_TITLE,
-            raegfx::text::FontFamily::Sans,
+            ath_tokens::TYPE_TITLE,
+            athgfx::text::FontFamily::Sans,
         );
-        let cy = y + (h as i32 - y) / 2 - rae_tokens::SPACE_6 as i32;
+        let cy = y + (h as i32 - y) / 2 - ath_tokens::SPACE_6 as i32;
         canvas.draw_text_aa(
             (w as i32 - wg) / 2,
             cy,
             glyph,
-            rae_tokens::TYPE_TITLE,
+            ath_tokens::TYPE_TITLE,
             FG_DIM,
-            raegfx::text::FontFamily::Sans,
+            athgfx::text::FontFamily::Sans,
         );
         canvas.draw_text_aa(
             (w as i32 - w1) / 2,
-            cy + rae_tokens::SPACE_5 as i32 + 6,
+            cy + ath_tokens::SPACE_5 as i32 + 6,
             line1,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             p.text_secondary,
-            raegfx::text::FontFamily::Sans,
+            athgfx::text::FontFamily::Sans,
         );
         canvas.draw_text_aa(
             (w as i32 - w2) / 2,
-            cy + rae_tokens::SPACE_5 as i32 + rae_tokens::SPACE_5 as i32,
+            cy + ath_tokens::SPACE_5 as i32 + ath_tokens::SPACE_5 as i32,
             line2,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             FG_DIM,
-            raegfx::text::FontFamily::Sans,
+            athgfx::text::FontFamily::Sans,
         );
     } else {
         for row in layout_history(y, h as i32) {
@@ -1194,46 +1194,46 @@ fn render_center(panel: &CenterPanel) {
                     // Group app name (type.label, neutral — never accent for a
                     // static label, per material-and-shadow.md §chrome restraint).
                     let avail = (w - 2 * pad - 80) as i32;
-                    let name = fit_aa(&canvas, &source, rae_tokens::TYPE_LABEL, avail);
+                    let name = fit_aa(&canvas, &source, ath_tokens::TYPE_LABEL, avail);
                     let name_col = if quiet { FG_DIM } else { FG };
                     canvas.draw_text_aa(
                         pad as i32,
                         y + 6,
                         name,
-                        rae_tokens::TYPE_LABEL,
+                        ath_tokens::TYPE_LABEL,
                         name_col,
-                        raegfx::text::FontFamily::Sans,
+                        athgfx::text::FontFamily::Sans,
                     );
                     let name_w = canvas.measure_text_aa(
                         name,
-                        rae_tokens::TYPE_LABEL,
-                        raegfx::text::FontFamily::Sans,
+                        ath_tokens::TYPE_LABEL,
+                        athgfx::text::FontFamily::Sans,
                     );
                     // Count badge (accent.subtle pill) when >1 in the group.
                     if count > 1 {
                         let label = alloc::format!("{}", count);
                         let lw = canvas.measure_text_aa(
                             &label,
-                            rae_tokens::TYPE_CAPTION,
-                            raegfx::text::FontFamily::Sans,
+                            ath_tokens::TYPE_CAPTION,
+                            athgfx::text::FontFamily::Sans,
                         );
-                        let bw = (lw + 2 * rae_tokens::SPACE_2 as i32) as usize;
-                        let bx = pad + name_w as usize + rae_tokens::SPACE_2 as usize;
+                        let bw = (lw + 2 * ath_tokens::SPACE_2 as i32) as usize;
+                        let bx = pad + name_w as usize + ath_tokens::SPACE_2 as usize;
                         canvas.fill_rounded_rect(
                             bx,
                             y as usize + 5,
                             bw,
-                            (rae_tokens::TYPE_CAPTION.line_height as usize) + 4,
-                            rae_tokens::RADIUS_XS as usize,
+                            (ath_tokens::TYPE_CAPTION.line_height as usize) + 4,
+                            ath_tokens::RADIUS_XS as usize,
                             accent_subtle(),
                         );
                         canvas.draw_text_aa(
-                            (bx + rae_tokens::SPACE_2 as usize) as i32,
+                            (bx + ath_tokens::SPACE_2 as usize) as i32,
                             y + 7,
                             &label,
-                            rae_tokens::TYPE_CAPTION,
+                            ath_tokens::TYPE_CAPTION,
                             FG,
-                            raegfx::text::FontFamily::Sans,
+                            athgfx::text::FontFamily::Sans,
                         );
                     }
                     // Collapse chevron (right): ^ collapsed / v expanded.
@@ -1242,9 +1242,9 @@ fn render_center(panel: &CenterPanel) {
                         (w - pad - 10) as i32,
                         y + 6,
                         chevron,
-                        rae_tokens::TYPE_LABEL,
+                        ath_tokens::TYPE_LABEL,
                         FG_DIM,
-                        raegfx::text::FontFamily::Sans,
+                        athgfx::text::FontFamily::Sans,
                     );
                 }
                 CenterRow::Item {
@@ -1259,38 +1259,38 @@ fn render_center(panel: &CenterPanel) {
                         let bar = urgency_bar(urgency);
                         canvas.fill_rect(pad, y as usize + 6, 3, HIST_ROW_H as usize - 12, bar);
                     }
-                    let inset = pad + rae_tokens::SPACE_3 as usize;
+                    let inset = pad + ath_tokens::SPACE_3 as usize;
                     let avail = (w - inset - pad - 16) as i32;
-                    let title_fit = fit_aa(&canvas, &title, rae_tokens::TYPE_LABEL, avail);
+                    let title_fit = fit_aa(&canvas, &title, ath_tokens::TYPE_LABEL, avail);
                     canvas.draw_text_aa(
                         inset as i32,
                         y + 16,
                         title_fit,
-                        rae_tokens::TYPE_LABEL,
+                        ath_tokens::TYPE_LABEL,
                         if quiet { p.text_secondary } else { FG },
-                        raegfx::text::FontFamily::Sans,
+                        athgfx::text::FontFamily::Sans,
                     );
                     // Dismiss × affordance.
                     canvas.draw_text_aa(
                         (w - pad - 8) as i32,
                         y + 14,
                         "x",
-                        rae_tokens::TYPE_LABEL,
+                        ath_tokens::TYPE_LABEL,
                         FG_DIM,
-                        raegfx::text::FontFamily::Sans,
+                        athgfx::text::FontFamily::Sans,
                     );
                 }
                 CenterRow::Actions { y, id: _, labels } => {
                     // Inline-action chips, left-aligned under the item.
-                    let inset = pad + rae_tokens::SPACE_3 as usize;
+                    let inset = pad + ath_tokens::SPACE_3 as usize;
                     let mut cx = inset as i32;
                     for (i, label) in labels.iter().take(3).enumerate() {
                         let lw = canvas.measure_text_aa(
                             label,
-                            rae_tokens::TYPE_CAPTION,
-                            raegfx::text::FontFamily::Sans,
+                            ath_tokens::TYPE_CAPTION,
+                            athgfx::text::FontFamily::Sans,
                         );
-                        let cw = (lw + 2 * rae_tokens::SPACE_3 as i32) as usize;
+                        let cw = (lw + 2 * ath_tokens::SPACE_3 as i32) as usize;
                         if cx + cw as i32 > (w - pad) as i32 {
                             break;
                         }
@@ -1304,18 +1304,18 @@ fn render_center(panel: &CenterPanel) {
                             y as usize + 2,
                             cw,
                             (ACTION_ROW_H - 6) as usize,
-                            rae_tokens::RADIUS_XS as usize,
+                            ath_tokens::RADIUS_XS as usize,
                             bg,
                         );
                         canvas.draw_text_aa(
-                            cx + rae_tokens::SPACE_3 as i32,
+                            cx + ath_tokens::SPACE_3 as i32,
                             y + 5,
                             label,
-                            rae_tokens::TYPE_CAPTION,
+                            ath_tokens::TYPE_CAPTION,
                             FG,
-                            raegfx::text::FontFamily::Sans,
+                            athgfx::text::FontFamily::Sans,
                         );
-                        cx += cw as i32 + rae_tokens::SPACE_2 as i32;
+                        cx += cw as i32 + ath_tokens::SPACE_2 as i32;
                     }
                 }
                 CenterRow::QuietHeader { y } => {
@@ -1324,9 +1324,9 @@ fn render_center(panel: &CenterPanel) {
                         pad as i32,
                         y + 10,
                         "Delivered Quietly",
-                        rae_tokens::TYPE_CAPTION,
+                        ath_tokens::TYPE_CAPTION,
                         FG_DIM,
-                        raegfx::text::FontFamily::Sans,
+                        athgfx::text::FontFamily::Sans,
                     );
                 }
             }
@@ -1345,7 +1345,7 @@ pub fn center_click(lx: i32, ly: i32) -> bool {
             None => return false,
         }
     };
-    let pad = rae_tokens::SPACE_4 as i32;
+    let pad = ath_tokens::SPACE_4 as i32;
     let mut y = pad + QS_HEADER_H;
     // Quick-settings rows.
     for c in quick_settings::CONTROLS {
@@ -1357,9 +1357,9 @@ pub fn center_click(lx: i32, ly: i32) -> bool {
         y += QS_ROW_H;
     }
     // History header row (Clear all is right-aligned).
-    y += rae_tokens::SPACE_2 as i32 + rae_tokens::SPACE_2 as i32;
+    y += ath_tokens::SPACE_2 as i32 + ath_tokens::SPACE_2 as i32;
     let header_y = y;
-    if ly >= header_y && ly < header_y + rae_tokens::TYPE_LABEL.line_height as i32 + 4 {
+    if ly >= header_y && ly < header_y + ath_tokens::TYPE_LABEL.line_height as i32 + 4 {
         // Right third = Clear all.
         if lx > CENTER_W as i32 * 2 / 3 {
             clear_history();
@@ -1367,7 +1367,7 @@ pub fn center_click(lx: i32, ly: i32) -> bool {
             return true;
         }
     }
-    y += QS_HEADER_H - rae_tokens::SPACE_2 as i32;
+    y += QS_HEADER_H - ath_tokens::SPACE_2 as i32;
     // History rows: walk the SAME layout model the renderer used so hit regions
     // can't desync. A group header click toggles collapse (or per-group clear on
     // the chevron/edge); an item click dismisses when on its × edge.
@@ -1462,16 +1462,16 @@ pub fn run_boot_smoketest() {
     // solid CARD_BG), the normal-urgency bar must be derive_accent().base, the
     // critical bar must be state.danger, and the toast must carry radius.md +
     // the elev.2 shadow. If any const drifts off its token, pass=false.
-    let want_glass = rae_tokens::GLASS_TINT_DARK;
+    let want_glass = ath_tokens::GLASS_TINT_DARK;
     // Live seed: the normal-urgency bar must equal derive_accent(active_accent).base.
-    let want_accent = rae_tokens::derive_accent(accent_seed(), PALETTE).base;
+    let want_accent = ath_tokens::derive_accent(accent_seed(), PALETTE).base;
     let want_danger = PALETTE.state_danger;
     let glass_ok = CARD_BG == want_glass;
     let urgency_ok = urgency_bar(NotificationUrgency::Normal) == want_accent
         && urgency_bar(NotificationUrgency::Critical) == want_danger
         && urgency_bar(NotificationUrgency::Low) == PALETTE.text_tertiary;
     let depth_ok =
-        TOAST_RADIUS == rae_tokens::RADIUS_MD as usize && rae_tokens::ELEV_2.radius == 14;
+        TOAST_RADIUS == ath_tokens::RADIUS_MD as usize && ath_tokens::ELEV_2.radius == 14;
 
     let pass = posted
         && two_visible
@@ -1496,7 +1496,7 @@ pub fn run_boot_smoketest() {
         want_glass,
         want_accent,
         TOAST_RADIUS,
-        rae_tokens::ELEV_2.radius,
+        ath_tokens::ELEV_2.radius,
         if glass_ok && urgency_ok && depth_ok {
             "PASS"
         } else {
@@ -1551,13 +1551,13 @@ fn run_toast_polish_smoketest(t0: u64) {
     // constant near-black (alpha set, RGB == 0) — the penumbra is produced by the
     // compositor's blur-silhouette renderer (render_drop_shadow), NOT a hard
     // colored offset rect. FAIL if any RGB channel leaks in (the old blue block).
-    let sc = rae_tokens::ELEV_2.color;
+    let sc = ath_tokens::ELEV_2.color;
     let shadow_alpha = (sc >> 24) & 0xFF;
     let shadow_rgb = sc & 0x00_FF_FF_FF;
     let soft_shadow_ok = shadow_alpha != 0
         && shadow_rgb == 0
-        && rae_tokens::ELEV_2.offset_y == 3
-        && rae_tokens::ELEV_2.radius == 14;
+        && ath_tokens::ELEV_2.offset_y == 3
+        && ath_tokens::ELEV_2.radius == 14;
 
     // Clean up so the live tray badge starts empty (advance past the newest
     // toast's deadline = t0 + 2 + TTL).
@@ -1838,7 +1838,7 @@ fn run_empty_smoketest(_t0: u64) {
     );
 }
 
-/// `/proc/raeen/notify` — notification surface, history, and Control Center.
+/// `/proc/athena/notify` — notification surface, history, and Control Center.
 pub fn dump_text() -> String {
     let toasts = TOASTS.lock();
     let mut out = alloc::format!(

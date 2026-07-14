@@ -8,7 +8,7 @@
 // entry (bringup_entry.o) + the off-path WEAK stubs, relocatable-linked into one
 // freestanding object by `linuxkpi-drm/m4c-link.sh`. Its remaining undefined
 // symbols are the LinuxKPI surface, which the daemon already provides via its
-// `raeen_linuxkpi` crate dependency.
+// `ath_linuxkpi` crate dependency.
 //
 // We deliberately do NOT run the C build from here: it is a heavy external GPL
 // artifact (gcc against the vendored kernel tree), not a cargo dependency, and a
@@ -49,7 +49,7 @@ fn main() {
     );
 
     // Link the merged amdgpu object into the daemon; its LinuxKPI undefs resolve
-    // against the daemon's raeen_linuxkpi crate.
+    // against the daemon's ath_linuxkpi crate.
     println!("cargo:rustc-link-arg={}", obj.display());
 
     // RELOC FIX (the 0x77 fault): -Bsymbolic binds every intra-daemon reference to

@@ -881,7 +881,7 @@ pub fn crc32_ieee(data: &[u8]) -> u32 {
 }
 
 /// Seed a spec-correct GPT with an ESP and (when the disk has room) a AthFS
-/// root partition. Returns `(esp_start_lba, raefs_start_lba)`; `raefs_start`
+/// root partition. Returns `(esp_start_lba, athfs_start_lba)`; `athfs_start`
 /// is 0 when the disk is too small for a AthFS root (QEMU smoke disk).
 pub fn seed_minimal_gpt_with_esp() -> Option<(u64, u64)> {
     const EFI_GUID: [u8; 16] = [
@@ -970,26 +970,26 @@ pub fn seed_minimal_gpt_with_esp() -> Option<(u64, u64)> {
     // Entry 1 — AthFS root, when the disk is large enough to hold one. AthFS
     // begins at the next 1 MiB boundary after the ESP and runs to the last
     // usable LBA. Require ≥ ~2 MiB of root (4096 sectors) before bothering —
-    // the tiny QEMU smoke disk gets ESP-only and reports raefs_start = 0.
+    // the tiny QEMU smoke disk gets ESP-only and reports athfs_start = 0.
     // GUID must match `block_io::PartitionType::RaeFs` (52414546-534F-2147-…).
-    const RAEFS_GUID: [u8; 16] = [
+    const ATHFS_GUID: [u8; 16] = [
         0x46, 0x45, 0x41, 0x52, 0x4F, 0x53, 0x47, 0x21, 0x41, 0x52, 0x45, 0x45, 0x4E, 0x4F, 0x53,
         0x21,
     ];
-    let raefs_start = {
+    let athfs_start = {
         let after_esp = end_lba.saturating_add(1);
         (after_esp + 2047) & !2047u64 // round up to the next 1 MiB boundary
     };
-    let have_raefs = last_usable_lba > raefs_start.saturating_add(4096);
-    if have_raefs {
+    let have_athfs = last_usable_lba > athfs_start.saturating_add(4096);
+    if have_athfs {
         let off = ENTRY_SIZE as usize; // entry 1 begins at byte 128
-        entries[off..off + 16].copy_from_slice(&RAEFS_GUID);
+        entries[off..off + 16].copy_from_slice(&ATHFS_GUID);
         // Unique partition GUID (arbitrary but stable across re-seeds).
         entries[off + 16..off + 32].copy_from_slice(&[
             0x52, 0x41, 0x45, 0x46, 0x53, 0x21, 0x52, 0x4F, 0x4F, 0x54, 0x00, 0x01, 0x02, 0x03,
             0x04, 0x05,
         ]);
-        entries[off + 32..off + 40].copy_from_slice(&raefs_start.to_le_bytes());
+        entries[off + 32..off + 40].copy_from_slice(&athfs_start.to_le_bytes());
         entries[off + 40..off + 48].copy_from_slice(&last_usable_lba.to_le_bytes());
         let root_name = [
             b'R' as u16,
@@ -1067,19 +1067,19 @@ pub fn seed_minimal_gpt_with_esp() -> Option<(u64, u64)> {
     }
 
     crate::serial_println!(
-        "[fatfs] install seed GPT: esp={}..{} raefs_start={}{} entries_crc=0x{:08x}",
+        "[fatfs] install seed GPT: esp={}..{} athfs_start={}{} entries_crc=0x{:08x}",
         start_lba,
         end_lba,
-        raefs_start,
-        if have_raefs { "" } else { " (none)" },
+        athfs_start,
+        if have_athfs { "" } else { " (none)" },
         entries_crc
     );
 
-    Some((start_lba, if have_raefs { raefs_start } else { 0 }))
+    Some((start_lba, if have_athfs { athfs_start } else { 0 }))
 }
 
 /// The AthFS partition type GUID (matches `block_io::PartitionType::RaeFs`).
-pub const RAEFS_TYPE_GUID: [u8; 16] = [
+pub const ATHFS_TYPE_GUID: [u8; 16] = [
     0x46, 0x45, 0x41, 0x52, 0x4F, 0x53, 0x47, 0x21, 0x41, 0x52, 0x45, 0x45, 0x4E, 0x4F, 0x53, 0x21,
 ];
 
@@ -1157,7 +1157,7 @@ pub fn add_gpt_partition_on(
 
     // ── Write the AthFS entry into the free slot ────────────────────────────
     let off = slot * entry_size;
-    entries[off..off + 16].copy_from_slice(&RAEFS_TYPE_GUID);
+    entries[off..off + 16].copy_from_slice(&ATHFS_TYPE_GUID);
     entries[off + 16..off + 32].copy_from_slice(&[
         0x52, 0x41, 0x45, 0x46, 0x53, 0x21, 0x52, 0x4F, 0x4F, 0x54, 0x00, 0x0D, 0x0A, 0x0B, 0x0C,
         0x0D,
@@ -1338,7 +1338,7 @@ pub fn run_boot_smoketest() {
         PartitionScan::NoPartitionTable => {
             let l = String::from("no partition table — trying sector 0 as raw FAT32 VBR");
             crate::serial_println!("[fatfs] {}", l);
-            install_seed_esp_lba = seed_minimal_gpt_with_esp().map(|(esp, _raefs)| esp);
+            install_seed_esp_lba = seed_minimal_gpt_with_esp().map(|(esp, _athfs)| esp);
             if let Some(lba) = install_seed_esp_lba {
                 crate::serial_println!(
                     "[fatfs] install seed: wrote minimal GPT + ESP entry at LBA {}",
@@ -1506,7 +1506,7 @@ pub fn dump_text() -> String {
 //
 // Writes a spec-compliant FAT32 filesystem into an ESP partition and populates
 // the EFI boot tree (/EFI/BOOT/BOOTX64.EFI + /EFI/athenaos/). Used by the
-// installer (raeinstaller) to make a freshly-partitioned NVMe bootable.
+// installer (athinstaller) to make a freshly-partitioned NVMe bootable.
 // Microsoft FAT spec (fatgen103) section 3 (BPB) + section 6 (directory entries).
 // ===========================================================================
 

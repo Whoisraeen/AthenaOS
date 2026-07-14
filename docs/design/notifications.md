@@ -10,7 +10,7 @@
 > or macOS's two-surface (NC vs Control Center) split confusion.
 
 **All tokens below are defined in [`design-language.md`](./design-language.md)**
-and live in the `rae_tokens` crate (ADR 0003). This spec only assigns them; it
+and live in the `ath_tokens` crate (ADR 0003). This spec only assigns them; it
 introduces no new magic numbers. Toast geometry (320×72) and panel width (380px)
 are **local layout constants** for the kernel-drawn surface, expressed as
 `space.*`/token multiples — deliberately not new global tokens.
@@ -101,7 +101,7 @@ differentiator — every post is kept the instant it fires.
 
 ## AthenaOS design tokens this surface uses
 
-Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
+Pulled verbatim from `design-language.md` / `ath_tokens`. No new magic numbers.
 
 - **spacing:** `space.2` (toast stack gap — already `TOAST_GAP`, card internal gap),
   `space.3` (card vertical padding, group-header inset), `space.4` (panel padding,
@@ -116,7 +116,7 @@ Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 - **type:** `type.label` (toast/card title, group-app name), `type.body`
   (notification body when expanded), `type.caption` (source + relative time +
   group count badge + "Delivered Quietly" header + inline-action labels).
-- **accent model:** seed = `ThemeAbi.accent_argb`; `rae_tokens::derive_accent`.
+- **accent model:** seed = `ThemeAbi.accent_argb`; `ath_tokens::derive_accent`.
   Normal-urgency bar = `accent.base` (already `proof_accent()`); inline-action
   primary button = `accent.subtle` fill + `accent.text`; focus = `accent.base`
   ring + `accent.glow`. Critical = `state.danger`, low = `text.tertiary`. **No
@@ -293,7 +293,7 @@ without launching the app (Concept "fast is a feature").
   `accent.active` flash; focus ring + glow; disabled (no cap) → not rendered.
 - **reduced-motion:** the action row appears instantly (no grow), reply field
   appears with no slide.
-- **Flag to raeen-accessibility:** quick-reply must be fully keyboard-reachable and
+- **Flag to athena-accessibility:** quick-reply must be fully keyboard-reachable and
   the send action must have a non-pointer trigger (`Enter` in the field).
 
 ---
@@ -315,14 +315,14 @@ one system, two docks.
 
 | Concern | Rule | Owner |
 |---|---|---|
-| Contrast | toast/card title `type.label` ≥7:1; body ≥4.5:1; time/source ≥3:1 (non-essential); urgency-bar colors must clear 3:1 against the glass | raeen-accessibility |
-| Focus visibility | every card/group/inline-action is **never color-only**: `accent.base` ring + `elev.focus` glow | raeen-accessibility |
-| Reduced-motion | no slides/decks/fan-out; instant appear/dismiss; clear-all is a cut | raeen-accessibility |
-| Hit targets | dismiss × ≥32px pointer, action chips ≥32px; couch ≥48px | raeen-visual-qa |
-| Keyboard-complete | open Center, move group→item→action, activate, dismiss, clear-all, quick-reply — all with no pointer | raeen-accessibility |
-| DND legibility | DND state visible (tray badge + "Delivered Quietly" section), never a silent black hole | raeen-accessibility |
+| Contrast | toast/card title `type.label` ≥7:1; body ≥4.5:1; time/source ≥3:1 (non-essential); urgency-bar colors must clear 3:1 against the glass | athena-accessibility |
+| Focus visibility | every card/group/inline-action is **never color-only**: `accent.base` ring + `elev.focus` glow | athena-accessibility |
+| Reduced-motion | no slides/decks/fan-out; instant appear/dismiss; clear-all is a cut | athena-accessibility |
+| Hit targets | dismiss × ≥32px pointer, action chips ≥32px; couch ≥48px | athena-visual-qa |
+| Keyboard-complete | open Center, move group→item→action, activate, dismiss, clear-all, quick-reply — all with no pointer | athena-accessibility |
+| DND legibility | DND state visible (tray badge + "Delivered Quietly" section), never a silent black hole | athena-accessibility |
 
-Flag to **raeen-accessibility:** confirm the unread-count badge and urgency bar
+Flag to **athena-accessibility:** confirm the unread-count badge and urgency bar
 stay legible when the accent is re-seeded via Vibe Mode (low-saturation accents
 must keep a 3:1 contrast or fall back to `text.primary`).
 
@@ -353,14 +353,14 @@ Ships only when:
   and the motion tokenization. Keep all rendering under `lock_compositor()` with the
   IF=0 → unlock-before-scanout discipline (memory `compositor-IF=0`); no per-frame
   allocations on the toast/center paint path (memory `iron-console-logging-tax`).
-- **raeen-shell-apps** — the **inline-action IPC + dispatch** (the notification
+- **athena-shell-apps** — the **inline-action IPC + dispatch** (the notification
   source declares actions over its capability-checked channel; the shell routes
   the button/quick-reply/snooze callbacks). The tray unread badge is rendered by
   the shell's tray cluster (see `system-tray.md`).
-- **raeen-ui** — expose the **notification-card widget** (icon + title + body +
+- **athena-ui** — expose the **notification-card widget** (icon + title + body +
   time + dismiss + action row) and the **group-deck container** as reusable
-  `rae_tokens`-consuming widgets so the toast and the Center share one renderer.
-- **raeen-accessibility (flagged)** — quick-reply keyboard path; DND legibility;
+  `ath_tokens`-consuming widgets so the toast and the Center share one renderer.
+- **athena-accessibility (flagged)** — quick-reply keyboard path; DND legibility;
   badge/urgency contrast under re-seeded accents; reduced-motion audit.
 
 ### FAIL-able boot-log proof lines
@@ -381,7 +381,7 @@ is missing from "Delivered Quietly," if a critical notification is suppressed by
 DND, if an action without its capability still renders, or if the bar color
 diverges from the live accent.)
 
-### Visual-QA verification list (raeen-visual-qa)
+### Visual-QA verification list (athena-visual-qa)
 Verify on iron / host-render / QEMU window (headless screendump striping is a
 capture artifact, not the render — memory `ui-glass-design-system`):
 - Screenshot: 3 stacked glass toasts top-right — depth cue visible (back cards

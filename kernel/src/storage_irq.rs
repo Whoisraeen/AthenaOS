@@ -6,7 +6,7 @@
 //! `kernelchecklist.md` §M-A requires MSI-X on at least one PCI device on
 //! real hardware, with legacy INTx as fallback when MSI-X programming fails.
 //! NVMe and AHCI call [`probe_msix_or_intx`] at init; this module records
-//! the outcome for boot smoketest and `/proc/raeen/storage_irq`.
+//! the outcome for boot smoketest and `/proc/athena/storage_irq`.
 
 #![allow(dead_code)]
 

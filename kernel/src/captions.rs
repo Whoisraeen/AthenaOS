@@ -22,7 +22,7 @@
 //! All off by default (an exact no-op until a user enables it from Settings or
 //! the Super+Alt+V shortcut), persisted via `config_registry` like the rest of
 //! the a11y toggles. R10: `init` + `run_boot_smoketest` (FAIL-able) +
-//! `/proc/raeen/captions` + this docstring.
+//! `/proc/athena/captions` + this docstring.
 
 #![allow(dead_code)]
 
@@ -37,7 +37,7 @@ use spin::Mutex;
 /// `/a11y/reduced_motion` / `/a11y/sticky_keys`).
 const VISUAL_ALERTS_CFG: &str = "/a11y/visual_alerts";
 
-/// Most recent captions kept for the on-screen stream / `/proc/raeen/captions`.
+/// Most recent captions kept for the on-screen stream / `/proc/athena/captions`.
 const RING_CAP: usize = 32;
 
 /// One captioned system announcement.
@@ -148,7 +148,7 @@ pub fn init() {
     crate::serial_println!("[ OK ] Captions / visual alerts ready (default off)");
 }
 
-/// `/proc/raeen/captions` — visual-alert state + the recent caption stream.
+/// `/proc/athena/captions` — visual-alert state + the recent caption stream.
 pub fn dump_text() -> String {
     let st = STATE.lock();
     let mut s = alloc::format!(

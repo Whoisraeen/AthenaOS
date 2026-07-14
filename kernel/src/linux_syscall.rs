@@ -3246,7 +3246,7 @@ pub fn run_boot_smoketest() {
     crate::selftest::record_smoketest("linux_user_ptr_fixup", fault_fixup_pass);
 }
 
-/// `/proc/raeen/linux_syscall` — Linux ABI translation runtime counters.
+/// `/proc/athena/linux_syscall` — Linux ABI translation runtime counters.
 pub fn dump_text() -> String {
     let total = TOTAL_DISPATCHED.load(Ordering::Relaxed);
     let unhandled = UNHANDLED_DISPATCHED.load(Ordering::Relaxed);

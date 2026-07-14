@@ -26,7 +26,7 @@
 //! `crate::capability::Cap::System` in the `cpufreq` driver, not here; this
 //! module is read-only telemetry.
 //!
-//! Output: `[msr-amd] …` lines at boot + `/proc/raeen/msr_amd`.
+//! Output: `[msr-amd] …` lines at boot + `/proc/athena/msr_amd`.
 
 #![allow(dead_code)]
 
@@ -304,7 +304,7 @@ pub fn get_info() -> AmdMsrInfo {
     INFO.lock().unwrap_or_default()
 }
 
-// ── /proc/raeen/msr_amd ─────────────────────────────────────────────────
+// ── /proc/athena/msr_amd ─────────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let g = INFO.lock();

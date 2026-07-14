@@ -5,7 +5,7 @@ the Apple lock-in.
 
 ## Goals
 
-- A single `raekit::App` entry point that ties together UI, state, capabilities,
+- A single `athkit::App` entry point that ties together UI, state, capabilities,
   IPC, and the app lifecycle
 - Capability declarations are *types*: the app's permission manifest is the
   set of capability tokens it asks for at compile time
@@ -25,10 +25,10 @@ my-app.rae/
 ## Surface sketch
 
 ```rust
-use raekit::prelude::*;
-use raekit::caps::{Camera, Microphone};
+use athkit::prelude::*;
+use athkit::caps::{Camera, Microphone};
 
-#[raekit::app]
+#[athkit::app]
 struct MyApp;
 
 impl App for MyApp {

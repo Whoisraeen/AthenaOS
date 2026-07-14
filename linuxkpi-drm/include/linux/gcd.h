@@ -4,7 +4,7 @@
  *
  * Greatest common divisor — amdgpu_pll uses it to reduce feedback/reference
  * divider ratios when computing display/engine PLL settings. Backed by
- * raeen_linuxkpi's lib/gcd binary-GCD implementation at M4. License boundary
+ * ath_linuxkpi's lib/gcd binary-GCD implementation at M4. License boundary
  * (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_GCD_H

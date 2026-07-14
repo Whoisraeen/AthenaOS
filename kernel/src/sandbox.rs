@@ -4,7 +4,7 @@
 //! Concept §Security: "Mandatory app sandboxing — every app runs in its own
 //! sandbox by default. Capability-based sandboxing that's invisible to users and
 //! predictable to developers." This module is the kernel-side enforcement point:
-//! the policy *model* lives in `components/raeshield` (`SandboxPolicy` /
+//! the policy *model* lives in `components/athshield` (`SandboxPolicy` /
 //! `PolicyEnforcer`); this module binds it to live tasks and gates the syscalls
 //! that touch userspace-visible state (device claim, DMA, network, install).
 //!
@@ -15,9 +15,9 @@
 //!     only one relaxed load when no task is sandboxed — the common boot state.
 //!   * When an app IS sandboxed (AppSandbox / Strict), the gated syscall classes
 //!     are checked against a AthGuard profile and denied with `EPERM` if the
-//!     policy says no — and the violation is counted for `/proc/raeen/sandbox`.
+//!     policy says no — and the violation is counted for `/proc/athena/sandbox`.
 //!
-//! R10: `init()` + `run_boot_smoketest()` + `/proc/raeen/sandbox` + this docstring.
+//! R10: `init()` + `run_boot_smoketest()` + `/proc/athena/sandbox` + this docstring.
 
 #![allow(dead_code)]
 
@@ -26,8 +26,8 @@ extern crate alloc;
 use alloc::collections::BTreeMap;
 use alloc::string::String;
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use rae_abi::syscall as abi;
-use raeshield::{
+use ath_abi::syscall as abi;
+use athshield::{
     Capability, DeviceKind, Direction, PolicyEnforcer, SandboxPolicy, SandboxProfile,
     SecurityDecision, SyscallRequest, ViolationAction,
 };
@@ -163,13 +163,13 @@ pub fn level_of(pid: u64) -> SandboxLevel {
 /// is the safe default until manifests are wired.
 const TRUSTED_APPS: &[&str] = &[
     "user_init",
-    "rae-sh",
-    "raeshell",
+    "ath-sh",
+    "athshell",
     "driver_supervisor",
     "amdgpud",
     "i915d",
     "nvidiad",
-    "raeinstaller", // needs Cap::System anyway; gated separately
+    "athinstaller", // needs Cap::System anyway; gated separately
     "settings",
     "task_mgr",
     "files",
@@ -469,7 +469,7 @@ pub fn run_boot_smoketest() {
     // NIC / disk claim slip through. Falsifiable: if `request_for` ever stops
     // threading the real kind, nic/storage flip to ALLOWED and this FAILs.
     let gpu_rw_policy = SandboxPolicy::builder()
-        .allow_gpu(raeshield::AccessMode::ReadWrite)
+        .allow_gpu(athshield::AccessMode::ReadWrite)
         .build();
     let now = crate::timers::JIFFIES.load(Ordering::Relaxed);
     let decides = |kind: DeviceKind| -> bool {

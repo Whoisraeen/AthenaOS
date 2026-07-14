@@ -21,7 +21,7 @@ docstring MUST quote one of these lines.
 ## Already in the tree (verify-before-implement)
 
 Surveyed read-only (a concurrent agent holds uncommitted WIP in `kernel/src`,
-`raegfx`, `rae_tokens`, `apps/files` — this spec touched none of it):
+`athgfx`, `ath_tokens`, `apps/files` — this spec touched none of it):
 
 - **No aarch64 anything.** Confirms the parent spec: zero `aarch64`/`arm64` tokens in
   `kernel/src`; no `kernel/src/arch/` directory; the `arch::` seam from Slice 0 does not
@@ -137,7 +137,7 @@ poking system registers via `core::arch::asm!`.
 ### What replaces `bootloader_api::BootInfo` — the shared `BootContext`
 
 This is the seam the parent spec (NEEDS-INTERFACE) names but does not fully shape. Concrete
-proposal (owned by `raeen-architect`; arch-neutral, lives in `arch/mod.rs` or a shared
+proposal (owned by `athena-architect`; arch-neutral, lives in `arch/mod.rs` or a shared
 `boot.rs`):
 
 ```rust
@@ -288,7 +288,7 @@ all work, with nothing else in the way.
 
 ## Interface needs (NEEDS-INTERFACE)
 
-For `raeen-architect` (intra-kernel `arch::` seam contract; **no `rae_abi`/ABI_VERSION
+For `athena-architect` (intra-kernel `arch::` seam contract; **no `ath_abi`/ABI_VERSION
 change** — the user/syscall ABI is arch-neutral by design; confirm `ABI_VERSION` unchanged):
 
 - **`BootContext` + `FirmwareTables` + `MemoryRegion`/`MemoryKind` + `FrameBufferDesc`** as
@@ -305,7 +305,7 @@ change** — the user/syscall ABI is arch-neutral by design; confirm `ABI_VERSIO
 - **`arch::smp::start_ap(mpidr, entry)`** backed by PSCI `CPU_ON` on aarch64.
 - `arch::run_boot_smoketest()` R10 slot (shared, asserts MMU/IRQ/timer/context per arch).
 
-These are the contract `raeen-architect` owns as Slice 0a's internal seam doc. None require an
+These are the contract `athena-architect` owns as Slice 0a's internal seam doc. None require an
 ABI bump.
 
 ## File-by-file plan (aarch64 backend — after Slice 1 lands)
@@ -350,7 +350,7 @@ boot-log line that PROVES each (and a smoketest that can print FAIL — CLAUDE.m
 | **e** | **Success marker + arch smoketest** | the SAME `[ OS ] System successfully booted.` then `[arch-smoke] aarch64 -> PASS` (asserts: MMU round-trips a known phys↔virt map; a self/SGI IPI is delivered+acked; monotonic clock advances across a busy-wait; a kernel-thread context switch preserves x19–x30) | end-to-end single-core boot to userspace-ready |
 | **f** | **PSCI SMP** | `[smp] PSCI CPU_ON: 4/4 cores online` (each AP prints `[smp] cpu{mpidr} alive`) | secondary bring-up, per-CPU `TPIDR_EL1`, the scheduler on >1 aarch64 core |
 
-`/proc/raeen/arch` MUST report (arch-neutral, both arches): active arch (`aarch64`), CPUs
+`/proc/athena/arch` MUST report (arch-neutral, both arches): active arch (`aarch64`), CPUs
 online, page-table levels (4) + root count (2 TTBRs), IRQ controller (`GICv2`), timer
 (`arm-generic`), syscall-entry mechanism (`svc #0`), firmware source (`DeviceTree`).
 
@@ -377,7 +377,7 @@ arch).
   `-device virtio-gpu-pci` when the GFX phase reaches aarch64).
 - **xtask:** add `--target`/arch selection that picks `qemu-system-aarch64` + the `-M virt`
   arg set; reuse the existing CI marker-wait (`[ OS ] System successfully booted.`) and
-  `%TEMP%\raeen-serial.log` drain. No iron path for aarch64 yet — QEMU virt is the proof
+  `%TEMP%\athena-serial.log` drain. No iron path for aarch64 yet — QEMU virt is the proof
   surface (`[~]` status until/unless real ARM hardware is acquired).
 
 ## Risks & realistic phase breakdown (honest)
@@ -423,11 +423,11 @@ refactor). Phases, smallest-first:
 
 ## Handoff
 
-- **raeen-architect:** finalize the `BootContext` / `FirmwareTables` / `PlatformTopology` /
+- **athena-architect:** finalize the `BootContext` / `FirmwareTables` / `PlatformTopology` /
   `arch::early_serial` / `arch::mmu::AddressSpace`(two-root) / `arch::smp::start_ap` seam
   signatures from §Interface (Slice 0a internal contract; confirm `ABI_VERSION` unchanged). This
   spec gives the concrete field shapes; architect ratifies them.
-- **raeen-kernel / raeen-arch:** implement the aarch64 backend in milestone order
+- **athena-kernel / athena-arch:** implement the aarch64 backend in milestone order
   (a→f) — entry asm + PL011 → MMU(two-TTBR) → DTB/FDT parser facade → GICv2 + generic timer →
   boot-to-marker + smoketest → PSCI SMP. Plus xtask multi-target + the host-KAT FDT parser
   proven against a `dumpdtb` capture before QEMU.

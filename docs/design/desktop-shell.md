@@ -16,10 +16,10 @@ This spec only assigns them; it introduces no new magic numbers.
 
 | Piece | Where | Today | This spec changes |
 |---|---|---|---|
-| Taskbar | **LIVE: `components/raeshell/src/lib.rs::DesktopShell::render`** (`TASKBAR_HEIGHT=36`, flat `BAR_BG 0x0A0E1A`, `ACCENT 0x4E9CFF`). *(`raeshell/src/desktop.rs` `TASKBAR_H=40` is DEAD code — never instantiated; do not touch.)* | flat, hardcoded palette | → 44px, `material.mica`, `radius` on the Start pill + task buttons, hover/active/focus states |
+| Taskbar | **LIVE: `components/athshell/src/lib.rs::DesktopShell::render`** (`TASKBAR_HEIGHT=36`, flat `BAR_BG 0x0A0E1A`, `ACCENT 0x4E9CFF`). *(`athshell/src/desktop.rs` `TASKBAR_H=40` is DEAD code — never instantiated; do not touch.)* | flat, hardcoded palette | → 44px, `material.mica`, `radius` on the Start pill + task buttons, hover/active/focus states |
 | Window chrome | `kernel/src/window_chrome.rs` (`TITLE_BAR_H=28`, flat `CHROME_BG`, block-font glyphs, square min/max/close) | functional, pre-polish | → 32px, focused/unfocused tint, real macOS-order traffic-light controls w/ hover, draggable, accent focus stroke |
-| Start menu | `raeshell::StartMenu` (kernel-drawn, app list, pinned/categories) | exists | → `material.glass` panel, `radius.lg`, search field, recents grid, motion-in |
-| System tray / clock | `raeshell::SystemTray` (`tray_clock_string`) | clock only | → tray icon cluster + quick-settings flyout |
+| Start menu | `athshell::StartMenu` (kernel-drawn, app list, pinned/categories) | exists | → `material.glass` panel, `radius.lg`, search field, recents grid, motion-in |
+| System tray / clock | `athshell::SystemTray` (`tray_clock_string`) | clock only | → tray icon cluster + quick-settings flyout |
 | Notifications/toasts | `kernel/src/notify.rs` (320x72, max 3, oldest-evicted, urgency bar) | LIVE & good | → stack spacing/motion tokens, glass material, accent urgency bar |
 | Drop shadow / blur / HDR | `compositor.rs` | LIVE | reused as `elev.*` / `material.glass` |
 
@@ -221,29 +221,29 @@ Because incoherence is the top risk, the shell ships only when:
    surface change together).
 2. Corner radii are concentric (no child sharper than its parent − padding).
 3. Every interactive element has a visible focus state distinct from hover.
-4. Dark and light both render with passing contrast (raeen-accessibility sign-off).
+4. Dark and light both render with passing contrast (athena-accessibility sign-off).
 
 ---
 
 ## Handoff
 
 ### Implementers
-- **raeen-ui (framework):** create `raeui::tokens` (spacing/radius/type/motion/
+- **athena-ui (framework):** create `athui::tokens` (spacing/radius/type/motion/
   color constants from `design-language.md`) + `derive_accent(seed)`; refactor
   `desktop.rs`, `notify.rs`, `window_chrome.rs`, and the per-app palettes to
   consume it (ends the ~30-file `const ACCENT` duplication).
-- **raeen-shell-apps (the surfaces):** taskbar geometry/states (`desktop.rs`);
+- **athena-shell-apps (the surfaces):** taskbar geometry/states (`desktop.rs`);
   Start menu search + grid + motion (`start_menu.rs`/`desktop.rs`);
   quick-settings flyout (new); toast tokenization (`notify.rs`).
-- **raeen-gfx:** titlebar repaint with traffic-light controls + focused/unfocused
+- **athena-gfx:** titlebar repaint with traffic-light controls + focused/unfocused
   tint + `material.mica` (`window_chrome.rs`, `compositor.rs` titlebar draw);
   snap-preview overlay glass region; confirm per-corner rounded-rect mask.
 - **theme_engine (kernel):** `derive_accent`, `material.mica` wallpaper-average
   sampling, left-vs-right control-layout variant flag.
-- **raeen-accessibility (flagged):** contrast pass on both palettes; focus-state
+- **athena-accessibility (flagged):** contrast pass on both palettes; focus-state
   audit; reduced-motion path verification; 32px target audit.
 
-### On-screen / boot-log evidence (raeen-visual-qa + smoketests)
+### On-screen / boot-log evidence (athena-visual-qa + smoketests)
 - **Taskbar:** QEMU screenshot showing 44px mica bar, Start pill (`radius.pill`),
   running-app accent indicators, tray clock+icons. Boot log: existing desktop
   activate marker + a new `[shell] taskbar: mica tint=0x.. accent=0x..` line.

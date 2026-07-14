@@ -6,7 +6,7 @@
  * (dma_fence_array/chain) embed a `struct irq_work` BY VALUE for their async
  * signal callback, so the type must be fully defined for layout. On the bring-up
  * daemon there is no hard-IRQ context — the work runs inline via the cooperative
- * pump (workqueue.rs) — so init/queue are backed by raeen_linuxkpi at M4.
+ * pump (workqueue.rs) — so init/queue are backed by ath_linuxkpi at M4.
  * License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_IRQ_WORK_H
@@ -30,7 +30,7 @@ static inline void init_irq_work(struct irq_work *work, void (*func)(struct irq_
 	work->func = func;
 }
 
-/* queue/sync — backed by raeen_linuxkpi (M4); the daemon pump drains them. */
+/* queue/sync — backed by ath_linuxkpi (M4); the daemon pump drains them. */
 bool irq_work_queue(struct irq_work *work);
 void irq_work_sync(struct irq_work *work);
 

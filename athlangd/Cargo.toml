@@ -1,0 +1,16 @@
+[package]
+name = "athlangd"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "athlangd — AthenaOS userspace Rae-script interpreter daemon. Drains queued (>64 KiB) scripts the kernel refuses to run inline: SYS_SCRIPT_FETCH claims a job, the shared athlang interpreter runs it fuel-limited under the submitter's cap_mask, SYS_SCRIPT_COMPLETE reports exit + output."
+
+[dependencies]
+ath_abi = { path = "../components/ath_abi" }
+athlang = { path = "../components/athlang" }
+
+[[bin]]
+name = "athlangd"
+path = "src/main.rs"

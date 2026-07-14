@@ -1,4 +1,4 @@
-//! `/proc/raeen/perf` — the missing telemetry surface for the Concept's North
+//! `/proc/athena/perf` — the missing telemetry surface for the Concept's North
 //! Star contracts.
 //!
 //! The Concept's headline promises (sub-frame input latency, sub-3ms audio,
@@ -89,7 +89,7 @@ static IGW_LAST_TSC: AtomicU64 = AtomicU64::new(0);
 // `record_frame_present` already stamps a TSC each compositor present; the
 // delta between consecutive presents IS the frametime. We keep the TSC of the
 // previous present and a tiny lock-free ring of the most recent N frametimes
-// in microseconds so the GameOS Game Bar (and `/proc/raeen/perf`) can read live
+// in microseconds so the GameOS Game Bar (and `/proc/athena/perf`) can read live
 // FPS + a frametime history WITHOUT parsing text. The ring is fixed-size (no
 // allocation, ever) and written only on the present hot path; readers snapshot
 // it. This is additive instrumentation — the input→photon recording above is
@@ -511,7 +511,7 @@ pub fn record_context_switch(is_game: bool) {
 }
 
 /// Observe a runqueue depth at pick time; keeps the running maximum. Cheap
-/// lock-free max so /proc/raeen/perf can show the worst backlog seen.
+/// lock-free max so /proc/athena/perf can show the worst backlog seen.
 #[inline]
 pub fn observe_runq_depth(depth: u64) {
     let mut cur = MAX_RUNQ_DEPTH.load(Ordering::Relaxed);
@@ -617,10 +617,10 @@ pub fn frametime_history_us(out: &mut [u64]) -> usize {
 }
 
 pub fn init() {
-    crate::serial_println!("[ OK ] perf telemetry ready (/proc/raeen/perf)");
+    crate::serial_println!("[ OK ] perf telemetry ready (/proc/athena/perf)");
 }
 
-/// `/proc/raeen/perf` body — one line per North Star contract counter.
+/// `/proc/athena/perf` body — one line per North Star contract counter.
 pub fn dump_text() -> alloc::string::String {
     let (dl_misses, dl_worst_us) = crate::scheduler::deadline_miss_stats();
     let (pick_s, pick_min_ns, pick_avg_ns, pick_max_ns) = pick_latency_snapshot();
@@ -743,7 +743,7 @@ pub fn dump_text() -> alloc::string::String {
 /// the boot telemetry stays pristine. Can print FAIL.
 pub fn run_boot_smoketest() {
     // Run the heap-alloc microbench (PERFORMANCE_TARGETS §7) and keep its result
-    // — this is the boot measurement reported at /proc/raeen/perf, not a
+    // — this is the boot measurement reported at /proc/athena/perf, not a
     // throwaway. FAIL-able: it must record samples and a non-zero, sane average.
     // The < 500 ns iron contract is NOT asserted here (QEMU TCG inflates alloc
     // latency ~3–4×, so a hard sub-500ns check would false-FAIL in CI); we assert
@@ -954,7 +954,7 @@ pub fn run_boot_smoketest() {
         && latency_under_budget;
     crate::selftest::record_smoketest("perf", pass);
     crate::serial_println!(
-        "[perf] /proc/raeen/perf surface + input->photon pipeline (armed/sample/idle={}/{}/{}) -> {}",
+        "[perf] /proc/athena/perf surface + input->photon pipeline (armed/sample/idle={}/{}/{}) -> {}",
         armed,
         pipeline_ok,
         idle_ok,
@@ -980,7 +980,7 @@ pub fn run_boot_smoketest() {
         if heap_ok { "PASS" } else { "FAIL" }
     );
     // Make the live scheduler decision/scan latency visible in serial (it lives
-    // at /proc/raeen/perf, read on demand). By this boot stage many timer
+    // at /proc/athena/perf, read on demand). By this boot stage many timer
     // preemptions + yields have run, so the sample count is already meaningful.
     let (pk_s, pk_min, pk_avg, pk_max) = pick_latency_snapshot();
     crate::serial_println!(

@@ -90,7 +90,7 @@ fn main() {
     // --screenshot=PATH (ADR 0004): in CI mode, once the boot marker lands, give
     // the compositor a settle window then capture a PNG of the framebuffer via the
     // QMP `screendump` command (QEMU 7.1+ format=png — avoids the PPM->PNG striping
-    // artifact). Pair with --uefi for a clean 32bpp GOP capture. Hands raeen-visual-qa
+    // artifact). Pair with --uefi for a clean 32bpp GOP capture. Hands athena-visual-qa
     // a real image (goal #1 acceptance). Reuses run_qemu's known-good UEFI boot.
     let mut screenshot: Option<String> = None;
     for a in &args {
@@ -226,9 +226,9 @@ fn main() {
             eprintln!("                  wizard) + SHA256SUMS + Ed25519 sig + RELEASE-NOTES.md.");
             eprintln!("                  Add --safe for a dry-run installer (no disk writes).");
             eprintln!("  gpu-test        Host-only AMD GPU driver proof — NO .img. Runs the");
-            eprintln!("                  raeen_amdgpu KATs + the full amdgpu bring-up stage");
+            eprintln!("                  ath_amdgpu KATs + the full amdgpu bring-up stage");
             eprintln!(
-                "                  transcript on a mock GPU; logs -> %TEMP%/raeen-gpu-test.log"
+                "                  transcript on a mock GPU; logs -> %TEMP%/athena-gpu-test.log"
             );
             eprintln!();
             eprintln!("Flags:");
@@ -259,7 +259,7 @@ fn main() {
 /// QEMU, flashes NO iron: the cheapest layer of the proof ladder for the GPU.
 ///
 /// Two stages, both on the dev host:
-///   1. `cargo test -p raeen_amdgpu` — the pure-logic KATs (PM4 packet encodings,
+///   1. `cargo test -p ath_amdgpu` — the pure-logic KATs (PM4 packet encodings,
 ///      ATOMBIOS parse incl. the real-Athena-VFCT table, IP-discovery parse,
 ///      SOC15 offset resolution).
 ///   2. The LinuxKPI harness in `RAEEN_GPU_ONLY` mode — replays amdgpud's ACTUAL
@@ -267,30 +267,30 @@ fn main() {
 ///      CP/SDMA rings -> scanout) against a mock GPU with a hardware-reaction
 ///      model, with `RAEEN_GPU_LOG` surfacing the full `[amdgpu]` stage transcript.
 ///
-/// Combined output is mirrored to %TEMP%/raeen-gpu-test.log (same place the QEMU
+/// Combined output is mirrored to %TEMP%/athena-gpu-test.log (same place the QEMU
 /// serial log lives) so the stage-by-stage GPU log is one file. A non-zero exit
 /// from either stage fails the whole run — this is a FAIL-able gate, not a demo.
 fn run_gpu_test() {
     use std::io::Write;
     let root = project_root();
-    let log_path = std::env::temp_dir().join("raeen-gpu-test.log");
+    let log_path = std::env::temp_dir().join("athena-gpu-test.log");
     let mut log = String::new();
     let mut all_ok = true;
 
-    // (1/2) raeen_amdgpu pure-logic KATs.
-    eprintln!("[gpu-test] (1/2) raeen_amdgpu host KATs (cargo test -p raeen_amdgpu)");
+    // (1/2) ath_amdgpu pure-logic KATs.
+    eprintln!("[gpu-test] (1/2) ath_amdgpu host KATs (cargo test -p ath_amdgpu)");
     let kat = Command::new("cargo")
         .current_dir(&root)
-        .args(["test", "-p", "raeen_amdgpu"])
+        .args(["test", "-p", "ath_amdgpu"])
         .output()
-        .expect("failed to run cargo test -p raeen_amdgpu");
+        .expect("failed to run cargo test -p ath_amdgpu");
     let kat_out = format!(
         "{}{}",
         String::from_utf8_lossy(&kat.stdout),
         String::from_utf8_lossy(&kat.stderr)
     );
     print!("{kat_out}");
-    log.push_str("=== raeen_amdgpu host KATs ===\n");
+    log.push_str("=== ath_amdgpu host KATs ===\n");
     log.push_str(&kat_out);
     all_ok &= kat.status.success();
 
@@ -408,7 +408,7 @@ fn build_kernel(release: bool, safe: bool, production: bool, target: &str) {
 fn build_user_apps(release: bool) {
     let root = project_root();
 
-    let relibc_dir = root.join("components").join("raebridge").join("relibc");
+    let relibc_dir = root.join("components").join("athbridge").join("relibc");
     let build_std = ["-Z", "build-std=core,alloc"];
     let relibc_pkg_args = [
         "build",
@@ -468,19 +468,19 @@ fn build_user_apps(release: bool) {
         .join("x86_64-unknown-none")
         .join(profile);
 
-    // M5 (opt-in): RAEEN_AMDGPU_REAL=1 builds amdgpud against the REAL upstream
+    // M5 (opt-in): ATHENA_AMDGPU_REAL=1 builds amdgpud against the REAL upstream
     // Linux amdgpu C driver (the linuxkpi-drm object set) instead of the Rust
     // reimpl, for an Athena GPU bring-up image. Requires the vendored GPL kernel
     // tree + bash (WSL/Linux). OFF by default so the portable image (QEMU CI, the
     // safe image, any box without the GPL tree) always builds. See
     // linuxkpi-drm/M5-BAREMETAL-PLAN.md and amdgpud/build.rs.
-    let amdgpu_real = std::env::var_os("RAEEN_AMDGPU_REAL").is_some();
+    let amdgpu_real = std::env::var_os("ATHENA_AMDGPU_REAL").is_some();
     let prebuilt_amdgpu_obj = std::env::var_os("RAE_AMDGPU_BRINGUP_OBJ")
         .map(PathBuf::from)
         .filter(|path| path.is_file());
     if amdgpu_real && prebuilt_amdgpu_obj.is_none() {
         eprintln!(
-            "[xtask] RAEEN_AMDGPU_REAL: building the real amdgpu object set (m4c-link.sh)..."
+            "[xtask] ATHENA_AMDGPU_REAL: building the real amdgpu object set (m4c-link.sh)..."
         );
         let status = Command::new("bash")
             .current_dir(&root)
@@ -490,12 +490,12 @@ fn build_user_apps(release: bool) {
             .status()
             .expect("failed to run linuxkpi-drm/m4c-link.sh (need bash + vendored GPL source)");
         if !status.success() {
-            eprintln!("[xtask] m4c-link.sh failed — unset RAEEN_AMDGPU_REAL to build the Rust-reimpl amdgpud instead");
+            eprintln!("[xtask] m4c-link.sh failed — unset ATHENA_AMDGPU_REAL to build the Rust-reimpl amdgpud instead");
             process::exit(1);
         }
     } else if let Some(path) = prebuilt_amdgpu_obj.as_ref() {
         eprintln!(
-            "[xtask] RAEEN_AMDGPU_REAL: using prebuilt upstream object {}",
+            "[xtask] ATHENA_AMDGPU_REAL: using prebuilt upstream object {}",
             path.display()
         );
     }
@@ -1197,7 +1197,7 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
                 project_root().join("target/nvme.img").display()
             ),
             "-device",
-            "nvme,drive=nvm0,serial=raeen001",
+            "nvme,drive=nvm0,serial=athena001",
             "-drive",
             &format!(
                 "file={},format=raw,if=none,id=ahcidisk",
@@ -1239,7 +1239,7 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
     // `-d int` (per-interrupt CPU-state dump) was a debug leftover: it floods
     // stderr and drastically slows boot (a full register dump on every timer
     // tick). Re-enable manually only when diagnosing interrupt/fault issues.
-    // Hardware acceleration (opt-in): set RAEEN_ACCEL=whpx to run the guest on
+    // Hardware acceleration (opt-in): set ATHENA_ACCEL=whpx to run the guest on
     // the Windows Hypervisor Platform — orders of magnitude faster than the
     // default TCG software emulation (under TCG the heavy AthFS bucket I/O in the
     // boot smoketest crawls for minutes). `kernel-irqchip=off` is required (WHPX
@@ -1250,14 +1250,14 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
     // physical window, so the first MMIO access page-faults in kernel context.
     // Once the kernel maps high PCI BARs on demand (ioremap), make WHPX the
     // default. See docs / MasterChecklist Phase 1 §1.5.
-    // Acceleration priority: RAEEN_ACCEL override → else auto by host OS.
-    //   RAEEN_ACCEL=whpx  — Windows Hypervisor Platform (needs kernel-irqchip=off)
-    //   RAEEN_ACCEL=kvm   — force KVM; RAEEN_ACCEL=tcg — force software emulation
+    // Acceleration priority: ATHENA_ACCEL override → else auto by host OS.
+    //   ATHENA_ACCEL=whpx  — Windows Hypervisor Platform (needs kernel-irqchip=off)
+    //   ATHENA_ACCEL=kvm   — force KVM; ATHENA_ACCEL=tcg — force software emulation
     //   (unset) Linux with a usable /dev/kvm → KVM; otherwise TCG.
     // On a Linux host (incl. WSL2 once the user is in the `kvm` group so /dev/kvm
     // is rw) KVM gives the hardware-virt speedup vs ~30x-slower TCG. We keep the
     // same qemu64 CPU model the kernel is tested against rather than `-cpu host`.
-    let accel = std::env::var("RAEEN_ACCEL").ok();
+    let accel = std::env::var("ATHENA_ACCEL").ok();
     let accel = accel.as_deref();
     let kvm_usable = cfg!(target_os = "linux") && Path::new("/dev/kvm").exists();
     // CPU model. Default is the qemu64 model the kernel is regression-tested
@@ -1280,7 +1280,7 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
         eprintln!("[xtask] CPU model: {cpu_model} (RAEEN_CPU override)");
     }
     if accel == Some("whpx") {
-        eprintln!("[xtask] Acceleration: WHPX (RAEEN_ACCEL=whpx)");
+        eprintln!("[xtask] Acceleration: WHPX (ATHENA_ACCEL=whpx)");
         cmd.args(["-accel", "whpx,kernel-irqchip=off", "-cpu", &cpu_model]);
     } else if accel == Some("kvm") || (accel.is_none() && kvm_usable) {
         eprintln!("[xtask] Acceleration: KVM (/dev/kvm)");
@@ -1289,7 +1289,7 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
         let hint = if cfg!(target_os = "linux") {
             "TCG (no usable /dev/kvm — add your user to the `kvm` group for KVM)"
         } else {
-            "TCG (set RAEEN_ACCEL=whpx for WHPX)"
+            "TCG (set ATHENA_ACCEL=whpx for WHPX)"
         };
         eprintln!("[xtask] Acceleration: {hint}");
         cmd.args(["-cpu", &cpu_model]);
@@ -1299,7 +1299,7 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
     // OneDrive's filter driver intermittently locks the file, which breaks QEMU's
     // `-serial file:` open ("could not connect serial device") and corrupts CI
     // reads. Forward slashes so QEMU's `file:` parser accepts the Windows path.
-    let serial_path = std::env::temp_dir().join("raeen-serial.log");
+    let serial_path = std::env::temp_dir().join("athena-serial.log");
     let _ = std::fs::remove_file(&serial_path);
     let serial_arg = format!("file:{}", serial_path.to_string_lossy().replace('\\', "/"));
     cmd.args(["-serial", &serial_arg]);
@@ -1313,14 +1313,14 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
         ]);
     }
     // SMP count: default 2 (the documented "clean" config). Override with
-    // RAEEN_SMP=<n> — `RAEEN_SMP=1` avoids the work-stealing scheduler entirely,
+    // ATHENA_SMP=<n> — `ATHENA_SMP=1` avoids the work-stealing scheduler entirely,
     // which is the deterministic config for verifying a kernel change while the
     // multi-CPU duplicate-task race (MasterChecklist 4.8) is still open.
-    let smp = std::env::var("RAEEN_SMP")
+    let smp = std::env::var("ATHENA_SMP")
         .ok()
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "2".to_string());
-    eprintln!("[xtask] SMP: {} vCPU(s) (set RAEEN_SMP=<n> to change)", smp);
+    eprintln!("[xtask] SMP: {} vCPU(s) (set ATHENA_SMP=<n> to change)", smp);
     cmd.args([
         "-no-reboot",
         "-no-shutdown",
@@ -1339,7 +1339,7 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
     // shows the exact vector + error code + RIP that caused the fault
     // cascade. Off by default — it floods and slows boot.
     if std::env::var("RAEEN_QEMU_DEBUG").is_ok() {
-        let dbg_path = std::env::temp_dir().join("raeen-qemu-debug.log");
+        let dbg_path = std::env::temp_dir().join("athena-qemu-debug.log");
         let _ = std::fs::remove_file(&dbg_path);
         eprintln!("[xtask] QEMU debug trace: {}", dbg_path.display());
         cmd.args([
@@ -1371,7 +1371,7 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
 
     // User-mode netdev + virtio-net-pci for RX/DHCP bring-up (#110).
     // hostfwd: host localhost:2222 -> guest :22, so a real `ssh -p 2222
-    // raeen@localhost` reaches the in-kernel RaeSSH listener (AthNet SSH server
+    // athena@localhost` reaches the in-kernel RaeSSH listener (AthNet SSH server
     // Increment B). Harmless when nothing listens; guest DHCP IP is 10.0.2.15.
     cmd.args([
         "-netdev",
@@ -1535,7 +1535,7 @@ fn run_qemu(image_path: &Path, uefi: bool, ci: bool, disk_profile: &str, screens
                         reap(&mut child, pid);
                         process::exit(0);
                     }
-                    // Post-boot drain: the userspace daemons (user_init, raebridge_host,
+                    // Post-boot drain: the userspace daemons (user_init, athbridge_host,
                     // i915d, amdgpud, …) run AFTER the boot marker. Give them a bounded
                     // window to finish so their serial output lands in the log for CI/dev
                     // inspection, rather than reaping QEMU mid-bring-up. Exit early once
@@ -1742,7 +1742,7 @@ fn build_port(port_name: &str) -> PathBuf {
     std::fs::create_dir_all(&sysroot_lib).unwrap();
     let relibc_lib = root
         .join("components")
-        .join("raebridge")
+        .join("athbridge")
         .join("relibc")
         .join("target")
         .join("x86_64-unknown-none")

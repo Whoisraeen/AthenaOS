@@ -35,11 +35,11 @@ frame.present()?;
 
 ## Layering
 
-- **raegfx-api** (public): the Rust surface above.
-- **raegfx-runtime**: command buffer encoding, pipeline cache, swapchain.
-- **raegfx-backend-vulkan**: lowers to Vulkan on PC GPUs.
-- **raegfx-backend-direct**: native driver path for RaeReady GPUs (later).
-- **raegfx-translate-d3d**: DXVK/VKD3D heritage.
+- **athgfx-api** (public): the Rust surface above.
+- **athgfx-runtime**: command buffer encoding, pipeline cache, swapchain.
+- **athgfx-backend-vulkan**: lowers to Vulkan on PC GPUs.
+- **athgfx-backend-direct**: native driver path for RaeReady GPUs (later).
+- **athgfx-translate-d3d**: DXVK/VKD3D heritage.
 
 ## Open design questions
 

@@ -1587,8 +1587,8 @@ pub static SPI_BUS: Mutex<SpiBusState> = Mutex::new(SpiBusState::new());
 
 pub fn init() {
     let mut i2c = I2C_BUS.lock();
-    let bus0 = i2c.register_adapter("i2c-raeen-0", 400_000);
-    let bus1 = i2c.register_adapter("i2c-raeen-1", 100_000);
+    let bus0 = i2c.register_adapter("i2c-athena-0", 400_000);
+    let bus1 = i2c.register_adapter("i2c-athena-1", 100_000);
 
     if let Some(adapter) = i2c.get_adapter_mut(bus0) {
         adapter.register_device(I2cDeviceInfo::new(0x50, "eeprom"));
@@ -1606,8 +1606,8 @@ pub fn init() {
     drop(i2c);
 
     let mut spi = SPI_BUS.lock();
-    let spi_bus0 = spi.register_controller("spi-raeen-0", 4);
-    let _spi_bus1 = spi.register_controller("spi-raeen-1", 2);
+    let spi_bus0 = spi.register_controller("spi-athena-0", 4);
+    let _spi_bus1 = spi.register_controller("spi-athena-1", 2);
 
     if let Some(ctrl) = spi.get_controller_mut(spi_bus0) {
         let _ = ctrl.register_device(SpiDevice::new(spi_bus0, 0, "w25q128", 50_000_000));

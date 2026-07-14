@@ -3,7 +3,7 @@
 //!
 //! A standalone userspace ELF (`exec_path = "contacts"`). The rich data model
 //! (`model` — Contact/Phone/Email/vCard, sort/filter/groups) was the previously
-//! UNWIRED `raeshell::contacts_app`; it moved here and became a live app. This
+//! UNWIRED `athshell::contacts_app`; it moved here and became a live app. This
 //! `main.rs` is the app shell: a two-pane list + detail over demo contacts
 //! (there is no live CardDAV/store syscall yet — a `NEEDS-INTERFACE` follow-up),
 //! on the OBSIDIAN design language, re-skinned to the live desktop accent.
@@ -20,11 +20,11 @@ extern crate alloc;
 use alloc::string::String;
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
-use rae_tokens::{DARK, RAEBLUE, TYPE_BODY, TYPE_CAPTION, TYPE_SUBTITLE, TYPE_TITLE};
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
+use ath_tokens::{DARK, RAEBLUE, TYPE_BODY, TYPE_CAPTION, TYPE_SUBTITLE, TYPE_TITLE};
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
 
 mod model;
 use model::{Contact, ContactsApp, Email, EmailType, Phone, PhoneType};
@@ -45,10 +45,10 @@ const ROW_H: usize = 44;
 const LIST_TOP: usize = 56;
 
 fn accent() -> u32 {
-    rae_tokens::derive_accent(raekit::sys::theme_accent(), &DARK).base
+    ath_tokens::derive_accent(athkit::sys::theme_accent(), &DARK).base
 }
 fn accent_subtle() -> u32 {
-    rae_tokens::derive_accent(raekit::sys::theme_accent(), &DARK).subtle
+    ath_tokens::derive_accent(athkit::sys::theme_accent(), &DARK).subtle
 }
 /// On-accent ink for the selected row (IDENTITY §4: accent-filled row flips to
 /// dark ink).
@@ -160,7 +160,7 @@ fn render(app: &App, canvas: &mut Canvas) {
                 y,
                 SIDEBAR_W - 16,
                 ROW_H - 6,
-                rae_tokens::RADIUS_MD as usize,
+                ath_tokens::RADIUS_MD as usize,
                 acc,
             );
         }
@@ -252,7 +252,7 @@ fn render(app: &App, canvas: &mut Canvas) {
             },
         ),
     ] {
-        canvas.fill_rounded_rect(dx, cy, card_w, 58, rae_tokens::RADIUS_MD as usize, CARD_BG);
+        canvas.fill_rounded_rect(dx, cy, card_w, 58, ath_tokens::RADIUS_MD as usize, CARD_BG);
         canvas.draw_text_aa(
             dx as i32 + 16,
             cy as i32 + 10,
@@ -283,29 +283,29 @@ pub fn design_proof() -> bool {
         .all(|c| !c.full_name().is_empty() && !c.phones.is_empty() && !c.emails.is_empty());
     let tokens_ok = BG == DARK.bg_base
         && TEXT_FG == DARK.text_primary
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
     n >= 3 && each_has_contact_info && tokens_ok
 }
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     if !design_proof() {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
     let mut app = App::new();
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, 160, 80);
+    athkit::sys::surface_present(sid, 160, 80);
 
     let mut extended = false;
     loop {
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
         let sc = key as u8;
@@ -328,12 +328,12 @@ pub extern "C" fn _start() -> ! {
                 app.move_sel(1);
                 dirty = true;
             }
-            (false, 0x01) => raekit::sys::exit(0),
+            (false, 0x01) => athkit::sys::exit(0),
             _ => {}
         }
         if dirty {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, 160, 80);
+            athkit::sys::surface_present(sid, 160, 80);
         }
     }
 }

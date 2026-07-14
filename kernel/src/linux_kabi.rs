@@ -8,7 +8,7 @@
 //!
 //! This module is **not** GPL Linux kernel code. It is an MPL-2.0–compatible
 //! metadata table (symbol name → category + implementation status) modeled
-//! after `components/raebridge/src/pe_dll_registry.rs`: loaders resolve
+//! after `components/athbridge/src/pe_dll_registry.rs`: loaders resolve
 //! names to stub dispatch slots; real behavior lives in future AthenaOS
 //! shims or userspace driver services.
 //!
@@ -468,7 +468,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// Text dump for `/proc/raeen/linux_kabi`.
+/// Text dump for `/proc/athena/linux_kabi`.
 pub fn dump_text() -> String {
     let total = KABI_TABLE.len();
     let mut out = String::new();

@@ -22,14 +22,14 @@ minutes. Swappable — the OS doesn't care which shell you run.
 
 ## Layering
 
-- **raeshell-login**: greeter, multi-user select.
-- **raeshell-desktop**: wallpaper / live wallpaper host, icon layer, right-click menus.
-- **raeshell-taskbar**: app pinning, running indicators, system tray.
-- **raeshell-notif**: notification center, focus modes.
-- **raeshell-settings**: every setting, one app, fuzzy-searchable.
-- **raeshell-files**: file manager.
-- **raeshell-search**: tantivy/Lucene-class local index.
-- **raeshell-wm**: pluggable window manager backends.
+- **athshell-login**: greeter, multi-user select.
+- **athshell-desktop**: wallpaper / live wallpaper host, icon layer, right-click menus.
+- **athshell-taskbar**: app pinning, running indicators, system tray.
+- **athshell-notif**: notification center, focus modes.
+- **athshell-settings**: every setting, one app, fuzzy-searchable.
+- **athshell-files**: file manager.
+- **athshell-search**: tantivy/Lucene-class local index.
+- **athshell-wm**: pluggable window manager backends.
 
 ## Open design questions
 

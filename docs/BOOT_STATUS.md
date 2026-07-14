@@ -16,7 +16,7 @@ Serial transcript copy: [`logs/athena-m1-qemu-serial.log`](../logs/athena-m1-qem
 ### Notes / bootstrap breakage
 
 1. **Do not regenerate `Cargo.lock` blindly.** A fresh `cargo` update pulled `x86_64` 0.15.5, which fails to compile against `nightly-2026-05-01` (`Step::forward_overflowing`). Prefer a lockfile known-good with this toolchain until Athena pins its own vetted set.
-2. **Debug user-app builds** of `raenet` (browser path) can hit `rustc-LLVM ERROR: Do not know how to split the result of this operator!`. **Release** builds succeed; prefer `--release` for Athena CI.
+2. **Debug user-app builds** of `athnet` (browser path) can hit `rustc-LLVM ERROR: Do not know how to split the result of this operator!`. **Release** builds succeed; prefer `--release` for Athena CI.
 3. QEMU may warn about hostfwd `tcp::2222-:22` if the port is busy; CI still passed.
 4. Many inherited introspection strings still say “AthenaOS” in `/proc`-style dumps; product banner, DMI placeholders, `/system/name`, mDNS, installer labels, and xtask branding were retargeted to AthenaOS. Inherited `rae*` **crate directory names** remain temporarily; Athena-first code lives under `components/ath*`.
 
@@ -25,4 +25,4 @@ Serial transcript copy: [`logs/athena-m1-qemu-serial.log`](../logs/athena-m1-qem
 | Remote | URL | Push? |
 |---|---|---|
 | `origin` | https://github.com/Whoisraeen/AthenaOS | Yes — Athena only |
-| `upstream-raeenos` | https://github.com/Whoisraeen/AthenaOS | **No** — optional reference only, not a fork parent |
+| `upstream-athenaos` | https://github.com/Whoisraeen/AthenaOS | **No** — optional reference only, not a fork parent |

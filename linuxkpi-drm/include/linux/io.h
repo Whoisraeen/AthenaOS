@@ -5,7 +5,7 @@
  * MMIO + ioremap. This is THE register-access path: amdgpu's RREG32/WREG32 (and
  * the SOC15 macros) bottom out in readl/writel against the ioremap'd BAR. These
  * MUST be real at runtime — a faked readl/writel would mean we never touch the
- * GPU (the whole point), so they are declaration-only, backed by raeen_linuxkpi's
+ * GPU (the whole point), so they are declaration-only, backed by ath_linuxkpi's
  * ioremap + MMIO facade (P2) at M4/M5. NO inline fakes (SCOPE.md rule 9). License
  * boundary (../../README.md): API surface, no GPL source.
  */
@@ -15,7 +15,7 @@
 #include <linux/types.h>
 #include <linux/memremap.h>   /* memremap() + MEMREMAP_* — <linux/io.h> exposes these */
 
-/* register read/write — backed by raeen_linuxkpi's MMIO facade (M4/M5) */
+/* register read/write — backed by ath_linuxkpi's MMIO facade (M4/M5) */
 u8  readb(const volatile void __iomem *addr);
 u16 readw(const volatile void __iomem *addr);
 u32 readl(const volatile void __iomem *addr);
@@ -31,7 +31,7 @@ void writeq(u64 val, volatile void __iomem *addr);
 #define readq_relaxed(a)      readq(a)
 #define writeq_relaxed(v, a)  writeq((v), (a))
 
-/* aperture mapping — backed by raeen_linuxkpi (M4) */
+/* aperture mapping — backed by ath_linuxkpi (M4) */
 void __iomem *ioremap(phys_addr_t offset, size_t size);
 void __iomem *ioremap_wc(phys_addr_t offset, size_t size);
 void __iomem *ioremap_cache(phys_addr_t offset, size_t size);

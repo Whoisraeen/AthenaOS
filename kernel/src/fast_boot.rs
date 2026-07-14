@@ -830,7 +830,7 @@ impl SplashScreen {
         let Some(fb) = crate::framebuffer::fb_info() else {
             return 0;
         };
-        // raegfx::Canvas is ARGB32-only and has no row-stride support: a
+        // athgfx::Canvas is ARGB32-only and has no row-stride support: a
         // 24bpp mode (the BIOS/VBE path — writing 4-byte pixels into a 3-byte
         // grid overruns the buffer and faults pre-interrupts) or a padded GOP
         // stride would corrupt. Fall back to the text mirror there.
@@ -838,17 +838,17 @@ impl SplashScreen {
             return 0;
         }
         let (w, h) = (fb.width as usize, fb.height as usize);
-        let mut canvas = unsafe { raegfx::Canvas::new(fb.ptr, w, h, 4) };
-        let p = &rae_tokens::DARK;
+        let mut canvas = unsafe { athgfx::Canvas::new(fb.ptr, w, h, 4) };
+        let p = &ath_tokens::DARK;
         canvas.fill_rect(0, 0, w, h, p.bg_base);
 
         // Rae mark — accent-tinted, centered, sized to the screen.
-        let a = rae_tokens::derive_accent(rae_tokens::RAEBLUE, p);
+        let a = ath_tokens::derive_accent(ath_tokens::RAEBLUE, p);
         let mark = (h / 8).clamp(64, 128);
         let mark_x = (w - mark) / 2;
         let mark_y = h / 2 - mark;
         canvas.draw_icon(
-            raegfx::icon::Icon::RaeLogo,
+            athgfx::icon::Icon::RaeLogo,
             mark_x as i32,
             mark_y as i32,
             mark as i32,
@@ -856,15 +856,15 @@ impl SplashScreen {
         );
         // Wordmark under the mark.
         let word = "AthenaOS";
-        let style = rae_tokens::TYPE_TITLE;
-        let ww = canvas.measure_text_aa(word, style, raegfx::text::FontFamily::Sans);
+        let style = ath_tokens::TYPE_TITLE;
+        let ww = canvas.measure_text_aa(word, style, athgfx::text::FontFamily::Sans);
         canvas.draw_text_aa(
             (w as i32 - ww) / 2,
             (mark_y + mark + 16) as i32,
             word,
             style,
             p.text_primary,
-            raegfx::text::FontFamily::Sans,
+            athgfx::text::FontFamily::Sans,
         );
         self.render_progress();
 
@@ -891,16 +891,16 @@ impl SplashScreen {
             return;
         }
         let (w, h) = (fb.width as usize, fb.height as usize);
-        let mut canvas = unsafe { raegfx::Canvas::new(fb.ptr, w, h, 4) };
-        let p = &rae_tokens::DARK;
-        let a = rae_tokens::derive_accent(rae_tokens::RAEBLUE, p);
+        let mut canvas = unsafe { athgfx::Canvas::new(fb.ptr, w, h, 4) };
+        let p = &ath_tokens::DARK;
+        let a = ath_tokens::derive_accent(ath_tokens::RAEBLUE, p);
 
         let track_w = (w / 4).clamp(200, 360);
         let track_h = 4usize;
         let tx = (w - track_w) / 2;
         let ty = h / 2 + 40;
         // Clear the band (track + caption) back to the field, then repaint.
-        let cap_lh = rae_tokens::TYPE_CAPTION.line_height as usize;
+        let cap_lh = ath_tokens::TYPE_CAPTION.line_height as usize;
         canvas.fill_rect(0, ty, w, track_h + 14 + cap_lh, p.bg_base);
         canvas.fill_rounded_rect(tx, ty, track_w, track_h, 2, p.bg_elevated);
         let fill = track_w * (self.progress_percent as usize).min(100) / 100;
@@ -909,16 +909,16 @@ impl SplashScreen {
         }
         let msg_w = canvas.measure_text_aa(
             self.message,
-            rae_tokens::TYPE_CAPTION,
-            raegfx::text::FontFamily::Sans,
+            ath_tokens::TYPE_CAPTION,
+            athgfx::text::FontFamily::Sans,
         );
         canvas.draw_text_aa(
             (w as i32 - msg_w) / 2,
             (ty + track_h + 14) as i32,
             self.message,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             p.text_secondary,
-            raegfx::text::FontFamily::Sans,
+            athgfx::text::FontFamily::Sans,
         );
     }
 }
@@ -968,8 +968,8 @@ pub fn splash_progress(percent: u8, msg: &'static str) {
     let backdrop_intact = crate::framebuffer::fb_info()
         .filter(|f| f.stride == f.width && f.bytes_per_pixel == 4)
         .map(|f| {
-            let c = unsafe { raegfx::Canvas::new(f.ptr, f.width as usize, f.height as usize, 4) };
-            c.get_pixel(8, 8) == rae_tokens::DARK.bg_base
+            let c = unsafe { athgfx::Canvas::new(f.ptr, f.width as usize, f.height as usize, 4) };
+            c.get_pixel(8, 8) == ath_tokens::DARK.bg_base
         })
         .unwrap_or(false);
     if backdrop_intact {
@@ -1207,7 +1207,7 @@ pub fn set_tsc_mhz(mhz: u64) {
 }
 
 /// Calibrated TSC frequency in MHz (= ticks per microsecond), or 0 if not yet
-/// calibrated. Used by `/proc/raeen/perf` to convert TSC deltas to µs.
+/// calibrated. Used by `/proc/athena/perf` to convert TSC deltas to µs.
 pub fn tsc_mhz() -> u64 {
     TSC_MHZ.load(Ordering::Relaxed)
 }

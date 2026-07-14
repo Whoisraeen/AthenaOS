@@ -12,4 +12,4 @@ for hook in pre-commit commit-msg; do
   echo "Installed $hook -> $REPO_ROOT/.git/hooks/$hook"
 done
 chmod +x "$REPO_ROOT/scripts/ownership-lock.sh" "$REPO_ROOT/scripts/architecture-gate.sh" 2>/dev/null || true
-echo "Remember to set your agent identity, e.g.:  export RAEEN_AGENT=opus"
+echo "Remember to set your agent identity, e.g.:  export ATHENA_AGENT=opus"

@@ -93,6 +93,6 @@ devices. *(Planned.)*
 | Accessibility transforms | ⬜ |
 
 **Two concrete next steps:** (1) the **USB hub** driver unblocks real Athena input; (2) a
-**`/proc/raeen/input`** latency counter (report-arrival → event-dispatch → consumer-wake)
+**`/proc/athena/input`** latency counter (report-arrival → event-dispatch → consumer-wake)
 turns the ⬜ latency rows measurable. Both follow the `NATIVE_DRIVER_PLAN.md` method and the
 `TESTING_STRATEGY.md` ladder.

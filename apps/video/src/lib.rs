@@ -3,25 +3,25 @@
 //! The first-party local media player — QuickTime / Windows Media Player on day
 //! one — that wires three already-built engines into a clickable app:
 //!
-//!  1. **[`rae_mp4`]** demuxes a local `.mp4` (ISO-BMFF box tree → tracks → sample
+//!  1. **[`ath_mp4`]** demuxes a local `.mp4` (ISO-BMFF box tree → tracks → sample
 //!     tables): for every sample its absolute file offset/size/dts/keyframe, plus
 //!     the codec fourcc and codec-private config (`avcC` for H.264, `esds` for
 //!     AAC). [`open_media`] splits the file into a video track (H.264) and an audio
 //!     track (AAC).
-//!  2. **`raemedia::H264Decoder`** consumes the video elementary stream
+//!  2. **`athmedia::H264Decoder`** consumes the video elementary stream
 //!     ([`decode_first_video`]); decoded YUV420 frames go through
-//!     `raemedia::PixelConverter::yuv420_to_rgb` → ARGB8888 → the canvas blit path
+//!     `athmedia::PixelConverter::yuv420_to_rgb` → ARGB8888 → the canvas blit path
 //!     (the same `draw_pixel`/`fill_rect` Canvas seam the Photos app uses).
-//!  3. **`raemedia::AacDecoder`** consumes the audio elementary stream
+//!  3. **`athmedia::AacDecoder`** consumes the audio elementary stream
 //!     ([`decode_audio_pcm`]) → f32 PCM → resampled/interleaved i16 stereo →
-//!     `raekit::sys::audio_submit` (the exact mixer path `apps/music` uses).
+//!     `athkit::sys::audio_submit` (the exact mixer path `apps/music` uses).
 //!
 //! ## Honest scope (v1)
 //! - **Demux: real.** The full sample table is resolved; the transport bar, time
 //!   readout, and seek are driven by the real per-sample DTS table — not a stub.
-//! - **AAC audio: real.** `raemedia::aac::decode_rdb` performs a genuine IMDCT
+//! - **AAC audio: real.** `athmedia::aac::decode_rdb` performs a genuine IMDCT
 //!   filterbank decode; v1 submits the decoded PCM through the live mixer path.
-//! - **H.264 video: real for baseline I-frame keyframes.** `raemedia::H264Decoder`
+//! - **H.264 video: real for baseline I-frame keyframes.** `athmedia::H264Decoder`
 //!   is a bit-exact baseline decoder (Exp-Golomb SPS geometry, CAVLC, 4×4/16×16
 //!   intra prediction, inverse transform, deblocking — verified against ffmpeg
 //!   golden YUV). [`decode_first_video`] feeds the demuxed keyframe through it and
@@ -33,8 +33,8 @@
 //! - **Software raster only** (no GPU this session).
 //!
 //! ## Hostile-input posture (a media file is untrusted data)
-//! Every byte goes through `rae_mp4` (bounded box/sample counts, every offset
-//! bounds-checked → `Err`, never panics/OOM/loops) and the `raemedia` decoders
+//! Every byte goes through `ath_mp4` (bounded box/sample counts, every offset
+//! bounds-checked → `Err`, never panics/OOM/loops) and the `athmedia` decoders
 //! (which return `Err`/`None`, never panic, on malformed input). A bad file renders
 //! a "can't play this file" placeholder and the app stays alive.
 //!
@@ -56,7 +56,7 @@
 //! just calls [`run`].
 
 // no_std for the real userspace ELF; std under `cargo test` (or the `host`
-// feature) so the host KAT can link without raekit's bare-ELF lang items colliding
+// feature) so the host KAT can link without athkit's bare-ELF lang items colliding
 // with std.
 #![cfg_attr(not(test), no_std)]
 
@@ -66,13 +66,13 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
-use rae_mp4::{Codec, Mp4, Track, TrackKind};
-use rae_tokens::{Palette, DARK};
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
-use raemedia::{
+use ath_mp4::{Codec, Mp4, Track, TrackKind};
+use ath_tokens::{Palette, DARK};
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
+use athmedia::{
     AacDecoder, AudioDecoder, H264Decoder, MediaPacket, PacketFlags, PixelConverter, VideoDecoder,
 };
 
@@ -92,7 +92,7 @@ const TRANSPORT_H: usize = 56;
 const PRESENT_X: i32 = 180;
 const PRESENT_Y: i32 = 70;
 
-// ── Palette (rae_tokens — the shared Liquid Glass design language) ───────────
+// ── Palette (ath_tokens — the shared Liquid Glass design language) ───────────
 
 const BG: u32 = DARK.bg_base;
 const TITLE_BG: u32 = DARK.bg_overlay;
@@ -105,11 +105,11 @@ const TRACK_BG: u32 = DARK.bg_raised; // progress trough
 const STROKE_HL: u32 = DARK.stroke_strong;
 
 fn accent() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).base
+    ath_tokens::derive_accent(theme_seed(), &DARK).base
 }
 
 fn theme_seed() -> u32 {
-    raekit::sys::theme_accent()
+    athkit::sys::theme_accent()
 }
 
 // ── Audio contract (mirrors apps/music) ──────────────────────────────────────
@@ -160,7 +160,7 @@ pub struct Media {
 pub enum OpenError {
     /// The file could not be read / was empty.
     Read,
-    /// `rae_mp4` rejected the container (not an MP4, fragmented, truncated, …).
+    /// `ath_mp4` rejected the container (not an MP4, fragmented, truncated, …).
     Demux,
     /// The container parsed but carries neither a video nor an audio track.
     NoPlayableTrack,
@@ -215,7 +215,7 @@ impl Media {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// Engine wiring 1/3 — open + demux (rae_mp4). REAL.
+// Engine wiring 1/3 — open + demux (ath_mp4). REAL.
 // ════════════════════════════════════════════════════════════════════════════
 
 /// Demux an in-memory MP4 and pick the H.264 video track + AAC audio track.
@@ -275,11 +275,11 @@ pub fn open_media(data: Vec<u8>) -> Result<Media, OpenError> {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// Engine wiring 2/3 — H.264 video decode (raemedia::H264Decoder).
+// Engine wiring 2/3 — H.264 video decode (athmedia::H264Decoder).
 //
 // The decoder is invoked through its real `VideoDecoder` trait against the real
 // demuxed elementary stream. For a baseline I-frame keyframe it reconstructs an
-// actual YUV420 picture (bit-exact vs ffmpeg golden — see the raemedia KATs); we
+// actual YUV420 picture (bit-exact vs ffmpeg golden — see the athmedia KATs); we
 // convert that surface (YUV420 → RGB → ARGB) and display it. A stream the baseline
 // decoder doesn't support (CABAC, inter beyond the first keyframe) returns cleanly
 // as `None` → the honest "can't decode this stream" placeholder, never a fake frame.
@@ -430,9 +430,9 @@ fn avcc_extract_param_sets(avcc: &[u8]) -> Vec<u8> {
     out
 }
 
-/// Convert a `raemedia::VideoFrame` (YUV420p planes) to a packed ARGB8888
+/// Convert a `athmedia::VideoFrame` (YUV420p planes) to a packed ARGB8888
 /// [`RgbFrame`] via the engine's own `PixelConverter::yuv420_to_rgb`.
-fn yuv_frame_to_argb(frame: &raemedia::VideoFrame) -> RgbFrame {
+fn yuv_frame_to_argb(frame: &athmedia::VideoFrame) -> RgbFrame {
     let w = frame.width;
     let h = frame.height;
     // Planes: [0]=Y, [1]=U, [2]=V. Missing planes degrade to gray (bounds-checked
@@ -459,10 +459,10 @@ fn yuv_frame_to_argb(frame: &raemedia::VideoFrame) -> RgbFrame {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// Engine wiring 3/3 — AAC audio decode (raemedia::AacDecoder). REAL.
+// Engine wiring 3/3 — AAC audio decode (athmedia::AacDecoder). REAL.
 //
 // Decode every audio sample → f32 PCM → resample to 48 kHz / upmix to stereo →
-// interleaved i16, the exact shape `raekit::sys::audio_submit` (apps/music) wants.
+// interleaved i16, the exact shape `athkit::sys::audio_submit` (apps/music) wants.
 // ════════════════════════════════════════════════════════════════════════════
 
 /// Decode the whole audio track to interleaved 48 kHz i16 stereo PCM. Empty if
@@ -721,7 +721,7 @@ impl App {
     }
 
     fn reset_tick(&mut self) {
-        self.last_tick_ns = raekit::sys::time_ns();
+        self.last_tick_ns = athkit::sys::time_ns();
     }
 
     fn toggle_play(&mut self) {
@@ -741,7 +741,7 @@ impl App {
             return false;
         }
         let dur = self.duration_ms();
-        let now = raekit::sys::time_ns();
+        let now = athkit::sys::time_ns();
         if self.last_tick_ns == 0 {
             self.last_tick_ns = now;
             return false;
@@ -775,7 +775,7 @@ impl App {
             return;
         }
         let end = self.pcm_pos + chunk_frames * 2;
-        let accepted = raekit::sys::audio_submit(&self.pcm[self.pcm_pos..end]) as usize;
+        let accepted = athkit::sys::audio_submit(&self.pcm[self.pcm_pos..end]) as usize;
         self.pcm_pos += accepted * 2;
     }
 
@@ -812,7 +812,7 @@ impl App {
                 self.seek_frac(permille as f32 / 1000.0);
                 true
             }
-            Action::Close => raekit::sys::exit(0),
+            Action::Close => athkit::sys::exit(0),
             Action::None => false,
         }
     }
@@ -865,14 +865,14 @@ fn progress_rect() -> Rect {
 
 /// Slurp a file into memory via the VFS read syscalls (the apps/music pattern).
 fn read_file(path: &str) -> Option<Vec<u8>> {
-    let fd = raekit::sys::open(path, 0);
+    let fd = athkit::sys::open(path, 0);
     if fd == u64::MAX {
         return None;
     }
     let mut buf = Vec::new();
     let mut chunk = [0u8; 8192];
     loop {
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 {
             break;
         }
@@ -881,7 +881,7 @@ fn read_file(path: &str) -> Option<Vec<u8>> {
             break;
         }
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     Some(buf)
 }
 
@@ -890,8 +890,8 @@ fn read_file(path: &str) -> Option<Vec<u8>> {
 fn default_media_path() -> PathBuf {
     let mut p = PathBuf::new();
     let mut info = [0u8; 256];
-    if raekit::sys::session_info(&mut info).is_some() {
-        if let Some(home) = raekit::sys::session_home_from(&info) {
+    if athkit::sys::session_info(&mut info).is_some() {
+        if let Some(home) = athkit::sys::session_home_from(&info) {
             let mut s = String::new();
             s.push_str(home);
             s.push_str("/Videos/sample.mp4");
@@ -914,9 +914,9 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect_gradient(0, 0, WIN_W, TITLE_H, DARK.bg_elevated, TITLE_BG);
     canvas.draw_text_aa(
         12,
-        ((TITLE_H.saturating_sub(rae_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
+        ((TITLE_H.saturating_sub(ath_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
         "Video",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -925,15 +925,15 @@ fn render(app: &App, canvas: &mut Canvas) {
         4,
         20,
         20,
-        rae_tokens::RADIUS_XS as usize,
+        ath_tokens::RADIUS_XS as usize,
         DARK.state_danger,
     );
-    let x_w = canvas.measure_text_aa("X", rae_tokens::TYPE_LABEL, FontFamily::Sans);
+    let x_w = canvas.measure_text_aa("X", ath_tokens::TYPE_LABEL, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 18) as i32 - x_w / 2,
-        (4 + (20 - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
+        (4 + (20 - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
         "X",
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         0xFF_FF_FF_FF,
         FontFamily::Sans,
     );
@@ -950,24 +950,24 @@ fn render(app: &App, canvas: &mut Canvas) {
     let st_y = WIN_H - STATUS_H;
     canvas.fill_rect(0, st_y, WIN_W, STATUS_H, STATUS_BG);
     let st_ty = (st_y
-        + (STATUS_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+        + (STATUS_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
         as i32;
     let status = status_line(app);
     canvas.draw_text_aa(
         12,
         st_ty,
         status,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
     let hint = "Space:play/pause  Left/Right:seek  Esc:quit";
-    let hw = canvas.measure_text_aa(hint, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let hw = canvas.measure_text_aa(hint, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 12) as i32 - hw,
         st_ty,
         hint,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -983,12 +983,12 @@ fn render_video_area(app: &App, canvas: &mut Canvas, ay: usize, ah: usize) {
             Some(OpenError::Read) => "Couldn't read the file.",
             None => "Open a .mp4 to play.",
         };
-        let mw = canvas.measure_text_aa(msg, rae_tokens::TYPE_BODY, FontFamily::Sans);
+        let mw = canvas.measure_text_aa(msg, ath_tokens::TYPE_BODY, FontFamily::Sans);
         canvas.draw_text_aa(
             (WIN_W as i32 - mw) / 2,
             (ay + ah / 2) as i32,
             msg,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -1006,12 +1006,12 @@ fn render_video_area(app: &App, canvas: &mut Canvas, ay: usize, ah: usize) {
         // baseline decoder can't reconstruct (CABAC, inter-only, unsupported profile)
         // — so say "can't decode", not "pending". Audio + transport still work.
         let msg = "Can't decode this video stream (unsupported H.264 features).";
-        let mw = canvas.measure_text_aa(msg, rae_tokens::TYPE_BODY, FontFamily::Sans);
+        let mw = canvas.measure_text_aa(msg, ath_tokens::TYPE_BODY, FontFamily::Sans);
         canvas.draw_text_aa(
             (WIN_W as i32 - mw) / 2,
             (ay + ah / 2 - 14) as i32,
             msg,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -1020,12 +1020,12 @@ fn render_video_area(app: &App, canvas: &mut Canvas, ay: usize, ah: usize) {
             let mut buf = [0u8; 64];
             let n = fmt_track_summary(m, &mut buf);
             if let Ok(s) = core::str::from_utf8(&buf[..n]) {
-                let sw = canvas.measure_text_aa(s, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+                let sw = canvas.measure_text_aa(s, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
                 canvas.draw_text_aa(
                     (WIN_W as i32 - sw) / 2,
                     (ay + ah / 2 + 8) as i32,
                     s,
-                    rae_tokens::TYPE_CAPTION,
+                    ath_tokens::TYPE_CAPTION,
                     accent(),
                     FontFamily::Sans,
                 );
@@ -1045,20 +1045,20 @@ fn render_transport(app: &App, canvas: &mut Canvas) {
         pb.y,
         pb.w,
         pb.h,
-        rae_tokens::RADIUS_SM as usize,
+        ath_tokens::RADIUS_SM as usize,
         accent(),
     );
     let glyph = if app.playing { "||" } else { ">" };
-    let gw = canvas.measure_text_aa(glyph, rae_tokens::TYPE_SUBTITLE, FontFamily::Sans);
+    let gw = canvas.measure_text_aa(glyph, ath_tokens::TYPE_SUBTITLE, FontFamily::Sans);
     canvas.draw_text_aa(
         pb.x as i32 + (pb.w as i32 - gw) / 2,
         (pb.y
             + (pb
                 .h
-                .saturating_sub(rae_tokens::TYPE_SUBTITLE.line_height as usize))
+                .saturating_sub(ath_tokens::TYPE_SUBTITLE.line_height as usize))
                 / 2) as i32,
         glyph,
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         0xFF_0A_0E_1A,
         FontFamily::Sans,
     );
@@ -1083,13 +1083,13 @@ fn render_transport(app: &App, canvas: &mut Canvas) {
     let mut buf = [0u8; 32];
     let n = fmt_time_pair(app.pos_ms, dur, &mut buf);
     if let Ok(s) = core::str::from_utf8(&buf[..n]) {
-        let sw = canvas.measure_text_aa(s, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+        let sw = canvas.measure_text_aa(s, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
         canvas.draw_text_aa(
             (WIN_W - 12) as i32 - sw,
-            (ty + (TRANSPORT_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+            (ty + (TRANSPORT_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
                 as i32,
             s,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             TEXT_FG,
             FontFamily::Sans,
         );
@@ -1218,9 +1218,9 @@ fn fmt_track_summary(m: &Media, buf: &mut [u8]) -> usize {
 // ════════════════════════════════════════════════════════════════════════════
 
 pub fn run() -> ! {
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
@@ -1238,7 +1238,7 @@ pub fn run() -> ! {
     }
 
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     let mut extended = false;
     let mut left_was_down = false;
@@ -1248,7 +1248,7 @@ pub fn run() -> ! {
         let mut mouse_activity = false;
         let mut left_down = left_was_down;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -1257,15 +1257,15 @@ pub fn run() -> ! {
         }
         if mouse_activity || left_down != left_was_down {
             if left_down && !left_was_down {
-                let (cx, cy, _btn) = raekit::sys::cursor_pos();
-                let (ox, oy) = raekit::sys::surface_origin(sid)
+                let (cx, cy, _btn) = athkit::sys::cursor_pos();
+                let (ox, oy) = athkit::sys::surface_origin(sid)
                     .unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
                 let lx = (cx as i32).saturating_sub(ox as i32);
                 let ly = (cy as i32).saturating_sub(oy as i32);
                 let action = app.hit(lx, ly);
                 if app.dispatch(action) {
                     render(&app, &mut canvas);
-                    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 }
             }
             left_was_down = left_down;
@@ -1276,13 +1276,13 @@ pub fn run() -> ! {
             app.pump_audio();
             if app.tick_clock() {
                 render(&app, &mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
             }
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
         let sc = key as u8;
@@ -1325,13 +1325,13 @@ pub fn run() -> ! {
                 });
                 dirty = true;
             }
-            (false, 0x01) => raekit::sys::exit(0), // Esc = quit
+            (false, 0x01) => athkit::sys::exit(0), // Esc = quit
             _ => {}
         }
 
         if dirty {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
     }
 }
@@ -1350,7 +1350,7 @@ fn _palette_marker() -> &'static Palette {
 // in-memory MP4 into a video (H.264) + audio (AAC) track with a non-empty sample
 // table at the right first-sample offset/size, AND the decode path is invoked and
 // degrades cleanly (no panic). The MP4 is a hand-assembled minimal-but-valid
-// ftyp/moov/mdat box tree (the rae_mp4 test-fixture shape) with one `avc1` track
+// ftyp/moov/mdat box tree (the ath_mp4 test-fixture shape) with one `avc1` track
 // and one `mp4a` track. A broken demux, a dropped track, a wrong codec id, a wrong
 // offset, or a decode panic all fail the test.
 // ════════════════════════════════════════════════════════════════════════════
@@ -1359,7 +1359,7 @@ mod tests {
     use super::*;
     use alloc::vec;
 
-    // ── Minimal BMFF box builders (mirror rae_mp4/src/tests.rs) ──────────────
+    // ── Minimal BMFF box builders (mirror ath_mp4/src/tests.rs) ──────────────
 
     fn bx(ty: &[u8; 4], body: &[u8]) -> Vec<u8> {
         let mut v = Vec::new();
@@ -1720,7 +1720,7 @@ mod tests {
 
     // ── 5. The AAC decode path is invoked end-to-end and never panics. ────────
     //
-    // raemedia::aac::decode_rdb is a REAL decoder; on this tiny synthetic RDB it may
+    // athmedia::aac::decode_rdb is a REAL decoder; on this tiny synthetic RDB it may
     // produce silence or a short frame. We assert the path runs and yields a
     // (possibly empty) i16 stereo buffer with an even length (interleaved L,R) — the
     // exact contract `audio_submit` requires.
@@ -1796,7 +1796,7 @@ mod tests {
     // ════════════════════════════════════════════════════════════════════════
 
     /// The committed real baseline I-frame fixture (16×16, ffmpeg-authored). Same
-    /// bytes as `components/raemedia/tests/fixtures/frame16.mp4`; embedded here so
+    /// bytes as `components/athmedia/tests/fixtures/frame16.mp4`; embedded here so
     /// the KAT is self-contained (cross-crate test-file paths are fragile).
     static FRAME16_MP4: &[u8] = include_bytes!("../tests/fixtures/frame16.mp4");
 

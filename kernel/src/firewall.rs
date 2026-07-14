@@ -1218,7 +1218,7 @@ pub fn run_boot_smoketest() {
     }
 }
 
-/// `/proc/raeen/firewall` — live firewall profile, rule count, connection
+/// `/proc/athena/firewall` — live firewall profile, rule count, connection
 /// tracking and verdict statistics. MasterChecklist Phase 10.2.
 pub fn dump_text() -> String {
     let guard = FIREWALL.lock();

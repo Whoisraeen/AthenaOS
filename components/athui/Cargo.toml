@@ -1,0 +1,33 @@
+[package]
+name = "athui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "AthUI — native UI framework on Skia + wgpu. Compositor-aware, GPU-accelerated, glassmorphic by default."
+
+[dependencies]
+athgfx = { path = "../athgfx" }
+athfont = { path = "../athfont" }
+# Shared design tokens (ADR 0003). Re-exported as `athui::tokens` so the
+# design-language handoff name resolves; the single source of truth for the
+# palette/accent/radius/motion tokens that apps used to each redefine.
+ath_tokens = { path = "../ath_tokens" }
+libm = "0.2"
+# wgpu + skia-safe require std; gate behind a userspace-only feature so
+# the kernel's transitive build doesn't try to compile them. The actual
+# wgpu/skia renderer modules use `#[cfg(feature = "gpu_userspace")]`.
+wgpu        = { version = "0.19", default-features = false, optional = true }
+skia-safe   = { version = "0.73.0", features = ["gpu", "gl", "vulkan", "textlayout"], optional = true }
+# cosmic-text: pure-Rust text shaping (HarfBuzz port + swash rasterizer). MIT.
+# Handles ligatures, BiDi, font fallback — the hard part of premium text quality.
+# Concept §AthUI: "native rendering, premium feel."
+# MasterChecklist OSS references: Phase 8.1 Skia integration (text quality).
+# Study cosmic-text/src/layout.rs for glyph positioning fed to wgpu.
+cosmic-text = { version = "0.12", optional = true }
+
+[features]
+default = []
+gpu_userspace = ["wgpu", "skia-safe", "athgfx/gpu_userspace"]
+# Enable cosmic-text for premium text shaping alongside Skia
+rich_text = ["cosmic-text"]

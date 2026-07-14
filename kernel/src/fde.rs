@@ -180,9 +180,9 @@ pub fn init() {
 /// AthFS superblock magic must be ciphertext at rest too; (3) a wrong key
 /// must not decrypt what the right key decrypts.
 pub fn run_boot_smoketest() {
-    const CANARY: &[u8] = b"FDE-PLAINTEXT-CANARY-raeen-0x52414545";
-    const PASSPHRASE: &[u8] = b"raeen-fde-selftest-passphrase";
-    const SALT: &[u8] = b"raeen-fde-selftest-salt";
+    const CANARY: &[u8] = b"FDE-PLAINTEXT-CANARY-athena-0x52414545";
+    const PASSPHRASE: &[u8] = b"athena-fde-selftest-passphrase";
+    const SALT: &[u8] = b"athena-fde-selftest-salt";
 
     // Real volumes derive this with Argon2id (RFC 9106); the selftest uses
     // PBKDF2 at low cost to keep boot time flat — the binding under test is
@@ -196,9 +196,9 @@ pub fn run_boot_smoketest() {
         return;
     };
 
-    let io = crate::raefs::with_custom_raefs_device(Box::new(enc_dev), || {
-        let wrote = crate::raefs::write_flat_file("fde-canary.txt", CANARY);
-        let read = crate::raefs::read_flat_file("fde-canary.txt");
+    let io = crate::athfs::with_custom_athfs_device(Box::new(enc_dev), || {
+        let wrote = crate::athfs::write_flat_file("fde-canary.txt", CANARY);
+        let read = crate::athfs::read_flat_file("fde-canary.txt");
         (wrote, read.as_deref() == Some(CANARY))
     });
     let (wrote, read_ok) = io.unwrap_or((false, false));
@@ -253,7 +253,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/fde` — FDE binding state.
+/// `/proc/athena/fde` — FDE binding state.
 pub fn dump_text() -> String {
     alloc::format!(
         "# AthFS full-disk encryption (AES-256-XTS, tweak=LBA)\ncipher: AES-256-XTS\nkdf: Argon2id (RFC 9106; selftest uses PBKDF2-low)\nsectors_encrypted: {}\nsectors_decrypted: {}\nroot_volume_encrypted: false (opt-in at install; binding proven by smoketest)\n",

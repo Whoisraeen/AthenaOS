@@ -5,7 +5,7 @@ picture** for the first keyframe of a real H.264 `.mp4`, instead of its current 
 "video: decode pending" gray placeholder. The container, the avcC→Annex-B conversion, the
 NAL framing the decoder receives, the audio half (AAC), and the YUV→RGB display path are all
 already built and proven (see "Already in the tree"). The **only** delta is the body of
-`raemedia::H264Decoder` — replacing the flat-gray `produce_frame` stub with a real
+`athmedia::H264Decoder` — replacing the flat-gray `produce_frame` stub with a real
 intra-frame reconstruction pipeline.
 
 This is the video equivalent of `docs/research/aac-lc-decoder.md` — same discipline:
@@ -20,7 +20,7 @@ doc and follows the pipeline; nothing here requires web access.
 > Format) is the dominant container for both — phone video, downloaded video, and AAC audio
 > (`.m4a`/`.mp4`) all ship as BMFF."
 > (LEGACY_GAMING_CONCEPT.md §creators / media — the "it just works" media pillar; the same line
-> `rae_mp4/src/lib.rs` and the AAC spec quote.)
+> `ath_mp4/src/lib.rs` and the AAC spec quote.)
 
 And the manifesto's first principle:
 
@@ -36,7 +36,7 @@ keyframe, which is the gate before motion-compensated playback.
 
 Do **not** rebuild these. The decoder body is the **only** delta.
 
-- `components/rae_mp4/src/lib.rs` — **[x] built (host-KAT'd).** Resolves each sample's absolute
+- `components/ath_mp4/src/lib.rs` — **[x] built (host-KAT'd).** Resolves each sample's absolute
   offset/size (`Track::sample_data`), splits H.264 (`avc1`/`avc3`) vs AAC tracks, and surfaces
   the **`avcC` config record** in `Track::codec_private`. Sync (key) samples are flagged
   (`Sample::is_sync`). The demuxer never parses codec internals.
@@ -50,7 +50,7 @@ Do **not** rebuild these. The decoder body is the **only** delta.
   `Ok(None)` on a 0-sized or absent frame. **The wiring is complete and correct** — it
   "will display real picture the moment the engine learns reconstruction." No change needed in
   `apps/video` for v1.
-- `components/raemedia/src/lib.rs` — **[~] scaffold, emits flat gray.** The pieces to keep:
+- `components/athmedia/src/lib.rs` — **[~] scaffold, emits flat gray.** The pieces to keep:
   - `VideoDecoder` trait (`codec`, `decode(&MediaPacket) -> Result<Option<VideoFrame>>`,
     `flush`, `reset`, `capabilities`) — **frozen, do NOT change** (the consumer depends on it).
   - `VideoFrame { width, height, pixel_format, planes: Vec<VideoPlane{data,stride}>, pts,
@@ -70,7 +70,7 @@ Do **not** rebuild these. The decoder body is the **only** delta.
     reconstructed frame.
   - `PixelConverter::yuv420_to_rgb` — **[x] built.** BT.601 integer conversion the consumer
     uses. Not on the decode path but confirms the output contract.
-- `components/raemedia/src/{jpeg.rs, mp3.rs, mp3_dsp.rs, mp3_imdct_tables.rs, aac.rs}` — **the
+- `components/athmedia/src/{jpeg.rs, mp3.rs, mp3_dsp.rs, mp3_imdct_tables.rs, aac.rs}` — **the
   no_std soft-float decode-style precedent.** In particular:
   - `jpeg.rs` — **[x] built.** The closest sibling: a from-scratch **8×8 integer IDCT**,
     zig-zag, dequant, YCbCr→RGB, 4:2:0 chroma upsample, and the *exact* hostile-input posture
@@ -220,7 +220,7 @@ inline on the YUV planes). Populate the existing `H264Sps` fields (`width_mbs`, 
 **real** values. **Bound everything:** clamp `PicWidthInMbs`/`FrameHeightInMbs` so
 `PicSizeInMbs * 256 * 3/2 <= MAX_FRAME_BYTES` (a crafted SPS must not allocate gigabytes —
 return `Err` past a sane cap, e.g. 8192×8192). This is the #1 RCE/DoS surface; match
-`rae_mp4`'s posture.
+`ath_mp4`'s posture.
 
 ### §2 — PPS parse — `parse_pps()` (§7.3.2.2)
 
@@ -413,7 +413,7 @@ Cb/Cr at half the crop offsets, 4:2:0). `H264Decoder::decode` returns `Ok(Some(f
 slice packet, `Ok(None)` for the parameter-set-only packet (matching the consumer's
 expectation — it `let _ =`s the param-set result).
 
-**Untrusted-input discipline (non-negotiable, matches `jpeg.rs`/`rae_mp4`):** every
+**Untrusted-input discipline (non-negotiable, matches `jpeg.rs`/`ath_mp4`):** every
 Exp-Golomb/CAVLC read is bounds-checked (a read past the RBSP end returns an error → the frame
 yields `Err`/`None`, never a panic); every count derived from the bitstream (`PicSizeInMbs`,
 `mb_qp_delta`, `TotalCoeff`, intra mode index, `n_filt`-equivalents) is clamped to its ITU
@@ -459,7 +459,7 @@ keeps its honest "decode pending / can't play this file" UI and stays alive.
 ## §D — Data tables (generator-input form + the constant tables)
 
 The implementer transcribes these into `tools/h264_vlc_gen/gen.rs` (which re-verifies the VLC
-tables are prefix-free, §7.1) and `components/raemedia/src/h264_tables.rs`. The numeric
+tables are prefix-free, §7.1) and `components/athmedia/src/h264_tables.rs`. The numeric
 contents are ITU-T H.264 tables; this doc cites the clause + the FFmpeg/openh264 array name for
 each so the implementer can cross-check entry-for-entry (the corroboration gate). The tables are
 **not** reproduced in full inline here (CAVLC is ~thousands of VLC entries across the nC
@@ -514,9 +514,9 @@ arrays are permissive-enough to read (openh264 is BSD-2).*
 
 ## Interface needs (NEEDS-INTERFACE)
 
-**None.** Entirely inside the `raemedia` userspace crate, consuming `rae_mp4` output through its
+**None.** Entirely inside the `athmedia` userspace crate, consuming `ath_mp4` output through its
 existing public API and emitting through the existing `VideoDecoder`/`VideoFrame` contract. No
-new syscall, no `rae_abi` change, no kernel ABI surface, **and no change to the `VideoDecoder`
+new syscall, no `ath_abi` change, no kernel ABI surface, **and no change to the `VideoDecoder`
 trait or `VideoFrame` struct** (the consumer `apps/video` depends on the current shape). Only
 the *contents* of the decoded frame go from flat gray to real picture.
 
@@ -528,16 +528,16 @@ the *contents* of the decoded frame go from flat gray to real picture.
   value...}` rows; asserts each context is prefix-free + correctly dimensioned; emits the
   `h264_tables.rs` VLC arrays; prints `All H.264 CAVLC tables verified prefix-free.` (or
   `FAIL <table>: ...` + exit 1).
-- `components/raemedia/src/h264_tables.rs` — **new.** Generator output (the CAVLC VLC arrays) +
+- `components/athmedia/src/h264_tables.rs` — **new.** Generator output (the CAVLC VLC arrays) +
   the hand-reproduced `const` tables: `normAdjust4x4`, the chroma-QP map (Table 8-15), the 4×4
   zig-zag scan, the deblock α/β/tC0 tables (§D.4). All `const`, no runtime computation.
-- `components/raemedia/src/h264.rs` — **new.** The decoder core: an Exp-Golomb/CAVLC `BitReader`
+- `components/athmedia/src/h264.rs` — **new.** The decoder core: an Exp-Golomb/CAVLC `BitReader`
   (reuse the MP3/AAC bit-reader pattern) with RBSP emulation-prevention stripping; `parse_sps`,
   `parse_pps`, `parse_slice_header`; the MB loop (mb_type, intra modes, CAVLC residual); intra
   prediction (§5); inverse transform + dequant + reconstruction (§6); the deblocking pass (§7);
   the frame crop + `VideoFrame` build (§8). Concept docstring quoting the promise above. A
   FAIL-able `run_boot_smoketest()`.
-- `components/raemedia/src/lib.rs` — rewire `H264Decoder::process_nal` to call
+- `components/athmedia/src/lib.rs` — rewire `H264Decoder::process_nal` to call
   `h264::parse_sps`/`parse_pps`/`decode_slice` and `H264Decoder::decode` to return the
   reconstructed `VideoFrame`; **delete `produce_frame`'s flat-gray body** (or keep it only as
   the explicit fallback for an unsupported-feature `Err`, returning `Ok(None)` instead — prefer
@@ -551,7 +551,7 @@ the *contents* of the decoded frame go from flat gray to real picture.
 ## §7 — Host-KAT proof strategy (the reason for this spec)
 
 Proof is **host-KAT-first**, exactly like MP3/AAC: pure decode logic (no syscalls, `#![no_std]`
-+ `alloc`) runs under `cargo test -p raemedia` on the dev box, gated against a reference the
++ `alloc`) runs under `cargo test -p athmedia` on the dev box, gated against a reference the
 implementer generates with **ffmpeg in WSL2**. Every test below can print FAIL.
 
 ### §7.0 — Generating the in-tree fixture with ffmpeg (WSL2) — exact commands
@@ -611,14 +611,14 @@ the coeff_token (all nC contexts + chroma-DC), total_zeros, and run_before table
 well-formed before any decode.
 
 ### §7.2 — SPS geometry KAT (FAIL-able, the highest-value early proof)
-`cargo test -p raemedia h264_sps_geometry` MUST feed the SPS NAL extracted from `frame16.mp4`'s
+`cargo test -p athmedia h264_sps_geometry` MUST feed the SPS NAL extracted from `frame16.mp4`'s
 avcC and assert `parse_sps` returns `PicWidthInMbs==1, FrameHeightInMbs==1, display_width==16,
 display_height==16` (and 32×32 → 2×2 MBs, 32×32 display). A second case with a cropped SPS (a
 640×360 clip cropped from 640×368 coded) asserts the crop math. Negative case: a truncated SPS
 RBSP returns `Err`, not a panic. **This single test kills the "defaults to 1920×1080" bug.**
 
 ### §7.3 — CAVLC known-block KAT (FAIL-able)
-`cargo test -p raemedia h264_cavlc_block` MUST decode hand-built bitstreams: (a) the all-zero
+`cargo test -p athmedia h264_cavlc_block` MUST decode hand-built bitstreams: (a) the all-zero
 coeff_token (`TotalCoeff==0`) → an all-zero 16-coeff block; (b) a single-trailing-one block →
 the expected ±1 at the expected scan position; (c) a multi-level block with a known
 `total_zeros`+`run_before` → the exact 16-entry coefficient array (computed by hand in the
@@ -640,7 +640,7 @@ bS=3 normal filter at a known QP, and assert the output matches the §7-clause h
 assert `disable_deblocking_filter_idc==1` is an exact pass-through (identity).
 
 ### §7.6 — End-to-end keyframe KAT (the picture proof, FAIL-able) — the gate
-`cargo test -p raemedia h264_decode_known_keyframe` MUST:
+`cargo test -p athmedia h264_decode_known_keyframe` MUST:
 1. Decode the embedded `frame16.h264` (Annex-B) **and** drive the full `apps/video`-style path
    on `frame16.mp4` (avcC param sets + first sync sample) through `H264Decoder::decode`.
 2. Assert the **shape**: `Ok(Some(frame))`, `pixel_format==Yuv420p`, `width==16`, `height==16`,
@@ -661,10 +661,10 @@ assert `disable_deblocking_filter_idc==1` is an exact pass-through (identity).
 
 ### §7.7 — R10 boot smoketest + procfs (FAIL-able)
 - `h264::run_boot_smoketest()` decodes the embedded 16×16 keyframe and emits
-  `[raemedia] h264-iframe: <w>x<h> mbs=<n> bitexact=<bool> -> PASS` (FAIL if decode errors, the
+  `[athmedia] h264-iframe: <w>x<h> mbs=<n> bitexact=<bool> -> PASS` (FAIL if decode errors, the
   frame is the wrong shape, or `max_abs_diff != 0` against the embedded reference). This is the
   serial marker to grep on QEMU and iron.
-- The raemedia status/procfs line (alongside the AAC `aac=...` / MP3 `mp3=...` entries) MUST
+- The athmedia status/procfs line (alongside the AAC `aac=...` / MP3 `mp3=...` entries) MUST
   report `h264=iframe` (was `h264=pending`) once decode is wired.
 - The `h264.rs` module docstring + `decode_slice` MUST quote the Concept promise at the top of
   this spec.
@@ -672,27 +672,27 @@ assert `disable_deblocking_filter_idc==1` is an exact pass-through (identity).
 ## Acceptance criteria (the exact proof)
 
 - VLC generator prints `All H.264 CAVLC tables verified prefix-free.` exit 0 (§7.1).
-- `cargo test -p raemedia` passes `h264_sps_geometry`, `h264_cavlc_block`,
+- `cargo test -p athmedia` passes `h264_sps_geometry`, `h264_cavlc_block`,
   `h264_inverse_transform`, `h264_intra_dc_16x16`, `h264_intra_4x4_modes`, `h264_deblock_edge`,
   and `h264_decode_known_keyframe` (§7.2–7.6) — the last asserting **bit-exact** match to the
   ffmpeg golden YUV for both 16×16 and 32×32 fixtures, plus the clean-degradation negatives.
-- Boot log MUST show `[raemedia] h264-iframe: 16x16 mbs=1 bitexact=true -> PASS` (§7.7).
-- `/proc/raeen` (the raemedia status line) MUST report `h264=iframe`.
+- Boot log MUST show `[athmedia] h264-iframe: 16x16 mbs=1 bitexact=true -> PASS` (§7.7).
+- `/proc/athena` (the athmedia status line) MUST report `h264=iframe`.
 - `H264Decoder::decode`, fed `apps/video`'s real param-set + first-sync-sample packets from a
   user `.mp4`, returns `Ok(Some(VideoFrame))` with real picture; `apps/video` displays it (no
   app code change). On iron, the Video app shows a real first frame of a `.mp4` (the `[x]` gate).
 - The `VideoDecoder` trait and `VideoFrame`/`VideoPlane` structs are **unchanged** (diff proves
-  it); no `rae_abi`/kernel touch.
+  it); no `ath_abi`/kernel touch.
 
 ## Handoff
 
-- **Implementer: raeen-media.** Pure `raemedia` userspace work over `rae_mp4`'s existing API and
+- **Implementer: athena-media.** Pure `athmedia` userspace work over `ath_mp4`'s existing API and
   the existing `VideoDecoder` contract; no kernel/ABI/app-code touch. (A one-line cosmetic
   `apps/video` docstring/UI-string update is an optional follow-up, not part of the decode gate.)
 - **Precise files touched:** new `tools/h264_vlc_gen/gen.rs`, new
-  `components/raemedia/src/h264.rs`, new `components/raemedia/src/h264_tables.rs`, and a rewire
-  of `components/raemedia/src/lib.rs` (`H264Decoder::process_nal` + `decode`). **Read
-  `components/raemedia/src/jpeg.rs` first** — its integer IDCT, dequant, chroma subsampling,
+  `components/athmedia/src/h264.rs`, new `components/athmedia/src/h264_tables.rs`, and a rewire
+  of `components/athmedia/src/lib.rs` (`H264Decoder::process_nal` + `decode`). **Read
+  `components/athmedia/src/jpeg.rs` first** — its integer IDCT, dequant, chroma subsampling,
   table-as-`const`, and never-panic error posture are the direct stylistic precedent; reuse the
   MP3/AAC bit-reader pattern.
 - **Generate the fixture in WSL2** with the exact ffmpeg commands in §7.0; commit the tiny

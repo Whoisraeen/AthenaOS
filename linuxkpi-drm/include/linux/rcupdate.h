@@ -9,7 +9,7 @@
  * preemption/grace-periods; with no kernel preemption to gate, rcu_read_lock/
  * unlock are honest NO-OPS. The DEFERRED-FREE side (call_rcu/synchronize_rcu)
  * has real ordering obligations — freeing too early is a use-after-free — so it
- * is declaration-only, backed by raeen_linuxkpi's grace-period machinery at M4.
+ * is declaration-only, backed by ath_linuxkpi's grace-period machinery at M4.
  * NOT faked to free immediately (SCOPE.md rule 9). License boundary: API surface.
  */
 #ifndef _LINUXKPI_LINUX_RCUPDATE_H
@@ -46,7 +46,7 @@ struct rcu_head {
 #define rcu_assign_pointer(p, v)      do { wmb(); (p) = (v); } while (0)
 #define RCU_INIT_POINTER(p, v)        do { (p) = (v); } while (0)
 
-/* deferred free / grace period — real obligations, backed by raeen_linuxkpi (M4) */
+/* deferred free / grace period — real obligations, backed by ath_linuxkpi (M4) */
 void call_rcu(struct rcu_head *head, void (*func)(struct rcu_head *head));
 void synchronize_rcu(void);
 #define kfree_rcu(ptr, rcu_member) call_rcu(&(ptr)->rcu_member, (void (*)(struct rcu_head *))0)

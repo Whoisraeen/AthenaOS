@@ -6,15 +6,15 @@
 //! frosted, translucent `glass.chrome` over the window/desktop behind it, with
 //! the signature iridescent rim, focused/unfocused states, traffic-light
 //! controls on the LEFT, real readable title text. The bar is rendered by the
-//! shipped `raegfx::glass::draw_glass_surface(.., GLASS_CHROME_DARK)` (tint →
+//! shipped `athgfx::glass::draw_glass_surface(.., GLASS_CHROME_DARK)` (tint →
 //! frost → WCAG legibility-cap → iridescent rim → top highlight) — byte-for-byte
 //! the same call the taskbar / Control Center / Files make, so the whole shell
-//! reads as one material. Every colour/metric is a `rae_tokens` value
+//! reads as one material. Every colour/metric is a `ath_tokens` value
 //! (docs/design/design-language.md), not a private constant, so a Vibe-Mode
 //! re-skin (one seed change) recolours the chrome with the rest of the shell.
 //!
-//! Real glyphs: title text now renders with `raegfx::Canvas::draw_text_aa`
-//! (grayscale-AA RaeSans via raefont) at the `type.label` style, with the 8×8
+//! Real glyphs: title text now renders with `athgfx::Canvas::draw_text_aa`
+//! (grayscale-AA RaeSans via athfont) at the `type.label` style, with the 8×8
 //! bitmap path kept as the font-engine's internal early-boot fallback. (The
 //! original renderer computed a glyph index then DISCARDED it and painted
 //! `(row+col+glyph)%3` procedural speckle — window titles were unreadable
@@ -25,7 +25,7 @@
 
 extern crate alloc;
 
-use rae_tokens::{
+use ath_tokens::{
     GlassTier, Palette, DARK, GLASS_CHROME_DARK, RADIUS_MD, SPACE_2, SPACE_3, TYPE_LABEL,
 };
 
@@ -51,8 +51,8 @@ const GLASS_CHROME_DIM: GlassTier = GlassTier {
 /// Engine: "the desktop becomes a different place in one tap"). Replaces the
 /// previous hardcoded-RaeBlue deferral.
 #[inline]
-fn accent() -> rae_tokens::AccentRamp {
-    rae_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE)
+fn accent() -> ath_tokens::AccentRamp {
+    ath_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE)
 }
 
 /// The focused-window accent base actually painted on the title-bar top edge.
@@ -86,7 +86,7 @@ pub const CORNER_RADIUS: u32 = RADIUS_MD;
 
 /// `material.mica` static tint (design-language §5.2): a wallpaper-independent
 /// solid 1:2 blend of `bg.base`/`bg.raised`, OFF the per-frame blur path — the
-/// same recipe the taskbar uses (`raeshell::mica_tint`). Kept identical so
+/// same recipe the taskbar uses (`athshell::mica_tint`). Kept identical so
 /// taskbar and titlebar read as one material.
 #[inline]
 const fn mica_tint() -> u32 {
@@ -127,7 +127,7 @@ const fn mix_ch(a: u32, b: u32, num: u32, den: u32, shift: u32) -> u32 {
 }
 
 /// Opaque per-channel `num/den` blend of `a` toward `b` (matches
-/// `raeshell::blend_opaque` so the mica tint is byte-identical).
+/// `athshell::blend_opaque` so the mica tint is byte-identical).
 #[inline]
 const fn blend_opaque(a: u32, b: u32, num: u32, den: u32) -> u32 {
     0xFF00_0000
@@ -167,14 +167,14 @@ const fn desaturate_pct(c: u32, pct: u32) -> u32 {
 
 // ── Drawing ──────────────────────────────────────────────────────────────────
 
-/// Build a `raegfx::Canvas` over the whole compositor buffer so we can use the
+/// Build a `athgfx::Canvas` over the whole compositor buffer so we can use the
 /// real (`font8x8`-backed) text + anti-aliased circle primitives and draw at
 /// absolute screen coordinates. `stride` is the compositor row stride (== the
 /// comp-buffer width), so a Canvas of `width = stride` maps 1:1.
 #[inline]
-fn comp_canvas(buf: &mut [u32], stride: usize) -> raegfx::Canvas {
+fn comp_canvas(buf: &mut [u32], stride: usize) -> athgfx::Canvas {
     let height = if stride == 0 { 0 } else { buf.len() / stride };
-    unsafe { raegfx::Canvas::new(buf.as_mut_ptr() as *mut u8, stride, height, 4) }
+    unsafe { athgfx::Canvas::new(buf.as_mut_ptr() as *mut u8, stride, height, 4) }
 }
 
 /// Draw a title bar into `buf` (ARGB, row stride `stride`) at `(ox, oy)` with
@@ -216,14 +216,14 @@ pub fn draw_title_bar(
         // window chrome too — the near-black bar carries the hairline + top
         // light from the glass primitive; focus reads via the accent top edge.
         if focused {
-            raegfx::glass::draw_glass_surface(&mut canvas, gx, gy, gw, gh, 0, GLASS_CHROME);
+            athgfx::glass::draw_glass_surface(&mut canvas, gx, gy, gw, gh, 0, GLASS_CHROME);
             // LIVE-accent 1px top-edge highlight over the glass so a Vibe re-skin
             // recolours the focused window ("lit on black", OBSIDIAN §3).
             fill_clamped(&mut canvas, ox, oy, w, 1, accent().base);
         } else {
             // Unfocused: same tier, dimmer — no accent edge so focus reads at
             // a glance.
-            raegfx::glass::draw_glass_surface(&mut canvas, gx, gy, gw, gh, 0, GLASS_CHROME_DIM);
+            athgfx::glass::draw_glass_surface(&mut canvas, gx, gy, gw, gh, 0, GLASS_CHROME_DIM);
         }
     }
 
@@ -254,7 +254,7 @@ pub fn draw_title_bar(
 
     // ── Title text ──────────────────────────────────────────────────────
     // Crisp grayscale-AA title via `draw_text_aa` at the `type.label` style
-    // (raefont/RaeSans). We honour the TOKEN by colour + placement: focused
+    // (athfont/RaeSans). We honour the TOKEN by colour + placement: focused
     // uses text.primary, unfocused text.tertiary. The font engine falls back to
     // the 8×8 bitmap path internally during early boot (engine not ready).
     let text_color = if focused {
@@ -275,7 +275,7 @@ pub fn draw_title_bar(
         // the end until the AA advance fits the available width (replaces the
         // old fixed 8px/char clamp, which no longer matches proportional type).
         let mut shown = title;
-        if canvas.measure_text_aa(shown, TYPE_LABEL, raegfx::text::FontFamily::Sans) > avail_px {
+        if canvas.measure_text_aa(shown, TYPE_LABEL, athgfx::text::FontFamily::Sans) > avail_px {
             let mut end = shown.len();
             while end > 0 {
                 // Walk back to a char boundary.
@@ -286,7 +286,7 @@ pub fn draw_title_bar(
                     break;
                 }
                 let candidate = &shown[..end];
-                if canvas.measure_text_aa(candidate, TYPE_LABEL, raegfx::text::FontFamily::Sans)
+                if canvas.measure_text_aa(candidate, TYPE_LABEL, athgfx::text::FontFamily::Sans)
                     <= avail_px
                 {
                     shown = candidate;
@@ -305,7 +305,7 @@ pub fn draw_title_bar(
                 shown,
                 TYPE_LABEL,
                 text_color,
-                raegfx::text::FontFamily::Sans,
+                athgfx::text::FontFamily::Sans,
             );
         }
     }
@@ -314,7 +314,7 @@ pub fn draw_title_bar(
 /// Fill an axis-aligned rect clamped to non-negative origin (Canvas handles the
 /// right/bottom clip).
 #[inline]
-fn fill_clamped(canvas: &mut raegfx::Canvas, x: i32, y: i32, w: i32, h: i32, color: u32) {
+fn fill_clamped(canvas: &mut athgfx::Canvas, x: i32, y: i32, w: i32, h: i32, color: u32) {
     let x0 = x.max(0);
     let y0 = y.max(0);
     let w = (w - (x0 - x)).max(0);
@@ -423,7 +423,7 @@ pub fn run_boot_smoketest() {
     // The focused top-edge accent must track the LIVE seed (Vibe-Mode cohesion):
     // it equals derive_accent(theme_engine::active_accent()).base. FAIL-able —
     // if the chrome ever re-hardcodes the accent this drifts off the live seed.
-    let want_accent = rae_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE).base;
+    let want_accent = ath_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE).base;
     let accent_ok = proof_accent() == want_accent;
     let pass = TITLE_BAR_H == 32
         && mica_tint() == want_mica

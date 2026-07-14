@@ -5,7 +5,7 @@
  * Augmented red-black trees: each node carries a summary of its subtree (e.g. the
  * interval tree's max-endpoint), recomputed by callbacks invoked at every
  * rotation. The balancing cores (__rb_insert_augmented / __rb_erase_augmented /
- * __rb_erase_color) are the SAME exports raeen_linuxkpi's rbtree.rs provides for
+ * __rb_erase_color) are the SAME exports ath_linuxkpi's rbtree.rs provides for
  * the plain tree, taking the augment callbacks as function pointers; the public
  * struct-callback wrappers below are inline, exactly as the kernel factors them.
  *
@@ -25,7 +25,7 @@ struct rb_augment_callbacks {
 	void (*rotate)(struct rb_node *old, struct rb_node *new_);
 };
 
-/* balancing cores — implemented in raeen_linuxkpi/src/rbtree.rs (M4). The augment
+/* balancing cores — implemented in ath_linuxkpi/src/rbtree.rs (M4). The augment
  * callbacks are passed as bare function pointers (the wrappers below unpack the
  * struct). __rb_erase_augmented returns the node to start colour-fixup from. */
 void __rb_insert_augmented(struct rb_node *node, struct rb_root *root,

@@ -23,7 +23,7 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
-use rae_tokens::{DARK, SPACE_3};
+use ath_tokens::{DARK, SPACE_3};
 use spin::Mutex;
 
 const WIDGET_W: u32 = 168;
@@ -44,7 +44,7 @@ const FG_DIM: u32 = DARK.text_secondary;
 /// LIVE accent base for the widget kit (tracks Vibe Mode).
 #[inline]
 fn accent() -> u32 {
-    rae_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK).base
+    ath_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK).base
 }
 
 /// The accent base actually painted — public for the cohesion smoketest.
@@ -115,7 +115,7 @@ fn enabled(def: &WidgetDef) -> bool {
 }
 
 fn paint(w: &LiveWidget, value: &str) {
-    let mut canvas = unsafe { raegfx::Canvas::new(w.ptr, WIDGET_W as usize, WIDGET_H as usize, 4) };
+    let mut canvas = unsafe { athgfx::Canvas::new(w.ptr, WIDGET_W as usize, WIDGET_H as usize, 4) };
     canvas.fill_rect(0, 0, WIDGET_W as usize, WIDGET_H as usize, CARD_BG);
     // LIVE accent stripe (Vibe-tracking), 3px on the left edge.
     canvas.fill_rect(0, 0, 3, WIDGET_H as usize, accent());
@@ -124,7 +124,7 @@ fn paint(w: &LiveWidget, value: &str) {
     canvas.draw_text(inset, 8, w.name, FG_DIM, None);
     // Boundary-safe truncation: `String::truncate(18)` PANICS (kernel crash)
     // when byte 18 lands mid-codepoint; a widget value is arbitrary text.
-    let v = raeshell::text_util::truncate_chars(value, 18);
+    let v = athshell::text_util::truncate_chars(value, 18);
     canvas.draw_text(inset, 26, v, FG, None);
 }
 
@@ -234,7 +234,7 @@ pub fn run_boot_smoketest() {
     // Fail-able live-accent assertion: the kit's accent stripe must track the
     // Vibe seed (derive_accent(active_accent()).base). If the kit ever
     // re-hardcodes its accent, this drifts off the live seed and prints FAIL.
-    let want_accent = rae_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK).base;
+    let want_accent = ath_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK).base;
     let accent_ok = proof_accent() == want_accent;
 
     // Fail-able UTF-8 boundary-safety assertion for the truncation used in
@@ -244,7 +244,7 @@ pub fn run_boot_smoketest() {
     // were to regress to a byte slice, the boot would PANIC here, not print FAIL
     // — which is exactly why the kernel must never byte-slice user strings.
     let multibyte = "Caf\u{e9}_\u{6587}\u{6863}_\u{1F3AE}_widget_value_overflow_xyz";
-    let cut = raeshell::text_util::truncate_chars(multibyte, 18);
+    let cut = athshell::text_util::truncate_chars(multibyte, 18);
     let truncation_ok = cut.chars().count() == 18
         && multibyte.is_char_boundary(cut.len())
         && multibyte.starts_with(cut);
@@ -272,7 +272,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/widgets` — widget system state.
+/// `/proc/athena/widgets` — widget system state.
 pub fn dump_text() -> String {
     let live = LIVE.lock();
     let mut out = alloc::format!(

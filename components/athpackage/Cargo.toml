@@ -1,0 +1,12 @@
+[package]
+name = "athpackage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaePackage — system package manager for AthenaOS"
+
+[dependencies]
+# Real hashes (SHA-256/512, BLAKE2b) + Ed25519 signature verification for
+# package integrity/authenticity — replaces the former homebrew stubs.
+ath_crypto = { path = "../ath_crypto" }

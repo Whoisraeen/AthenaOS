@@ -3,7 +3,7 @@
 # (see panic.rs). Invaluable for diagnosing kernel panics in a pre-1.0 OS; the
 # runtime cost is negligible. Drop this once the kernel is stable if desired.
 # poly1305_force_soft: the poly1305 v0.8.0 AVX2 backend (__m256i / _mm256_* intrinsics,
-# pulled in transitively via chacha20poly1305 -> raenet) cannot be lowered by LLVM for
+# pulled in transitively via chacha20poly1305 -> athnet) cannot be lowered by LLVM for
 # this soft-float / no-SSE target ("Do not know how to split the result of this operator!"),
 # the same SIMD-codegen class as the sha2 force-soft fix. poly1305 0.8 has no Cargo
 # `force-soft` feature, only this build cfg — so the scalar `soft` backend is forced here.

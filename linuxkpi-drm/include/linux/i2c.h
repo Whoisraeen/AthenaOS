@@ -4,7 +4,7 @@
  *
  * I2C bus model. DRM connectors embed `struct i2c_adapter ddc` BY VALUE for
  * DDC/EDID, so the type must be fully defined for layout. Display/DDC is out of
- * the MES subset; the transfer ops are backed by raeen_linuxkpi at M4 if DDC is
+ * the MES subset; the transfer ops are backed by ath_linuxkpi at M4 if DDC is
  * brought into scope. License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_I2C_H
@@ -45,7 +45,7 @@ struct i2c_msg {
 static inline void *i2c_get_adapdata(const struct i2c_adapter *a) { return dev_get_drvdata(&a->dev); }
 static inline void  i2c_set_adapdata(struct i2c_adapter *a, void *d) { dev_set_drvdata(&a->dev, d); }
 
-/* transfer/register — backed by raeen_linuxkpi (M4) */
+/* transfer/register — backed by ath_linuxkpi (M4) */
 int i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num);
 int i2c_add_adapter(struct i2c_adapter *adap);
 void i2c_del_adapter(struct i2c_adapter *adap);

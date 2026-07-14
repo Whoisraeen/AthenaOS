@@ -432,16 +432,16 @@ pub fn run_mmu_boot_smoketest() {
     );
 }
 
-// --- R10 artifact 3: /proc/raeen/arch ---------------------------------------
+// --- R10 artifact 3: /proc/athena/arch ---------------------------------------
 
-/// Render `/proc/raeen/arch` — active arch identity + HAL status. Wired in
+/// Render `/proc/athena/arch` — active arch identity + HAL status. Wired in
 /// `procfs.rs` (`"arch" => crate::arch::dump_text()`).
 pub fn dump_text() -> String {
     use core::fmt::Write;
     let mut s = String::new();
     let _ = writeln!(
         s,
-        "# /proc/raeen/arch — architecture HAL (Slice 0b + Slice 1a + Slice 1.5a)"
+        "# /proc/athena/arch — architecture HAL (Slice 0b + Slice 1a + Slice 1.5a)"
     );
     let _ = writeln!(s, "arch:                 {}", NAME);
     let _ = writeln!(s, "pointer_width_bits:   {}", POINTER_WIDTH);

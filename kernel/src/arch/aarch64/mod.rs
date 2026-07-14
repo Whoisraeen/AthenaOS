@@ -68,12 +68,12 @@ pub const PAGE_SIZE: usize = 4096;
 /// `virt` + the AArch64 Linux boot protocol both little-endian).
 pub const IS_LITTLE_ENDIAN: bool = true;
 
-/// Interrupt-controller family name (for `/proc/raeen/arch` reporting). GICv2
+/// Interrupt-controller family name (for `/proc/athena/arch` reporting). GICv2
 /// is the spec's first target (ADR 0009 §2); GICv3 is a later swap behind the
 /// same seam.
 pub const INTERRUPT_CONTROLLER: &str = "GICv2";
 
-/// Time-source family name (for `/proc/raeen/arch` reporting). The ARM Generic
+/// Time-source family name (for `/proc/athena/arch` reporting). The ARM Generic
 /// Timer is the LAPIC-timer equivalent (spec A5).
 pub const TIMER_SOURCE: &str = "ARM generic timer";
 

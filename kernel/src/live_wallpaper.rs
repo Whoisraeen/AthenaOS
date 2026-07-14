@@ -326,7 +326,7 @@ pub fn sys_status(out_ptr: u64, out_cap: u64, validate_w: impl Fn(u64, u64, bool
     WP_STATUS as u64
 }
 
-// ── /proc/raeen/wallpaper ──────────────────────────────────────────────
+// ── /proc/athena/wallpaper ──────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let g = ENG.lock();

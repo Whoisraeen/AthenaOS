@@ -9,7 +9,7 @@ const KERNEL_STACK_SIZE: usize = 4096 * 16; // 64 KiB
 
 // ---- Native user-stack layout (new_elf_with_pty) -------------------------
 // TOP is one page below the 47-bit canonical user ceiling; the mapped region
-// grows DOWN from there. 256 pages (1 MiB) so real raekit apps' startup frames
+// grows DOWN from there. 256 pages (1 MiB) so real athkit apps' startup frames
 // fit. The old 5-page (20 KiB) map crashed Files at 0x7FFF_FFFF_9F68.
 /// Number of 4 KiB pages mapped for a native task's initial user stack.
 pub const NATIVE_USER_STACK_PAGES: usize = 256; // 1 MiB
@@ -265,7 +265,7 @@ pub struct Task {
     /// switch site compares outgoing vs incoming FIELDS and skips the MSR
     /// write when equal (zero writes until some task actually sets a TLS).
     /// Inheriting instead of zeroing matters: pre-TLS boot residue in the
-    /// MSR is load-bearing for early userspace (raebridge stall, 2026-06-10).
+    /// MSR is load-bearing for early userspace (athbridge stall, 2026-06-10).
     /// GS is virtualized per-task too now (see `gs_base`): the CPU id moved off
     /// the user-visible GS base into the kernel-GS per-CPU block, so a Win32
     /// guest can own its GS base. `arch_prctl(ARCH_SET_GS)` stays refused for
@@ -622,7 +622,7 @@ impl Task {
         // below the 47-bit canonical user ceiling) and the mapped region grows
         // DOWN from there. The old layout mapped only 5 pages (20 KiB), which is
         // enough for the minimal `hello_window` control app but NOT for a real
-        // raekit app: Files' crt0/relibc/raekit startup frames overflowed the
+        // athkit app: Files' crt0/relibc/athkit startup frames overflowed the
         // 20 KiB span and faulted at 0x7FFF_FFFF_9F68 (~152 B below the old base
         // 0x7FFF_FFFF_A000) → "Killing faulting task". There is no demand stack
         // growth (the page-fault handler kills user faults), so the initial map

@@ -1,0 +1,12 @@
+[package]
+name = "athcontainer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaeContainer — OCI container runtime for AthenaOS"
+
+[dependencies]
+# Real SHA-256 for content-addressed image/layer digests (the OCI digest must
+# be a genuine cryptographic hash) — replaces the former homebrew stub.
+ath_crypto = { path = "../ath_crypto" }

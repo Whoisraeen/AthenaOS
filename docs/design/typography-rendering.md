@@ -16,7 +16,7 @@ Pro + Core Text grayscale AA + light hinting) and Windows 11 (Segoe UI Variable 
 DirectWrite, ClearType/grayscale) both ship sub-pixel-clean, kerned, hinted UI
 text at every size. AthenaOS today ships an **8×8 bitmap block font**
 (`font8x8::BASIC_FONTS`) — the same 64-pixel face nearest-neighbour/bilinear-
-upscaled for "large" text. raeen-visual-qa judged this the **single dominant
+upscaled for "large" text. athena-visual-qa judged this the **single dominant
 "basic / not crisp" signal** in the first OS screenshot. Until this is fixed, no
 amount of glass, shadow, or accent work makes the desktop rival macOS/Win11,
 because the type undercuts all of it. **This is THE highest-leverage UI fix.**
@@ -43,7 +43,7 @@ because the type undercuts all of it. **This is THE highest-leverage UI fix.**
 - **GNOME (Cairo + FreeType + HarfBuzz, fontconfig):** FreeType autohinter +
   grayscale; slight-hinting default. *Take:* the FreeType pipeline shape
   (parse → hint → scanline-rasterize → coverage AA → cache) is exactly what
-  `raefont` already implements. *Avoid:* fontconfig's complexity — we ship a
+  `athfont` already implements. *Avoid:* fontconfig's complexity — we ship a
   fixed 2-family set, not a system font picker (yet).
 - **KDE (FreeType, same stack), SteamOS (Big Picture, large sizes only):**
   confirm the same pipeline; SteamOS never renders body-size text so it dodges
@@ -63,12 +63,12 @@ audit changes that — a runtime rasterizer is **already built**:
 
 | Asset | Where | State |
 |---|---|---|
-| 8×8 bitmap path (the blocky text on screen) | `raegfx::Canvas::draw_glyph` / `draw_text` / `draw_glyph_scaled` (`components/raegfx/src/lib.rs:133–230`) | LIVE, used by **every kernel surface** (window_chrome, login_ui, setup_ui, notify, widgets, control_panel) |
-| **Full no_std TrueType/OpenType engine** | `components/raefont/src/lib.rs` (4055 lines) | BUILT, **unwired, ZERO host KATs**. Has: sfnt/TTC container, cmap (fmt 0/4/6/12/14), glyf (simple+composite), loca/hmtx/hhea/maxp/kern/OS-2/gasp/GDEF/COLR/CPAL/fvar, a **TrueType hinting bytecode interpreter**, a **scanline `Rasterizer`** with grayscale AA + gamma + oversample + (unused) subpixel, `TextShaper`, `FontDatabase` (matching+fallback), `GlyphCache`, global `FontEngine`. |
-| raefont → Canvas glue | `components/raeui/src/text.rs` (`TextRenderer::render_text`, `measure_text`, `break_lines`) | BUILT, **has a compositing bug** (see Integration §3.4). Userspace-side only; not reachable from kernel surfaces. |
-| **Duplicate twin** | `components/raegfx/src/font.rs` — a *second* TrueType `FontEngine` | DEAD (`#![allow(dead_code)]`). Violates CLAUDE.md rule 7 (no parallel twins). **Must be quarantined, not extended.** |
-| Type ramp tokens | `rae_tokens::{TypeStyle, TYPE_DISPLAY..TYPE_CAPTION}` (`components/rae_tokens/src/lib.rs:413–459`) | LIVE — exactly the §6 ramp, each carries `ppem` + `weight` + `line_height`. The natural `TypeStyle` selector callers pass. |
-| **The actual missing piece** | *no `.ttf`/`.otf`/`.ttc` exists anywhere in the tree* (`**/*.ttf` → 0 files) | **Nothing supplies font bytes.** `raefont` parses bytes it is never given. |
+| 8×8 bitmap path (the blocky text on screen) | `athgfx::Canvas::draw_glyph` / `draw_text` / `draw_glyph_scaled` (`components/athgfx/src/lib.rs:133–230`) | LIVE, used by **every kernel surface** (window_chrome, login_ui, setup_ui, notify, widgets, control_panel) |
+| **Full no_std TrueType/OpenType engine** | `components/athfont/src/lib.rs` (4055 lines) | BUILT, **unwired, ZERO host KATs**. Has: sfnt/TTC container, cmap (fmt 0/4/6/12/14), glyf (simple+composite), loca/hmtx/hhea/maxp/kern/OS-2/gasp/GDEF/COLR/CPAL/fvar, a **TrueType hinting bytecode interpreter**, a **scanline `Rasterizer`** with grayscale AA + gamma + oversample + (unused) subpixel, `TextShaper`, `FontDatabase` (matching+fallback), `GlyphCache`, global `FontEngine`. |
+| athfont → Canvas glue | `components/athui/src/text.rs` (`TextRenderer::render_text`, `measure_text`, `break_lines`) | BUILT, **has a compositing bug** (see Integration §3.4). Userspace-side only; not reachable from kernel surfaces. |
+| **Duplicate twin** | `components/athgfx/src/font.rs` — a *second* TrueType `FontEngine` | DEAD (`#![allow(dead_code)]`). Violates CLAUDE.md rule 7 (no parallel twins). **Must be quarantined, not extended.** |
+| Type ramp tokens | `ath_tokens::{TypeStyle, TYPE_DISPLAY..TYPE_CAPTION}` (`components/ath_tokens/src/lib.rs:413–459`) | LIVE — exactly the §6 ramp, each carries `ppem` + `weight` + `line_height`. The natural `TypeStyle` selector callers pass. |
+| **The actual missing piece** | *no `.ttf`/`.otf`/`.ttc` exists anywhere in the tree* (`**/*.ttf` → 0 files) | **Nothing supplies font bytes.** `athfont` parses bytes it is never given. |
 
 **So the delta is not "build a rasterizer." It is: embed a font, host-KAT the
 existing rasterizer, fix the blend bug, kill the twin, and wire ONE crisp path
@@ -76,17 +76,17 @@ to BOTH the kernel surfaces and the userspace apps.**
 
 ---
 
-## Decision 1 — rendering approach: **runtime vector rasterizer (raefont)**, not a baked atlas
+## Decision 1 — rendering approach: **runtime vector rasterizer (athfont)**, not a baked atlas
 
 The brief offered (a) a pre-baked grayscale-AA bitmap atlas vs (b) a runtime
 vector rasterizer. With a complete rasterizer already in-tree, the trade-off
 table tips decisively to (b), but with the atlas idea **retained as the cache
 shape**:
 
-| Factor | (a) Baked AA atlas | (b) Runtime rasterizer (`raefont`) | Decision |
+| Factor | (a) Baked AA atlas | (b) Runtime rasterizer (`athfont`) | Decision |
 |---|---|---|---|
 | Build cost from today | New: an offline baker tool + per-size PNG/raw blobs + a blit path. | **Already written** (4055 lines). Cost = wire + test + 1 font file. | **(b)** — less *net* work because (b) exists |
-| no_std / soft-float | Trivial (just blits bytes). | `raefont` is `#![no_std]`; its floats are the compositor-style GPR f32 math (memory `kernel-soft-float` — no FPU save needed, same as compositor HDR). Verified: only deps = `alloc`. | both fine |
+| no_std / soft-float | Trivial (just blits bytes). | `athfont` is `#![no_std]`; its floats are the compositor-style GPR f32 math (memory `kernel-soft-float` — no FPU save needed, same as compositor HDR). Verified: only deps = `alloc`. | both fine |
 | Binary size | One atlas **per size per weight** (6 sizes × 3 weights × 2 families ≈ 36 sheets) — each a full coverage bitmap. Bloats fast. | One compressed/subset `.ttf` per family (~100–300 KB subset) covers **all** sizes/weights via outlines. | **(b)** smaller for full ramp |
 | Arbitrary sizes (zoom, OOBE 32px clock, future HiDPI) | Locked to baked sizes; off-ramp sizes re-blur. | Any ppem, crisp. | **(b)** |
 | Kerning / hinting / ligatures | None (atlas is pre-spaced; no pair kerning unless baked per-pair — impractical). | `kern` table + hinting interpreter + shaper already present. | **(b)** |
@@ -98,7 +98,7 @@ crisp text at every size including the 32px OOBE clock and future HiDPI — the
 atlas cannot do arbitrary sizes or kerning, so it caps the ceiling below
 macOS/Win11. *Simplest-correct* also favours (b) here precisely because the
 rasterizer is already written; building an atlas baker is the *new* code.
-**Chosen: runtime vector rasterizer (`raefont`), with its per-(glyph,ppem)
+**Chosen: runtime vector rasterizer (`athfont`), with its per-(glyph,ppem)
 `GlyphCache` serving as the de-facto runtime atlas** — we get the atlas's
 steady-state speed and the vector path's unbounded crispness.
 
@@ -111,7 +111,7 @@ font engine initialises), and as the `'?'`-tofu fallback for unmapped glyphs.
 
 | Role | Face | License | Embeddable? | Subset shipped |
 |---|---|---|---|---|
-| **RaeSans** (UI) | **Inter** (humanist grotesque; large x-height, designed for screens — matches §6 "Inter / SF Pro / Segoe family"; `ThemeAbi.font_family` already defaults to `"Inter"`) | **SIL OFL 1.1** | **Yes** — OFL explicitly permits bundling in commercial/closed products | Weights **400 / 500 / 600** (Regular/Medium/SemiBold), Latin + punctuation + arrows/box-drawing for chrome. Variable `.ttf` acceptable (raefont parses `fvar`) but ship **static instances** for the 3 weights to keep the rasterizer path simple. |
+| **RaeSans** (UI) | **Inter** (humanist grotesque; large x-height, designed for screens — matches §6 "Inter / SF Pro / Segoe family"; `ThemeAbi.font_family` already defaults to `"Inter"`) | **SIL OFL 1.1** | **Yes** — OFL explicitly permits bundling in commercial/closed products | Weights **400 / 500 / 600** (Regular/Medium/SemiBold), Latin + punctuation + arrows/box-drawing for chrome. Variable `.ttf` acceptable (athfont parses `fvar`) but ship **static instances** for the 3 weights to keep the rasterizer path simple. |
 | **RaeMono** (terminal/code) | **JetBrains Mono** | **SIL OFL 1.1** | **Yes** | Weights 400 / 500; Latin + box-drawing + common programming ligature glyphs (ligatures optional — shaper supports, can defer). |
 
 **OFL compliance obligations (carry into the commit that adds the files):**
@@ -123,16 +123,16 @@ font engine initialises), and as the `'?'`-tofu fallback for unmapped glyphs.
 - License text + attribution belong in `docs/THIRD_PARTY_LICENSES` (or repo
   equivalent).
 
-**Where the files live:** `components/raefont/assets/Inter-{Regular,Medium,
+**Where the files live:** `components/athfont/assets/Inter-{Regular,Medium,
 SemiBold}.ttf` + `JetBrainsMono-{Regular,Medium}.ttf` + `OFL.txt`, embedded into
-the binary via `include_bytes!` behind a `raefont::builtin` module that returns
+the binary via `include_bytes!` behind a `athfont::builtin` module that returns
 `&'static [u8]` (no filesystem dependency — must work at first boot before AthFS
 mounts). Subset with a tool like `fonttools subset` *offline* to control binary
 size; record the exact subset command in the assets README so the blob is
 reproducible (CLAUDE.md off-target/reproducibility discipline).
 
 > **DESIGN_LANGUAGE.md §6 proposed addendum** (a metric §6 lacks): add a line
-> noting the embedded face files + that `raefont::builtin::rae_sans(weight)`
+> noting the embedded face files + that `athfont::builtin::rae_sans(weight)`
 > resolves the `ThemeAbi.font_family="Inter"` default to bytes, and that
 > grayscale AA (not sub-pixel) is the system AA mode. (Docs-only note; I did not
 > edit §6 in this pass — see Handoff.)
@@ -146,7 +146,7 @@ for DESIGN_LANGUAGE.md §6 if accepted):
 
 - **type ramp:** `TYPE_DISPLAY` 32/600, `TYPE_TITLE` 22/600, `TYPE_SUBTITLE`
   17/500, `TYPE_BODY` 14/400, `TYPE_LABEL` 13/500, `TYPE_CAPTION` 11/400
-  (`rae_tokens::TypeStyle`, already live). `ppem` = the px field.
+  (`ath_tokens::TypeStyle`, already live). `ppem` = the px field.
 - **colour:** glyph fg = `text.primary` / `text.secondary` / `text.tertiary`
   (§4); coverage AA modulates the fg's alpha — fg RGB is constant, alpha = glyph
   coverage × fg alpha.
@@ -169,14 +169,14 @@ The non-negotiable cohesion requirement: **one crisp path feeds BOTH the kernel
 surfaces and the userspace apps**, or we re-create the incoherence DESIGN_
 LANGUAGE.md exists to prevent. The path:
 
-### 3.1 New API on `raegfx::Canvas` (the shared chokepoint)
+### 3.1 New API on `athgfx::Canvas` (the shared chokepoint)
 
-`raegfx` is the one crate both the kernel (compositor/window_chrome) and
+`athgfx` is the one crate both the kernel (compositor/window_chrome) and
 userspace apps already depend on for `Canvas`. The AA entry point lands here so
 there is exactly one text API:
 
 ```
-// proposed signature shape (raeen-gfx implements):
+// proposed signature shape (athena-gfx implements):
 impl Canvas {
     /// Draw `s` with the system font at the given type style, fg colour, and
     /// origin (baseline-relative y handled internally from font metrics).
@@ -186,15 +186,15 @@ impl Canvas {
         &mut self,
         x: i32, y: i32,
         s: &str,
-        style: rae_tokens::TypeStyle,   // selects ppem + weight
+        style: ath_tokens::TypeStyle,   // selects ppem + weight
         fg: u32,                         // ARGB; alpha respected
         family: FontFamily,             // Sans | Mono
     ) -> i32;
 }
 ```
 
-- Internally calls a `raegfx::text` module that owns a `&'static mut FontEngine`
-  (raefont's global) + the per-(glyph,ppem,weight) `GlyphCache`.
+- Internally calls a `athgfx::text` module that owns a `&'static mut FontEngine`
+  (athfont's global) + the per-(glyph,ppem,weight) `GlyphCache`.
 - `style.weight` → picks the Inter 400/500/600 instance in the `FontDatabase`.
 - Per-glyph: `cmap.lookup` → `loca`/`glyf` → `Rasterizer::rasterize` (cached) →
   `blend_glyph` (the corrected blit, §3.4) → advance by `hmtx` + `kern`.
@@ -203,12 +203,12 @@ impl Canvas {
 
 ### 3.2 Resolve the duplicate-engine violation FIRST
 
-`components/raegfx/src/font.rs` is a second TrueType engine and must **not** be
+`components/athgfx/src/font.rs` is a second TrueType engine and must **not** be
 the one wired (CLAUDE.md rule 7 — extend the wired module, never a twin). Decide
-explicitly: the **standalone `raefont` crate is the wired engine** (it is more
-complete — hinting interpreter, COLR/CPAL, shaper). `raegfx/src/font.rs` is
-quarantined per `docs/QUARANTINED_MODULES.md` (or deleted), and `raegfx` depends
-on `raefont`. This is a prerequisite, not optional — shipping two TrueType
+explicitly: the **standalone `athfont` crate is the wired engine** (it is more
+complete — hinting interpreter, COLR/CPAL, shaper). `athgfx/src/font.rs` is
+quarantined per `docs/QUARANTINED_MODULES.md` (or deleted), and `athgfx` depends
+on `athfont`. This is a prerequisite, not optional — shipping two TrueType
 engines is exactly the incoherence risk in OS form.
 
 ### 3.3 How callers pick a `TypeStyle`
@@ -218,12 +218,12 @@ Callers already have the ramp. Migration is mechanical: every
 `canvas.draw_text_aa(x, y, s, TYPE_BODY, fg, FontFamily::Sans)` (or the surface's
 ramp entry). Terminal uses `FontFamily::Mono`. Surfaces to migrate (all current
 8×8 callers): `kernel/src/window_chrome.rs`, `login_ui`, `setup_ui` (OOBE),
-`notify`, `widgets`, `control_panel`; userspace `raeshell/desktop`, the 6 app
-ELF crates, `raekit` views. The accent/colour tokens they pass are unchanged.
+`notify`, `widgets`, `control_panel`; userspace `athshell/desktop`, the 6 app
+ELF crates, `athkit` views. The accent/colour tokens they pass are unchanged.
 
 ### 3.4 Fix the compositing bug in the existing blit (load-bearing)
 
-`raeui/src/text.rs::blit_glyph` (line ~387) does **not** composite over the
+`athui/src/text.rs::blit_glyph` (line ~387) does **not** composite over the
 destination — it computes `(b + inv * 0 / 255)` and writes opaque
 `0xFF000000 | premultiplied_fg`, i.e. it blends the glyph against **black**, not
 against the actual glass/gradient pixel underneath. On the dark desktop this
@@ -238,9 +238,9 @@ lib.rs:207 already uses `blend_pixel` correctly; reuse that). The new
 
 1. **Before `FontEngine::init()`** (early boot, panic screen, pre-AthFS): 8×8
    bitmap. Always available, zero deps.
-2. **After init + builtin font load:** `draw_text_aa` → raefont. This is the
+2. **After init + builtin font load:** `draw_text_aa` → athfont. This is the
    desktop, OOBE, login, every app.
-3. **Unmapped glyph (no cmap entry, no fallback hit):** raefont returns tofu;
+3. **Unmapped glyph (no cmap entry, no fallback hit):** athfont returns tofu;
    draw the 8×8 `'?'` so nothing is invisible.
 
 `FontEngine::init()` + `database.add_font(builtin bytes)` is called once, after
@@ -266,13 +266,13 @@ Text rendering is mostly stateless, but the **a11y / mode** matrix still applies
   glyph); surface fade still respects `motion.instant`.
 - **high-contrast / "larger text" a11y:** ppem scales via the `TypeStyle` the
   surface passes (a global scale factor multiplies `style.ppem`); `aa.gamma` and
-  optional stem-darkening tune weight. **Flag to raeen-accessibility:** define
+  optional stem-darkening tune weight. **Flag to athena-accessibility:** define
   the global text-scale factor (e.g. 100/125/150/200%) and its token home; the
   rasterizer already supports arbitrary ppem so this is a token+plumbing task,
   not a render-engine task.
 
 **Keyboard/controller:** N/A to glyph rendering. Caret position/measurement uses
-`measure_text` / `break_lines` (already in `raeui/text.rs`) — these must be
+`measure_text` / `break_lines` (already in `athui/text.rs`) — these must be
 re-pointed at the corrected pipeline so hit-testing and cursor placement match
 what is drawn.
 
@@ -294,13 +294,13 @@ what is drawn.
   linearise dst and fg (sRGB→linear, `aa.gamma` 2.2), blend in linear, convert
   back. The compositor **already has an sRGB↔linear path** (`HdrPipeline`,
   DESIGN_LANGUAGE.md §0) — reuse its LUT/Taylor approximation rather than adding
-  floats to the glyph hot loop. raefont's `gamma` field currently applies gamma
+  floats to the glyph hot loop. athfont's `gamma` field currently applies gamma
   to the *coverage mask* at rasterize time (an approximation); standardise to
   **blend-time gamma** for correctness, or document the coverage-gamma as the
   cheaper approximation if blend-time proves too costly on the software raster.
-  (raeen-gfx owns this perf/correctness call; host-KAT both.)
+  (athena-gfx owns this perf/correctness call; host-KAT both.)
 - **Hinting at small ppem.** Below `text.hint_ppem_floor` (16), run the TrueType
-  hinting interpreter (present in raefont) or vertical-stem grid-fit so 11/13/14
+  hinting interpreter (present in athfont) or vertical-stem grid-fit so 11/13/14
   px body text snaps to the pixel grid. This is the difference between "crisp
   small text" and "soft grey mush" — it is *why* the 8×8 bitmap currently looks
   sharper than a naive vector path would at body size, and why we must hint.
@@ -311,9 +311,9 @@ what is drawn.
 
 Restating the delta crisply, because most of this exists:
 
-- **Built, keep:** `raefont` parser + hinting interpreter + grayscale `Rasterizer`
-  + shaper + `FontDatabase` + `GlyphCache`; `rae_tokens::TypeStyle` ramp;
-  `raeui/text.rs` measure/break-lines; `Canvas::blend_pixel`.
+- **Built, keep:** `athfont` parser + hinting interpreter + grayscale `Rasterizer`
+  + shaper + `FontDatabase` + `GlyphCache`; `ath_tokens::TypeStyle` ramp;
+  `athui/text.rs` measure/break-lines; `Canvas::blend_pixel`.
 - **Build (the actual new work):**
   1. **Embed an Inter + JetBrains Mono subset** (`include_bytes!`) — *nothing
      supplies font bytes today; this unblocks everything.*
@@ -322,8 +322,8 @@ Restating the delta crisply, because most of this exists:
      rule 15 (pure logic → host KAT first) is mandatory and unmet.
   3. **Fix `blit_glyph` source-over + gamma** (§3.4/§5) — current code blends
      against black.
-  4. **Add `Canvas::draw_text_aa`** in `raegfx` (the shared API).
-  5. **Quarantine the `raegfx::font` twin**; wire `raefont` as the one engine.
+  4. **Add `Canvas::draw_text_aa`** in `athgfx` (the shared API).
+  5. **Quarantine the `athgfx::font` twin**; wire `athfont` as the one engine.
   6. **Migrate the kernel + app surfaces** off 8×8 to `draw_text_aa`.
 - **Do NOT rebuild:** a rasterizer, an atlas baker, a parser, a cache.
 
@@ -333,11 +333,11 @@ Restating the delta crisply, because most of this exists:
 
 | Stage | Scope | Proof (cheapest layer that can FAIL) |
 |---|---|---|
-| **S0** | Quarantine `raegfx::font.rs` twin; make `raegfx` depend on `raefont`. | `cargo run -p xtask --release -- build --release` exit 0; `docs/QUARANTINED_MODULES.md` row added; no `raegfx::font` references remain (grep). |
-| **S1** *(first increment — see below)* | Embed **Inter SemiBold** subset; **host-KAT** `raefont::Rasterizer` on one glyph ('A') at `TYPE_TITLE.ppem` (22): assert non-zero coverage, expected width/height bounds, and that lowering coverage→0 outside the glyph bbox. | `cargo test -p raefont` (per-crate, per memory `no-std-workspace-host-test`): KAT prints `raefont rasterize 'A'@22: WxH=.. cov_sum=..` and asserts bounds; flips to FAIL if coverage is all-zero (catches "no font bytes"). |
-| **S2** | Fix `blit_glyph` source-over + gamma; host-KAT the **blend** (fg over a known dst → expected ARGB, incl. a light-bg case that the old black-blend would fail). | `cargo test -p raeui` (or wherever blend lands): `blend AA glyph over 0xFF101418 and over 0xFFEFF2F8` asserts no dark halo on light. FAIL-able. |
-| **S3** | `Canvas::draw_text_aa` + full ramp (all 6 `TYPE_*`, weights 400/500/600) + JetBrains Mono for Mono family; `FontEngine::init()` wired before `activate_desktop`. | QEMU boot: serial marker `[raefont] engine ready: families=2 weights=3` + smoketest renders one AA string to an offscreen canvas and asserts cached glyph count > 0. No `[PANIC]`; `System successfully booted`. |
-| **S4** | Migrate OOBE/login/window-chrome/notify + the desktop + the 6 apps to `draw_text_aa`. | **Re-screenshot for raeen-visual-qa** (host-render + QEMU-window + iron — per memory `ui-glass-design-system`: headless QEMU screendump striping is a capture artifact, verify on the clean surfaces). Boot-time guard: no new `[boot] WARN`, `[BOOT-BENCH]` not regressed (rasterize-on-first-frame must not blow the 6 s budget). |
+| **S0** | Quarantine `athgfx::font.rs` twin; make `athgfx` depend on `athfont`. | `cargo run -p xtask --release -- build --release` exit 0; `docs/QUARANTINED_MODULES.md` row added; no `athgfx::font` references remain (grep). |
+| **S1** *(first increment — see below)* | Embed **Inter SemiBold** subset; **host-KAT** `athfont::Rasterizer` on one glyph ('A') at `TYPE_TITLE.ppem` (22): assert non-zero coverage, expected width/height bounds, and that lowering coverage→0 outside the glyph bbox. | `cargo test -p athfont` (per-crate, per memory `no-std-workspace-host-test`): KAT prints `athfont rasterize 'A'@22: WxH=.. cov_sum=..` and asserts bounds; flips to FAIL if coverage is all-zero (catches "no font bytes"). |
+| **S2** | Fix `blit_glyph` source-over + gamma; host-KAT the **blend** (fg over a known dst → expected ARGB, incl. a light-bg case that the old black-blend would fail). | `cargo test -p athui` (or wherever blend lands): `blend AA glyph over 0xFF101418 and over 0xFFEFF2F8` asserts no dark halo on light. FAIL-able. |
+| **S3** | `Canvas::draw_text_aa` + full ramp (all 6 `TYPE_*`, weights 400/500/600) + JetBrains Mono for Mono family; `FontEngine::init()` wired before `activate_desktop`. | QEMU boot: serial marker `[athfont] engine ready: families=2 weights=3` + smoketest renders one AA string to an offscreen canvas and asserts cached glyph count > 0. No `[PANIC]`; `System successfully booted`. |
+| **S4** | Migrate OOBE/login/window-chrome/notify + the desktop + the 6 apps to `draw_text_aa`. | **Re-screenshot for athena-visual-qa** (host-render + QEMU-window + iron — per memory `ui-glass-design-system`: headless QEMU screendump striping is a capture artifact, verify on the clean surfaces). Boot-time guard: no new `[boot] WARN`, `[BOOT-BENCH]` not regressed (rasterize-on-first-frame must not blow the 6 s budget). |
 
 **Boot-time watch (CLAUDE.md rule 12/15):** S3/S4 add per-glyph rasterization to
 the first desktop frame. The `GlyphCache` makes steady state cheap, but the first
@@ -349,19 +349,19 @@ critical smoketest path), or defer non-visible-surface text.
 
 ## Handoff
 
-- **Implementer — `raefont` crate owner (raeen-gfx-adjacent):** owns S0–S2 — embed
+- **Implementer — `athfont` crate owner (athena-gfx-adjacent):** owns S0–S2 — embed
   the subset + `builtin` module, add the host KATs (the rasterizer's first
   tests), fix/standardise gamma. *This crate is the engine; do not extend the
-  `raegfx::font` twin.*
-- **Implementer — raeen-gfx (the Canvas path):** owns S3 — `Canvas::draw_text_aa`,
-  the `raegfx::text` module owning the `FontEngine` + cache, the source-over
+  `athgfx::font` twin.*
+- **Implementer — athena-gfx (the Canvas path):** owns S3 — `Canvas::draw_text_aa`,
+  the `athgfx::text` module owning the `FontEngine` + cache, the source-over
   blend through `Canvas::blend_pixel`, and the gamma-correct blend reusing
   `HdrPipeline`'s sRGB↔linear. Decides coverage-gamma vs blend-gamma on perf.
-- **Implementer — raeen-ui / raeen-shell-apps (adoption):** owns S4 — migrate
-  every 8×8 caller (kernel surfaces + the 6 app ELFs + raekit views) to
+- **Implementer — athena-ui / athena-shell-apps (adoption):** owns S4 — migrate
+  every 8×8 caller (kernel surfaces + the 6 app ELFs + athkit views) to
   `draw_text_aa(.., TYPE_*, .., family)`; re-point `measure_text`/`break_lines`
   caret math at the wired pipeline.
-- **raeen-accessibility — flagged items:** (1) define the global **text-scale
+- **athena-accessibility — flagged items:** (1) define the global **text-scale
   factor** (100/125/150/200%) and its token home — engine already supports
   arbitrary ppem; (2) confirm `aa.gamma`/stem-darkening defaults meet contrast
   with §4.2 ratios at body size; (3) verify hinting actually keeps 11px
@@ -371,7 +371,7 @@ critical smoketest path), or defer non-visible-surface text.
   *Not edited in this pass — flagged for the next DESIGN_LANGUAGE update so the
   token addition is reviewed, not silently inlined.*
 
-### Visual-QA verification list (hand to raeen-visual-qa after S4)
+### Visual-QA verification list (hand to athena-visual-qa after S4)
 
 Screenshot and verify on **host-render + iron** (not headless QEMU screendump —
 striping artifact):
@@ -395,21 +395,21 @@ striping artifact):
   and visually stunning" UI; every surface spec assumes crisp type.
 - Phase 14 (AthShell + apps) — the 6 apps + terminal need readable text to be
   shippable.
-- The `ui-glass-design-system` memory's open follow-up: "raefont = crisp-text
+- The `ui-glass-design-system` memory's open follow-up: "athfont = crisp-text
   follow-up" — this spec is its plan.
 
 ---
 
 ## THE single first increment to build (S1)
 
-**Embed an Inter SemiBold subset into `raefont` via `include_bytes!` and add the
+**Embed an Inter SemiBold subset into `athfont` via `include_bytes!` and add the
 rasterizer's first host KAT.**
 
 Concretely:
-1. Add `components/raefont/assets/Inter-SemiBold.ttf` (offline-subset Latin +
-   punctuation) + `OFL.txt`; add `raefont::builtin::rae_sans_semibold() ->
+1. Add `components/athfont/assets/Inter-SemiBold.ttf` (offline-subset Latin +
+   punctuation) + `OFL.txt`; add `athfont::builtin::rae_sans_semibold() ->
    &'static [u8]`.
-2. Add `#[cfg(test)] mod tests` to `raefont`: load the builtin bytes via
+2. Add `#[cfg(test)] mod tests` to `athfont`: load the builtin bytes via
    `FontHandle::from_bytes`, look up `'A'`, parse its `glyf`, rasterize at
    `ppem = 22` (`TYPE_TITLE`), and assert:
    - `FontHandle::from_bytes(..).is_some()` (font parsed),
@@ -421,13 +421,13 @@ Concretely:
 
 **Exact proof:**
 ```
-cargo test -p raefont
+cargo test -p athfont
 # expect: test rasterize_inter_A_at_title ... ok
-# stdout: [raefont-kat] 'A'@22 W=.. H=.. cov_sum=.. (>0)
+# stdout: [athfont-kat] 'A'@22 W=.. H=.. cov_sum=.. (>0)
 ```
 This is the cheapest layer that proves the whole thesis viable (a real face
 parses and rasterizes to non-trivial AA coverage in our no_std crate) and is the
-prerequisite every later stage builds on — without embedded bytes, raefont
+prerequisite every later stage builds on — without embedded bytes, athfont
 rasterizes nothing. It touches no kernel code, no boot path, and cannot produce a
 false green (the `cov_sum > 0` assertion fails loudly if the font is missing or
 the parser regresses).

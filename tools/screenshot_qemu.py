@@ -5,7 +5,7 @@ Boots a built disk image headlessly, waits for a serial sentinel (plus a
 settle delay for the compositor), then captures the framebuffer via the QMP
 `screendump` command with format=png (QEMU 7.1+; avoids the PPM->PNG striping
 artifact documented in project memory). Lead-run only (subagent Bash is
-sandboxed); hands the PNG to raeen-visual-qa.
+sandboxed); hands the PNG to athena-visual-qa.
 
 Usage:
   python tools/screenshot_qemu.py --image <bios.img> --out shot.png \
@@ -63,7 +63,7 @@ def main():
     args = ap.parse_args()
 
     serial_path = os.path.join(
-        os.environ.get("TEMP", "/tmp"), "raeen-screenshot-serial.log"
+        os.environ.get("TEMP", "/tmp"), "athena-screenshot-serial.log"
     )
     try:
         os.remove(serial_path)

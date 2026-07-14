@@ -7,8 +7,8 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
-raegfx = { path = "../../components/raegfx" }
-raekit = { path = "../../components/raekit" }
-rae_tokens = { path = "../../components/rae_tokens" }
-rae_regex = { path = "../../components/rae_regex" }
-rae_toml = { path = "../../components/rae_toml" }
+athgfx = { path = "../../components/athgfx" }
+athkit = { path = "../../components/athkit" }
+ath_tokens = { path = "../../components/ath_tokens" }
+ath_regex = { path = "../../components/ath_regex" }
+ath_toml = { path = "../../components/ath_toml" }

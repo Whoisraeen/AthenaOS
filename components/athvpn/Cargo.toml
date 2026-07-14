@@ -1,0 +1,17 @@
+[package]
+name = "athvpn"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "RaeVPN — VPN client and server for AthenaOS"
+
+[dependencies]
+# spin::Mutex guards the per-session anti-replay window (RFC 6479) — decrypt is
+# &self so the (highest, bitmap) state needs synchronized interior mutability.
+spin = "0.9"
+x25519-dalek = { version = "2", default-features = false, features = ["static_secrets"] }
+blake2 = { version = "0.10", default-features = false }
+subtle = { version = "2", default-features = false }
+chacha20poly1305 = { version = "0.10", default-features = false, features = ["alloc"] }
+zeroize = { version = "1", default-features = false, features = ["alloc"] }

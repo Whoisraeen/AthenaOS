@@ -1,0 +1,28 @@
+[package]
+name = "ath_jpeg"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS baseline JPEG codec — "show my photos" + "save/export my photo as
+# JPEG" (LEGACY_GAMING_CONCEPT.md §creators / media). JPEG is the dominant photo/camera
+# format on the web and from every phone/camera; an OS that can't open OR save a
+# .jpg isn't a daily driver. This is the from-scratch baseline sequential-DCT
+# decoder + encoder Photos / athplay sit on, matching
+# the ath_png / ath_bmp / ath_gif ARGB8888 `Vec<u32>` pixel convention so all the
+# house still-image decoders are consumed uniformly. Self-contained: JPEG carries
+# its own Huffman tables, so there is NO external decompressor dependency.
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_png / ath_bmp pattern): the lib is
+# `no_std` + `alloc` in every shipped build and toggles to `std` only under
+# `cfg(test)` for the host KAT harness. The kernel/media path is no_std +
+# soft-float with NO libm, so the inverse DCT and YCbCr->RGB use a precomputed
+# const cosine table (no runtime cos/sqrt) — the same no-libm posture as ath_png.
+# Run the FAIL-able proof with `cargo test -p ath_jpeg` — no QEMU, no image build.
+# Treats every byte as hostile (decoders are the #1 RCE surface): no
+# `unwrap`/`expect`/raw-index-panic is reachable from `decode_jpeg`, and
+# dimensions / pixel budget are bounded before any allocation.
+
+[dependencies]

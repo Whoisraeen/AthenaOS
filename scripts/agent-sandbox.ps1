@@ -28,7 +28,7 @@
   Phase number from MasterChecklist.md (e.g. 1, 2, 6).
 
 .PARAMETER Slug
-  Kebab-case phase slug (e.g. tier0-boot, tier1-useful, raegfx-vulkan).
+  Kebab-case phase slug (e.g. tier0-boot, tier1-useful, athgfx-vulkan).
 
 .PARAMETER ItemId
   Optional. Checklist item id (e.g. 1.4-osipic). When set, work happens on

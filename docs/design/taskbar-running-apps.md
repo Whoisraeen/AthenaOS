@@ -11,7 +11,7 @@
 > without Win11's flaky never-combine modes or the Dock's hidden window-management.
 
 **All tokens below are defined in [`design-language.md`](./design-language.md)**
-and live in the `rae_tokens` crate (ADR 0003). This spec only assigns them; it
+and live in the `ath_tokens` crate (ADR 0003). This spec only assigns them; it
 introduces no new magic numbers. Button sizes (36px) are local layout constants
 from `desktop-shell.md` §1, not new global tokens.
 
@@ -51,11 +51,11 @@ primitive that `window-management.md` §1 introduces.
 
 ## Already built (delta only — verify-before-spec)
 
-Grounded in `components/raeshell/src/lib.rs` (read, not assumed).
+Grounded in `components/athshell/src/lib.rs` (read, not assumed).
 
 | Piece | Where | Today | This spec adds |
 |---|---|---|---|
-| `TaskbarItem` | `raeshell::TaskbarItem` (`lib.rs:205`) | LIVE: `title`, `surface_id`, `focused`, `minimized`, `icon_char` — one item per window | the **grouped button** model (N windows → one button), the indicator language, hover-preview, jump list, badge |
+| `TaskbarItem` | `athshell::TaskbarItem` (`lib.rs:205`) | LIVE: `title`, `surface_id`, `focused`, `minimized`, `icon_char` — one item per window | the **grouped button** model (N windows → one button), the indicator language, hover-preview, jump list, badge |
 | Taskbar render + states | `desktop-shell.md` §1 + `lib.rs` render path (`TASKBAR_HEIGHT=44`, 36px buttons, `material.mica`, accent indicator bar) | LIVE geometry + hover/active/focus/disabled states | the **running-indicator semantics** (count/focus), preview popover, jump-list popover, drag-to-pin |
 | Pinned apps | `AppEntry { pinned, launch_count }` (`lib.rs:217`) | LIVE pinned + launch-count model in the Start menu | drag-from-Start / drag-on-bar to pin to the taskbar; pin/unpin from the jump list |
 | Live window buffers + snapshot | `compositor.rs` `Surface.kernel_ptr`; `snapshot_surface` introduced by `window-management.md` §1 | buffers LIVE; `snapshot_surface` is the §4 switcher's primitive | **reused** for the hover-preview thumbnails (same one-shot box-downscale) |
@@ -105,7 +105,7 @@ jump lists, and user-owned ordering — one accent, one glass.
 
 ## AthenaOS design tokens this surface uses
 
-Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
+Pulled verbatim from `design-language.md` / `ath_tokens`. No new magic numbers.
 
 - **spacing:** `space.1` (button gaps — already), `space.2` (preview-tile gap,
   popover padding), `space.3` (jump-list row inset), `space.4` (popover content
@@ -119,7 +119,7 @@ Pulled verbatim from `design-language.md` / `rae_tokens`. No new magic numbers.
 - **type:** `type.label` (preview-flyout app header, jump-list section header),
   `type.caption` (per-window thumbnail title, jump-list rows, badge count),
   `type.body` (jump-list file names).
-- **accent model:** seed = `ThemeAbi.accent_argb`; `rae_tokens::derive_accent`.
+- **accent model:** seed = `ThemeAbi.accent_argb`; `ath_tokens::derive_accent`.
   Focused window indicator = full-width `accent.base`; preview-tile selection =
   `accent.subtle` + `accent.base` ring; badge = `accent.base` (or `state.danger`
   for urgent); hover/focus = `bg.elevated` + `accent.base` ring + `accent.glow`.
@@ -236,7 +236,7 @@ popover anchored above the button:
 - **`Cap`-gated:** only an app with the badge capability can set one; no system
   fabrication.
 - **reduced-motion:** badge appears instantly, no pulse.
-- **Flag to raeen-accessibility:** count badges must be color-independent (the pill
+- **Flag to athena-accessibility:** count badges must be color-independent (the pill
   shape + number carry the meaning, not hue alone).
 
 ---
@@ -263,7 +263,7 @@ popover anchored above the button:
 
 Every hover affordance (preview flyout, jump list) has a keyboard + controller
 equivalent (design-language §8 hover-independence). Focus is always `accent.base`
-ring + `elev.focus`, never color-only — flag deviations to raeen-accessibility.
+ring + `elev.focus`, never color-only — flag deviations to athena-accessibility.
 
 ---
 
@@ -284,15 +284,15 @@ ring + `elev.focus`, never color-only — flag deviations to raeen-accessibility
 
 | Concern | Rule | Owner |
 |---|---|---|
-| Contrast | indicator bars ≥3:1 on mica; preview titles ≥4.5:1; badge text ≥4.5:1 on its pill | raeen-accessibility |
-| Focus visibility | every button/tile/jump-row is **never color-only**: `accent.base` ring + `elev.focus` glow | raeen-accessibility |
-| Indicator legibility | running/focused/count distinguishable without color (length/segments, not hue alone) | raeen-accessibility |
-| Badge legibility | count/progress carried by shape+number, not hue | raeen-accessibility |
-| Reduced-motion | no indicator grow, badge pulse, drag-settle, or tile scale; instant popovers | raeen-accessibility |
-| Hit targets | 36px buttons (≥32px floor) / 48px couch; preview close × ≥24px (≥32 couch) | raeen-visual-qa |
-| Keyboard-complete | open previews + jump list, raise/close windows, pin/reorder — all with no pointer | raeen-accessibility |
+| Contrast | indicator bars ≥3:1 on mica; preview titles ≥4.5:1; badge text ≥4.5:1 on its pill | athena-accessibility |
+| Focus visibility | every button/tile/jump-row is **never color-only**: `accent.base` ring + `elev.focus` glow | athena-accessibility |
+| Indicator legibility | running/focused/count distinguishable without color (length/segments, not hue alone) | athena-accessibility |
+| Badge legibility | count/progress carried by shape+number, not hue | athena-accessibility |
+| Reduced-motion | no indicator grow, badge pulse, drag-settle, or tile scale; instant popovers | athena-accessibility |
+| Hit targets | 36px buttons (≥32px floor) / 48px couch; preview close × ≥24px (≥32 couch) | athena-visual-qa |
+| Keyboard-complete | open previews + jump list, raise/close windows, pin/reorder — all with no pointer | athena-accessibility |
 
-Flag to **raeen-accessibility:** confirm the multi-window segmented indicator and
+Flag to **athena-accessibility:** confirm the multi-window segmented indicator and
 the focused-segment accent stay distinguishable for color-vision-deficient users,
 and that "needs attention" pulse has a non-color cue.
 
@@ -317,28 +317,28 @@ Ships only when:
 ## Handoff
 
 ### Implementer
-- **raeen-shell-apps — primary owner.** Extend `raeshell::TaskbarItem`/the taskbar
+- **athena-shell-apps — primary owner.** Extend `athshell::TaskbarItem`/the taskbar
   render path (`lib.rs`): group windows-per-app into one button, the §1 indicator
   semantics, the §2 hover-preview flyout (calling `snapshot_surface`), the §3
   capability-aware jump list, the §4 click/cycle + drag-to-pin (reusing
   `AppEntry.pinned`), and §5 badges. Repaint indicators only on state change
   (compositor-latency doctrine, memory `iron-console-logging-tax`).
-- **raeen-gfx / kernel (compositor)** — `snapshot_surface(id, dst, w, h)` is the
+- **athena-gfx / kernel (compositor)** — `snapshot_surface(id, dst, w, h)` is the
   shared primitive (introduced by `window-management.md` §1); confirm it serves
   both the switcher and these previews under `lock_compositor()` (UAF-safe read of
   compositor-owned memory, memory `compositor-IF=0`). No new per-frame allocations.
-- **raeen-ui** — expose the **preview-flyout** (live-thumbnail tile row) and the
-  **jump-list popover** as reusable `rae_tokens`-consuming widgets (shared with the
+- **athena-ui** — expose the **preview-flyout** (live-thumbnail tile row) and the
+  **jump-list popover** as reusable `ath_tokens`-consuming widgets (shared with the
   tray's overflow/context-menu containers, `system-tray.md`).
-- **app-side IPC (raebridge / app SDK)** — the capability-checked channels by which
+- **app-side IPC (athbridge / app SDK)** — the capability-checked channels by which
   an app declares jump-list tasks/recents and sets badges; the taskbar reads these,
   never fabricates them.
-- **raeen-accessibility (flagged)** — color-independent indicators + badges;
+- **athena-accessibility (flagged)** — color-independent indicators + badges;
   attention-pulse non-color cue; keyboard-complete preview/jump-list reach;
   reduced-motion.
 
 ### FAIL-able boot-log proof lines
-A `taskbar` (or `raeshell`) `run_boot_smoketest` driving synthetic windows/apps:
+A `taskbar` (or `athshell`) `run_boot_smoketest` driving synthetic windows/apps:
 
 ```
 [taskbar] group smoketest: app=Term windows=3 buttons=1 segments=3 focused_seg=1 -> PASS
@@ -353,7 +353,7 @@ A `taskbar` (or `raeshell`) `run_boot_smoketest` driving synthetic windows/apps:
 no-capability jump-list section or badge still renders, if click-cycle doesn't
 advance windows, or if the focused indicator diverges from the live accent.)
 
-### Visual-QA verification list (raeen-visual-qa)
+### Visual-QA verification list (athena-visual-qa)
 Verify on iron / host-render / QEMU window (headless screendump striping is a
 capture artifact — memory `ui-glass-design-system`):
 - Screenshot: indicator states side by side — not-running / running-unfocused /

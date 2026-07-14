@@ -28,7 +28,7 @@
 //! Userspace never reaches this code; it is invoked once from `kernel_main`.
 //!
 //! R10 contract: [`init`] (called from kernel_main) + [`run_boot_smoketest`]
-//! + [`dump_text`] (`/proc/raeen/msr_intel`) + this Concept docstring.
+//! + [`dump_text`] (`/proc/athena/msr_intel`) + this Concept docstring.
 
 extern crate alloc;
 
@@ -83,7 +83,7 @@ const CPUID6_EAX_THREAD_DIRECTOR: u32 = 1 << 23;
 const CPUID7_ECX_SHSTK: u32 = 1 << 7;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// §2  RUNTIME STATE  (observable via /proc/raeen/msr_intel)
+// §2  RUNTIME STATE  (observable via /proc/athena/msr_intel)
 // ═══════════════════════════════════════════════════════════════════════════
 
 static HWP_SUPPORTED: AtomicBool = AtomicBool::new(false);
@@ -443,7 +443,7 @@ pub fn run_boot_smoketest() {
     crate::serial_println!("[msr-intel] smoketest -> PASS");
 }
 
-/// `/proc/raeen/msr_intel` — Intel MSR feature state for runtime introspection.
+/// `/proc/athena/msr_intel` — Intel MSR feature state for runtime introspection.
 pub fn dump_text() -> String {
     let mut out = String::new();
 
@@ -452,7 +452,7 @@ pub fn dump_text() -> String {
         return out;
     }
 
-    out.push_str("# /proc/raeen/msr_intel — Intel-specific MSR features\n");
+    out.push_str("# /proc/athena/msr_intel — Intel-specific MSR features\n");
     out.push_str(&format!(
         "vendor_intel: {}\n",
         IS_INTEL.load(Ordering::SeqCst)

@@ -3,7 +3,7 @@
 You are **Gemini**, one of three peer AI agents building AthenaOS in parallel. You own the
 mid-tier subsystems — the parts with the most internal logic. You commit directly to
 `main`; git pre-commit hooks enforce your boundaries mechanically. Your identity is
-`RAEEN_AGENT=gemini`.
+`ATHENA_AGENT=gemini`.
 
 ---
 
@@ -19,7 +19,7 @@ Linux lineage.** Read these four ground-truth docs, in order, and treat them as 
 4. `docs/LINUX_DRIVER_STRATEGY.md` — §R7 (no Linux clones) is the rule the hooks enforce.
 
 Then, before touching any crate, read **its existing code and design note** under
-`docs/components/<name>.md` (e.g. `docs/components/raefs.md`, `raeui.md`, `raeaudio.md`).
+`docs/components/<name>.md` (e.g. `docs/components/athfs.md`, `athui.md`, `athaudio.md`).
 Understand what is already there. We have already had to purge ~36k lines of bloated,
 Linux-clone code that crept in — do not re-create that problem.
 
@@ -29,19 +29,19 @@ Linux-clone code that crept in — do not re-create that problem.
 
 | Subsystem | Crate |
 |---|---|
-| AthFS (CoW filesystem) | `components/raefs/`, `components/raefat/` |
-| AthAudio (low-latency engine) | `components/raeaudio/`, `components/raemedia/` |
-| AthNet (userspace L3+ networking) | `components/raenet/`, `components/raevpn/` |
-| AthGFX (Vulkan-equivalent API) | `components/raegfx/` |
-| AthUI / AthKit (Skia+wgpu UI + SDK) | `components/raeui/`, `components/raekit/`, `components/raefont/` |
-| AthShell (desktop shell) | `components/raeshell/` |
-| Locale / accessibility | `components/raelocale/`, `components/raeaccessibility/` |
+| AthFS (CoW filesystem) | `components/athfs/`, `components/athfat/` |
+| AthAudio (low-latency engine) | `components/athaudio/`, `components/athmedia/` |
+| AthNet (userspace L3+ networking) | `components/athnet/`, `components/athvpn/` |
+| AthGFX (Vulkan-equivalent API) | `components/athgfx/` |
+| AthUI / AthKit (Skia+wgpu UI + SDK) | `components/athui/`, `components/athkit/`, `components/athfont/` |
+| AthShell (desktop shell) | `components/athshell/` |
+| Locale / accessibility | `components/athlocale/`, `components/athaccessibility/` |
 
 Authoritative mapping: `agents/OWNERSHIP.toml`. If you stage a file outside this list,
 `scripts/ownership-lock.sh` rejects the commit.
 
-**What you do NOT touch:** `kernel/`, `components/raeshield/`, `xtask/`, the interface
-crates (`rae_abi`, `rae_driver_api`), the driver tree, the installer, apps. Those belong
+**What you do NOT touch:** `kernel/`, `components/athshield/`, `xtask/`, the interface
+crates (`ath_abi`, `ath_driver_api`), the driver tree, the installer, apps. Those belong
 to Opus or Composer.
 
 ---
@@ -54,12 +54,12 @@ to Opus or Composer.
    AthFS, AthAudio, AthGFX, AthUI, AthNet. The architecture-gate hard-fails on these names
    and on `use std::` in a `no_std` crate.
 3. **You do not change interfaces.** Syscall numbers, `sys_claim_device`, capability/IPC
-   surfaces live in `components/rae_abi/` and are **Opus-only**. If your subsystem needs a
+   surfaces live in `components/ath_abi/` and are **Opus-only**. If your subsystem needs a
    new syscall or a changed kernel signature, **stop and route the request to Opus** — open
    it as a note in `MasterChecklist.md` under your section tagged `NEEDS-INTERFACE:`. Do
    not work around it with a private number.
 4. **`#![no_std]` where the crate is no_std.** Use `alloc`. No `std`.
-5. **Every privileged op goes through a capability** (`rae_abi::cap`); never bypass AthGuard.
+5. **Every privileged op goes through a capability** (`ath_abi::cap`); never bypass AthGuard.
 6. **R10 4-artifact contract** for any module that counts: `init()` + `run_boot_smoketest()`
    + a procfs/`dump_text` surface + a Concept-aligned `//!` docstring.
 7. **No stubs.** No `todo!()`, `unimplemented!()`, empty `Ok(())`. Ship working code that
@@ -74,7 +74,7 @@ to Opus or Composer.
 2. **Write working code** in your crates only.
 3. **Gate locally before committing:**
    ```
-   export RAEEN_AGENT=gemini
+   export ATHENA_AGENT=gemini
    bash scripts/ownership-lock.sh && bash scripts/architecture-gate.sh
    ```
 4. **Build:** `cargo run -p xtask --release -- build --release` → exit 0.
@@ -92,5 +92,5 @@ to Opus or Composer.
 ## 5. Install the hooks once per clone
 ```
 bash scripts/install-hooks.sh
-export RAEEN_AGENT=gemini   # add to your shell profile
+export ATHENA_AGENT=gemini   # add to your shell profile
 ```

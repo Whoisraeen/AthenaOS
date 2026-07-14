@@ -6,7 +6,7 @@
  * framebuffer (efifb/vesafb) from the PCI aperture before taking over. In the
  * AthenaOS model the compositor/scanout handoff is handled elsewhere (no fbdev to
  * evict), so this reports success-of-nothing to do; the real removal, if needed,
- * is backed by raeen_linuxkpi at M5. License boundary (../../README.md): surface.
+ * is backed by ath_linuxkpi at M5. License boundary (../../README.md): surface.
  */
 #ifndef _LINUXKPI_LINUX_APERTURE_H
 #define _LINUXKPI_LINUX_APERTURE_H

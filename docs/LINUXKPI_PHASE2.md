@@ -14,10 +14,10 @@ without rewriting millions of lines of C — per Concept §Architecture
 ## The four phases
 
 ### Phase 1 — Foundation (the great deception)
-`components/raeen_linuxkpi` exposes the C-ABI the Linux kernel exports:
+`components/ath_linuxkpi` exposes the C-ABI the Linux kernel exports:
 - `kmalloc`/`kzalloc`/`kfree` → daemon-local bump heap (`mm.rs`)
 - `get_jiffies_64`/`msleep` → host syscalls 128/129 → `timers::JIFFIES` + HPET sleep
-- `raeen_printk` → host syscall 131 → kernel serial
+- `athena_printk` → host syscall 131 → kernel serial
 - `spin_lock`/`spin_unlock`, `mutex_lock`/`mutex_unlock` → atomics + scheduler yield
 
 ### Phase 2 — Hardware bridge (MMIO + interrupts)
@@ -62,19 +62,19 @@ without rewriting millions of lines of C — per Concept §Architecture
 | Path | Role |
 |------|------|
 | `kernel/src/linuxkpi_host.rs` | Host syscalls 127-140 + device registry + supervisor |
-| `components/raeen_linuxkpi/src/host.rs` | Raw syscall stubs (syscall1/2/3 helpers) |
-| `components/raeen_linuxkpi/src/pci.rs` | `pci_enable`, `ioremap`, `readl`/`writel` |
-| `components/raeen_linuxkpi/src/pci_ext.rs` | `pci_set_master`, regions, config byte/word, `pci_resource_*`, `pci_alloc_irq_vectors`, `pci_find_capability`, `dma_set_mask_*` |
-| `components/raeen_linuxkpi/src/dma.rs` | `dma_alloc_coherent` zero-copy bridge |
-| `components/raeen_linuxkpi/src/dma_stream.rs` | `dma_map_single`/`dma_map_page`/sync/`dma_mapping_error` (streaming) |
-| `components/raeen_linuxkpi/src/irq.rs` | `request_irq`/`request_threaded_irq`/`free_irq`/`enable_irq`, handler registry + `lkpi_serve_irq` pump |
-| `components/raeen_linuxkpi/src/string.rs` | `memcpy`/`memmove`/`memset`/`memcmp`/`memchr` + `str*` |
-| `components/raeen_linuxkpi/src/atomic.rs` | `atomic_t`/`atomic64_t` ops, `*_bit`, `mb`/`rmb`/`wmb` barriers |
-| `components/raeen_linuxkpi/src/delay.rs` | `udelay`/`ndelay`/`mdelay`/`usleep_range`, `ktime_get_ns`, jiffies conv |
-| `components/raeen_linuxkpi/src/kalloc.rs` | `vmalloc`/`kvmalloc`/`kcalloc`/`krealloc`/`kmemdup`/`kstrdup`/`devm_*`/page alloc |
-| `components/raeen_linuxkpi/src/sync.rs` | spinlocks (`_raw_spin_*`, irqsave), mutex init/trylock, `struct completion`, rwsem, `schedule`/`cond_resched` |
-| `components/raeen_linuxkpi/src/device.rs` | `printk`/`_printk`, `dev_err`/`dev_warn`/`dev_info`/`dev_dbg`, `dump_stack` |
-| `components/raeen_linuxkpi/src/lib.rs` | `kmalloc`/`kfree`, firmware, supervisor, self-tests |
+| `components/ath_linuxkpi/src/host.rs` | Raw syscall stubs (syscall1/2/3 helpers) |
+| `components/ath_linuxkpi/src/pci.rs` | `pci_enable`, `ioremap`, `readl`/`writel` |
+| `components/ath_linuxkpi/src/pci_ext.rs` | `pci_set_master`, regions, config byte/word, `pci_resource_*`, `pci_alloc_irq_vectors`, `pci_find_capability`, `dma_set_mask_*` |
+| `components/ath_linuxkpi/src/dma.rs` | `dma_alloc_coherent` zero-copy bridge |
+| `components/ath_linuxkpi/src/dma_stream.rs` | `dma_map_single`/`dma_map_page`/sync/`dma_mapping_error` (streaming) |
+| `components/ath_linuxkpi/src/irq.rs` | `request_irq`/`request_threaded_irq`/`free_irq`/`enable_irq`, handler registry + `lkpi_serve_irq` pump |
+| `components/ath_linuxkpi/src/string.rs` | `memcpy`/`memmove`/`memset`/`memcmp`/`memchr` + `str*` |
+| `components/ath_linuxkpi/src/atomic.rs` | `atomic_t`/`atomic64_t` ops, `*_bit`, `mb`/`rmb`/`wmb` barriers |
+| `components/ath_linuxkpi/src/delay.rs` | `udelay`/`ndelay`/`mdelay`/`usleep_range`, `ktime_get_ns`, jiffies conv |
+| `components/ath_linuxkpi/src/kalloc.rs` | `vmalloc`/`kvmalloc`/`kcalloc`/`krealloc`/`kmemdup`/`kstrdup`/`devm_*`/page alloc |
+| `components/ath_linuxkpi/src/sync.rs` | spinlocks (`_raw_spin_*`, irqsave), mutex init/trylock, `struct completion`, rwsem, `schedule`/`cond_resched` |
+| `components/ath_linuxkpi/src/device.rs` | `printk`/`_printk`, `dev_err`/`dev_warn`/`dev_info`/`dev_dbg`, `dump_stack` |
+| `components/ath_linuxkpi/src/lib.rs` | `kmalloc`/`kfree`, firmware, supervisor, self-tests |
 
 ## Symbol surface (2026-06-10)
 

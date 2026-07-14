@@ -455,7 +455,7 @@ fn resolve_cpu_freq(cpu_id: u32, attr: &str) -> Option<String> {
         "cpuinfo_cur_freq" => Some(String::from("3000000\n")),
         "scaling_governor" => Some(String::from("performance\n")),
         "scaling_available_governors" => Some(String::from("performance powersave\n")),
-        "scaling_driver" => Some(String::from("raeen-cpufreq\n")),
+        "scaling_driver" => Some(String::from("athena-cpufreq\n")),
         "energy_performance_preference" => Some(String::from("performance\n")),
         "energy_performance_available_preferences" => Some(String::from(
             "default performance balance_performance balance_power power\n",

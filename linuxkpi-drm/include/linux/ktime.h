@@ -9,7 +9,7 @@
  * License boundary (../../README.md): this declares the ktime *API surface*
  * (signatures + the arithmetic the function names dictate), NOT GPL source. The
  * clock READERS need a real monotonic source, so they are declaration-only and
- * resolve to raeen_linuxkpi at link time (M4). The arithmetic/comparison helpers
+ * resolve to ath_linuxkpi at link time (M4). The arithmetic/comparison helpers
  * are pure s64 math — the only meaning their names can carry — so they are
  * defined inline here. No silent-success fakes (SCOPE.md).
  */
@@ -42,7 +42,7 @@
 /* Largest representable ktime_t (saturating sentinel for "never times out"). */
 #define KTIME_MAX  ((s64)~((u64)1 << 63))
 
-/* ---- clock readers (declaration-only; raeen_linuxkpi backs these at M4) ----
+/* ---- clock readers (declaration-only; ath_linuxkpi backs these at M4) ----
  * A real monotonic/wall source is required, so these cannot be inlined here. */
 ktime_t ktime_get(void);              /* CLOCK_MONOTONIC */
 ktime_t ktime_get_real(void);         /* CLOCK_REALTIME  */

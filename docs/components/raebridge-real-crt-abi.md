@@ -1,6 +1,6 @@
 # AthBridge real-MSVC-CRT ABI spec — GS base + W^X mprotect
 
-**Status:** SPEC ONLY. No `rae_abi`, `syscall.rs`, or kernel file is edited by
+**Status:** SPEC ONLY. No `ath_abi`, `syscall.rs`, or kernel file is edited by
 this document. The implementation is gated on the kernel context-switch tree
 cooling (the GS save/restore lands in `scheduler.rs`, which is concurrently
 dirty). This is the design that lets the architect land `[interface]` + kernel
@@ -23,7 +23,7 @@ the TLS array (`gs:[0x58]`), the PEB pointer (`gs:[0x60]`), and `LastError`
 (`gs:[0x68]`). `__readgsqword(0x30)` is emitted inline all over the CRT and
 Win32 shims.
 
-AthBridge's `components/raebridge/src/ldr.rs` **already** builds an
+AthBridge's `components/athbridge/src/ldr.rs` **already** builds an
 offset-correct `Teb`/`Peb`/`RtlUserProcessParameters` set
 (`ProcessEnv::build`), and `ProcessEnv::gs_base()` already returns the TEB
 address. Two things are missing, both kernel/ABI work:
@@ -120,7 +120,7 @@ not interleaved with other context-switch churn.
 |---|---|
 | number | **282** (next free after `SYS_SEARCH_QUERY_RESOLVED` = 281; SYSCALL_TABLE.md "Next free: 282") |
 | name | `SYS_SET_GS_BASE` |
-| rae_abi const | `pub const SYS_SET_GS_BASE: u64 = 282;` (mirror the `SYS_SET_FS_BASE = 126` entry) |
+| ath_abi const | `pub const SYS_SET_GS_BASE: u64 = 282;` (mirror the `SYS_SET_FS_BASE = 126` entry) |
 | args | `rdi = base` (user virtual address of the TEB) |
 | rax | `0` on success, `u64::MAX` on a non-canonical / kernel-half address |
 | cap gate | **none** — same posture as `SYS_SET_FS_BASE` (126), which is ungated. Setting your own GS base is a per-task register write into your own address space; it grants no new authority. |
@@ -228,7 +228,7 @@ writes the same `Task::gs_base` field.
 |---|---|
 | number | **283** (next free after `SYS_SET_GS_BASE` = 282) |
 | name | `SYS_MPROTECT` |
-| rae_abi const | `pub const SYS_MPROTECT: u64 = 283;` |
+| ath_abi const | `pub const SYS_MPROTECT: u64 = 283;` |
 | args | `rdi = addr`, `rsi = len`, `rdx = prot` |
 | rax | `0` on success; `u64::MAX` on bad range / unmapped page / disallowed transition |
 | cap gate | **none today**, but see AthGuard W^X interaction below. The operation can only narrow/adjust protections on the caller's *own* already-mapped user pages; it maps nothing new and reaches no other address space. |
@@ -239,7 +239,7 @@ writes the same `Task::gs_base` field.
 
 `SYS_MMAP` already takes `prot` in `rdx` with `3` meaning RW (see
 `exec.rs::load_pe_executable` calling `sys_mmap(.., 3, ..)`). Define the bits
-explicitly in `rae_abi` so both sides agree (today the kernel mmap arm ignores
+explicitly in `ath_abi` so both sides agree (today the kernel mmap arm ignores
 `prot` and always maps RWX — `SYS_MPROTECT` is where the bits start to bite):
 
 ```rust
@@ -386,9 +386,9 @@ Layering (cheapest first, per TESTING_STRATEGY):
   `PROT_READ|PROT_EXEC -> (false, false)` (RX), `PROT_READ|PROT_WRITE ->
   (true, true)` (RW+NX), and W+X rejection under policy. Catches the bit logic
   off-target.
-- **Boot smoketest** (R10): `raebridge`'s boot smoketest loads the tiny gs-PE,
+- **Boot smoketest** (R10): `athbridge`'s boot smoketest loads the tiny gs-PE,
   runs it through a single self-yield, and prints
-  `[raebridge] gs-teb smoketest: read_before=.. survived_switch=.. -> PASS/FAIL`.
+  `[athbridge] gs-teb smoketest: read_before=.. survived_switch=.. -> PASS/FAIL`.
 - **QEMU CI**: the above marker present, no PANIC, `System successfully booted`.
 - **iron**: same marker on Athena once the kernel slice lands.
 
@@ -404,7 +404,7 @@ requires kernel signal/fault plumbing: a CPU fault in a AthBridge guest must be
 trapped, translated to an `EXCEPTION_RECORD` + `CONTEXT`, and the guest's
 language handler invoked on the guest stack, with continue/unwind semantics.
 
-**That is a SEPARATE future spec** (`docs/research/raebridge-seh-delivery-abi.md`,
+**That is a SEPARATE future spec** (`docs/research/athbridge-seh-delivery-abi.md`,
 to be written). It is the next gate AFTER this one — a CRT binary first has to
 *start* (TEB + W^X, this doc) before its fault path matters. Not designed here.
 
@@ -414,11 +414,11 @@ to be written). It is the next gate AFTER this one — a CRT binary first has to
 
 | piece | owner | deliverable |
 |---|---|---|
-| `[interface]` commit | **architect (opus, sole `rae_abi` editor)** | `SYS_SET_GS_BASE = 282`, `SYS_MPROTECT = 283`, `PROT_*` consts in `rae_abi`; rows in `docs/SYSCALL_TABLE.md` (new Block 33); ungated, all-sandbox, no `ABI_VERSION` bump (additive numbers). Lands WITH the dispatch arms. |
-| kernel impl | **raeen-kernel** | (a) `Task::gs_base` field + `0` init at the 4 ctor sites; (b) the dispatch arms 282/283 in `syscall.rs` (282 writes `KernelGsBase`; 283 walks+flips PTEs + TLB flush); (c) GS save/restore at the 3 `scheduler.rs` switch sites mirroring `fs_base`; (d) move `current_cpu_id()` off the active GS base onto the kernel-GS per-CPU `cpu_id` field, and audit interrupt-path callers. **Gated on the context-switch tree cooling** (touches `scheduler.rs`). |
-| AthBridge wiring | **raeen-compat** | `syscalls.rs` wrappers `sys_set_gs_base`/`sys_mprotect`; `exec.rs` steps 4b/5/6 (mprotect `.text` RX, `set_gs_base(env.gs_base())`, jump entry); own the `ProcessEnv` lifetime; the tiny gs-PE FAIL-able smoketest + host KAT for the prot math. |
+| `[interface]` commit | **architect (opus, sole `ath_abi` editor)** | `SYS_SET_GS_BASE = 282`, `SYS_MPROTECT = 283`, `PROT_*` consts in `ath_abi`; rows in `docs/SYSCALL_TABLE.md` (new Block 33); ungated, all-sandbox, no `ABI_VERSION` bump (additive numbers). Lands WITH the dispatch arms. |
+| kernel impl | **athena-kernel** | (a) `Task::gs_base` field + `0` init at the 4 ctor sites; (b) the dispatch arms 282/283 in `syscall.rs` (282 writes `KernelGsBase`; 283 walks+flips PTEs + TLB flush); (c) GS save/restore at the 3 `scheduler.rs` switch sites mirroring `fs_base`; (d) move `current_cpu_id()` off the active GS base onto the kernel-GS per-CPU `cpu_id` field, and audit interrupt-path callers. **Gated on the context-switch tree cooling** (touches `scheduler.rs`). |
+| AthBridge wiring | **athena-compat** | `syscalls.rs` wrappers `sys_set_gs_base`/`sys_mprotect`; `exec.rs` steps 4b/5/6 (mprotect `.text` RX, `set_gs_base(env.gs_base())`, jump entry); own the `ProcessEnv` lifetime; the tiny gs-PE FAIL-able smoketest + host KAT for the prot math. |
 
 The architect lands the `[interface]` (constants + table) + the kernel dispatch
 + the scheduler restore as one coordinated change once the kernel context-switch
-files are clean, then raeen-compat wires the loader against the published
+files are clean, then athena-compat wires the loader against the published
 numbers (282 / 283). This unblocks real MSVC-compiled Windows `.exe` execution.

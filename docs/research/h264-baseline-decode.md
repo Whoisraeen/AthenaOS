@@ -1,9 +1,9 @@
 # Spec: H.264/AVC **Baseline** intra decode — make `.mp4` video display real picture
 
 The single biggest remaining gap in the #5 "play my movies" pillar. The container side and the
-app shell already landed: `rae_mp4` resolves every H.264 sample's bytes + the `avcC` SPS/PPS, the
+app shell already landed: `ath_mp4` resolves every H.264 sample's bytes + the `avcC` SPS/PPS, the
 `apps/video` player wires demux → `H264Decoder` → YUV→ARGB → canvas, and AAC audio is genuinely
-audible. The one thing that does **not** work is the picture: `raemedia::H264Decoder` is a
+audible. The one thing that does **not** work is the picture: `athmedia::H264Decoder` is a
 parse-shell that emits a flat gray YUV420 surface (the app honestly shows "Video stream demuxed —
 decode pending (engine)"). This spec is the concrete, honest, **provable** plan to close that.
 
@@ -22,7 +22,7 @@ MP3/AAC specs took (per-stage referenced, not end-to-end bit-exact in the host K
 > "A daily driver must 'play my movies' and 'play my music.' MP4 … (the ISO Base Media File
 > Format) is the dominant container for both — phone video, downloaded video, and AAC audio
 > (`.m4a`/`.mp4`) all ship as BMFF."
-> (LEGACY_GAMING_CONCEPT.md §creators / media — the exact line `rae_mp4/src/lib.rs` and
+> (LEGACY_GAMING_CONCEPT.md §creators / media — the exact line `ath_mp4/src/lib.rs` and
 > `apps/video/src/lib.rs` both quote in their module docstrings; the "it just works" media pillar.
 > Concept §Roadmap Year-1 also names a decoded picture as the bar: "Boots, draws, plays …".)
 
@@ -36,7 +36,7 @@ closed for audio.
 Do **not** rebuild these. The decoder is the **delta** between the parse-shell and real
 reconstruction.
 
-- `components/rae_mp4/src/lib.rs` — **[x] built (host-KAT'd).** The demuxer resolves every video
+- `components/ath_mp4/src/lib.rs` — **[x] built (host-KAT'd).** The demuxer resolves every video
   sample's absolute offset/size/dts/cts/keyframe and hands raw elementary-stream bytes via
   `Track::sample_data(data, i)`. For `Codec::H264` (fourcc `avc1`/`avc3`) `Track::codec_private` is
   the **`avcC` box payload** (AVCDecoderConfigurationRecord: version, profile/compat/level,
@@ -51,7 +51,7 @@ reconstruction.
   ARGB8888 → `blit_frame_fit()`. **The output contract is fixed and correct: produce a real
   YUV420p `VideoFrame` and the app already displays it.** When the engine learns reconstruction,
   `decode_first_video` needs *no change* (the app's own docstring says so).
-- `components/raemedia/src/lib.rs` — **[~] parse-shell, emits gray.** This is the call site to
+- `components/athmedia/src/lib.rs` — **[~] parse-shell, emits gray.** This is the call site to
   replace. Specifically:
   - `H264Decoder` / `H264Sps` / `H264Pps` / `H264SliceHeader` / `H264SliceType` structs exist
     (good field shapes already: `width_mbs`, `height_mbs`, `chroma_format`, `frame_mbs_only`,
@@ -64,12 +64,12 @@ reconstruction.
   - `produce_frame()` (~L1675) returns a `VideoFrame` of all-`0` Y + all-`128` UV (a gray frame) at
     `width_mbs*16 × height_mbs*16` (= 0×0 today, so the app falls to "decode pending").
   - `VideoDecoder::decode()` (~L1720) returns that frame whenever a slice NAL was seen.
-- `components/raemedia/src/lib.rs::PixelConverter::yuv420_to_rgb()` (~L3903) — **[x] built.** The
+- `components/athmedia/src/lib.rs::PixelConverter::yuv420_to_rgb()` (~L3903) — **[x] built.** The
   exact YUV(4:2:0)→RGB the app's `yuv_frame_to_argb` consumes (BT.601/709 coefficients, per-sample
   `.get().unwrap_or`-bounded). **Reuse verbatim — do NOT write a second color converter.** The
   ARGB8888 `Vec<u32>` output model is the same one the image decoders (`png.rs`/`jpeg.rs`) feed the
   canvas with.
-- `components/raemedia/src/mp3_dsp.rs` / `aac` no-libm DSP precedent — **[x] built.** The
+- `components/athmedia/src/mp3_dsp.rs` / `aac` no-libm DSP precedent — **[x] built.** The
   no-libm/`#![no_std]`/soft-float discipline (no `libm`, integer or host-precomputed-table math)
   is established. H.264 baseline is *easier* here: the core transforms are **integer** (no
   trig/IMDCT at all), so most of the DSP is exact integer arithmetic — no table-build trig needed.
@@ -101,7 +101,7 @@ spec oracles; AthenaOS keeps its own `#![no_std]`, no-libm, integer-transform de
   (LGPL)** — used only as the source-of-numbers cross-check; no code copied/linked.
 - **Concept §R7 (no Linux-clone lineage):** satisfied — H.264 is an ITU/ISO codec, not a Linux
   subsystem; the implementation is original Rust over ITU data tables (no DRM/KMS, no Linux media
-  framework involvement). The decoder is pure userspace `raemedia`, no kernel/ABI surface.
+  framework involvement). The decoder is pure userspace `athmedia`, no kernel/ABI surface.
 
 **Corroboration gate:** the CAVLC VLC tables and the inverse-quant `LevelScale`/`Vmat` constants in
 §4 are transcribed from ITU-T H.264 §8/§9 and **cross-checked entry-for-entry against both openh264
@@ -151,7 +151,7 @@ CABAC/B/8×8/interlace/HDR are explicitly deferred follow-ups, each its own spec
 The decode flow, each stage cross-referenced to the existing shell it replaces:
 
 ```
-avcC sample bytes (length-prefixed NAL)            ← rae_mp4 Track::sample_data
+avcC sample bytes (length-prefixed NAL)            ← ath_mp4 Track::sample_data
   │  (or Annex-B from apps/video::avcc_to_annexb)
   ▼
 [A] NAL framing + emulation-prevention removal      → §2.1  (fix parse_nal_units)
@@ -201,7 +201,7 @@ Everything from SPS onward is bit-packed with Exp-Golomb (§9.1). NEW `BitReader
 - `more_rbsp_data()` / byte-alignment for trailing bits.
 - **Hostile-input discipline:** every read past the RBSP end returns 0/`Err` (never panics); every
   count derived from the stream (mb count, `total_coeff`, `run_before`) is clamped to its syntactic
-  max before use. Parsers are the #1 RCE surface — match `rae_mp4`'s posture exactly.
+  max before use. Parsers are the #1 RCE surface — match `ath_mp4`'s posture exactly.
 
 ### §2.3 — SPS parse (§7.3.2.1) — the geometry the shell hardcodes to 0
 Replace the `profile=nal[1]` stub with a real `ue`/`se` parse. Fields that matter for Baseline:
@@ -421,7 +421,7 @@ Source: ITU Tables 9-7..9-10; cross-check openh264 `g_kuiTotalZeros*`/`g_kuiZero
 These are tiny fixed tables; transcribe + cross-check.
 
 ### §4.4 — the follow-up data-spec
-`docs/research/h264-cavlc-tables.md` (NEXT spec, raeen-researcher): inline all of §4.1–§4.3 verbatim
+`docs/research/h264-cavlc-tables.md` (NEXT spec, athena-researcher): inline all of §4.1–§4.3 verbatim
 from ITU, corroborated openh264 ↔ FFmpeg entry-for-entry, in a **generator-checkable row form**
 (codeword,len → value tuple) so a `tools/h264_vlc_gen` can assert prefix-freeness + dimension =
 table size before emit — exactly the MP3/AAC `*_huff_gen` discipline. **Flag now:** the implementer
@@ -431,8 +431,8 @@ must not transcribe these from memory; they come from the data-spec.
 
 ## §5 — Interface needs (NEEDS-INTERFACE)
 
-**None.** This is entirely inside the `raemedia` userspace crate (and an optional new `rae_h264`
-crate). No new syscall, no `rae_abi` change, no kernel ABI surface. The decoder already returns
+**None.** This is entirely inside the `athmedia` userspace crate (and an optional new `ath_h264`
+crate). No new syscall, no `ath_abi` change, no kernel ABI surface. The decoder already returns
 `VideoFrame` through the existing `VideoDecoder` trait; only the *contents* go from gray to real
 picture, and `apps/video` consumes it unchanged. (If a future GPU-decode path is wanted, *that*
 would need an interface — out of scope here; this is the CPU reference decoder.)
@@ -441,23 +441,23 @@ would need an interface — out of scope here; this is the CPU reference decoder
 
 ## §6 — File-by-file plan
 
-**Recommended structure: a new `components/rae_h264` crate** (so the decoder is independently
-host-testable like `rae_mp4`, and `raemedia` depends on it), OR extend `raemedia` in-place. New
-crate is cleaner for the KAT split and keeps `raemedia/src/lib.rs` (already ~4k lines) from growing;
-but extending `raemedia` avoids a new Cargo member. **Decision: new `rae_h264` crate** — matches the
-`rae_mp4` precedent (per-codec crate, `#![cfg_attr(not(test), no_std)]`, `forbid(unsafe_code)`,
-host-KAT module at the bottom), and `raemedia::H264Decoder` becomes a thin adapter over it.
+**Recommended structure: a new `components/ath_h264` crate** (so the decoder is independently
+host-testable like `ath_mp4`, and `athmedia` depends on it), OR extend `athmedia` in-place. New
+crate is cleaner for the KAT split and keeps `athmedia/src/lib.rs` (already ~4k lines) from growing;
+but extending `athmedia` avoids a new Cargo member. **Decision: new `ath_h264` crate** — matches the
+`ath_mp4` precedent (per-codec crate, `#![cfg_attr(not(test), no_std)]`, `forbid(unsafe_code)`,
+host-KAT module at the bottom), and `athmedia::H264Decoder` becomes a thin adapter over it.
 
-- `components/rae_h264/src/lib.rs` (NEW) — `BitReader` (Exp-Golomb §2.2), `nal.rs` RBSP extraction +
+- `components/ath_h264/src/lib.rs` (NEW) — `BitReader` (Exp-Golomb §2.2), `nal.rs` RBSP extraction +
   emul-prevention (§2.1), `sps.rs`/`pps.rs`/`slice.rs` parsers (§2.3–2.5), `macroblock.rs` (§2.6),
   `cavlc.rs` residual (§4, consuming the data-spec tables), `transform.rs` (§2.7 integer
   IDCT/Hadamard + inverse-quant), `intra.rs` (§2.8), `deblock.rs` (§2.9), `inter.rs` (§2.10, step 2).
   Public API: `H264Decoder::new()` / `decode_nal(&[u8]) -> Result<Option<Frame>, _>` /
   `Frame { width, height, y, u, v }` (cropped dims, YUV420p).
-- `components/rae_h264/src/tables/` — the CAVLC + inverse-quant tables emitted by the §4.4 data-spec
+- `components/ath_h264/src/tables/` — the CAVLC + inverse-quant tables emitted by the §4.4 data-spec
   generator (do NOT hand-type).
-- `components/raemedia/src/lib.rs` — replace the `H264Decoder` internals (`parse_nal_units`,
-  `process_nal`, `produce_frame`) with a thin adapter: feed NALs to `rae_h264`, wrap its
+- `components/athmedia/src/lib.rs` — replace the `H264Decoder` internals (`parse_nal_units`,
+  `process_nal`, `produce_frame`) with a thin adapter: feed NALs to `ath_h264`, wrap its
   `Frame` into the existing `VideoFrame { planes }`. **Keep the `VideoDecoder` trait + `VideoFrame`
   shape unchanged** (the app depends on them). Report cropped width/height.
 - `apps/video/src/lib.rs` — **no change** (the wiring already consumes a real `VideoFrame`; verify
@@ -467,7 +467,7 @@ host-KAT module at the bottom), and `raemedia::H264Decoder` becomes a thin adapt
 
 ## §7 — Acceptance criteria (the exact proof)
 
-**Foundation slice (§3.1) — each a FAIL-able host KAT (`cargo test -p rae_h264`):**
+**Foundation slice (§3.1) — each a FAIL-able host KAT (`cargo test -p ath_h264`):**
 - `h264_nal_strips_emulation_prevention` — input with `00 00 03 01` → RBSP has `00 00 01`; wrong
   output fails. Asserts the NAL-type list too.
 - `h264_exp_golomb_known_codewords` — table of `(bits → ue/se value)`; includes a negative case.
@@ -496,24 +496,24 @@ host-KAT module at the bottom), and `raemedia::H264Decoder` becomes a thin adapt
 
 **Boot/runtime markers:**
 - `run_boot_smoketest()` for the H.264 path MUST emit
-  `[rae_h264] sps=<WxH> idct=ok intra=ok deblock=ok cavlc=ok -> PASS` (FAIL if the minimal-I-MB
+  `[ath_h264] sps=<WxH> idct=ok intra=ok deblock=ok cavlc=ok -> PASS` (FAIL if the minimal-I-MB
   recon does not match the embedded expected block). The smoketest must be able to print FAIL.
-- `/proc/raeen/media` MUST report `h264=intra` (was `h264=demux-only`) once §3.1 lands;
+- `/proc/athena/media` MUST report `h264=intra` (was `h264=demux-only`) once §3.1 lands;
   `h264=playing` once P-slices (§2.10) land.
-- Docstring on `rae_h264::lib` MUST quote the Concept promise above (R10).
+- Docstring on `ath_h264::lib` MUST quote the Concept promise above (R10).
 - **Visual proof (the `[x]` lever):** on iron, `apps/video` displays a real first keyframe of a
   committed Baseline `.mp4` (the "decode pending" placeholder no longer shows).
 
 ## §8 — Handoff
 
-- **Implementer: raeen-media.** Pure userspace (`rae_h264` + the `raemedia` adapter); no kernel/ABI
+- **Implementer: athena-media.** Pure userspace (`ath_h264` + the `athmedia` adapter); no kernel/ABI
   touch. Sequencing below keeps the build green and the app's honest "decode pending" behavior until
   real pixels exist.
 - **Foundation slice (land this first, fully provable):** in order, each its own FAIL-able KAT —
   (1) NAL/emul-prevention + Exp-Golomb reader; (2) SPS + PPS parse (fix the `width_mbs=0` bug — this
   alone makes the app report correct dimensions); (3) the §4.4 CAVLC data-spec + `h264_vlc_gen` +
   the VLC KATs; (4) the integer transform + inverse-quant; (5) intra prediction; (6) deblocking;
-  (7) the minimal-I-MB end-to-end KAT; (8) wire the `raemedia` adapter + flip `h264=intra`. **Each
+  (7) the minimal-I-MB end-to-end KAT; (8) wire the `athmedia` adapter + flip `h264=intra`. **Each
   step is independently provable before the next — real progress lands at every step.**
 - **Then (step 2):** P-slice inter prediction (§2.10) + 1-frame DPB → `h264=playing` (the file
   *plays*, not just shows a keyframe).

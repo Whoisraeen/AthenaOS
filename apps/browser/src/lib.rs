@@ -5,15 +5,15 @@
 //!
 //! The biggest missing first-party app. It wires the two already-built, already-
 //! host-KAT'd web engines into a clickable browser:
-//!   * `raeweb` — HTML tokenizer → parser → DOM → CSS cascade → layout → paint.
-//!     [`raeweb::RenderPipeline::render_to_layout`] gives the laid-out box tree;
-//!     [`raeweb::backend::paint_displaylist_to_canvas`] blits the display list
-//!     through the SAME crisp-AA `raegfx::Canvas` path every AthUI surface uses —
+//!   * `athweb` — HTML tokenizer → parser → DOM → CSS cascade → layout → paint.
+//!     [`athweb::RenderPipeline::render_to_layout`] gives the laid-out box tree;
+//!     [`athweb::backend::paint_displaylist_to_canvas`] blits the display list
+//!     through the SAME crisp-AA `athgfx::Canvas` path every AthUI surface uses —
 //!     the literal meaning of "renders through AthUI".
-//!   * `rae_js` — a real tree-walking ECMAScript interpreter. An inline `<script>`
-//!     is extracted from the page and executed via [`rae_js::Interpreter::eval_str`]
+//!   * `ath_js` — a real tree-walking ECMAScript interpreter. An inline `<script>`
+//!     is extracted from the page and executed via [`ath_js::Interpreter::eval_str`]
 //!     for its evaluation + `console.*` side effects; the output is captured with
-//!     [`rae_js::Interpreter::take_console_output`]. Budget-bounded: a hostile
+//!     [`ath_js::Interpreter::take_console_output`]. Budget-bounded: a hostile
 //!     script returns a positioned error, it never hangs or panics the app.
 //!
 //! ## Honest scope (v1 — what is PROVEN vs DEFERRED)
@@ -23,7 +23,7 @@
 //!   console output. Real back/forward/reload/address-bar navigation over the
 //!   local content set.
 //! * PROVEN (v2 — the engine-gap close): **live JS → DOM mutation**. A `document`
-//!   host object (`rae_js::HostObject` bound to a shared `raeweb::DomDocument`, see
+//!   host object (`ath_js::HostObject` bound to a shared `athweb::DomDocument`, see
 //!   [`dom_js`]) is installed before the page's inline scripts run, so
 //!   `document.getElementById('out').textContent = 'new'` mutates the real DOM and
 //!   marks it dirty; `render_page` then re-lays-out the mutated tree so the change
@@ -33,7 +33,7 @@
 //! * PROVEN (v4 — interactivity): `el.addEventListener('click', fn)` registers a JS
 //!   callback against the element's id, and a click (synthetic by id via
 //!   [`InteractivePage::click_node`], or by pixel coordinate via
-//!   [`InteractivePage::click_at`] using `raeweb::hit_test`) invokes the handler in
+//!   [`InteractivePage::click_at`] using `athweb::hit_test`) invokes the handler in
 //!   the live interpreter, bubbles to id-bearing ancestors, drains the microtask/
 //!   timer loop, and re-lays-out so a handler's DOM mutation shows. A throwing or
 //!   runaway handler is budget-bounded and surfaced as an error — the page never
@@ -44,23 +44,23 @@
 //!   `onclick="…"` attribute handlers, and `innerHTML` writes (parsing a fragment back
 //!   into the tree). Stated plainly, not faked.
 //! * PROVEN (v3 — network fetch over a MOCK transport): a typed `http://` URL is
-//!   fetched through `raeweb::loader::fetch_document` over an injectable
-//!   [`raenet::http1::HttpTransport`], then run through the SAME render+execute path
+//!   fetched through `athweb::loader::fetch_document` over an injectable
+//!   [`athnet::http1::HttpTransport`], then run through the SAME render+execute path
 //!   as a local page (parse → cascade → layout → paint, `document` host object,
 //!   inline `<script>`s, re-layout on DOM mutation). The host KAT injects
-//!   [`raenet::http1::MockTransport`] (a canned HTTP/1.1 response) and asserts the
+//!   [`athnet::http1::MockTransport`] (a canned HTTP/1.1 response) and asserts the
 //!   fetch happened (right host/path), the layout carries the page's text, and the
 //!   script executed; failure modes (connection error / non-200 / malformed) render
 //!   an HONEST error page, never a panic or a blank surface. Body size is bounded by
 //!   the loader's `Limits` so a hostile response cannot OOM. See [`BrowserModel::fetch_and_render`].
 //! * DEFERRED (iron-gated): LIVE connectivity. The live ELF wraps a real socket in
-//!   `RaeSocketTransport` (DNS resolve + TCP connect + send/recv over the raekit
+//!   `RaeSocketTransport` (DNS resolve + TCP connect + send/recv over the athkit
 //!   socket syscalls), but actually reaching a server needs the kernel networking at
 //!   DHCP-Bound (the RTL8125 RX/DHCP work on iron). Until that lands, a live fetch
 //!   resolves cleanly to the error page. `https://` has a verified TLS 1.3 fetch
-//!   path BUILT and host-proven in `raenet` (`HttpsClient::get_over` — validates the
+//!   path BUILT and host-proven in `athnet` (`HttpsClient::get_over` — validates the
 //!   cert chain to a trusted root, binds the hostname to the cert SAN, and verifies
-//!   CertificateVerify + the server Finished, fail-closed; see `cargo test -p raenet
+//!   CertificateVerify + the server Finished, fail-closed; see `cargo test -p athnet
 //!   --features tls13`). It is not yet linked into this live ELF because the
 //!   RustCrypto TLS stack (sha2/aes-gcm/polyval) does not codegen for the soft-float,
 //!   no-SSE `x86_64-unknown-none` userspace target (CLAUDE.md pitfall #14). Until that
@@ -69,7 +69,7 @@
 //!
 //! The navigation + load/render/script DECISION logic lives in the syscall-free
 //! [`BrowserModel`] so the host KAT (`cargo test -p browser --features host`) links
-//! the LIVE `raeweb` + `rae_js` engines with no kernel: feed a known HTML string
+//! the LIVE `athweb` + `ath_js` engines with no kernel: feed a known HTML string
 //! (with CSS + an inline `<script>`), assert the rendered LAYOUT contains the
 //! expected element box + heading text (real layout), AND assert the inline JS
 //! EXECUTED (captured `console.log` output matches the computed value).
@@ -90,24 +90,24 @@ pub mod tabs;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use raeweb::{LayoutBox, RenderPipeline};
+use athweb::{LayoutBox, RenderPipeline};
 
 #[cfg(not(test))]
-use raeweb::backend::paint_displaylist_to_canvas;
+use athweb::backend::paint_displaylist_to_canvas;
 
 // The render/run path is live-ELF only; under `cargo test` only the BrowserModel
-// (over raeweb + rae_js) is exercised, so the graphics/syscall imports are gated
+// (over athweb + ath_js) is exercised, so the graphics/syscall imports are gated
 // out to keep the host test warning-clean.
 #[cfg(not(test))]
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 #[cfg(not(test))]
-use rae_tokens::DARK;
+use ath_tokens::DARK;
 #[cfg(not(test))]
-use raegfx::text::FontFamily;
+use athgfx::text::FontFamily;
 #[cfg(not(test))]
-use raegfx::Canvas;
+use athgfx::Canvas;
 
 // ── Window geometry (live ELF only) ──────────────────────────────────────
 
@@ -155,7 +155,7 @@ const TEXT_TERTIARY: u32 = DARK.text_tertiary;
 
 #[cfg(not(test))]
 fn accent() -> u32 {
-    rae_tokens::derive_accent(raekit::sys::theme_accent(), &DARK).base
+    ath_tokens::derive_accent(athkit::sys::theme_accent(), &DARK).base
 }
 
 // ===========================================================================
@@ -174,17 +174,17 @@ pub const VIEWPORT_H: f32 = 520.0;
 pub struct LoadedPage {
     /// The address the page was loaded from (a local path or `about:` URL).
     pub url: String,
-    /// The laid-out box tree from the LIVE `raeweb` layout engine. The chrome
+    /// The laid-out box tree from the LIVE `athweb` layout engine. The chrome
     /// paints it; the KAT asserts element boxes + text against it.
     pub layout: LayoutBox,
     /// Every line the page's inline `<script>` wrote to `console.*` while it ran
     /// (empty if the page had no script, or the script wrote nothing).
     pub console: Vec<String>,
     /// `Some(msg)` if the inline script failed to parse/run (positioned error from
-    /// `rae_js`); the page still renders — a broken script never blocks the DOM.
+    /// `ath_js`); the page still renders — a broken script never blocks the DOM.
     pub script_error: Option<String>,
     /// The document's HTML, retained so the live paint path can re-derive the
-    /// engine's [`raeweb::DisplayList`] each frame (the public paint bridge consumes
+    /// engine's [`athweb::DisplayList`] each frame (the public paint bridge consumes
     /// a display list, not a layout tree).
     pub html: String,
     /// The page-level stylesheet, retained for the same reason.
@@ -255,7 +255,7 @@ impl BrowserModel {
     /// every `<style>` block it extracted from the document; the KAT passes one).
     pub fn render_page(&self, url: &str, html: &str, css: &str) -> LoadedPage {
         // Run the page's inline scripts against a LIVE document binding: a `document` host
-        // object (bound to a shared raeweb DOM) is installed before execution, so
+        // object (bound to a shared athweb DOM) is installed before execution, so
         // `document.getElementById('x').textContent = '…'` mutates the real tree. The
         // returned `mutated_html` is the document serialized AFTER the scripts ran — if a
         // script changed the DOM, it differs from the input and we lay THAT out (so the
@@ -294,32 +294,32 @@ impl BrowserModel {
     /// The display list for `page`, for the live paint bridge. Re-renders through
     /// the engine's public pipeline (cheap for v1's small local docs).
     #[cfg(not(test))]
-    pub fn display_list_for(&self, page: &LoadedPage) -> raeweb::DisplayList {
+    pub fn display_list_for(&self, page: &LoadedPage) -> athweb::DisplayList {
         self.pipeline.render(&page.html, &page.css)
     }
 
     /// Fetch `url` over the injected HTTP transport and render it through the SAME
     /// parse → cascade → layout → paint + inline-`<script>` execution path the local
     /// loader uses. This is the network front of the browser, host-testable because
-    /// `transport` is any [`raenet::http1::HttpTransport`] — the host KAT passes a
-    /// [`raenet::http1::MockTransport`] returning a canned HTTP/1.1 response; the live
+    /// `transport` is any [`athnet::http1::HttpTransport`] — the host KAT passes a
+    /// [`athnet::http1::MockTransport`] returning a canned HTTP/1.1 response; the live
     /// app passes a real socket transport.
     ///
     /// Always returns a `LoadedPage` (never an `Err`) so the chrome has something to
     /// paint no matter what: a fetch/transport failure, a non-2xx status, or a
     /// malformed body all resolve to an HONEST error page (a real HTML document run
     /// through the engine), never a panic or a blank surface. The response body size
-    /// is bounded by the loader's [`raenet::http1::Limits`] (16 MiB default) so a
+    /// is bounded by the loader's [`athnet::http1::Limits`] (16 MiB default) so a
     /// hostile/huge response cannot OOM the app.
     ///
     /// `<style>` blocks in the fetched document are extracted and cascaded; any
     /// `<script>` runs against the live `document` binding (DOM mutation shows).
-    pub fn fetch_and_render<T: raenet::http1::HttpTransport>(
+    pub fn fetch_and_render<T: athnet::http1::HttpTransport>(
         &self,
         url: &str,
         transport: &mut T,
     ) -> LoadedPage {
-        match raeweb::loader::fetch_document(url, transport) {
+        match athweb::loader::fetch_document(url, transport) {
             Ok(resource) => {
                 // Honest server-error handling: a non-2xx is a real navigation result, not a
                 // transport failure — render the server's own body if it sent one, else a
@@ -446,19 +446,19 @@ pub fn extract_styles(html: &str) -> String {
 /// order. `rel` is matched token-wise (case-insensitive), so `rel="stylesheet"`,
 /// `rel="alternate stylesheet"`, and `rel="STYLESHEET"` all qualify; a `<link>`
 /// without an `href`, or one that is not a stylesheet (`rel="icon"` etc.), is
-/// skipped. Uses raeweb's public DOM (`parse_html` → walk `tag_name`/`get_attribute`)
+/// skipped. Uses athweb's public DOM (`parse_html` → walk `tag_name`/`get_attribute`)
 /// so it sees the real parsed tree, not a regex over text.
 ///
 /// Never panics: a malformed document simply yields whatever links parsed.
 pub fn link_stylesheet_hrefs(html: &str) -> Vec<String> {
-    let dom = raeweb::parse_html(html);
+    let dom = athweb::parse_html(html);
     let mut out: Vec<String> = Vec::new();
     collect_link_hrefs(&dom, &mut out);
     out
 }
 
 /// Recursive DOM walk collecting stylesheet `<link>` hrefs in document order.
-fn collect_link_hrefs(node: &raeweb::DomNode, out: &mut Vec<String>) {
+fn collect_link_hrefs(node: &athweb::DomNode, out: &mut Vec<String>) {
     if node.tag_name() == Some("link") {
         let is_stylesheet = node
             .get_attribute("rel")
@@ -491,7 +491,7 @@ fn collect_link_hrefs(node: &raeweb::DomNode, out: &mut Vec<String>) {
 /// common case (a linked framework sheet overridden by a later inline `<style>` is the
 /// rare case and is a known v1 simplification, stated plainly). Linked sheets that fail
 /// to fetch are skipped — a broken stylesheet never fails the page.
-fn collect_page_css<T: raenet::http1::HttpTransport>(
+fn collect_page_css<T: athnet::http1::HttpTransport>(
     base_url: &str,
     html: &str,
     transport: &mut T,
@@ -504,13 +504,13 @@ fn collect_page_css<T: raenet::http1::HttpTransport>(
     // Resolve each href to an absolute http:// URL; drop the ones we can't/won't fetch.
     let mut urls: Vec<String> = Vec::new();
     for href in &hrefs {
-        if let Some(abs) = raeweb::loader::resolve_stylesheet_url(base_url, href) {
+        if let Some(abs) = athweb::loader::resolve_stylesheet_url(base_url, href) {
             urls.push(abs);
         }
     }
     if !urls.is_empty() {
         let linked =
-            raeweb::loader::fetch_stylesheets(&urls, transport, &raenet::http1::Limits::new());
+            athweb::loader::fetch_stylesheets(&urls, transport, &athnet::http1::Limits::new());
         if !linked.is_empty() {
             css.push('\n');
             css.push_str(&linked);
@@ -519,7 +519,7 @@ fn collect_page_css<T: raenet::http1::HttpTransport>(
     css
 }
 
-/// Run every top-level `<script>` block's contents through `rae_js`, in document
+/// Run every top-level `<script>` block's contents through `ath_js`, in document
 /// order, sharing ONE interpreter so later scripts see earlier globals (the real
 /// browser semantics). Returns the concatenated console output and the FIRST
 /// script error encountered (if any).
@@ -534,7 +534,7 @@ pub fn run_inline_scripts(html: &str) -> (Vec<String>, Option<String>) {
     if scripts.is_empty() {
         return (Vec::new(), None);
     }
-    let mut interp = rae_js::Interpreter::new();
+    let mut interp = ath_js::Interpreter::new();
     let mut out: Vec<String> = Vec::new();
     let mut first_err: Option<String> = None;
     for src in &scripts {
@@ -573,9 +573,9 @@ pub struct ScriptRun {
     pub dom_mutated: bool,
 }
 
-/// Run every top-level inline `<script>` through `rae_js` with a LIVE `document` binding
+/// Run every top-level inline `<script>` through `ath_js` with a LIVE `document` binding
 /// installed — the engine-gap closer. A `document` host object backed by a shared
-/// [`raeweb::DomDocument`] (parsed from `html`+`css`) is defined as a global before the
+/// [`athweb::DomDocument`] (parsed from `html`+`css`) is defined as a global before the
 /// scripts run, so `document.getElementById('out').textContent = 'new'` mutates the real
 /// DOM. After the scripts run, the (possibly mutated) document is serialized back to HTML so
 /// the caller can re-lay-out it.
@@ -587,7 +587,7 @@ pub struct ScriptRun {
 /// crash.
 pub fn run_inline_scripts_with_dom(html: &str, css: &str) -> ScriptRun {
     let scripts = extract_scripts(html);
-    let mut interp = rae_js::Interpreter::new();
+    let mut interp = ath_js::Interpreter::new();
     // Install the `document` binding bound to a shared DOM, even if there are no scripts
     // (cheap; keeps the path uniform). The viewport matches the model's layout viewport so
     // any geometry a future script reads is consistent.
@@ -624,8 +624,8 @@ pub fn run_inline_scripts_with_dom(html: &str, css: &str) -> ScriptRun {
     }
 }
 
-/// A loaded page that stays INTERACTIVE: it keeps the live `rae_js` interpreter, the shared
-/// `raeweb` document, and the event-listener registry alive after the initial render, so a
+/// A loaded page that stays INTERACTIVE: it keeps the live `ath_js` interpreter, the shared
+/// `athweb` document, and the event-listener registry alive after the initial render, so a
 /// later click can invoke the handlers a page registered with `addEventListener` — and the
 /// DOM mutations those handlers make become visible on re-layout.
 ///
@@ -643,7 +643,7 @@ pub fn run_inline_scripts_with_dom(html: &str, css: &str) -> ScriptRun {
 /// Never panics: a handler that throws or runs away is bounded by the interpreter budget and
 /// surfaced as an error; the page stays alive and renderable.
 pub struct InteractivePage {
-    interp: rae_js::Interpreter,
+    interp: ath_js::Interpreter,
     doc: dom_js::SharedDoc,
     registry: events::SharedRegistry,
     pipeline: RenderPipeline,
@@ -660,7 +660,7 @@ impl InteractivePage {
     /// page's inline `<script>`s (registering any `addEventListener` callbacks), and lay out
     /// the resulting DOM. The interpreter/doc/registry are retained for later click dispatch.
     pub fn load(html: &str, css: &str) -> InteractivePage {
-        let mut interp = rae_js::Interpreter::new();
+        let mut interp = ath_js::Interpreter::new();
         let (doc, registry) =
             dom_js::install_document_interactive(&mut interp, html, css, VIEWPORT_W, VIEWPORT_H);
         let scripts = extract_scripts(html);
@@ -744,14 +744,14 @@ impl InteractivePage {
     /// [`events::DispatchResult`]. This is the pixel entry point the live browser drives from a
     /// real pointer click.
     pub fn click_at(&mut self, x: f32, y: f32) -> Option<events::DispatchResult> {
-        let hit = raeweb::hit_test(&self.layout, x, y)?;
+        let hit = athweb::hit_test(&self.layout, x, y)?;
         let id = hit.node_id?;
         Some(self.click_node(&id))
     }
 
     /// The display list for the current layout, for the live paint bridge. Re-renders the
     /// live (post-dispatch) DOM through the engine's public pipeline.
-    pub fn display_list(&self) -> raeweb::DisplayList {
+    pub fn display_list(&self) -> athweb::DisplayList {
         self.pipeline
             .render(&self.doc.borrow().serialize(), &self.css)
     }
@@ -937,10 +937,10 @@ pub fn classify_url(url: &str) -> UrlKind {
 
 /// Build an honest error document for a transport/parse failure — a real HTML page
 /// rendered through the live engine (NOT a panic, NOT a blank surface). The error
-/// reason is mapped from the loader's [`raeweb::loader::LoadError`] into plain
+/// reason is mapped from the loader's [`athweb::loader::LoadError`] into plain
 /// language a user can act on.
-pub fn load_error_doc(url: &str, err: &raeweb::loader::LoadError) -> String {
-    use raeweb::loader::LoadError;
+pub fn load_error_doc(url: &str, err: &athweb::loader::LoadError) -> String {
+    use athweb::loader::LoadError;
     let reason = match err {
         LoadError::BadUrl => "The address could not be understood (bad URL or unsupported scheme).",
         LoadError::Transport => {
@@ -1101,11 +1101,11 @@ impl App {
                 self.model.fetch_and_render(&owned, &mut transport)
             }
             UrlKind::NetworkTls => {
-                // The verified TLS 1.3 fetch path is BUILT and proven: raenet's
+                // The verified TLS 1.3 fetch path is BUILT and proven: athnet's
                 // `HttpsClient::get_over` completes the handshake and authenticates the
                 // server (cert chain → trusted root, hostname → cert SAN,
                 // CertificateVerify + server Finished) before any body is accepted, and
-                // fails closed on every failure (host-KAT'd: `cargo test -p raenet
+                // fails closed on every failure (host-KAT'd: `cargo test -p athnet
                 // --features tls13`). It is NOT linked into this live ELF yet because
                 // the RustCrypto TLS stack (sha2/aes-gcm/polyval) cannot be lowered by
                 // LLVM for the soft-float, no-SSE `x86_64-unknown-none` userspace target
@@ -1197,9 +1197,9 @@ impl App {
     }
 }
 
-// ── Live HTTP transport over raekit sockets (live ELF only) ─────────────────
+// ── Live HTTP transport over athkit sockets (live ELF only) ─────────────────
 
-/// The real [`raenet::http1::HttpTransport`] the live browser fetches through:
+/// The real [`athnet::http1::HttpTransport`] the live browser fetches through:
 /// DNS-resolve the host, open a TCP socket, send the request, and drain the reply.
 /// This is the production peer of the host KAT's `MockTransport` — same trait, so the
 /// engine's fetch path is identical whether driven by a socket or a canned response.
@@ -1224,36 +1224,36 @@ impl RaeSocketTransport {
 impl Drop for RaeSocketTransport {
     fn drop(&mut self) {
         if let Some(fd) = self.fd.take() {
-            raekit::sys::sock_close(fd);
+            athkit::sys::sock_close(fd);
         }
     }
 }
 
 #[cfg(not(test))]
-impl raenet::http1::HttpTransport for RaeSocketTransport {
-    fn connect(&mut self, host: &str, port: u16) -> raenet::http1::Http1Result<()> {
-        use raenet::http1::Http1Error;
+impl athnet::http1::HttpTransport for RaeSocketTransport {
+    fn connect(&mut self, host: &str, port: u16) -> athnet::http1::Http1Result<()> {
+        use athnet::http1::Http1Error;
         // Accept a dotted-quad host directly; otherwise resolve via DNS.
         let ip = match parse_dotted_quad(host) {
             Some(quad) => quad,
-            None => raekit::sys::dns_resolve(host)
+            None => athkit::sys::dns_resolve(host)
                 .ok_or_else(|| Http1Error::Transport(String::from("DNS resolution failed")))?,
         };
-        let fd = raekit::sys::tcp_connect(ip, port)
+        let fd = athkit::sys::tcp_connect(ip, port)
             .ok_or_else(|| Http1Error::Transport(String::from("TCP connect failed")))?;
         self.fd = Some(fd);
         Ok(())
     }
 
-    fn send(&mut self, buf: &[u8]) -> raenet::http1::Http1Result<()> {
-        use raenet::http1::Http1Error;
+    fn send(&mut self, buf: &[u8]) -> athnet::http1::Http1Result<()> {
+        use athnet::http1::Http1Error;
         let fd = self
             .fd
             .ok_or_else(|| Http1Error::Transport(String::from("send before connect")))?;
         let mut off = 0usize;
         let mut idle = 0u32;
         while off < buf.len() {
-            let n = raekit::sys::sock_send(fd, &buf[off..]);
+            let n = athkit::sys::sock_send(fd, &buf[off..]);
             if n < 0 {
                 return Err(Http1Error::Transport(String::from("socket send error")));
             }
@@ -1263,7 +1263,7 @@ impl raenet::http1::HttpTransport for RaeSocketTransport {
                 if idle > 100_000 {
                     return Err(Http1Error::Transport(String::from("send timed out")));
                 }
-                raekit::sys::yield_now();
+                athkit::sys::yield_now();
                 continue;
             }
             idle = 0;
@@ -1272,8 +1272,8 @@ impl raenet::http1::HttpTransport for RaeSocketTransport {
         Ok(())
     }
 
-    fn recv(&mut self, buf: &mut [u8]) -> raenet::http1::Http1Result<usize> {
-        use raenet::http1::Http1Error;
+    fn recv(&mut self, buf: &mut [u8]) -> athnet::http1::Http1Result<usize> {
+        use athnet::http1::Http1Error;
         let fd = self
             .fd
             .ok_or_else(|| Http1Error::Transport(String::from("recv before connect")))?;
@@ -1281,7 +1281,7 @@ impl raenet::http1::HttpTransport for RaeSocketTransport {
         // slow server eventually delivers, but a dead connection can't hang forever.
         let mut idle = 0u32;
         loop {
-            let n = raekit::sys::sock_recv(fd, buf);
+            let n = athkit::sys::sock_recv(fd, buf);
             if n < 0 {
                 return Err(Http1Error::Transport(String::from("socket recv error")));
             }
@@ -1292,7 +1292,7 @@ impl raenet::http1::HttpTransport for RaeSocketTransport {
                     // attempt rather than spinning forever.
                     return Ok(0);
                 }
-                raekit::sys::yield_now();
+                athkit::sys::yield_now();
                 continue;
             }
             return Ok(n as usize);
@@ -1338,7 +1338,7 @@ fn read_local_html(url: &str) -> Option<String> {
     if path.is_empty() || path.starts_with("about:") {
         return None;
     }
-    let fd = raekit::sys::open(path, 0);
+    let fd = athkit::sys::open(path, 0);
     if fd == u64::MAX {
         return None;
     }
@@ -1348,13 +1348,13 @@ fn read_local_html(url: &str) -> Option<String> {
         if data.len() > 8 * 1024 * 1024 {
             break;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     if data.is_empty() {
         return None;
     }
@@ -1390,9 +1390,9 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect(0, 0, WIN_W, TITLE_H, CHROME);
     canvas.draw_text_aa(
         10,
-        ((TITLE_H - rae_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
+        ((TITLE_H - ath_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
         "Browser",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_SECONDARY,
         FontFamily::Sans,
     );
@@ -1411,14 +1411,14 @@ fn render_toolbar(app: &App, canvas: &mut Canvas) {
         let bx = 8 + idx * (BTN_W + 4);
         let by = y + 4;
         let bh = TOOLBAR_H - 8;
-        canvas.fill_rounded_rect(bx, by, BTN_W, bh, rae_tokens::RADIUS_SM as usize, FIELD_BG);
+        canvas.fill_rounded_rect(bx, by, BTN_W, bh, ath_tokens::RADIUS_SM as usize, FIELD_BG);
         let fg = if enabled { TEXT_PRIMARY } else { TEXT_TERTIARY };
-        let gw = canvas.measure_text_aa(glyph, rae_tokens::TYPE_BODY, FontFamily::Sans);
+        let gw = canvas.measure_text_aa(glyph, ath_tokens::TYPE_BODY, FontFamily::Sans);
         canvas.draw_text_aa(
             (bx + BTN_W / 2) as i32 - gw / 2,
-            (by + (bh - rae_tokens::TYPE_BODY.line_height as usize) / 2) as i32,
+            (by + (bh - ath_tokens::TYPE_BODY.line_height as usize) / 2) as i32,
             glyph,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             fg,
             FontFamily::Sans,
         );
@@ -1437,7 +1437,7 @@ fn render_toolbar(app: &App, canvas: &mut Canvas) {
         addr_y,
         addr_w,
         addr_h,
-        rae_tokens::RADIUS_SM as usize,
+        ath_tokens::RADIUS_SM as usize,
         FIELD_BG,
     );
     if app.editing_address {
@@ -1455,16 +1455,16 @@ fn render_toolbar(app: &App, canvas: &mut Canvas) {
     };
     canvas.draw_text_aa(
         addr_x as i32 + 10,
-        addr_y as i32 + ((addr_h - rae_tokens::TYPE_BODY.line_height as usize) / 2) as i32,
+        addr_y as i32 + ((addr_h - ath_tokens::TYPE_BODY.line_height as usize) / 2) as i32,
         shown,
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         fg,
         FontFamily::Sans,
     );
 }
 
 /// Paint the current page through the LIVE engine paint bridge
-/// ([`raeweb::backend::paint_displaylist_to_canvas`]) — the SAME crisp-AA `raegfx`
+/// ([`athweb::backend::paint_displaylist_to_canvas`]) — the SAME crisp-AA `athgfx`
 /// path AthUI uses ("renders through AthUI"). The display list is in viewport
 /// space; we offset it under the chrome by translating the bridge's scroll origin
 /// up by `top` (content that lands above the chrome is clipped to the canvas), and
@@ -1494,9 +1494,9 @@ fn render_status(app: &App, canvas: &mut Canvas) {
     };
     canvas.draw_text_aa(
         10,
-        sy as i32 + ((STATUS_H - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
+        sy as i32 + ((STATUS_H - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
         text,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_TERTIARY,
         FontFamily::Sans,
     );
@@ -1516,15 +1516,15 @@ fn paint_loading(canvas: &mut Canvas, sid: u64, url: &str) {
         24,
         (top + 24) as i32,
         "Loading…",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_SECONDARY,
         FontFamily::Sans,
     );
     canvas.draw_text_aa(
         24,
-        (top + 24 + rae_tokens::TYPE_SUBTITLE.line_height as usize + 6) as i32,
+        (top + 24 + ath_tokens::TYPE_SUBTITLE.line_height as usize + 6) as i32,
         url,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_TERTIARY,
         FontFamily::Sans,
     );
@@ -1534,13 +1534,13 @@ fn paint_loading(canvas: &mut Canvas, sid: u64, url: &str) {
     canvas.fill_rect(0, sy, WIN_W, 1, STROKE);
     canvas.draw_text_aa(
         10,
-        sy as i32 + ((STATUS_H - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
+        sy as i32 + ((STATUS_H - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
         "Loading…",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_TERTIARY,
         FontFamily::Sans,
     );
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 }
 
 // ── Input ──────────────────────────────────────────────────────────────────
@@ -1634,15 +1634,15 @@ fn scancode_to_ascii(code: u8, shift: bool) -> Option<u8> {
 /// URLs, arrow keys scroll the web view.
 #[cfg(not(test))]
 pub fn run() -> ! {
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
     let mut app = App::new();
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     loop {
         let mut dirty = false;
@@ -1651,7 +1651,7 @@ pub fn run() -> ! {
         let mut left_down = false;
         let mut mouse_edge = false;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -1662,9 +1662,9 @@ pub fn run() -> ! {
             left_down = now_down;
         }
         if mouse_edge {
-            let (cx, cy, _btn) = raekit::sys::cursor_pos();
+            let (cx, cy, _btn) = athkit::sys::cursor_pos();
             let (ox, oy) =
-                raekit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
+                athkit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
             let lx = (cx as i32).saturating_sub(ox as i32);
             let ly = (cy as i32).saturating_sub(oy as i32);
             match hit_control(lx, ly) {
@@ -1697,7 +1697,7 @@ pub fn run() -> ! {
         }
 
         // ── Keyboard.
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key != 0 {
             let code = (key & 0xFF) as u8;
             let pressed = (key & 0x8000_0000) == 0;
@@ -1731,7 +1731,7 @@ pub fn run() -> ! {
                     }
                 } else {
                     match code {
-                        0x01 => raekit::sys::exit(0),
+                        0x01 => athkit::sys::exit(0),
                         // Up/Down arrows scroll the web view.
                         0x48 => {
                             app.scroll_y = (app.scroll_y - 40.0).max(0.0);
@@ -1760,13 +1760,13 @@ pub fn run() -> ! {
 
         if dirty {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
     }
 }
 
 // ===========================================================================
-// Host KAT — links the LIVE raeweb + rae_js engines, no kernel.
+// Host KAT — links the LIVE athweb + ath_js engines, no kernel.
 // ===========================================================================
 
 #[cfg(test)]
@@ -1821,7 +1821,7 @@ console.log("answer=" + answer);
 
     #[test]
     fn inline_script_actually_executed() {
-        // (b) The inline JS RAN in the real rae_js interpreter and produced an
+        // (b) The inline JS RAN in the real ath_js interpreter and produced an
         // observable result (captured console output).
         let model = BrowserModel::new();
         let page = model.render_page("about:test", DOC, "");
@@ -2299,11 +2299,11 @@ console.log("answer=" + answer);
     // injectable HttpTransport, the response's HTML is run through the SAME
     // parse→cascade→layout + inline-<script> path local pages use, and failures
     // render an HONEST error page (never a panic, never blank). The transport is
-    // raenet::http1::MockTransport — a canned HTTP/1.1 dialogue — so NO live network
+    // athnet::http1::MockTransport — a canned HTTP/1.1 dialogue — so NO live network
     // is touched (live connectivity is iron-gated on DHCP-Bound). This mirrors how
-    // rae_mail host-tests SMTP/IMAP against scripted server dialogs.
+    // ath_mail host-tests SMTP/IMAP against scripted server dialogs.
 
-    use raenet::http1::MockTransport;
+    use athnet::http1::MockTransport;
 
     /// Build a canned HTTP/1.1 200 response with the given HTML body + Content-Length.
     fn mock_200(body: &str) -> Vec<u8> {
@@ -2369,7 +2369,7 @@ console.log("answer=" + answer);
             "the network page's heading must render through layout"
         );
 
-        // (3) The inline <script> executed in rae_js (observable via console).
+        // (3) The inline <script> executed in ath_js (observable via console).
         assert!(page.script_error.is_none(), "{:?}", page.script_error);
         assert_eq!(
             page.console,
@@ -2526,12 +2526,12 @@ console.log("answer=" + answer);
         }
     }
 
-    impl raenet::http1::HttpTransport for RoutingMock {
-        fn connect(&mut self, host: &str, _port: u16) -> raenet::http1::Http1Result<()> {
+    impl athnet::http1::HttpTransport for RoutingMock {
+        fn connect(&mut self, host: &str, _port: u16) -> athnet::http1::Http1Result<()> {
             self.connected_hosts.push(String::from(host));
             Ok(())
         }
-        fn send(&mut self, buf: &[u8]) -> raenet::http1::Http1Result<()> {
+        fn send(&mut self, buf: &[u8]) -> athnet::http1::Http1Result<()> {
             self.sent.extend_from_slice(buf);
             // Select the response body for THIS request's path; reset the read cursor.
             let path = Self::path_of_request(buf).unwrap_or_default();
@@ -2544,7 +2544,7 @@ console.log("answer=" + answer);
             self.read_pos = 0;
             Ok(())
         }
-        fn recv(&mut self, buf: &mut [u8]) -> raenet::http1::Http1Result<usize> {
+        fn recv(&mut self, buf: &mut [u8]) -> athnet::http1::Http1Result<usize> {
             let remaining = self.cur.len().saturating_sub(self.read_pos);
             if remaining == 0 {
                 return Ok(0);

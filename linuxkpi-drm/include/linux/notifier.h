@@ -3,7 +3,7 @@
  * <linux/notifier.h> shim (MPL-2.0, original work).
  *
  * Notifier chains — ordered callback broadcast. amdgpu hooks reset/hotplug/
- * panic notifiers. The chain register/unregister/call is backed by raeen_linuxkpi
+ * panic notifiers. The chain register/unregister/call is backed by ath_linuxkpi
  * at M4 (real ordered list + locking; a no-op register would silently drop every
  * notification — SCOPE.md rule 9). License boundary (../../README.md): surface.
  */
@@ -36,7 +36,7 @@ struct raw_notifier_head      { struct notifier_block *head; };
 #define NOTIFY_BAD      (NOTIFY_STOP_MASK | 0x0002)
 #define NOTIFY_STOP     (NOTIFY_OK | NOTIFY_STOP_MASK)
 
-/* chain ops — backed by raeen_linuxkpi (M4) */
+/* chain ops — backed by ath_linuxkpi (M4) */
 int atomic_notifier_chain_register(struct atomic_notifier_head *nh, struct notifier_block *nb);
 int atomic_notifier_chain_unregister(struct atomic_notifier_head *nh, struct notifier_block *nb);
 int atomic_notifier_call_chain(struct atomic_notifier_head *nh, unsigned long val, void *v);

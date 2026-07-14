@@ -12,7 +12,7 @@
 >
 > What shipped since this spec (verified in source 2026-06-21, file evidence in the audit):
 > - `kernel/src/a11y.rs` (1236 lines) — tree built from the live compositor surface list, R10
->   complete (init line, FAIL-able smoketests, `/proc/raeen/a11y`, Concept docstring), wired in
+>   complete (init line, FAIL-able smoketests, `/proc/athena/a11y`, Concept docstring), wired in
 >   `kernel_main`. (This whole spec is built.)
 > - Cap-gated AT ABI `SYS_A11Y_SNAPSHOT` (277) + `SYS_A11Y_ACTION` (278), `Cap::Accessibility`
 >   READ/WRITE, fail-closed — i.e. the "NEEDS-INTERFACE" block (sec 7) LANDED.
@@ -20,14 +20,14 @@
 >   screen-reader announce core + `SpeechSink`/`LogSpeechSink`, contrast math + audit.
 > - User-facing on-switches (hotkeys Super+Alt+M/H/C/R + Super+=/- and the Control Center
 >   Accessibility tile) AND the high-contrast LIVE forced-colors palette swap
->   (`rae_tokens::active_palette() == HIGH_CONTRAST`) shipped AFTER the audit — proven by
->   `a11y::run_onswitch_smoketest` (boot) + `rae_tokens` `active_palette_swaps_under_high_contrast`
+>   (`ath_tokens::active_palette() == HIGH_CONTRAST`) shipped AFTER the audit — proven by
+>   `a11y::run_onswitch_smoketest` (boot) + `ath_tokens` `active_palette_swaps_under_high_contrast`
 >   (host KAT).
 
 **Status:** SUPERSEDED design spec (built; status above) — kept for design rationale + seam map.
-**Implementer:** raeen-accessibility
-**Interface owner (must land first):** raeen-architect — see the NEEDS-INTERFACE block (sec 7).
-**Scope:** the foundation tier only — the accessibility tree, its /proc/raeen/a11y snapshot,
+**Implementer:** athena-accessibility
+**Interface owner (must land first):** athena-architect — see the NEEDS-INTERFACE block (sec 7).
+**Scope:** the foundation tier only — the accessibility tree, its /proc/athena/a11y snapshot,
 and a capability-gated read/action API. Screen reader / magnifier / high-contrast (19.2) and
 keyboard navigation (19.3) are separate later items; this spec only names them as follow-ups.
 (All of these are now BUILT — see the SUPERSEDED banner; this section describes the original plan.)
@@ -56,9 +56,9 @@ analogue of macOS TCC / UIA core).
 ## 1b. Verify-before-implement — what already exists (do NOT rebuild)
 > **STALE as written (2026-06-21):** the two bullets below described the pre-implementation
 > state. Both are now OUT OF DATE — the kernel DOES have an a11y tree (`kernel/src/a11y.rs`),
-> and the raeui `infer_role`/`infer_label` stubs were replaced by real role inference
+> and the athui `infer_role`/`infer_label` stubs were replaced by real role inference
 > (`role_from_widget_kind`, `provider_nodes_for_window`). See the audit. Kept for design context.
-- components/raeui/src/accessibility.rs ALREADY has a full a11y-tree model in userspace:
+- components/athui/src/accessibility.rs ALREADY has a full a11y-tree model in userspace:
   AccessibilityRole (23 roles incl. Window/Button/Slider/...), AccessibilityTraits,
   AccessibilityAction, AccessibilityNode {id,role,label,value,bounds,children,actions},
   AccessibilityTree (build_from_widget_tree, focus_next/prev, describe_focused, high-contrast
@@ -69,10 +69,10 @@ analogue of macOS TCC / UIA core).
 - ~~The KERNEL has NO a11y tree at all today.~~ (STALE — `kernel/src/a11y.rs` is live, 1236
   lines, R10-complete.) The delta described here was: build the tree in the kernel from
   the compositor surface list (sec 2), expose it (procfs + cap-gated syscalls), and leave the
-  raeui types as the userspace AccessKit-adapter shape they map onto. **This is DONE.** Do NOT duplicate the raeui
+  athui types as the userspace AccessKit-adapter shape they map onto. **This is DONE.** Do NOT duplicate the athui
   Role/Action enums in a new userspace crate; the kernel a11y.rs Role mirrors AccessKit and the
-  existing raeui enum, and the widget provider (sec 6) is where raeui's per-widget data later
-  flows in. raeui's high-contrast palette + focus traversal feed 19.2/19.3, not this tier.
+  existing athui enum, and the widget provider (sec 6) is where athui's per-widget data later
+  flows in. athui's high-contrast palette + focus traversal feed 19.2/19.3, not this tier.
 
 ## 2. Where the tree comes from (the live surface tree already exists)
 kernel/src/compositor.rs already owns the authoritative window tree: Surface { id, owner_task,
@@ -84,7 +84,7 @@ role+name+state+bounds+z for every window today. Foundation tier builds the a11y
 Foundation = window-level tree. Each Surface -> one Node with Role::Window. Widget-level child
 nodes (Button/Label/TextInput inside a window) require AthUI/AthShell to report per-widget
 role+name+bounds; that is a declared extension point (sec 6), not built in this tier. The
-smoketest and procfs prove the window tier; the widget hook is wired but empty until raeen-ui
+smoketest and procfs prove the window tier; the widget hook is wired but empty until athena-ui
 populates it.
 
 Lock discipline (mandatory — CLAUDE.md 10.6): the compositor mutex is acquired
@@ -108,7 +108,7 @@ Types (no_std):
   bounds: (i32,i32,u32,u32) = x,y,w,h, actions: Actions, z_order: u32 }.
 
 Functions:
-- init() — registers /proc/raeen/a11y, logs the init line. Called from kernel_main AFTER
+- init() — registers /proc/athena/a11y, logs the init line. Called from kernel_main AFTER
   compositor::init so the surface list exists.
 - build_tree() -> Vec<AccessNode> — lock_compositor(), walk surfaces, map each to an AccessNode
   (root id=0 desktop; windows parent=0). State from visible + focused_surface_id() + minimized.
@@ -133,11 +133,11 @@ Functions:
    build_tree(); find name == a11y-probe; assert role==Window; bounds match seeded x/y/w/h;
    snapshot_for_client(false) returns Err. Tear the probe down at the end (Surface::drop frees
    its frames).
-3. procfs: /proc/raeen/a11y registered in procfs.rs alongside the table: ("a11y",
-   crate::a11y::dump_text) next to ("compositor", proc_raeen_compositor).
+3. procfs: /proc/athena/a11y registered in procfs.rs alongside the table: ("a11y",
+   crate::a11y::dump_text) next to ("compositor", proc_athena_compositor).
 4. Concept docstring quote: the Security lines at the top of this spec, in the //! module doc.
 
-## 5. /proc/raeen/a11y shape
+## 5. /proc/athena/a11y shape
 Header: nodes/focused/cap_gated. One line per node, e.g.:
   node id=17 parent=0 role=Window name="Settings" state=visible,focused bounds=200,120,900,640
   z=2 actions=focus,default,close
@@ -145,16 +145,16 @@ Minimized windows show state=minimized; widget child nodes indent under their wi
 is populated.
 
 ## 6. Extension point for widget-level nodes (declared, not built here)
-a11y.rs exposes set_widget_provider(f: fn(window_id: u64) -> Vec<AccessNode>). When raeen-ui
+a11y.rs exposes set_widget_provider(f: fn(window_id: u64) -> Vec<AccessNode>). When athena-ui
 later reports per-widget role+name+bounds (a AthUI item, Phase 8/19 follow-up), build_tree()
 calls the provider per window and parents the returned widget nodes under that windows
 Surface.id. Until then the provider is None and the tree is window-tier only. This is the seam
 for the screen reader (19.2) and keyboard nav (19.3).
 
-## 7. NEEDS-INTERFACE — for raeen-architect (land in an [interface] commit FIRST)
-The cap-gated AT API requires ABI surface only raeen-architect may add. raeen-accessibility
+## 7. NEEDS-INTERFACE — for athena-architect (land in an [interface] commit FIRST)
+The cap-gated AT API requires ABI surface only athena-architect may add. athena-accessibility
 builds against these AFTER they land; do not add them yourself.
-1. New capability variant in components/rae_abi + kernel/src/capability.rs:
+1. New capability variant in components/ath_abi + kernel/src/capability.rs:
    Cap::Accessibility { rights: Rights }  (READ = read the tree; WRITE = dispatch actions).
    Rationale: assistive tech is its own privilege class (matches macOS TCC Accessibility and
    UIA); reusing Cap::Debug/Cap::System would over-grant. Additive enum variant -> bump
@@ -167,16 +167,16 @@ builds against these AFTER they land; do not add them yourself.
    - SYS_A11Y_ACTION (269?): rdi=node_id, rsi=action bits. Gated on Cap::Accessibility{WRITE}.
      Routes to a11y::dispatch_action.
    - Define repr(C) A11yNode { id, parent, role, state, x, y, w, h, actions, name[48] } in
-     rae_abi (fixed ~80 bytes; name inline like ThemeInfo/SurfaceHdr).
-3. The syscall.rs dispatch arms land WITH the numbers (number in rae_abi + dispatch arm in the
+     ath_abi (fixed ~80 bytes; name inline like ThemeInfo/SurfaceHdr).
+3. The syscall.rs dispatch arms land WITH the numbers (number in ath_abi + dispatch arm in the
    same commit, per house rules).
 
 ## 8. Boot-log lines that prove each Phase 19.1 item (QEMU, headless, no iron/input)
 - Item (1) tree from the surface tree with role/name/state/bounds/actions:
   [a11y] accessibility tree online (AccessKit-compatible, window tier) then the tree smoketest
   PASS line (sec 4).
-- Item (2) /proc/raeen/a11y snapshot + FAIL-able smoketest: the smoketest line asserts the
-  seeded window appears with the correct role; /proc/raeen/a11y dumps the live tree.
+- Item (2) /proc/athena/a11y snapshot + FAIL-able smoketest: the smoketest line asserts the
+  seeded window appears with the correct role; /proc/athena/a11y dumps the live tree.
 - Item (3) capability-gated AT API: cap_denies_uncapped=true (un-capped snapshot returns Err) +
   action_focus_ok=true (a capped action reaches the compositor), both inside the smoketest line.
 Mark [~] on QEMU pass; [x] only on iron (paused).
@@ -188,9 +188,9 @@ Mark [~] on QEMU pass; [x] only on iron (paused).
 > keyboard nav, widget provider) are at least partially built — see the audit for per-item state.
 > The ONE remaining big dependency called out here ("AthUI widget provider — the biggest
 > dependency for real screen-reader value") is still the live #1 gap (provider has no caller).
-- First: raeen-architect lands the NEEDS-INTERFACE block (sec 7) in an [interface] commit (Cap
+- First: athena-architect lands the NEEDS-INTERFACE block (sec 7) in an [interface] commit (Cap
   variant + 2 syscalls + A11yNode repr + ABI_VERSION bump + SYSCALL_TABLE).
-- Then: raeen-accessibility builds kernel/src/a11y.rs (sec 3-5), wires init() into kernel_main
+- Then: athena-accessibility builds kernel/src/a11y.rs (sec 3-5), wires init() into kernel_main
   after compositor::init, registers procfs, lands the FAIL-able smoketest (sec 4), and adds a
   host KAT (build a tree from synthetic Surface-like inputs; assert roles/states/cap-deny) per
   house rule 15 (pure logic gets a host KAT first).

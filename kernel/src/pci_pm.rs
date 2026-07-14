@@ -223,7 +223,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/pci_pm` — per-device power states.
+/// `/proc/athena/pci_pm` — per-device power states.
 pub fn dump_text() -> String {
     let reg = REGISTRY.lock();
     let mut out = alloc::format!(

@@ -41,12 +41,12 @@ pub const MAX_CLIPBOARD_BYTES: usize = 64 * 1024;
 
 /// Maximum history entries retained. Pinned-safe eviction: once full, the
 /// OLDEST UNPINNED entry is dropped (a pinned entry is never evicted). Mirrors
-/// `rae_abi::syscall::CLIP_HIST_MAX_ENTRIES` and
-/// `raeshell::ClipboardManager::max_history`.
+/// `ath_abi::syscall::CLIP_HIST_MAX_ENTRIES` and
+/// `athshell::ClipboardManager::max_history`.
 pub const MAX_HISTORY_ENTRIES: usize = 64;
 
 /// One recorded clipboard entry. Text-first; `format`/`reserved*` exist so a
-/// future Image/Files/Url clip is additive (mirrors `rae_abi::ClipEntryHeader`).
+/// future Image/Files/Url clip is additive (mirrors `ath_abi::ClipEntryHeader`).
 struct ClipEntry {
     data: Vec<u8>,
     format: u32,
@@ -88,7 +88,7 @@ pub fn set(data: &[u8]) -> Result<(), ()> {
         clip.extend_from_slice(data);
     }
     SET_COUNT.fetch_add(1, Ordering::Relaxed);
-    push_history(data, rae_abi::syscall::CLIP_FMT_TEXT);
+    push_history(data, ath_abi::syscall::CLIP_FMT_TEXT);
     Ok(())
 }
 
@@ -164,10 +164,10 @@ pub fn history_entry_bytes(index: usize) -> Option<Vec<u8>> {
     let e = hist.get(index)?;
     let mut flags = 0u32;
     if e.pinned {
-        flags |= rae_abi::syscall::CLIP_FLAG_PINNED;
+        flags |= ath_abi::syscall::CLIP_FLAG_PINNED;
     }
-    let header = rae_abi::ClipEntryHeader {
-        version: rae_abi::ClipEntryHeader::VERSION,
+    let header = ath_abi::ClipEntryHeader {
+        version: ath_abi::ClipEntryHeader::VERSION,
         format: e.format,
         flags,
         byte_len: e.data.len() as u32,
@@ -179,8 +179,8 @@ pub fn history_entry_bytes(index: usize) -> Option<Vec<u8>> {
     let hdr_bytes: &[u8] = unsafe {
         // SAFETY: ClipEntryHeader is #[repr(C)], all-u32, no padding/pointers.
         core::slice::from_raw_parts(
-            (&header as *const rae_abi::ClipEntryHeader) as *const u8,
-            core::mem::size_of::<rae_abi::ClipEntryHeader>(),
+            (&header as *const ath_abi::ClipEntryHeader) as *const u8,
+            core::mem::size_of::<ath_abi::ClipEntryHeader>(),
         )
     };
     let mut out = Vec::with_capacity(hdr_bytes.len() + e.data.len());
@@ -240,7 +240,7 @@ pub fn history_promote(index: usize) -> bool {
     true
 }
 
-/// /proc/raeen/clipboard — active buffer stats + history count/pinned.
+/// /proc/athena/clipboard — active buffer stats + history count/pinned.
 pub fn dump_text() -> String {
     let clip = CLIPBOARD.lock();
     let preview_len = clip.len().min(48);
@@ -292,7 +292,7 @@ pub fn run_boot_smoketest() {
             0,
             ClipEntry {
                 data: data.to_vec(),
-                format: rae_abi::syscall::CLIP_FMT_TEXT,
+                format: ath_abi::syscall::CLIP_FMT_TEXT,
                 pinned: false,
                 sequence: 0,
                 paste_count: 0,

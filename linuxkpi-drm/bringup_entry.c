@@ -3,7 +3,7 @@
  * bringup_entry.c — the amdgpud daemon's entry into the real amdgpu init (MPL-2.0,
  * original work).
  *
- * The daemon claims the Athena GPU (BDF c4:00.0), wires raeen_linuxkpi's device
+ * The daemon claims the Athena GPU (BDF c4:00.0), wires ath_linuxkpi's device
  * access (lkpi_set_current_device + lkpi_register_bar per BAR), then calls
  * rae_amdgpu_device_init() with the discovered PCI identity + BAR windows. This
  * replicates the minimal setup amdgpu_pci_probe() does before handing off to the
@@ -57,7 +57,7 @@ static void rae_set_bar(struct pci_dev *pdev, unsigned int i, u64 phys, u64 size
 /*
  * Run the real amdgpu init against the claimed device. The daemon has already
  * called lkpi_set_current_device(handle) + lkpi_register_bar(bar, phys, size), so
- * raeen_linuxkpi's ioremap/dma/config route to the live GPU. Returns 0 on success.
+ * ath_linuxkpi's ioremap/dma/config route to the live GPU. Returns 0 on success.
  */
 int rae_amdgpu_device_init(u16 vendor, u16 device, u8 revision,
 			   u8 pci_bus, u8 pci_devfn,       /* claimed BDF   */

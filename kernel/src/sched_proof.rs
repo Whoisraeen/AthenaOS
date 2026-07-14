@@ -145,14 +145,14 @@ static FRAME_WORST_LATE_US: AtomicU64 = AtomicU64::new(0);
 static STOP: AtomicBool = AtomicBool::new(false);
 
 /// Set true once the window is measured, the load is stopped, and the result is
-/// recorded. Surfaced via `/proc/raeen/sched_proof` as the run-complete flag.
+/// recorded. Surfaced via `/proc/athena/sched_proof` as the run-complete flag.
 static PROOF_DONE: AtomicBool = AtomicBool::new(false);
 
 /// Set once the proof has run, so it can never be launched twice (it perturbs
 /// scheduling on purpose and must be a one-shot).
 static STARTED: AtomicBool = AtomicBool::new(false);
 
-/// Live result, surfaced via `/proc/raeen/sched_proof`. 0 = not run, 1 = PASS,
+/// Live result, surfaced via `/proc/athena/sched_proof`. 0 = not run, 1 = PASS,
 /// 2 = FAIL. The measured numbers live in the fields below.
 static RESULT: AtomicU32 = AtomicU32::new(0);
 static R_FRAME_MISSES: AtomicU64 = AtomicU64::new(0);
@@ -510,11 +510,11 @@ fn run_window() {
     // CANNOT prove is an absolute sub-period dispatch deadline: the LAPIC tick is
     // 10 ms (timers.rs HZ=100) and the frame's 14 ms deadline sits only ~1.3 ticks
     // below its 16.67 ms period, so a SINGLE extra 10 ms re-dispatch tick under
-    // added post-boot load (raebridge/amdgpu/user_init) pushes a re-dispatch past
+    // added post-boot load (athbridge/amdgpu/user_init) pushes a re-dispatch past
     // the period+deadline budget and trips frame_misses. That is the SAME TCG-tick
     // re-dispatch floor already honestly iron-gated for the 2.67 ms audio and 6 ms
     // input sub-period workers — NOT an EDF logic regression. (Confirmed by
-    // raeen-perf: byte-identical scheduler/timers/apic blobs vs the PASS commit
+    // athena-perf: byte-identical scheduler/timers/apic blobs vs the PASS commit
     // 15f7024; picks_game >> picks_normal, preempted_normal=true, starvation guard
     // never trips, global_worst_lateness=0ns on every boot.)
     //
@@ -640,7 +640,7 @@ fn run_window() {
         // so EDF is provably preempting Normal correctly. The frame's 16.67 ms
         // period with a 14 ms deadline sits only ~1.3 of the 10 ms QEMU-TCG LAPIC
         // ticks (timers.rs HZ=100) below its period, so a single extra re-dispatch
-        // tick under added post-boot load (raebridge/amdgpu/user_init competing in
+        // tick under added post-boot load (athbridge/amdgpu/user_init competing in
         // the window) pushes a re-dispatch past the period+deadline budget — the
         // SAME tick floor already iron-gated for the 2.67 ms audio / 6 ms input
         // sub-periods. Iron (finer tick + real µs HW, PERFORMANCE_TARGETS L72
@@ -699,7 +699,7 @@ pub fn init() {
     // wall time rather than the old per-yield tick clock (the 1/10 defect).
     crate::scheduler::prewarm_edf_clock();
     crate::serial_println!(
-        "[ OK ] sched_proof init: spawning frame-EDF orchestrator + SCHED_NORMAL load (/proc/raeen/sched_proof)"
+        "[ OK ] sched_proof init: spawning frame-EDF orchestrator + SCHED_NORMAL load (/proc/athena/sched_proof)"
     );
 
     // Spawn the orchestrator as a deadline task at the frame period with an early
@@ -727,13 +727,13 @@ pub fn init() {
     // FAIL-able `[sched-proof] EDF deadline adherence:` line on its own; the
     // bounded (short) window is sized to complete before the userspace GPU-daemon
     // reap markers the CI drain keys on, so the line is captured. The live result
-    // is also at /proc/raeen/sched_proof. This keeps the proof OFF the
+    // is also at /proc/athena/sched_proof. This keeps the proof OFF the
     // boot-completion critical path while still running in the real
     // post-BOOT_COMPLETE preemptive scheduling context.
     let _ = PROOF_DONE.load(Ordering::Relaxed);
 }
 
-/// `/proc/raeen/sched_proof` body. Reports the live proof result + measured
+/// `/proc/athena/sched_proof` body. Reports the live proof result + measured
 /// numbers so the deadline-adherence claim is inspectable at runtime, not just
 /// in the boot log. Reads lock-free atoms only.
 pub fn dump_text() -> alloc::string::String {

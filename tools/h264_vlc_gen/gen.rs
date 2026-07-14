@@ -2,7 +2,7 @@
 // tools/mp3_huff_gen/gen.rs and tools/aac_huff_gen/gen.rs.
 //
 // It `include!`s the SAME table source the runtime decoder uses
-// (components/raemedia/src/h264_tables.rs) so there is exactly one copy of the data; a
+// (components/athmedia/src/h264_tables.rs) so there is exactly one copy of the data; a
 // transcription typo is caught HERE before it can reach the decoder. For each CAVLC VLC
 // context (coeff_token ×4 nC ranges + chroma-DC, total_zeros ×15 + chroma-DC ×3,
 // run_before ×7) it verifies:
@@ -19,7 +19,7 @@
 // file's inner `//!` doc-comment requires it live inside a module item.
 #[allow(dead_code)]
 mod tables {
-    include!("../../components/raemedia/src/h264_tables.rs");
+    include!("../../components/athmedia/src/h264_tables.rs");
 }
 use tables::*;
 

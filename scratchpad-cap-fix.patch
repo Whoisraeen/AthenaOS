@@ -109,7 +109,7 @@ index 8808cc4..613eb79 100644
 +/// TODO(MasterChecklist Phase 9): replace the broad `Cap::System{WRITE}` with a
 +/// narrow, device-class-scoped `Cap::Gpu{WRITE}` / dedicated `Cap::Device` and
 +/// teach the claim gate to accept it for the matching PCI class — so a GPU
-+/// daemon cannot also reach `SYS_RAEEN_SHUTDOWN` / perm-prompt respond. This
++/// daemon cannot also reach `SYS_ATHENA_SHUTDOWN` / perm-prompt respond. This
 +/// slice grants the exact authority the existing gate checks to avoid an ABI
 +/// change; the over-grant is bounded to the allowlisted first-party binaries.
 +pub fn maybe_seed_driver_daemon(child_id: crate::task::TaskId, name: &str) {

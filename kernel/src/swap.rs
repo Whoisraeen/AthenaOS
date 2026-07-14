@@ -220,7 +220,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/swap` — swap area state.
+/// `/proc/athena/swap` — swap area state.
 pub fn dump_text() -> String {
     let guard = SWAP.lock();
     let (total, used) = guard

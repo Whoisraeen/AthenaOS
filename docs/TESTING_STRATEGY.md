@@ -32,9 +32,9 @@ register state machines, allocator math. The logic lives in a `#![no_std]` modul
 a trait for any hardware access, and a **host harness** runs it on the dev machine via
 ordinary `cargo test` / `rustc --edition 2021`. Instant, deterministic, no emulation.
 
-- **Proven examples:** `rae_crypto` (SHA-256/BLAKE2/Argon2id/X25519/Ed25519 KATs),
+- **Proven examples:** `ath_crypto` (SHA-256/BLAKE2/Argon2id/X25519/Ed25519 KATs),
   `tools/argon2_kat`, `tools/linuxkpi_harness` (36/36 — atomics, MMIO, allocators + a
-  mock-GPU bring-up), `raeen_amdgpu::bringup` (17 unit + 43/43 harness).
+  mock-GPU bring-up), `ath_amdgpu::bringup` (17 unit + 43/43 harness).
 - **The embargo trick:** when QEMU is unavailable, lift the *byte-identical* pure logic
   into a standalone `rustc` host program and check it against a published KAT — this is
   how Argon2id (RFC 9106) and BLAKE2b were validated with no boot.
@@ -53,7 +53,7 @@ kernel module owes the **R10 four-artifact contract**:
 
 1. `init()` called from `kernel_main` in the right order,
 2. `run_boot_smoketest()` that exercises the real code path and prints a serial verdict,
-3. a `/proc/raeen/<module>` procfs line for live state,
+3. a `/proc/athena/<module>` procfs line for live state,
 4. a Concept docstring.
 
 The smoketest drives the *real* subsystem deterministically and prints
@@ -68,17 +68,17 @@ The full system boots headless and self-reports.
 
 ```
 cargo run -p xtask --release -- build --release          # exit 0
-RAEEN_SMP=2 cargo run -p xtask --release -- run --release --uefi --ci --disk smoketest
+ATHENA_SMP=2 cargo run -p xtask --release -- run --release --uefi --ci --disk smoketest
 # xtask waits for [ OS ] System successfully booted., drains daemons, exit 0 = booted
 ```
 
-Verify the serial log (`$env:TEMP\raeen-serial.log`, **never** in the repo — OneDrive
+Verify the serial log (`$env:TEMP\athena-serial.log`, **never** in the repo — OneDrive
 would lock it):
 - `PANIC` / `KERNEL PAGE FAULT` ⇒ must be absent,
 - `System successfully booted.` ⇒ must be present,
 - the feature's own marker ⇒ present with the expected value.
 
-Knobs: `RAEEN_SMP=<n>` (1 avoids work-stealing), `RAEEN_ACCEL=whpx`, `--disk=<virtio|nvme|ata|smoketest>`.
+Knobs: `ATHENA_SMP=<n>` (1 avoids work-stealing), `ATHENA_ACCEL=whpx`, `--disk=<virtio|nvme|ata|smoketest>`.
 Run on **both SMP=1 and SMP=2** for anything touching scheduling/IPI — and don't trust
 SMP-green on fewer than ~5 boots (the steal-resume race is intermittent).
 
@@ -117,7 +117,7 @@ Prefer the cheapest layer that actually proves it. A host KAT that runs in 50 ms
 - **Commit your own files only.** Stage explicit paths and verify the staged set — the repo
   is OneDrive-synced and multi-agent, so the index can mutate mid-operation (a sibling's
   `git add` has swept a staged file into the wrong commit). Commit promptly.
-- **Run the gates** before commit: `RAEEN_AGENT=opus`, `scripts/ownership-lock.sh` +
+- **Run the gates** before commit: `ATHENA_AGENT=opus`, `scripts/ownership-lock.sh` +
   `scripts/architecture-gate.sh` (the pre-commit hook runs both).
 - **No stubs that claim success.** An empty `Ok(())` or a smoketest that can't fail is
   worse than no test — it's a false green. A smoketest must be able to print `FAIL`.
@@ -127,7 +127,7 @@ Prefer the cheapest layer that actually proves it. A host KAT that runs in 50 ms
 ## 5. Known measurement gaps
 
 - **Perf telemetry is thin** — boot is well-instrumented; frame/audio/input/scheduler
-  latency mostly isn't. A `/proc/raeen/perf` histogram surface is the missing piece (see
+  latency mostly isn't. A `/proc/athena/perf` histogram surface is the missing piece (see
   `PERFORMANCE_TARGETS.md`).
 - **No automated iron CI** — Athena verification is a manual flash loop. Until there's a
   hardware test rig, `[x]` is gated on a human boot.

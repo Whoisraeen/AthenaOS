@@ -7,7 +7,7 @@
  * loop-checks the condition and blocks on an M4-backed waiter between checks
  * (REAL block/wake — not a busy-spin and not a no-op that returns immediately,
  * SCOPE.md rule 9); `wake_up*` and the low-level block are backed by
- * raeen_linuxkpi at M4. License boundary (../../README.md): API surface.
+ * ath_linuxkpi at M4. License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_WAIT_H
 #define _LINUXKPI_LINUX_WAIT_H
@@ -34,7 +34,7 @@ typedef struct wait_queue_entry wait_queue_entry_t;
 static inline void init_waitqueue_head(wait_queue_head_t *wq)
 { spin_lock_init(&wq->lock); wq->head.next = wq->head.prev = &wq->head; }
 
-/* low-level block/wake — backed by raeen_linuxkpi (M4). __wait_block parks the
+/* low-level block/wake — backed by ath_linuxkpi (M4). __wait_block parks the
  * caller on `wq` until a wake_up targets it; the _timeout form returns the
  * jiffies left (0 on timeout). */
 void wake_up(wait_queue_head_t *wq);

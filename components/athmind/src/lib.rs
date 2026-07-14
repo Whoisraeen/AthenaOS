@@ -1,7 +1,7 @@
 //! AthMind — cognitive loop for AthenaOS.
 //!
 //! Implements the sense → update self → choose → act → remember tick.
-//! LLM/tool proposals (via inherited `raeai`) are optional and never
+//! LLM/tool proposals (via inherited `athai`) are optional and never
 //! bypass AthGuard on the path to AthBody / AthVoice.
 #![cfg_attr(not(test), no_std)]
 

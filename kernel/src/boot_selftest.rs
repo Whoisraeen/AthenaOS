@@ -18,10 +18,10 @@
 //! heavy *pure-compute* feature smoketests that dominated the old
 //! `[tier1-prof] modules=5574ms` bucket and the Tier-7/8 smoketest blocks:
 //! notify (the ~24-surface toast storm), wm_policy / window_chrome / login_ui /
-//! raeshell-terminal, aer, and raebridge. **Two safety gates govern what may
+//! athshell-terminal, aer, and athbridge. **Two safety gates govern what may
 //! be deferred:**
 //!  1. *No real init.* Smoketests that double as init (xHCI HID arm/drain,
-//!     watchdogs, thread spawns, the raegfx text-engine build, shell_runner's
+//!     watchdogs, thread spawns, the athgfx text-engine build, shell_runner's
 //!     embedded control_panel::init) stay inline — deferring them bricks boot
 //!     or breaks devices.
 //!  2. *No masked-context perturbation.* The sweep runs inside the marker's
@@ -45,7 +45,7 @@ use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 /// (the sweep is idempotent — the underlying smoketests already are).
 static RAN: AtomicBool = AtomicBool::new(false);
 /// Number of deferred smoketests dispatched on the last sweep — surfaced via
-/// `/proc/raeen/boot` so an operator can confirm the sweep ran.
+/// `/proc/athena/boot` so an operator can confirm the sweep ran.
 static LAST_COUNT: AtomicU32 = AtomicU32::new(0);
 /// Set by [`init`] to confirm the deferred-sweep orchestration was armed on the
 /// critical path before any feature smoketest could run early.
@@ -60,7 +60,7 @@ static ARMED: AtomicBool = AtomicBool::new(false);
 /// Concretely it resets the sweep state to a known-armed baseline (`RAN=false`,
 /// `LAST_COUNT=0`) and records that the orchestration is live, so the
 /// critical-path [`run_boot_smoketest`] can assert the gate is armed and
-/// `/proc/raeen/boot` reports a coherent pre-sweep state.
+/// `/proc/athena/boot` reports a coherent pre-sweep state.
 pub fn init() {
     RAN.store(false, Ordering::SeqCst);
     LAST_COUNT.store(0, Ordering::SeqCst);
@@ -102,11 +102,11 @@ pub fn run_deferred() {
     crate::login_ui::run_boot_smoketest(); // token reads only
     count += 1;
     {
-        // raeshell VT100/ANSI terminal parser coverage (pure decode test).
-        let (text, cup, sgr, ed) = raeshell::terminal::run_smoketest();
+        // athshell VT100/ANSI terminal parser coverage (pure decode test).
+        let (text, cup, sgr, ed) = athshell::terminal::run_smoketest();
         let pass = text && cup && sgr && ed;
         crate::serial_println!(
-            "[raeshell] terminal smoketest: text={} cup={} sgr={} erase={} -> {}",
+            "[athshell] terminal smoketest: text={} cup={} sgr={} erase={} -> {}",
             text,
             cup,
             sgr,
@@ -134,7 +134,7 @@ pub fn run_deferred() {
     // selftest::run() computes before this sweep).
 
     // ── Tier 8 deferred: pure feature-correctness smoketests. ────────────
-    crate::raebridge_boot::run_boot_smoketest(); // throwaway DLL registry + embedded PE parse
+    crate::athbridge_boot::run_boot_smoketest(); // throwaway DLL registry + embedded PE parse
     count += 1;
 
     // ── Tier 8 deferred: userspace-feature correctness ───────────────────
@@ -184,7 +184,7 @@ pub fn run_deferred() {
     );
 }
 
-/// True once the deferred sweep has completed (for `/proc/raeen/boot`).
+/// True once the deferred sweep has completed (for `/proc/athena/boot`).
 pub fn ran() -> bool {
     RAN.load(Ordering::Relaxed)
 }

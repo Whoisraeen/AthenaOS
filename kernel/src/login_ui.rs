@@ -12,14 +12,14 @@
 extern crate alloc;
 
 use alloc::string::String;
-use rae_tokens::{
+use ath_tokens::{
     AccentRamp, Palette, DARK, GLASS_POPOVER_DARK, RADIUS_LG, TYPE_BODY, TYPE_CAPTION, TYPE_LABEL,
     TYPE_SUBTITLE,
 };
-use raegfx::text::FontFamily;
+use athgfx::text::FontFamily;
 
 /// Active palette for the login surface (dark default — the lock screen is
-/// always dark, like Windows/macOS). Every colour below is a `rae_tokens`
+/// always dark, like Windows/macOS). Every colour below is a `ath_tokens`
 /// value so a Vibe-Mode re-skin flows here with the rest of the shell.
 const PALETTE: &Palette = &DARK;
 
@@ -29,7 +29,7 @@ const PALETTE: &Palette = &DARK;
 /// as window chrome (`window_chrome::accent`) and the toasts (`notify`).
 #[inline]
 fn accent() -> AccentRamp {
-    rae_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE)
+    ath_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE)
 }
 
 /// The accent base actually painted — public so the cross-surface cohesion
@@ -41,7 +41,7 @@ pub fn proof_accent() -> u32 {
 
 /// Backdrop palette — vertical gradient between BG_TOP (top of screen)
 /// and BG_BOT (bottom). Faked via N horizontal strips because the
-/// raegfx::Canvas API only exposes fill_rect; per-pixel interpolation
+/// athgfx::Canvas API only exposes fill_rect; per-pixel interpolation
 /// would be prettier but isn't free on a CPU rasterizer.
 ///
 /// `BG_TOP` is `bg.base` verbatim (design-language §4.1 notes the login
@@ -91,12 +91,12 @@ impl LoginState {
             shift_held: false,
         };
         // Seed username from /session/last_user (set by setup_ui on
-        // first-boot account creation). Falls back to "raeen" — the
+        // first-boot account creation). Falls back to "athena" — the
         // dev-default account — only when the registry has no record,
         // which happens on a fresh kernel with no completed first-boot
         // setup (the wizard runs in that case, not the login screen).
         let user = crate::config_registry::get_text("/session/last_user")
-            .unwrap_or_else(|| alloc::string::String::from("raeen"));
+            .unwrap_or_else(|| alloc::string::String::from("athena"));
         let bytes = user.as_bytes();
         let n = bytes.len().min(s.username.len());
         s.username[..n].copy_from_slice(&bytes[..n]);
@@ -112,11 +112,11 @@ impl LoginState {
     /// backdrop with a centered frosted glass card holding the avatar, greeting,
     /// and the password pill, exactly like the macOS / Win11 sign-in moment. The
     /// public signature is unchanged (the kernel passes `ptr` + `w`/`h`);
-    /// internally we wrap the buffer in a [`raegfx::Canvas`] — the SAME software
+    /// internally we wrap the buffer in a [`athgfx::Canvas`] — the SAME software
     /// rasterizer the compositor uses — so we draw through the shared
     /// `glass`/`draw_text_aa` primitives instead of hand-rolled hex pixels.
     pub fn render(&self, ptr: *mut u8, w: u32, h: u32) {
-        let mut canvas = unsafe { raegfx::Canvas::new(ptr, w as usize, h as usize, 4) };
+        let mut canvas = unsafe { athgfx::Canvas::new(ptr, w as usize, h as usize, 4) };
 
         // Live accent ramp (tracks Vibe Mode). `base` = bright accent (focused),
         // `active` = darkened accent for the dim/inactive ring.
@@ -132,7 +132,7 @@ impl LoginState {
         // ── Background → the signature Aurora Mesh (IDENTITY.md §3): the same
         //    living backdrop the desktop + lock screen wear — visual continuity
         //    from boot to login to desktop. Replaces the old flat navy gradient.
-        raegfx::glass::render_aurora_dark(&mut canvas, 0, 0, sw, sh, 0);
+        athgfx::glass::render_aurora_dark(&mut canvas, 0, 0, sw, sh, 0);
 
         // ── Centered glass card: avatar + greeting + password pill float on a
         //    `glass.popover` frosted surface (transient → instant legibility over
@@ -147,7 +147,7 @@ impl LoginState {
         // Soft ambient shadow lifts the card off the aurora, then the shipped
         // tiered-glass draw (tint → frost → legibility cap → iridescent rim).
         canvas.fill_rounded_rect_shadow(card_x, card_y, card_w, card_h, cr, 0x0A_10_1C, 40, 18);
-        raegfx::glass::draw_glass_surface(
+        athgfx::glass::draw_glass_surface(
             &mut canvas,
             card_x,
             card_y,
@@ -293,12 +293,12 @@ impl LoginState {
 
 /// Deterministic, fail-able proof that the login screen wears the Liquid Glass
 /// identity: its accent tracks the LIVE Vibe seed (`theme_engine::active_accent`),
-/// its palette is `rae_tokens`-derived (not re-hardcoded), and the card draws on
+/// its palette is `ath_tokens`-derived (not re-hardcoded), and the card draws on
 /// the `glass.popover` tier (the aurora + frosted-card surface, not a flat panel).
 /// If the screen ever re-hardcodes the accent, drifts a palette colour off the
 /// token, or downgrades the card off the popover tier, this prints FAIL.
 pub fn run_boot_smoketest() {
-    let want_accent = rae_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE).base;
+    let want_accent = ath_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE).base;
     let accent_ok = proof_accent() == want_accent;
     // Palette colours must be the token values, not re-hardcoded constants.
     let palette_ok = CARD_BG == DARK.bg_raised
@@ -329,7 +329,7 @@ const DARK_POPOVER_FROST_REF: u32 = 0x06_FF_FF_FF;
 /// Public re-export so other UI surfaces (desktop wallpaper, setup
 /// wizard) can share the same gradient language for visual continuity.
 pub fn draw_vertical_gradient_pub(
-    canvas: &mut raegfx::Canvas,
+    canvas: &mut athgfx::Canvas,
     w: usize,
     h: usize,
     top: u32,
@@ -345,7 +345,7 @@ pub fn draw_vertical_gradient_pub(
 /// 60K pixels written 32 times = 2M writes, fast enough that the login
 /// screen redraw doesn't visibly stutter on TCG QEMU.
 fn draw_vertical_gradient(
-    canvas: &mut raegfx::Canvas,
+    canvas: &mut athgfx::Canvas,
     w: usize,
     h: usize,
     top: u32,

@@ -22,27 +22,27 @@ path = "src/main.rs"
 test = false
 
 [features]
-# Forwards to `raekit/host`: lets the std `cargo test` harness link `browser`
-# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# Forwards to `athkit/host`: lets the std `cargo test` harness link `browser`
+# (-> `athkit`) without athkit's bare-ELF lang items colliding with std (E0152
 # duplicate panic_impl). The normal `cargo build -p browser --target
 # x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
 # with `cargo test -p browser --features host`.
-host = ["raekit/host"]
+host = ["athkit/host"]
 
 [dependencies]
-raegfx = { path = "../../components/raegfx" }
-raekit = { path = "../../components/raekit" }
-rae_tokens = { path = "../../components/rae_tokens" }
+athgfx = { path = "../../components/athgfx" }
+athkit = { path = "../../components/athkit" }
+ath_tokens = { path = "../../components/ath_tokens" }
 # The HTML/CSS engine: tokenizer -> parser -> DOM -> CSS cascade -> layout -> paint.
 # RenderPipeline::render_to_layout gives the laid-out box tree; backend::
-# paint_displaylist_to_canvas blits a DisplayList to a raegfx Canvas.
-raeweb = { path = "../../components/raeweb" }
+# paint_displaylist_to_canvas blits a DisplayList to a athgfx Canvas.
+athweb = { path = "../../components/athweb" }
 # The ECMAScript interpreter: Interpreter::eval_str runs an inline <script> for its
 # evaluation + console side effects; take_console_output captures the observable.
-rae_js = { path = "../../components/rae_js" }
+ath_js = { path = "../../components/ath_js" }
 # The HTTP/1.1 client + transport seam: http1::HttpTransport is the injectable
 # byte transport the address-bar fetch rides on. The live ELF wraps a real socket
 # in RaeSocketTransport; the host KAT drives http1::MockTransport with a canned
-# response. (raeweb's loader already consumes this; the app needs it directly to
+# response. (athweb's loader already consumes this; the app needs it directly to
 # name the trait + construct the transports.)
-raenet = { path = "../../components/raenet" }
+athnet = { path = "../../components/athnet" }

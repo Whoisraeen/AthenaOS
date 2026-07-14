@@ -6,7 +6,7 @@
  * shrinker so the kernel can reclaim cached free pages under memory pressure —
  * OUT of the MES bring-up subset (no reclaim during init; the daemon owns its
  * heap). The type is laid out so ttm_pool's shrinker can be defined by value;
- * register/free are backed by raeen_linuxkpi as no-ops (nothing reclaims here).
+ * register/free are backed by ath_linuxkpi as no-ops (nothing reclaims here).
  * License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_SHRINKER_H
@@ -35,7 +35,7 @@ struct shrinker {
 	void         *private_data;
 };
 
-/* allocation/registration — backed by raeen_linuxkpi (M4). alloc returns a real
+/* allocation/registration — backed by ath_linuxkpi (M4). alloc returns a real
  * zeroed shrinker so the caller can set its callbacks; register/free are no-ops
  * (nothing drives reclaim during bring-up). */
 struct shrinker *shrinker_alloc(unsigned int flags, const char *fmt, ...);

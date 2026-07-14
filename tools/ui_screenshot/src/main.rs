@@ -1,22 +1,22 @@
 //! ui_screenshot — HOST-render UI screenshot harness (ADR 0004, host-render path).
 //!
 //! *"Built for people who care about how things feel."* — `LEGACY_GAMING_CONCEPT.md`
-//! §AthUI. Goal #1 requires the UI be "proven by raeen-visual-qa screenshots."
+//! §AthUI. Goal #1 requires the UI be "proven by athena-visual-qa screenshots."
 //! The live desktop is unreachable in headless CI and the QEMU
 //! `screendump`->PPM pipeline stripes (project memory: a 24bpp-read-as-32bpp /
 //! stride capture artifact — NOT the real render; iron + HOST-RENDER are clean).
 //! This is the clean path: render representative UI surfaces on a host-backed
-//! `raegfx::Canvas` (the EXACT software rasterizer the kernel composites with)
-//! and encode real, spec-valid PNGs with raemedia's from-scratch encoder.
+//! `athgfx::Canvas` (the EXACT software rasterizer the kernel composites with)
+//! and encode real, spec-valid PNGs with athmedia's from-scratch encoder.
 //!
 //! Two tiers of capture:
 //!   1. Design ATOMS — the soft-ambient drop shadow (proving a feathered
 //!      penumbra, not a hard block), a glassmorphic panel, rounded-rects +
-//!      gradients, raefont grayscale-AA text across the type ramp, circles, and
+//!      gradients, athfont grayscale-AA text across the type ramp, circles, and
 //!      the focus ring (normal + high-contrast).
 //!   2. Real shipped SURFACES whose `render(&mut Canvas)` is host-callable with
 //!      no kernel state: the Control Center, the LIVE Files window (apps/files::
-//!      render_preview, not the dead raeshell twin), and
+//!      render_preview, not the dead athshell twin), and
 //!      notification toasts. (Surfaces whose render lives in `shell_runner.rs`
 //!      and is wound through `DesktopShell` kernel state are NOT host-callable;
 //!      see the REPORT gap list.)
@@ -24,10 +24,10 @@
 //! Output: PNGs + `manifest.txt` in `docs/design/screenshots/`.
 //! Run: `cargo run --release` from `tools/ui_screenshot/`.
 
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
-use raemedia::png_encode::{encode_argb8888, ColorType};
-use rae_tokens::{
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
+use athmedia::png_encode::{encode_argb8888, ColorType};
+use ath_tokens::{
     TYPE_BODY, TYPE_CAPTION, TYPE_DISPLAY, TYPE_LABEL, TYPE_SUBTITLE, TYPE_TITLE,
 };
 use std::fs;
@@ -108,28 +108,28 @@ fn dark_backdrop(c: &mut Canvas, w: usize, h: usize) {
 /// before/after on the "flat void" defect is immediate. `phase=0` is the still
 /// frame the live wallpaper would advance over time.
 fn aurora_backdrop(c: &mut Canvas, w: usize, h: usize) {
-    raegfx::glass::render_aurora_dark(c, 0, 0, w, h, 0);
+    athgfx::glass::render_aurora_dark(c, 0, 0, w, h, 0);
 }
 
 fn main() {
     let dir = screenshots_dir();
     println!("ui_screenshot — host-render UI capture -> {}", dir.display());
 
-    // Build the raefont AA text engine (embedded Inter + JetBrains Mono). The
+    // Build the athfont AA text engine (embedded Inter + JetBrains Mono). The
     // kernel does this at boot; on host we must do it explicitly or every
     // `draw_text_aa` silently falls back to the blocky 8x8 bitmap font — which
     // would make these captures LIE about text crispness. Assert it loaded so
     // the harness FAILS loudly instead of shipping bitmap text.
-    let aa_ready = raegfx::text::ensure_init();
+    let aa_ready = athgfx::text::ensure_init();
     assert!(
-        aa_ready && raegfx::text::families_loaded() == 2,
-        "raefont AA engine did not load on host (ready={aa_ready}, families={}) — \
+        aa_ready && athgfx::text::families_loaded() == 2,
+        "athfont AA engine did not load on host (ready={aa_ready}, families={}) — \
          captures would fall back to the 8x8 bitmap font",
-        raegfx::text::families_loaded()
+        athgfx::text::families_loaded()
     );
     println!(
-        "raefont AA engine ready: {} families (RaeSans + RaeMono)",
-        raegfx::text::families_loaded()
+        "athfont AA engine ready: {} families (RaeSans + RaeMono)",
+        athgfx::text::families_loaded()
     );
 
     println!("[atoms]");
@@ -358,7 +358,7 @@ fn render_primitives_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, Stri
     );
 }
 
-/// The raefont grayscale-AA type ramp (§6) — DISPLAY..CAPTION, Sans + Mono — so
+/// The athfont grayscale-AA type ramp (§6) — DISPLAY..CAPTION, Sans + Mono — so
 /// visual-qa can judge text crispness (the "basic / not crisp" 8x8-font fix).
 fn render_type_ramp_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
     let (w, h) = (820usize, 560usize);
@@ -369,7 +369,7 @@ fn render_type_ramp_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, Strin
         let fg = 0xFF_ED_F1_F8u32;
         let dim = 0xFF_8A_93_A6u32;
         let mut y = 36i32;
-        let ramp: [(&str, rae_tokens::TypeStyle); 6] = [
+        let ramp: [(&str, ath_tokens::TypeStyle); 6] = [
             ("Display — RaeSans", TYPE_DISPLAY),
             ("Title — RaeSans", TYPE_TITLE),
             ("Subtitle — RaeSans", TYPE_SUBTITLE),
@@ -392,13 +392,13 @@ fn render_type_ramp_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, Strin
         dir,
         "atom-type-ramp.png",
         manifest,
-        "raefont grayscale-AA type ramp (Display..Caption, RaeSans + RaeMono) — text-crispness reference",
+        "athfont grayscale-AA type ramp (Display..Caption, RaeSans + RaeMono) — text-crispness reference",
     );
 }
 
-/// The single focus-ring renderer (`raeui::draw_focus_ring`) in BOTH modes:
+/// The single focus-ring renderer (`athui::draw_focus_ring`) in BOTH modes:
 /// normal accent (left) and high-contrast forced-colors (right). HC is the live
-/// `rae_tokens::set_high_contrast` toggle — proving the ring auto-swaps to the
+/// `ath_tokens::set_high_contrast` toggle — proving the ring auto-swaps to the
 /// HC cyan without the surface knowing.
 fn render_focus_rings_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
     let (w, h) = (760usize, 320usize);
@@ -409,31 +409,31 @@ fn render_focus_rings_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, Str
         let accent = 0xFF_2E_5C_C8u32;
 
         // LEFT: a focused button, normal mode.
-        rae_tokens::set_high_contrast(false);
+        ath_tokens::set_high_contrast(false);
         let (bx, by, bw, bh) = (90usize, 110usize, 220usize, 64usize);
         c.fill_rounded_rect(bx, by, bw, bh, 14, 0xFF_24_2E_42);
-        raeui::accessibility::draw_focus_ring(&mut c, bx, by, bw, bh, 14, accent);
+        athui::accessibility::draw_focus_ring(&mut c, bx, by, bw, bh, 14, accent);
         c.draw_text_aa((bx + 28) as i32, (by + 22) as i32, "Focused (normal)", TYPE_LABEL, 0xFF_ED_F1_F8, FontFamily::Sans);
         c.draw_text_aa(90, 60, "draw_focus_ring — accent", TYPE_CAPTION, 0xFF_8A_93_A6, FontFamily::Sans);
 
         // RIGHT: the SAME call under forced-colors HC — auto-swaps to HC cyan.
-        rae_tokens::set_high_contrast(true);
+        ath_tokens::set_high_contrast(true);
         let (hx, hy) = (460usize, 110usize);
         c.fill_rounded_rect(hx, hy, bw, bh, 14, 0xFF_00_00_00);
-        raeui::accessibility::draw_focus_ring(&mut c, hx, hy, bw, bh, 14, accent);
+        athui::accessibility::draw_focus_ring(&mut c, hx, hy, bw, bh, 14, accent);
         c.draw_text_aa((hx + 28) as i32, (hy + 22) as i32, "Focused (HC)", TYPE_LABEL, 0xFF_FF_FF_FF, FontFamily::Sans);
         c.draw_text_aa(460, 60, "high-contrast forced-colors", TYPE_CAPTION, 0xFF_8A_93_A6, FontFamily::Sans);
-        rae_tokens::set_high_contrast(false); // restore global
+        ath_tokens::set_high_contrast(false); // restore global
     }
     fb.save(
         dir,
         "atom-focus-ring.png",
         manifest,
-        "raeui::draw_focus_ring: normal accent (left) + auto-swapped high-contrast cyan (right)",
+        "athui::draw_focus_ring: normal accent (left) + auto-swapped high-contrast cyan (right)",
     );
 }
 
-/// The AthGFX line-icon set (`raegfx::icon::Icon`) — the real glyphs that
+/// The AthGFX line-icon set (`athgfx::icon::Icon`) — the real glyphs that
 /// replace the W/B/F/N/A/X/G/R/P + H/D/L/M LETTER placeholders visual-QA flagged
 /// (`visual-qa-critique-2026-06-21.md` #1/#2). Renders every icon:
 ///   * Row block 1 — at Control-Center TILE size (28px), text.secondary tint,
@@ -444,7 +444,7 @@ fn render_focus_rings_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, Str
 ///     proving monochrome icons take any token color.
 /// Runs a FAIL-able assertion that every icon painted real ink at tile size.
 fn render_icon_sheet_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raegfx::icon::Icon;
+    use athgfx::icon::Icon;
 
     let all = Icon::ALL;
     let cols = 8usize;
@@ -608,7 +608,7 @@ fn render_icon_sheet_atom(dir: &PathBuf, manifest: &mut Vec<(String, usize, Stri
 /// — the same code the kernel composites. Populated with representative state
 /// (game mode on, media playing, an expanded Wi-Fi list) over a desktop backdrop.
 fn render_control_center_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raeshell::control_center::{ControlCenter, ExpandRow, TileKind};
+    use athshell::control_center::{ControlCenter, ExpandRow, TileKind};
     let (w, h) = (1280usize, 800usize);
     let taskbar = 44usize;
     let mut fb = HostFb::new(w, h);
@@ -619,7 +619,7 @@ fn render_control_center_surface(dir: &PathBuf, manifest: &mut Vec<(String, usiz
     cc.set_media(true, "Midnight City", "M83");
     cc.toggle_expand(TileKind::WiFi);
     cc.set_expand_rows(vec![
-        ExpandRow { name: String::from("Raeen-5G"), signal: 4, secured: true, connected: true },
+        ExpandRow { name: String::from("Athena-5G"), signal: 4, secured: true, connected: true },
         ExpandRow { name: String::from("Cafe Guest"), signal: 2, secured: false, connected: false },
         ExpandRow { name: String::from("Neighbor"), signal: 1, secured: true, connected: false },
     ]);
@@ -641,7 +641,7 @@ fn render_control_center_surface(dir: &PathBuf, manifest: &mut Vec<(String, usiz
 
 /// The LIVE Files window via `files::render_preview(canvas, &FilesViewState)` —
 /// the real `apps/files` render path (host-renderable since the lib/bin split +
-/// the raekit `host` feature), NOT the quarantined `raeshell::file_manager` dead
+/// the athkit `host` feature), NOT the quarantined `athshell::file_manager` dead
 /// twin (retired from this harness). Rendered over the signature aurora backdrop.
 fn render_files_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
     let (w, h) = (1100usize, 720usize);
@@ -662,7 +662,7 @@ fn render_files_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String
 
 /// Notification toasts via the SHIPPED `NotificationDaemon::render_toasts`.
 fn render_notification_toasts_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raeshell::notifications_daemon::{NotificationDaemon, NotificationHints, Urgency};
+    use athshell::notifications_daemon::{NotificationDaemon, NotificationHints, Urgency};
     let (w, h) = (1280usize, 800usize);
     let mut fb = HostFb::new(w, h);
 
@@ -709,7 +709,7 @@ fn render_notification_toasts_surface(dir: &PathBuf, manifest: &mut Vec<(String,
 /// on-accent ink, token-tinted tray icons. The first time the taskbar is
 /// critiquable. Rendered as a 56px edge-docked bar at the bottom over the aurora.
 fn render_taskbar_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raeshell::taskbar::{Taskbar, TaskButtonState};
+    use athshell::taskbar::{Taskbar, TaskButtonState};
     let (w, h) = (1280usize, 800usize);
     let bar_h = 56usize;
     let mut fb = HostFb::new(w, h);
@@ -779,7 +779,7 @@ fn render_taskbar_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, Stri
 /// through, app tiles as frosted cards, the selected row accent-filled with dark
 /// on-accent ink. Retires the old opaque `StartMenuTheme` navy palette.
 fn render_start_menu_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raeshell::start_menu::{AppCategory, RecommendedItem, StartMenu};
+    use athshell::start_menu::{AppCategory, RecommendedItem, StartMenu};
     let (w, h) = (1280usize, 800usize);
     let mut fb = HostFb::new(w, h);
 
@@ -788,7 +788,7 @@ fn render_start_menu_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, S
         ("Files", "com.raeos.files", "/usr/bin/raefiles", 'F', AppCategory::Utilities),
         ("Browser", "com.raeos.browser", "/usr/bin/raebrowser", 'W', AppCategory::Web),
         ("Terminal", "com.raeos.terminal", "/usr/bin/raeterminal", 'T', AppCategory::Utilities),
-        ("Settings", "com.raeos.settings", "/usr/bin/raesettings", 'S', AppCategory::System),
+        ("Settings", "com.raeos.settings", "/usr/bin/athsettings", 'S', AppCategory::System),
         ("Editor", "com.raeos.editor", "/usr/bin/raeeditor", 'E', AppCategory::Productivity),
         ("RaeGames", "com.raeos.games", "/usr/bin/raegames", 'G', AppCategory::Games),
     ] {
@@ -833,12 +833,12 @@ fn render_start_menu_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, S
 /// the `glass.popover` tier (IDENTITY.md §7) applied to the highest-frequency
 /// surface: the right-click flyout. A frosted card the aurora reads through with
 /// the iridescent rim + a soft ambient drop shadow so it floats; RaeSans
-/// `type.label` rows with a leading `raegfx` line-icon, an optional right-aligned
+/// `type.label` rows with a leading `athgfx` line-icon, an optional right-aligned
 /// `type.caption` shortcut hint, hairline `stroke.subtle` separators between
 /// groups, a hovered row as an accent wash with dark on-accent ink, and a
 /// disabled row in `text.tertiary`. Retires the old flat ad-hoc styling.
 fn render_context_menu_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raeshell::start_menu::{ContextAction, ContextMenu, ContextMenuItem};
+    use athshell::start_menu::{ContextAction, ContextMenu, ContextMenuItem};
     let (w, h) = (640usize, 480usize);
     let mut fb = HostFb::new(w, h);
 
@@ -922,8 +922,8 @@ fn render_context_menu_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize,
     {
         let mw = menu.width as usize;
         let mh = menu.height as usize;
-        let radius = rae_tokens::RADIUS_MD as usize; // matches the menu's own surface radius
-        let text = rae_tokens::active_palette().text_primary;
+        let radius = ath_tokens::RADIUS_MD as usize; // matches the menu's own surface radius
+        let text = ath_tokens::active_palette().text_primary;
 
         // (1) Glass-only re-render at the SAME rect over the SAME aurora — the background
         // the white rows sit on. Worst interior CR must clear AA over the bright bleed.
@@ -931,25 +931,25 @@ fn render_context_menu_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize,
         {
             let mut c = gfb.canvas();
             aurora_backdrop(&mut c, w, h);
-            raegfx::glass::draw_glass_surface(
+            athgfx::glass::draw_glass_surface(
                 &mut c,
                 mx as usize,
                 my as usize,
                 mw,
                 mh,
                 radius,
-                rae_tokens::GLASS_POPOVER_DARK,
+                ath_tokens::GLASS_POPOVER_DARK,
             );
         }
         let mut worst = f32::MAX;
         // Skip the 3px iridescent rim band + the top highlight (additive light over the
         // capped interior); body text sits inset past them. Inset 8px from the rect edge
         // clears the band everywhere except the rounded corners, which carry no text.
-        let band = rae_tokens::GLASS_EDGE_BAND_PX as usize;
+        let band = ath_tokens::GLASS_EDGE_BAND_PX as usize;
         for yy in (my as usize + band + 5)..(my as usize + mh - band - 5).min(h) {
             for xx in (mx as usize + band + 5)..(mx as usize + mw - band - 5).min(w) {
                 let p = gfb.px[yy * w + xx] | 0xFF00_0000;
-                let cr = rae_tokens::contrast_ratio(text, p);
+                let cr = ath_tokens::contrast_ratio(text, p);
                 if cr < worst {
                     worst = cr;
                 }
@@ -997,7 +997,7 @@ fn render_context_menu_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize,
 
     // FAIL-able: the rendered menu must (a) paint an accent wash on the hovered
     // row and (b) not be a flat field (glass + ink give a real luma spread).
-    let a = rae_tokens::derive_accent(raeshell::active_accent(), raeshell::active_palette());
+    let a = ath_tokens::derive_accent(athshell::active_accent(), athshell::active_palette());
     let (ar, ag, ab) = (
         ((a.base >> 16) & 0xFF) as i32,
         ((a.base >> 8) & 0xFF) as i32,
@@ -1040,7 +1040,7 @@ fn render_context_menu_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize,
 /// aurora reads through, a frosted sidebar (panel tier) + a de-tinted SOLID
 /// content area (readable, NOT a dark box), accent on the selected nav row.
 fn render_settings_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raeshell::control_panel::ControlPanel;
+    use athshell::control_panel::ControlPanel;
     let (w, h) = (1280usize, 800usize);
     let mut fb = HostFb::new(w, h);
 
@@ -1067,12 +1067,12 @@ fn render_settings_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, Str
 /// moment, glassified to the Liquid Glass identity (IDENTITY.md §3 Aurora +
 /// §7 popover tier). Driven through the EXACT raw-buffer path the kernel's
 /// `shell_runner::render_lock` calls (the lock screen wraps the slice in a
-/// `raegfx::Canvas` internally), so this capture exercises the shipped code,
+/// `athgfx::Canvas` internally), so this capture exercises the shipped code,
 /// not a host-only preview. Shows the aurora backdrop + a centered frosted
 /// glass card holding the clock, avatar, display name, and password pill with
 /// the iridescent rim.
 fn render_lock_screen_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raeshell::lock_screen::LockScreen;
+    use athshell::lock_screen::LockScreen;
     let (w, h) = (1280usize, 800usize);
     let mut fb = HostFb::new(w, h);
 
@@ -1119,10 +1119,10 @@ fn render_lock_screen_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, 
 /// rim + a soft ambient drop shadow so it floats (macOS Spotlight / Win11
 /// PowerToys Run quality). A representative query ("fir") returns a few ranked
 /// rows: the selected (top) row is an accent wash with dark on-accent ink, each
-/// row leads with a real `raegfx` line-icon, titles in RaeSans `type.body`,
+/// row leads with a real `athgfx` line-icon, titles in RaeSans `type.body`,
 /// paths/hints in `text.secondary`, a right-aligned `text.tertiary` category tag.
 fn render_command_palette_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raeshell::command_palette::CommandPalette;
+    use athshell::command_palette::CommandPalette;
     let (w, h) = (1280usize, 800usize);
     let mut fb = HostFb::new(w, h);
 
@@ -1155,7 +1155,7 @@ fn render_command_palette_surface(dir: &PathBuf, manifest: &mut Vec<(String, usi
 
     // FAIL-able: the flyout must (a) paint an accent wash on the selected row and
     // (b) read as glass + ink (a real luma spread), not a flat field.
-    let a = rae_tokens::derive_accent(raeshell::active_accent(), raeshell::active_palette());
+    let a = ath_tokens::derive_accent(athshell::active_accent(), athshell::active_palette());
     let (ar, ag, ab) = (
         ((a.base >> 16) & 0xFF) as i32,
         ((a.base >> 8) & 0xFF) as i32,
@@ -1192,13 +1192,13 @@ fn render_command_palette_surface(dir: &PathBuf, manifest: &mut Vec<(String, usi
         dir,
         "surface-command-palette.png",
         manifest,
-        "SHIPPED CommandPalette::render OVER the Aurora Mesh — glass.popover flyout (frosted + iridescent rim + soft ambient shadow), RaeSans search field with a real magnifier icon, result rows with leading raegfx line-icons, an accent-wash selected row with dark on-accent ink, secondary path text + right-aligned category tags (retires the deprecated GLASS_TINT_DARK alias fill)",
+        "SHIPPED CommandPalette::render OVER the Aurora Mesh — glass.popover flyout (frosted + iridescent rim + soft ambient shadow), RaeSans search field with a real magnifier icon, result rows with leading athgfx line-icons, an accent-wash selected row with dark on-accent ink, secondary path text + right-aligned category tags (retires the deprecated GLASS_TINT_DARK alias fill)",
     );
 }
 
 fn render_snap_layout_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raeshell::snap_layouts::SnapOverlay;
-    use raeshell::tiling_wm::Rect;
+    use athshell::snap_layouts::SnapOverlay;
+    use athshell::tiling_wm::Rect;
     let (w, h) = (1280usize, 800usize);
     let mut fb = HostFb::new(w, h);
 
@@ -1221,7 +1221,7 @@ fn render_snap_layout_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, 
 
     // FAIL-able: the flyout must (a) paint an accent-fill preview on the hovered
     // zone and (b) read as glass + ink (a real luma spread), not a flat field.
-    let a = rae_tokens::derive_accent(raeshell::active_accent(), raeshell::active_palette());
+    let a = ath_tokens::derive_accent(athshell::active_accent(), athshell::active_palette());
     let (ar, ag, ab) = (
         ((a.base >> 16) & 0xFF) as i32,
         ((a.base >> 8) & 0xFF) as i32,
@@ -1263,9 +1263,9 @@ fn render_snap_layout_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, 
 }
 
 fn render_snap_assist_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use raeshell::snap_assist::{Candidate, SnapAssist};
-    use raeshell::snap_layouts::SnapTemplate;
-    use raeshell::tiling_wm::Rect;
+    use athshell::snap_assist::{Candidate, SnapAssist};
+    use athshell::snap_layouts::SnapTemplate;
+    use athshell::tiling_wm::Rect;
     let (w, h) = (1280usize, 800usize);
     let mut fb = HostFb::new(w, h);
 
@@ -1291,7 +1291,7 @@ fn render_snap_assist_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, 
 
     // FAIL-able: the hovered candidate tile must paint an accent highlight and
     // the picker must read as glass + ink (a real luma spread).
-    let a = rae_tokens::derive_accent(raeshell::active_accent(), raeshell::active_palette());
+    let a = ath_tokens::derive_accent(athshell::active_accent(), athshell::active_palette());
     let (ar, ag, ab) = (
         ((a.base >> 16) & 0xFF) as i32,
         ((a.base >> 8) & 0xFF) as i32,
@@ -1338,13 +1338,13 @@ fn render_snap_assist_surface(dir: &PathBuf, manifest: &mut Vec<(String, usize, 
 
 /// Step 2 (§3.2): the full-screen Aurora Mesh wallpaper, no windows — the living
 /// blue-violet-teal mesh that kills the flat navy void. The single highest-impact
-/// change. Proves `raegfx::glass::render_aurora_dark` directly.
+/// change. Proves `athgfx::glass::render_aurora_dark` directly.
 fn render_aurora_wallpaper(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
     let (w, h) = (1280usize, 800usize);
     let mut fb = HostFb::new(w, h);
     {
         let mut c = fb.canvas();
-        raegfx::glass::render_aurora_dark(&mut c, 0, 0, w, h, 0);
+        athgfx::glass::render_aurora_dark(&mut c, 0, 0, w, h, 0);
     }
     // FAIL-able: the wallpaper must NOT be a flat void — assert a real luma spread
     // across the frame (the old navy gradient had almost none in the lower band).
@@ -1365,7 +1365,7 @@ fn render_aurora_wallpaper(dir: &PathBuf, manifest: &mut Vec<(String, usize, Str
         dir,
         "wallpaper-aurora-dark.png",
         manifest,
-        "raegfx::glass::render_aurora_dark — full-screen procedural Aurora Mesh (blue/violet/teal blobs, soft falloff, vignette); replaces the flat navy void",
+        "athgfx::glass::render_aurora_dark — full-screen procedural Aurora Mesh (blue/violet/teal blobs, soft falloff, vignette); replaces the flat navy void",
     );
 }
 
@@ -1374,12 +1374,12 @@ fn render_aurora_wallpaper(dir: &PathBuf, manifest: &mut Vec<(String, usize, Str
 /// each are visible. Uses the SHIPPED `glass::draw_glass_surface` (tier + luma
 /// auto-adjust + edge stack), the exact call the kernel + shell-apps make.
 fn render_glass_tiers_over_aurora(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use rae_tokens::{GLASS_CHROME_DARK, GLASS_PANEL_DARK, GLASS_POPOVER_DARK};
+    use ath_tokens::{GLASS_CHROME_DARK, GLASS_PANEL_DARK, GLASS_POPOVER_DARK};
     let (w, h) = (1180usize, 520usize);
     let mut fb = HostFb::new(w, h);
     {
         let mut c = fb.canvas();
-        raegfx::glass::render_aurora_dark(&mut c, 0, 0, w, h, 0);
+        athgfx::glass::render_aurora_dark(&mut c, 0, 0, w, h, 0);
 
         let pw = 320usize;
         let ph = 340usize;
@@ -1397,7 +1397,7 @@ fn render_glass_tiers_over_aurora(dir: &PathBuf, manifest: &mut Vec<(String, usi
             // soft ambient shadow so the glass reads as floating over the aurora.
             c.fill_rounded_rect_shadow(px, py, pw, ph, 16, 0x0A_10_1C, 40, 16);
             // the SHIPPED tiered-glass draw — tint + luma-adjust + edge stack.
-            raegfx::glass::draw_glass_surface(&mut c, px, py, pw, ph, 16, *tier);
+            athgfx::glass::draw_glass_surface(&mut c, px, py, pw, ph, 16, *tier);
             c.draw_text_aa(
                 (px + 24) as i32,
                 (py + 24) as i32,
@@ -1428,7 +1428,7 @@ fn render_glass_tiers_over_aurora(dir: &PathBuf, manifest: &mut Vec<(String, usi
         dir,
         "glass-tiers-over-aurora.png",
         manifest,
-        "raegfx::glass::draw_glass_surface — chrome/panel/popover tiers over the aurora (luma auto-adjust + iridescent edge); backdrop reads through, opacity rises left->right",
+        "athgfx::glass::draw_glass_surface — chrome/panel/popover tiers over the aurora (luma auto-adjust + iridescent edge); backdrop reads through, opacity rises left->right",
     );
 }
 
@@ -1437,20 +1437,20 @@ fn render_glass_tiers_over_aurora(dir: &PathBuf, manifest: &mut Vec<(String, usi
 /// the "instantly recognizable" signature shot. We render a panel at 1× then
 /// nearest-upscale a corner crop 3× into the output so the 2px rim is legible.
 fn render_iridescent_edge_3x(dir: &PathBuf, manifest: &mut Vec<(String, usize, String)>) {
-    use rae_tokens::GLASS_PANEL_DARK;
+    use ath_tokens::GLASS_PANEL_DARK;
     // 1× source render.
     let (sw, sh) = (380usize, 380usize);
     let mut src = HostFb::new(sw, sh);
     let (pnx, pny, pnw, pnh) = (60usize, 60usize, 280usize, 280usize);
     {
         let mut c = src.canvas();
-        raegfx::glass::render_aurora_dark(&mut c, 0, 0, sw, sh, 0);
+        athgfx::glass::render_aurora_dark(&mut c, 0, 0, sw, sh, 0);
         // a panel filling most of the frame so its BOTTOM-RIGHT corner sits inside.
-        raegfx::glass::draw_glass_surface(&mut c, pnx, pny, pnw, pnh, 24, GLASS_PANEL_DARK);
+        athgfx::glass::draw_glass_surface(&mut c, pnx, pny, pnw, pnh, 24, GLASS_PANEL_DARK);
         // OBSIDIAN: surfaces no longer carry the rim (IDENTITY-OBSIDIAN.md §2) —
         // this atom demos the still-shipped `draw_iridescent_rim` PRIMITIVE
         // (theming callers), so invoke it directly on the panel.
-        raegfx::glass::draw_iridescent_rim(&mut c, pnx, pny, pnw, pnh, 24);
+        athgfx::glass::draw_iridescent_rim(&mut c, pnx, pny, pnw, pnh, 24);
     }
     // 3× nearest crop of the BOTTOM-RIGHT corner — the TWO-HUE corner (Round-4
     // visual-QA note): the RIGHT edge renders violet (#B47CFF) and the BOTTOM edge
@@ -1497,7 +1497,7 @@ fn render_iridescent_edge_3x(dir: &PathBuf, manifest: &mut Vec<(String, usize, S
     // fix made the rim render; the Round-4 fix (edge-centered hue stops + the fixed
     // perimeter walk) makes the right edge violet and the bottom edge warm. Revert
     // either and both counts here collapse toward zero.
-    let band = rae_tokens::GLASS_EDGE_BAND_PX as usize;
+    let band = ath_tokens::GLASS_EDGE_BAND_PX as usize;
     let chroma = |p: u32| -> (i64, i64, i64) {
         (
             ((p >> 16) & 0xFF) as i64,
@@ -1537,6 +1537,6 @@ fn render_iridescent_edge_3x(dir: &PathBuf, manifest: &mut Vec<(String, usize, S
         dir,
         "glass-iridescent-edge-3x.png",
         manifest,
-        "raegfx::glass::draw_iridescent_rim — 3x zoom of a panel BOTTOM-RIGHT corner: the violet(right)->warm-amber(bottom) chromatic sweep over the aurora (the iridescent signature, two hues in one crop); FAIL-able chromatic-pixel proof",
+        "athgfx::glass::draw_iridescent_rim — 3x zoom of a panel BOTTOM-RIGHT corner: the violet(right)->warm-amber(bottom) chromatic sweep over the aurora (the iridescent signature, two hues in one crop); FAIL-able chromatic-pixel proof",
     );
 }

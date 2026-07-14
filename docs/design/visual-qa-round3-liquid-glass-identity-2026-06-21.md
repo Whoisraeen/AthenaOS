@@ -55,7 +55,7 @@ kind — it isn't felt, it's missing. Two root causes, in order:
    drawn *under* an opaque stroke that covers it, or (c) the additive blend is
    clamping/compositing such that a low-alpha colored add over a mid-blue base
    produces no perceptible hue delta. **This is a rendering correctness bug, not a
-   tuning value.** Owner: **raeen-gfx**.
+   tuning value.** Owner: **athena-gfx**.
 
 2. **Once it actually draws, the alpha IS too low for the signature the owner
    wants.** The spec ceilings the rim at `0x2E–0x33` "to be felt, not neon." But the
@@ -70,9 +70,9 @@ kind — it isn't felt, it's missing. Two root causes, in order:
    BAND_PX = 3`) so it survives the SW rasterizer's AA at 1×. Keep the host-KAT
    `[0x20, 0x40]` invariant — `0x40` is the legal ceiling, so this stays in-spec.
    The spec's `[0x20,0x40]` already anticipated this headroom; use it.
-   Owner: token bump **raeen-ui**, draw fix **raeen-gfx**.
+   Owner: token bump **athena-ui**, draw fix **athena-gfx**.
 
-   Note for **raeen-design-researcher**: the spec body text (§2.4) says "felt, not
+   Note for **athena-design-researcher**: the spec body text (§2.4) says "felt, not
    neon, ~18–20%" while the KAT ceiling is `0x40` (25%). The owner now wants it
    pushed to the ceiling. Reconcile the §2.4 prose to "felt at rest, but the
    signature must be legible at the corners — target the `0x40` band cap" so the
@@ -101,7 +101,7 @@ What's wrong vs a shipping macOS/Win11 wallpaper:
    bright backdrop for the glass to be luminous against.** Lift the blue blob's peak
    contribution so its core hits luma ~140–150 (`AURORA_BLOB_BLUE` core alpha up
    ~25%), keep the violet/teal as accents. The vignette already protects the edges.
-   Owner: **raeen-gfx**.
+   Owner: **athena-gfx**.
 
 2. **The blobs read as two soft circles, not "flowing aurora."** The reference and
    the Concept §3.1 word is *ribbon / mesh* — directional, flowing color, not round
@@ -111,8 +111,8 @@ What's wrong vs a shipping macOS/Win11 wallpaper:
    so they become ribbons, and a third smaller teal accent should overlap the
    blue→violet seam to create the additive color-mixing zone that makes mesh
    gradients read as premium. Right now there's no visible blue×violet *blend* zone
-   — they're separated. Owner: **raeen-gfx** (falloff math), spec note to
-   **raeen-design-researcher** to pin "anisotropic ribbon, not isotropic blob."
+   — they're separated. Owner: **athena-gfx** (falloff math), spec note to
+   **athena-design-researcher** to pin "anisotropic ribbon, not isotropic blob."
 
    No banding artifacts detected (smooth luma falloff) — that part is clean.
 
@@ -141,7 +141,7 @@ Two problems fall straight out of this table:
    spec's headline promise ("opacity rises left→right, you can see the tiers")
    **fails the eye test.** The tint alphas (0x40/0x73/0x99) are correct in the
    tokens, but because the tint color is so dark and close to the backdrop, adding
-   more of it barely changes the result. Owner: **raeen-gfx** — the tier separation
+   more of it barely changes the result. Owner: **athena-gfx** — the tier separation
    must survive backdrop variance.
 
 2. **The glass is dark glass, the reference is LIGHT glass.** This is the core
@@ -155,8 +155,8 @@ Two problems fall straight out of this table:
    *before* the colored tier tint, so the glass brightens the backdrop the way frost
    scatters light, then the slate tint colors it. Right now there's tint but no
    frost-lightening. **This single change is what will move the glass from "dark
-   card" to "frosted glass."** Owner: **raeen-gfx**; spec note to
-   **raeen-design-researcher** to add a `GLASS_FROST_LIGHTEN` token (≈`0x14` white
+   card" to "frosted glass."** Owner: **athena-gfx**; spec note to
+   **athena-design-researcher** to add a `GLASS_FROST_LIGHTEN` token (≈`0x14` white
    add) to §2 — the current tier model has alpha+tint but no luminance-add term, and
    that's the missing ingredient vs the reference.
 
@@ -179,14 +179,14 @@ fix surface is rendered over the deadest part of the backdrop, which means:
   (place the violet blob upper-right instead of bottom-right for the CC capture), or
   (b) confirm on a real desktop the CC will routinely sit over wallpaper color. For
   the proof shot specifically, the panel must be photographed over a lit region or
-  the surface will always under-sell. Owner: **raeen-gfx** (aurora blob placement) +
-  **raeen-shell-apps** (CC docking / where the panel lands).
+  the surface will always under-sell. Owner: **athena-gfx** (aurora blob placement) +
+  **athena-shell-apps** (CC docking / where the panel lands).
 
 - Secondary (after the known internal-tint repoint): the CC's internal cards have no
   visible iridescent rim and the toggles are still square-ish flat fills, not the
   pill-with-accent-glow the reference shows (`Liquid glass guide_...jpg` primary/
   secondary buttons). That's the §11 Step 5 re-skin and is already queued — owner
-  **raeen-shell-apps** — so it's not the surprise defect, but it stays on the list.
+  **athena-shell-apps** — so it's not the surprise defect, but it stays on the list.
 
 ---
 
@@ -199,44 +199,44 @@ fix surface is rendered over the deadest part of the backdrop, which means:
    → Fix the draw so the colored additive band actually shifts rim pixels toward
    cyan/violet/amber (correctness bug — rim either not drawn, drawn under an opaque
    stroke, or additive-clamped away). Then bump alpha to the `0x40` ceiling and band
-   to 3px. → **raeen-gfx** (draw correctness, the real bug) + **raeen-ui** (token
+   to 3px. → **athena-gfx** (draw correctness, the real bug) + **athena-ui** (token
    `0x33→0x40`, `GLASS_EDGE_BAND_PX 2→3`).
 
 2. **Glass is dark/subtractive, not luminous/frosted** (interiors are darker-blue
    than a bright backdrop; reference glass is milky and light-adding). → Add a
    luminance-add frost term (`≈0x14_FFFFFF` over the blurred backdrop) before the
-   slate tint, so glass brightens like real frost. → **raeen-gfx**; new token
-   `GLASS_FROST_LIGHTEN` from **raeen-design-researcher** + **raeen-ui**.
+   slate tint, so glass brightens like real frost. → **athena-gfx**; new token
+   `GLASS_FROST_LIGHTEN` from **athena-design-researcher** + **athena-ui**.
 
 **P1 — the backdrop and tier legibility**
 
 3. **Aurora peak too dim** (brightest luma 94/255; reference ~150–180). Whole frame
    underexposed → glass has nothing bright to refract. → Lift blue-blob core peak to
-   luma ~140–150; vignette already protects edges. → **raeen-gfx**.
+   luma ~140–150; vignette already protects edges. → **athena-gfx**.
 
 4. **Tiers visually indistinguishable** (chrome 49 / panel 46 / popover 31 on G —
    ordering inverted by backdrop variance). The "opacity rises left→right" promise
    fails the eye. → Make tier separation survive backdrop variance (the frost-lighten
    in #2 helps; consider tying a small fixed luminance step to tier, not just alpha).
-   → **raeen-gfx**.
+   → **athena-gfx**.
 
 5. **Aurora reads as 2 round blobs, not flowing mesh.** → Anisotropic (sheared,
    ~2.5:1, NW→SE) falloff + a third teal accent over the blue×violet seam to create a
-   visible color-blend zone. → **raeen-gfx**; spec pin from **raeen-design-researcher**.
+   visible color-blend zone. → **athena-gfx**; spec pin from **athena-design-researcher**.
 
 **P2 — surface composition / re-skin (mostly already queued)**
 
 6. **Control Center docked over the dead/dark backdrop gutter** → shadow + refraction
    both invisible. → Place a color blob behind the right-docked CC for the proof shot
-   / confirm real-desktop placement. → **raeen-gfx** + **raeen-shell-apps**.
+   / confirm real-desktop placement. → **athena-gfx** + **athena-shell-apps**.
 
 7. **CC internal glass tint + flat square toggles** (known repoint + pill/accent-glow
-   controls per reference). → §11 Step 5 re-skin. → **raeen-shell-apps**.
+   controls per reference). → §11 Step 5 re-skin. → **athena-shell-apps**.
 
 8. **Notifications toasts** (`surface-notifications.png`): toasts read as flat dark
    slates with hairline borders — same dark-glass + missing-rim issues as the panels;
    they'll inherit the P0/P1 fixes. Body text is tiny/low-contrast over the toast —
-   hand the measured ratio to **raeen-accessibility** once the frost-lighten lands
+   hand the measured ratio to **athena-accessibility** once the frost-lighten lands
    (brighter glass changes the contrast math). → inherits P0/P1; a11y to confirm.
 
 ---

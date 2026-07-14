@@ -8,9 +8,9 @@ repository.workspace = true
 description = "nvidiad — AthenaOS native userspace NVIDIA GPU driver daemon. Runs the chip-identification bring-up (PCI -> BAR0 -> NV_PMC_BOOT_0 decode) and reports each part's firmware-requirement tier (where GSP-RM walls a from-scratch driver)."
 
 [dependencies]
-rae_abi = { path = "../components/rae_abi" }
-raeen_linuxkpi = { path = "../components/raeen_linuxkpi" }
-raeen_nvidia = { path = "../components/raeen_nvidia" }
+ath_abi = { path = "../components/ath_abi" }
+ath_linuxkpi = { path = "../components/ath_linuxkpi" }
+ath_nvidia = { path = "../components/ath_nvidia" }
 
 [[bin]]
 name = "nvidiad"

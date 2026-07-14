@@ -5,7 +5,7 @@
  * A sync_file wraps a dma_fence behind a file descriptor so userspace can wait on
  * GPU work across the command-submission boundary. amdgpu_cs hands these out as
  * the out-fence of a submit. Type laid out for the fd plumbing; create/get backed
- * by raeen_linuxkpi at M4. License boundary (../../README.md): API surface.
+ * by ath_linuxkpi at M4. License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_SYNC_FILE_H
 #define _LINUXKPI_LINUX_SYNC_FILE_H
@@ -25,7 +25,7 @@ struct sync_file {
 	unsigned long     flags;
 };
 
-/* backed by raeen_linuxkpi (M4) */
+/* backed by ath_linuxkpi (M4) */
 struct sync_file *sync_file_create(struct dma_fence *fence);
 struct dma_fence *sync_file_get_fence(int fd);
 

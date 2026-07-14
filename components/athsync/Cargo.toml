@@ -1,0 +1,12 @@
+[package]
+name = "athsync"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "AthSync — optional cross-device sync, end-to-end encrypted."
+
+[dependencies]
+# Real HKDF-SHA256 key derivation + HMAC-SHA256 authentication tags for the E2E
+# sync channel — replaces the former homebrew wrapping_mul placeholders.
+ath_crypto = { path = "../ath_crypto" }

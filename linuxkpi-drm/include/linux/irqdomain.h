@@ -4,7 +4,7 @@
  *
  * IRQ-domain (interrupt-controller virtual->hw mapping). amdgpu's IH ring wraps
  * its source decoding behind a domain. In the AthenaOS userspace-daemon model a
- * device IRQ is delivered as IPC (raeen_linuxkpi's IRQ-doorbell facade, P2), not
+ * device IRQ is delivered as IPC (ath_linuxkpi's IRQ-doorbell facade, P2), not
  * a kernel irq line, so the mapping calls are backed by that facade at M4. This
  * is the type/decl surface the IH header needs. License boundary: API surface.
  */
@@ -33,7 +33,7 @@ struct irq_domain_ops {
 	void (*free)(struct irq_domain *d, unsigned int virq, unsigned int nr_irqs);
 };
 
-/* backed by raeen_linuxkpi's IRQ facade (M4) */
+/* backed by ath_linuxkpi's IRQ facade (M4) */
 struct irq_domain *irq_domain_add_linear(struct fwnode_handle *fwnode, unsigned int size,
 					 const struct irq_domain_ops *ops, void *host_data);
 void          irq_domain_remove(struct irq_domain *domain);

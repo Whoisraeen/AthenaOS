@@ -5,7 +5,7 @@
  * Memory-management API. The MES bring-up subset touches little of this (page
  * allocation + BO mmap are TTM/GEM, stubbed per SCOPE.md), so this provides the
  * pure PAGE_* arithmetic the DRM type graph needs and DECLARES the allocator/map
- * surface — backed by raeen_linuxkpi at M4. A fake alloc_page returning NULL, or
+ * surface — backed by ath_linuxkpi at M4. A fake alloc_page returning NULL, or
  * a page_address that lied, would corrupt any path that did use it (SCOPE.md
  * rule 9), so those are real-extern, never faked. License boundary: API surface.
  */
@@ -36,7 +36,7 @@
 #define PFN_PHYS(x)          ((phys_addr_t)(x) << PAGE_SHIFT)
 #define PHYS_PFN(x)          ((unsigned long)((x) >> PAGE_SHIFT))
 
-/* page <-> address — backed by raeen_linuxkpi (M4) */
+/* page <-> address — backed by ath_linuxkpi (M4) */
 unsigned long page_to_pfn(const struct page *page);
 struct page  *pfn_to_page(unsigned long pfn);
 void         *page_address(const struct page *page);
@@ -46,14 +46,14 @@ phys_addr_t   page_to_phys(const struct page *page);
 void          get_page(struct page *page);
 void          put_page(struct page *page);
 
-/* page allocation — backed by raeen_linuxkpi (M4) */
+/* page allocation — backed by ath_linuxkpi (M4) */
 struct page  *alloc_pages(gfp_t gfp, unsigned int order);
 struct page  *alloc_page(gfp_t gfp);
 unsigned long __get_free_pages(gfp_t gfp, unsigned int order);
 void          __free_pages(struct page *page, unsigned int order);
 void          free_pages(unsigned long addr, unsigned int order);
 
-/* vmalloc family — backed by raeen_linuxkpi (M4) */
+/* vmalloc family — backed by ath_linuxkpi (M4) */
 void *vmalloc(unsigned long size);
 void *vzalloc(unsigned long size);
 void  vfree(const void *addr);
@@ -194,7 +194,7 @@ static inline pgprot_t vm_get_page_prot(vm_flags_t flags)
 	return (pgprot_t){ 0UL };
 }
 
-/* mmap insertion — backed by raeen_linuxkpi (M4) */
+/* mmap insertion — backed by ath_linuxkpi (M4) */
 int        remap_pfn_range(struct vm_area_struct *vma, unsigned long addr, unsigned long pfn,
 			   unsigned long size, pgprot_t prot);
 int        vm_insert_page(struct vm_area_struct *vma, unsigned long addr, struct page *page);

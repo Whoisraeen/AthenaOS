@@ -1,6 +1,6 @@
 //! i915d — AthenaOS userspace Intel GPU driver daemon (Path C).
 //!
-//! Mirrors the i915 bring-up sequence on the LinuxKPI host + `raeen_drm` KMS island:
+//! Mirrors the i915 bring-up sequence on the LinuxKPI host + `ath_drm` KMS island:
 //!   1. PCI enable + BAR0 MMIO map
 //!   2. VBT (Video BIOS Table) parse
 //!   3. GGTT / aperture setup
@@ -16,19 +16,19 @@
 extern crate alloc;
 
 use core::panic::PanicInfo;
-use rae_abi::syscall as abi;
-use raeen_drm::kms;
+use ath_abi::syscall as abi;
+use ath_drm::kms;
 
-const _: () = assert!(rae_abi::ABI_VERSION == 4);
+const _: () = assert!(ath_abi::ABI_VERSION == 4);
 
 struct LkpiAllocator;
 
 unsafe impl core::alloc::GlobalAlloc for LkpiAllocator {
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-        raeen_linuxkpi::kmalloc(layout.size(), 0)
+        ath_linuxkpi::kmalloc(layout.size(), 0)
     }
     unsafe fn dealloc(&self, ptr: *mut u8, _layout: core::alloc::Layout) {
-        raeen_linuxkpi::kfree(ptr);
+        ath_linuxkpi::kfree(ptr);
     }
 }
 
@@ -64,7 +64,7 @@ fn klog(msg: &str) {
     let n = msg.len().min(159);
     buf[..n].copy_from_slice(&msg.as_bytes()[..n]);
     buf[n] = 0;
-    raeen_linuxkpi::raeen_printk(buf.as_ptr());
+    ath_linuxkpi::athena_printk(buf.as_ptr());
 }
 
 struct IntelGpu {
@@ -77,12 +77,12 @@ struct IntelGpu {
 /// Id-table match (class 0x03 + Intel) — finds the GPU wherever firmware put
 /// it, iGPU or Arc dGPU alike. Same post-claim verification as the BDF path.
 fn probe_match() -> Option<IntelGpu> {
-    let lkpi_dev = raeen_linuxkpi::pci_enable_match(0x03, INTEL_VENDOR)?;
+    let lkpi_dev = ath_linuxkpi::pci_enable_match(0x03, INTEL_VENDOR)?;
     verify_claimed(lkpi_dev)
 }
 
 fn probe(bus: u8, dev: u8, func: u8) -> Option<IntelGpu> {
-    let lkpi_dev = raeen_linuxkpi::pci::pci_enable(bus, dev, func);
+    let lkpi_dev = ath_linuxkpi::pci::pci_enable(bus, dev, func);
     if lkpi_dev >= 0xFFFF_FFFF_FFFF_F000 {
         return None;
     }
@@ -90,25 +90,25 @@ fn probe(bus: u8, dev: u8, func: u8) -> Option<IntelGpu> {
 }
 
 fn verify_claimed(lkpi_dev: u64) -> Option<IntelGpu> {
-    let id = raeen_linuxkpi::pci::read_config_dword(lkpi_dev, 0x00);
+    let id = ath_linuxkpi::pci::read_config_dword(lkpi_dev, 0x00);
     let vendor = (id & 0xFFFF) as u16;
     let device = ((id >> 16) & 0xFFFF) as u16;
     if vendor != INTEL_VENDOR {
         return None;
     }
-    let class = raeen_linuxkpi::pci::read_config_dword(lkpi_dev, 0x08);
+    let class = ath_linuxkpi::pci::read_config_dword(lkpi_dev, 0x08);
     let base_class = ((class >> 24) & 0xFF) as u8;
     if base_class != 0x03 {
         klog("[i915] Intel device is not display class; skipping");
         return None;
     }
 
-    let mmio = raeen_linuxkpi::pci::ioremap(lkpi_dev, 0);
+    let mmio = ath_linuxkpi::pci::ioremap(lkpi_dev, 0);
     if mmio.is_null() {
         klog("[i915] ioremap(BAR0) failed");
         return None;
     }
-    let _ = raeen_linuxkpi::pci::readl(mmio as *const u32);
+    let _ = ath_linuxkpi::pci::readl(mmio as *const u32);
     klog("[i915] stage 1 PCI probe + ioremap(BAR0) OK");
     if device == XE_LPG {
         klog("[i915] detected Intel Xe LPG class GPU");
@@ -128,7 +128,7 @@ fn read_vbt(gpu: &IntelGpu) -> bool {
 }
 
 fn init_ggtt(gpu: &IntelGpu) -> bool {
-    let staging = raeen_linuxkpi::dma::dma_alloc_coherent(gpu.lkpi_dev, 4096);
+    let staging = ath_linuxkpi::dma::dma_alloc_coherent(gpu.lkpi_dev, 4096);
     if staging.is_null() {
         klog("[i915] stage 3 GGTT staging alloc FAILED");
         return false;
@@ -138,9 +138,9 @@ fn init_ggtt(gpu: &IntelGpu) -> bool {
 }
 
 fn init_rings(gpu: &IntelGpu) -> bool {
-    let _ = raeen_linuxkpi::pci::readl(gpu.mmio as *const u32);
-    let rcs = raeen_linuxkpi::dma::dma_alloc_coherent(gpu.lkpi_dev, 64 * 1024);
-    let bcs = raeen_linuxkpi::dma::dma_alloc_coherent(gpu.lkpi_dev, 64 * 1024);
+    let _ = ath_linuxkpi::pci::readl(gpu.mmio as *const u32);
+    let rcs = ath_linuxkpi::dma::dma_alloc_coherent(gpu.lkpi_dev, 64 * 1024);
+    let bcs = ath_linuxkpi::dma::dma_alloc_coherent(gpu.lkpi_dev, 64 * 1024);
     if rcs.is_null() || bcs.is_null() {
         klog("[i915] stage 4 ring alloc FAILED");
         return false;
@@ -175,7 +175,7 @@ fn init_display(gpu: &IntelGpu) -> bool {
         fb,
     });
     let _ = gpu;
-    klog("[i915] stage 5 display modeset committed via raeen_drm");
+    klog("[i915] stage 5 display modeset committed via ath_drm");
     true
 }
 
@@ -199,8 +199,8 @@ pub extern "C" fn _start() -> ! {
         }
     };
 
-    let _ = raeen_linuxkpi::lkpi_supervisor_register(gpu.lkpi_dev);
-    raeen_linuxkpi::lkpi_supervisor_heartbeat(gpu.lkpi_dev);
+    let _ = ath_linuxkpi::lkpi_supervisor_register(gpu.lkpi_dev);
+    ath_linuxkpi::lkpi_supervisor_heartbeat(gpu.lkpi_dev);
 
     let ok = read_vbt(&gpu) && init_ggtt(&gpu) && init_rings(&gpu) && init_display(&gpu);
 

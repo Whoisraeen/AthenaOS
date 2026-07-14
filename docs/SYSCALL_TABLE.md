@@ -174,7 +174,7 @@ NAMED, clickable rows (name + path) the Files app / command palette use
 
 `cap_mask` bits (deny-by-default; `scripting.rs` `SCRIPT_CAP_*`): 1 SYSINFO ·
 2 NOTIFY · 4 THEME · 8 CONFIG · 16 WALLPAPER · 32 LAUNCH. 294/295 are the
-`raelangd` daemon half: FETCH claims the next queued >64 KiB script (Queued →
+`athlangd` daemon half: FETCH claims the next queued >64 KiB script (Queued →
 Running, source handed over), COMPLETE reports exit + captured output.
 
 ## Block 15: WireGuard (81–84) — Concept §AthNet
@@ -265,11 +265,11 @@ legacy behavior for compatibility.
 range was a hard collision: the dispatch arms for `SYS_OOM_SUBSCRIBE` (100, Block
 22a) and the AthFS snapshots (101–103, Block 22b) precede the anti-cheat range arm
 in `kernel/src/syscall.rs`, and Rust's match is first-arm-wins — so calling the
-*documented* `SYS_AC_REGISTER_GAME` (102) actually ran `raefs::snapshot_restore`,
+*documented* `SYS_AC_REGISTER_GAME` (102) actually ran `athfs::snapshot_restore`,
 a destructive filesystem rollback. OOM + AthFS snapshots are live and iron-proven,
 so anti-cheat (design-tier) moved to the fresh contiguous block below. The old
 anti-cheat numbers never reached `anticheat.rs`, so no working consumer broke.
-Canonical defs now live in `rae_abi` Block 34 (with a build-time collision guard).
+Canonical defs now live in `ath_abi` Block 34 (with a build-time collision guard).
 
 | nr | name | args | rax |
 |---:|---|---|---|
@@ -294,9 +294,9 @@ True tiling: the WM records a desired cell size; a tiling-aware client polls it 
 
 `SYS_SPAWN_ARGS` (the launcher's argv/target-passing primitive, gate item #2 —
 one `.exe`/process) is **reserved here as 293** so the number cannot collide when
-the slice lands; the `rae_abi` constant + dispatch arm + the native-argv kernel
+the slice lands; the `ath_abi` constant + dispatch arm + the native-argv kernel
 spawn impl land together as ONE `[interface]` + spawn slice **GATED on
-`scheduler.rs`/`task.rs` cooling** (see `docs/components/raebridge-process-model.md`
+`scheduler.rs`/`task.rs` cooling** (see `docs/components/athbridge-process-model.md`
 §2 "Sequencing gate (HOT FILE)"). NOTE: the process-model doc originally
 recommended 284, but 284–290 were taken by anti-cheat Block 34 and 291–292 by
 Block 35 since that draft — corrected to 293 on 2026-06-29 (the §10-pitfall-#1
@@ -339,16 +339,16 @@ require explicit command marshalling and otherwise fail closed.
 | 298 | `SYS_DRM_SERVICE_FETCH` | rdi=`RequestHeader*`, rsi=payload, rdx=capacity | payload bytes + 1; 0 when idle; error sentinel |
 | 299 | `SYS_DRM_SERVICE_COMPLETE` | rdi=request id, rsi=signed i32 status bits, rdx=payload, r10=len | 0 / error sentinel |
 
-Wire version 1 uses a 40-byte `rae_abi::drm_service::RequestHeader`; payloads
+Wire version 1 uses a 40-byte `ath_abi::drm_service::RequestHeader`; payloads
 are capped at 64 KiB. Next free: 300.
 
 ## Block 22: AthFS game extents (99)
 
 | nr | name | args | rax |
 |---:|---|---|---|
-| 99 | `SYS_RAEFS_GAME_INSTALL_HINT` | path_ptr, path_len (1..4096), expected_size (0 = default 32 KiB) | `start_block \| (block_count << 32)` or `E_RAEFS_*` |
+| 99 | `SYS_ATHFS_GAME_INSTALL_HINT` | path_ptr, path_len (1..4096), expected_size (0 = default 32 KiB) | `start_block \| (block_count << 32)` or `E_ATHFS_*` |
 
-AthFS errors: `E_RAEFS_NO_MOUNT` = `0xFFFF_FFFF_FFFF_F901`, `E_RAEFS_EXTENT_FAIL` = `F902`, `E_RAEFS_BAD_PATH` = `F903`.
+AthFS errors: `E_ATHFS_NO_MOUNT` = `0xFFFF_FFFF_FFFF_F901`, `E_ATHFS_EXTENT_FAIL` = `F902`, `E_ATHFS_BAD_PATH` = `F903`.
 
 ## Block 22a: Memory pressure (100) — Concept §Production hardening
 
@@ -369,25 +369,25 @@ Requires `Cap::Filesystem` with `WRITE` when the task holds any filesystem caps 
 
 | nr | name | args | rax |
 |---:|---|---|---|
-| 101 | `SYS_RAEFS_SNAPSHOT_CREATE` | name_ptr, name_len (0..4096) | new snapshot id (>0) or `E_RAEFS_*` |
-| 102 | `SYS_RAEFS_SNAPSHOT_RESTORE` | snap_id | 0 or `E_RAEFS_*` |
-| 103 | `SYS_RAEFS_SNAPSHOT_DELETE` | snap_id | 0 or `E_RAEFS_*` |
+| 101 | `SYS_ATHFS_SNAPSHOT_CREATE` | name_ptr, name_len (0..4096) | new snapshot id (>0) or `E_ATHFS_*` |
+| 102 | `SYS_ATHFS_SNAPSHOT_RESTORE` | snap_id | 0 or `E_ATHFS_*` |
+| 103 | `SYS_ATHFS_SNAPSHOT_DELETE` | snap_id | 0 or `E_ATHFS_*` |
 
-Kernel side: `kernel/src/raefs.rs` (`snapshot_create`/`snapshot_restore`/
+Kernel side: `kernel/src/athfs.rs` (`snapshot_create`/`snapshot_restore`/
 `snapshot_delete`). `CREATE` freezes the current FS state with a CoW refcount
 bump and records the user-supplied label in `SNAPSHOT_NAMES` (id → name);
 `RESTORE` atomically swaps the live bitmap + root inode back to the snapshot;
 `DELETE` drops a snapshot and reclaims its block references. All three require
 `Cap::Filesystem` with `WRITE` (same rule as `SYS_MKDIR`) and refuse in
 safe-mode (they write FS metadata). Names + ids surface at
-`/proc/raeen/raefs` (`id=.. ts=.. name=..`). Additive allocation (unreserved
+`/proc/athena/athfs` (`id=.. ts=.. name=..`). Additive allocation (unreserved
 slots 101-103 in the gap between `SYS_OOM_SUBSCRIBE` and the driver range; no
 `ABI_VERSION` bump).
 
 ## Block 23: LinuxKPI host (127–140)
 
-Userspace driver daemons link `components/raeen_linuxkpi` and call these from C ABI
-stubs. Phase 1 (127-131): `kmalloc`, `get_jiffies_64`, `msleep`, `raeen_printk`.
+Userspace driver daemons link `components/ath_linuxkpi` and call these from C ABI
+stubs. Phase 1 (127-131): `kmalloc`, `get_jiffies_64`, `msleep`, `athena_printk`.
 Phase 2-4 (130, 132-140): the hardware bridge — `ioremap`, PCI config, zero-copy
 `dma_alloc_coherent` (IOMMU-sandboxed), `request_irq` doorbells, daemon supervisor.
 See `docs/LINUXKPI_PHASE1.md` and `docs/LINUXKPI_PHASE2.md`.
@@ -421,7 +421,7 @@ never map kernel or another process's memory. Additive (no `ABI_VERSION` bump).
 
 `SYS_RAEGFX_REGISTER_SCANOUT` (143) is the first slot claimed from the AthGFX
 reserved range (143–199; additive, no `ABI_VERSION` bump). A GPU driver daemon
-(amdgpud, via `raeen_drm::kms::atomic_commit`) hands its display scanout
+(amdgpud, via `ath_drm::kms::atomic_commit`) hands its display scanout
 framebuffer to the in-kernel compositor, which then presents THROUGH the
 device's display engine (the amdgpu DCN scans the same physical pages the
 compositor blits into). SECURITY: `phys` must be a DMA region the caller already
@@ -446,8 +446,8 @@ hello_relibc smoketest, and any kernel-side userspace stub use this. Was
 syscall 27 in `ABI_VERSION = 1`, which collided with `SYS_SURFACE_CLOSE`
 in Block 3 — the compositor close-surface arm was unreachable because
 Rust match dispatches on first-arm-wins. Moved to 141 in `ABI_VERSION = 2`
-(see `components/rae_abi/src/lib.rs::syscall::SYS_DEBUG_PRINT`); relibc's
-`raeenOS_syscall::SYS_DEBUG_PRINT` was updated in the same commit. AthGFX's
+(see `components/ath_abi/src/lib.rs::syscall::SYS_DEBUG_PRINT`); relibc's
+`athenaOS_syscall::SYS_DEBUG_PRINT` was updated in the same commit. AthGFX's
 reserved range was slid to 142–199 to accommodate, then to 143–199 when
 `SYS_LINUXKPI_REQUEST_FIRMWARE` took 142 (additive, see Block 23).
 
@@ -462,7 +462,7 @@ either lock.
 
 ## Block 24: Installer (256–257)
 
-The userspace `raeinstaller` calls these to install AthenaOS onto the target disk.
+The userspace `athinstaller` calls these to install AthenaOS onto the target disk.
 Both require `Cap::System{WRITE}` (seeded only when the kernel boots in installer
 mode). See `kernel/src/installer.rs`, `docs` Phase 3.
 
@@ -471,7 +471,7 @@ mode). See `kernel/src/installer.rs`, `docs` Phase 3.
 | 256 | `SYS_INSTALL_RUN` | — | stage bitmask (5 bits = full install) / `u64::MAX` denied |
 | 257 | `SYS_INSTALL_CREATE_ACCOUNT` | user_ptr, user_len, pass_ptr, pass_len, disp_ptr, disp_len | new user id / `u64::MAX` |
 
-Install stage bits: GPT=1, ESP_FORMAT=2, BOOT_TREE=4, RAEFS_FORMAT=8, VERIFY=16.
+Install stage bits: GPT=1, ESP_FORMAT=2, BOOT_TREE=4, ATHFS_FORMAT=8, VERIFY=16.
 
 ## Block 25: Live theme (266) — Concept §Customization Engine
 
@@ -479,7 +479,7 @@ Install stage bits: GPT=1, ESP_FORMAT=2, BOOT_TREE=4, RAEFS_FORMAT=8, VERIFY=16.
 |---:|---|---|---|
 | 266 | `SYS_THEME_GET` | out_ptr (`ThemeInfo`), out_cap (bytes) | bytes written (32) / `u64::MAX` |
 
-`SYS_THEME_GET` writes a `rae_abi::ThemeInfo` (`#[repr(C)]`, 32 bytes: `version,
+`SYS_THEME_GET` writes a `ath_abi::ThemeInfo` (`#[repr(C)]`, 32 bytes: `version,
 accent_argb, bg_argb, fg_argb, is_dark, blur_radius, palette_id, reserved`) to
 the user buffer via `copy_to_user` (validated with `validate_user_range`, no raw
 deref). `accent_argb` is `theme_engine::active_accent()` — the SAME live seed the
@@ -517,8 +517,8 @@ the user buffer is unmapped/too small. **No capability gate** (audio output
 carries no secret and every app may make sound) and allowed in safe mode.
 Additive allocation (fresh slot 267 in the experimental range, next free after
 266 `SYS_THEME_GET`); no `ABI_VERSION` bump. The kernel side is
-`kernel/src/audio.rs::submit_samples`; the raekit wrapper is
-`raekit::sys::audio_submit`.
+`kernel/src/audio.rs::submit_samples`; the athkit wrapper is
+`athkit::sys::audio_submit`.
 
 ## Block 27: Clipboard history (268–273) — Concept §"The user owns the machine"
 
@@ -527,7 +527,7 @@ Win+V-class clipboard history + pin over the session clipboard. RAM-only and
 posture. The active buffer + GET/SET (107/108) are UNCHANGED; SET now also
 appends to a bounded history ring (`CLIP_HIST_MAX_ENTRIES` = 64) with
 pinned-safe eviction (oldest UNPINNED dropped first; pinned never evicted).
-Kernel side: `kernel/src/clipboard.rs`. raekit wrapper: `raekit::sys::clip_*`.
+Kernel side: `kernel/src/clipboard.rs`. athkit wrapper: `athkit::sys::clip_*`.
 
 | nr | name | args (rdi, rsi, rdx) | rax |
 |---:|---|---|---|
@@ -538,7 +538,7 @@ Kernel side: `kernel/src/clipboard.rs`. raekit wrapper: `raekit::sys::clip_*`.
 | 272 | `SYS_CLIP_HIST_CLEAR`   | — | entries removed (keeps pinned) |
 | 273 | `SYS_CLIP_HIST_PROMOTE` | index | 0 / `CLIP_ERR` |
 
-`CLIP_ERR` = `u64::MAX`. `SYS_CLIP_HIST_GET` writes a `rae_abi::ClipEntryHeader`
+`CLIP_ERR` = `u64::MAX`. `SYS_CLIP_HIST_GET` writes a `ath_abi::ClipEntryHeader`
 (`#[repr(C)]`, 32 bytes: `version, format, flags, byte_len, sequence,
 paste_count, reserved0, reserved1`) immediately followed by `byte_len` bytes of
 UTF-8 text payload. `format` is `CLIP_FMT_TEXT` (0) today; `CLIP_FMT_{RICH_TEXT,
@@ -572,7 +572,7 @@ so this is privacy-gated and fails CLOSED, unlike the fail-open FS/Process
 migration bridges). `SYS_CAPTURE_START` is **additionally refused in safe mode**
 (no screen reads off a safe-image boot).
 
-`SYS_CAPTURE_READ` writes a `rae_abi::CaptureHeader` (`#[repr(C)]`, 16 bytes:
+`SYS_CAPTURE_READ` writes a `ath_abi::CaptureHeader` (`#[repr(C)]`, 16 bytes:
 `width, height, format, bytes`) immediately followed by `bytes` of pixel data
 (`width*height*4`, ARGB or BGRA per the session format) via **validated
 `copy_to_user`** (`validate_user_range(write)` + `copy_to_user`, no raw
@@ -585,12 +585,12 @@ window/region-follow modes.
 Each session is **tagged with the calling task** and auto-reclaimed in
 `scheduler::reclaim_task_resources` (next to the socket/audio-voice sweep) so a
 crashed capturer can't leak a session. Active sessions surface at
-`/proc/raeen/capture` (`active_sessions: N` + one line per session). Additive
+`/proc/athena/capture` (`active_sessions: N` + one line per session). Additive
 allocation (fresh block 274–276, next free after clipboard history 273) and a
 fresh tail `Cap` variant — **no `ABI_VERSION` bump** (the `Cap` wire contract is
 flavor-tag-serialized via `flavor_id`, never index/bit-packed, so appending a
 variant breaks nothing). Kernel side: `kernel/src/syscall.rs` + `compositor.rs`;
-raekit wrappers: `raekit::sys::capture_{start,read,stop}`.
+athkit wrappers: `athkit::sys::capture_{start,read,stop}`.
 
 ## Block 29: Accessibility tree (277-278) — Concept §Security + Phase 19 a11y
 
@@ -598,8 +598,8 @@ The assistive-technology (AT) read/dispatch surface — the seam the screen
 reader, magnifier, and keyboard-nav all consume. Exposes the kernel-owned,
 window-tier accessibility tree (built from the compositor surface list,
 AccessKit-compatible) to a privileged AT client. Kernel side:
-`kernel/src/a11y.rs` + `kernel/src/syscall.rs`. raekit wrappers:
-`raekit::sys::a11y_{snapshot,action}`.
+`kernel/src/a11y.rs` + `kernel/src/syscall.rs`. athkit wrappers:
+`athkit::sys::a11y_{snapshot,action}`.
 
 | nr | name | args (rdi, rsi, rdx) | rax |
 |---:|---|---|---|
@@ -614,17 +614,17 @@ macOS TCC Accessibility / Windows UIA), so a task must explicitly hold the cap.
 Unlike screen capture, SNAPSHOT is **NOT** refused in safe mode (UI structure
 carries no pixel data / PII; the cap gate alone is the control).
 
-`SYS_A11Y_SNAPSHOT` writes a `rae_abi::A11ySnapshotHeader` (`#[repr(C)]`, 16
+`SYS_A11Y_SNAPSHOT` writes a `ath_abi::A11ySnapshotHeader` (`#[repr(C)]`, 16
 bytes: `version, node_count, focused_id`) immediately followed by `node_count`
-`rae_abi::A11yNode` records (`#[repr(C)]`, 96 bytes each: `id, parent, role,
+`ath_abi::A11yNode` records (`#[repr(C)]`, 96 bytes each: `id, parent, role,
 state, x, y, w, h, actions, name_len, name[48]`) via **validated
 `copy_to_user`** (`validate_user_range(write)` + `copy_to_user`, no raw deref —
 matches the net/capture hardening). The tree is a flat arena: `parent`
 references another node's `id` (`0` = the root desktop node). `role` is an
 `A11Y_ROLE_*` tag, `state` an `A11Y_STATE_*` bitfield, `actions` an
 `A11Y_ACTIONBIT_*` bitfield — all chosen to map 1:1 onto
-`raeui::accessibility`'s `AccessibilityRole` / `AccessibilityTraits` /
-`AccessibilityAction` so the kernel serializes raeui's live tree with no lossy
+`athui::accessibility`'s `AccessibilityRole` / `AccessibilityTraits` /
+`AccessibilityAction` so the kernel serializes athui's live tree with no lossy
 remapping.
 
 `SYS_A11Y_ACTION`'s `action` (`rsi`) is a single `A11Y_ACTION_*` selector
@@ -634,7 +634,7 @@ At the window tier FOCUS/ACTIVATE raise+focus the owning surface and DISMISS
 closes it; widget-tier actions route through the AthUI provider (implementer's
 next slice) and refuse (`A11Y_ERR`) until that lands rather than faking success.
 
-Active state surfaces at `/proc/raeen/a11y` (`nodes: N`, `focused_id`, one line
+Active state surfaces at `/proc/athena/a11y` (`nodes: N`, `focused_id`, one line
 per node). Additive allocation (fresh block 277-278, next free after screen
 capture 276) and a fresh tail `Cap` variant — **no `ABI_VERSION` bump** (the
 `Cap` wire contract is flavor-tag-serialized via `flavor_id`, never
@@ -670,8 +670,8 @@ first move), so the live path does not fail. Additive allocation (fresh slot 279
 next free after accessibility 277-278); **no `ABI_VERSION` bump** (a new number
 breaks no existing signature). Kernel side: `kernel/src/syscall.rs` (arm 279) +
 `kernel/src/compositor.rs` (`cursor_position_fast`). Surfaces at
-`/proc/raeen/compositor` (`cursor: x,y`). raekit wrapper:
-`raekit::sys::cursor_pos() -> (u32 x, u32 y, u32 buttons)`.
+`/proc/athena/compositor` (`cursor: x,y`). athkit wrapper:
+`athkit::sys::cursor_pos() -> (u32 x, u32 y, u32 buttons)`.
 
 ## Block 31: Live surface origin (280)
 
@@ -700,8 +700,8 @@ posture as the cursor poll) and **allowed in every sandbox level / safe mode**.
 Additive allocation (fresh slot 280, next free after cursor 279); **no
 `ABI_VERSION` bump** (a new number breaks no existing signature). Kernel side:
 `kernel/src/syscall.rs` (arm 280) + `kernel/src/compositor.rs`
-(`surface_origin(id) -> Option<(u32,u32)>`). raekit wrapper:
-`raekit::sys::surface_origin(sid: u64) -> Option<(u32 x, u32 y)>`. Boot proof:
+(`surface_origin(id) -> Option<(u32,u32)>`). athkit wrapper:
+`athkit::sys::surface_origin(sid: u64) -> Option<(u32 x, u32 y)>`. Boot proof:
 `compositor::run_surface_origin_smoketest` (`[compositor] surface_origin
 reads_a=… tracks_move=… unknown_none=… -> PASS`).
 
@@ -724,7 +724,7 @@ empty-result posture as `SYS_SEARCH_QUERY`).
 
 **Wire format — variable-length records.** The kernel writes back-to-back records
 into `[out_ptr, out_ptr + out_cap_bytes)`. Each record is a FIXED 24-byte header
-(`rae_abi::SearchResolvedHeader`, `#[repr(C)]`, little-endian) immediately
+(`ath_abi::SearchResolvedHeader`, `#[repr(C)]`, little-endian) immediately
 followed by `name_len` bytes of UTF-8 name then `path_len` bytes of UTF-8 path
 (no NUL terminators, no inter-record padding). The next record's header begins at
 `this_header + 24 + name_len + path_len`.
@@ -760,10 +760,10 @@ sandbox level / safe mode**. Additive allocation (fresh slot 281, next free afte
 surface origin 280); `ABI_VERSION` bumped to **v3** as a courtesy marker for the
 new wire record (no existing field or signature moved). Kernel side:
 `kernel/src/syscall.rs` (arm 281) + `kernel/src/search_index.rs`
-(`serialize_resolved(query, out_cap) -> (Vec<u8>, count)`). raekit:
-`raekit::syscalls::search::{query_resolved, decode_resolved, ResolvedHit}`. Boot
+(`serialize_resolved(query, out_cap) -> (Vec<u8>, count)`). athkit:
+`athkit::syscalls::search::{query_resolved, decode_resolved, ResolvedHit}`. Boot
 proof: `search_index::run_boot_smoketest` (`[search] crawl-query+resolve
-smoketest: … wire_ok=… tiny_ok=… -> PASS`). Host KAT: `cargo test -p raekit`
+smoketest: … wire_ok=… tiny_ok=… -> PASS`). Host KAT: `cargo test -p athkit`
 (`syscalls::tests::*` — round-trip + truncated/garbage no-panic).
 
 ## Block 33: AthBridge real-MSVC-CRT ABI (282–283) — Concept §Compatibility
@@ -771,7 +771,7 @@ smoketest: … wire_ok=… tiny_ok=… -> PASS`). Host KAT: `cargo test -p raeki
 The gate from "a hand-built PE runs" to "a real MSVC-compiled `.exe` runs". Every
 MSVC-CRT binary reads its Thread Environment Block via `gs:[0x30]` on entry (and
 `gs`-relative TEB fields throughout), and the loader must flip relocated `.text`
-RW→RX. See `docs/components/raebridge-real-crt-abi.md` for the full design.
+RW→RX. See `docs/components/athbridge-real-crt-abi.md` for the full design.
 
 | nr | name | args | rax |
 |---:|---|---|---|
@@ -810,7 +810,7 @@ numbers — **no `ABI_VERSION` bump**. Kernel side: `kernel/src/syscall.rs` (arm
 save/restore at the 3 switch sites), `kernel/src/gdt.rs` (cpu_id moved off the
 active GS base), `kernel/src/memory.rs` (`sys_mprotect` + `prot_to_pte_flags`).
 AthBridge wiring (`syscalls.rs` wrappers + `exec.rs` steps 4b/5/6) is the
-raeen-compat follow-up.
+athena-compat follow-up.
 
 ## Reserved ranges (do NOT use without updating this table)
 

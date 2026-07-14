@@ -356,7 +356,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Config registry: 29 default keys seeded (versioned, with snapshots)
 [ OK ] Per-app data buckets (/data/apps/self/)
 [buckets] run_boot_smoketest: store=true vfs_deny=true deny_foreign=true allow_owner=true self_needs_task=true -> PASS
-[session] AthID ready — default user 'raeen' (password: raeen)
+[session] AthID ready — default user 'athena' (password: athena)
 [session] persistence smoketest: records=1 hash_match=true reload_auth=true -> PASS
 [compositor] kernel surface 1 created: 1920x1080 (z=0, desktop)
 [shell_runner] safe-mode: on-screen diag panel OFF (log -> NVMe BOOTLOG.TXT) — booting to desktop
@@ -412,8 +412,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [winreg] registry shim up (Windows-10 defaults seeded, 0 persisted value(s) replayed from versioned config)
 [winreg] registry shim up (Windows-10 defaults seeded, 2 persisted value(s) replayed from versioned config)
 [winreg] smoketest: set=true versioned_mirror=true cold_restore=true win10_defaults=true err_semantics=true -> PASS
-[session] user config seeded at /users/raeen/
-[session] user 'raeen' logged in
+[session] user config seeded at /users/athena/
+[session] user 'athena' logged in
 [session] workstation locked
 [session] workstation unlocked
 [session] logged out
@@ -489,7 +489,7 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [netlog] initialized: UDP-broadcast log channel on port 51514 (boot_id=0xe377af0b)
 [rtl] TX path LIVE: first descriptor consumed by NIC (dev 8125, doorbell 0x90)
 [netlog] smoketest: frame=70B ip_header=valid tx=submitted -> PASS
-[mdns] responder up: advertising _raeen._tcp.local (DNS-SD), host athenaos.local
+[mdns] responder up: advertising _athena._tcp.local (DNS-SD), host athenaos.local
 [mdns] smoketest: query_answered=true ptr_cached=true srv_port_7690=true -> PASS
 [ OK ] AthGuard firewall initialized (4 rules, profile=DefaultDeny, conntrack 64k, rate-limit 1k pps)
 [ OK ] firewall selftest: 7/7 verdicts correct, per-app rule added, cap-gate enforced, telemetry-logged yes (profile=GamingOptimized, 9 rules)
@@ -514,8 +514,8 @@ AP GDT INDICES: u32cs=3, uds=4, ucs=5, kcs=1, kds=2
 [ OK ] Storage encryption initialized
 [encryption] KDF KAT: BLAKE2b-512(abc)=PASS Argon2id(RFC9106)=PASS -> PASS
 [fde] AES-256-XTS volume encryption ready (per-sector tweak=LBA, whole-volume incl. metadata)
-[raefs] Formatted 1MB AthFS with CoW + snapshots.
-[raefs] created new file: fde-canary.txt -> inode 2
+[athfs] Formatted 1MB AthFS with CoW + snapshots.
+[athfs] created new file: fde-canary.txt -> inode 2
 [fde] smoketest: write=true read_through_crypto=true plaintext_on_disk=false superblock_plaintext=false cipher_at_rest=true wrong_key_rejected=true -> PASS
 [ OK ] Kernel crypto API initialized
 [crypto] X25519 RFC7748 KAT: pubkey=true ecdh=true scalarmult=true -> PASS

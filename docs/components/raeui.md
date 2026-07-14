@@ -22,7 +22,7 @@ Skia and wgpu are implementation detail.
 ## Surface sketch
 
 ```rust
-use raeui::prelude::*;
+use athui::prelude::*;
 
 #[derive(View)]
 struct Counter { count: State<i32> }
@@ -40,11 +40,11 @@ impl Counter {
 
 ## Layering
 
-- **raeui-core**: view tree, layout, state, diffing.
-- **raeui-paint**: Skia-backed 2D paint pass.
-- **raeui-fx**: wgpu shaders for glass, blur, holographic, CRT, etc.
-- **raeui-compositor**: window manager hand-off, damage tracking, VRR-aware presentation.
-- **raeui-themes**: declarative theme bundle format, sandboxed.
+- **athui-core**: view tree, layout, state, diffing.
+- **athui-paint**: Skia-backed 2D paint pass.
+- **athui-fx**: wgpu shaders for glass, blur, holographic, CRT, etc.
+- **athui-compositor**: window manager hand-off, damage tracking, VRR-aware presentation.
+- **athui-themes**: declarative theme bundle format, sandboxed.
 
 ## Open design questions
 

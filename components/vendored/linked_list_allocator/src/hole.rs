@@ -33,7 +33,7 @@ use super::align_up;
 
 /// Boot-random per-heap cookie. `0` means "not installed" — encode/decode still
 /// round-trip (the location term alone keeps the list walkable), so a heap that
-/// never calls [`set_freelist_cookie`] (e.g. the raeen_linuxkpi shim) is simply
+/// never calls [`set_freelist_cookie`] (e.g. the ath_linuxkpi shim) is simply
 /// unhardened rather than broken.
 static FREELIST_COOKIE: AtomicU64 = AtomicU64::new(0);
 static COOKIE_INSTALLED: AtomicBool = AtomicBool::new(false);
@@ -62,7 +62,7 @@ impl HeapCorruption {
     }
 }
 
-/// Snapshot of the freelist-guard counters for `/proc/raeen/heap_guard`.
+/// Snapshot of the freelist-guard counters for `/proc/athena/heap_guard`.
 pub struct GuardStats {
     pub cookie_installed: bool,
     pub validations: u64,

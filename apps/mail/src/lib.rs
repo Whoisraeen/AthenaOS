@@ -1,20 +1,20 @@
 //! AthenaOS Mail — *"the common apps people rely on, available and just work"*
 //! (LEGACY_GAMING_CONCEPT.md charter app #5, "mail"). The macOS Mail / Windows Mail of
 //! AthenaOS: a clickable mailbox + reading pane + compose flow over the LIVE,
-//! already-host-KAT'd [`rae_mail`] protocol core.
+//! already-host-KAT'd [`ath_mail`] protocol core.
 //!
 //! Standalone userspace ELF launched from the start menu (`exec_path = "mail"`).
 //! Every byte of protocol work is done by the engines — this crate is the shell:
-//!   * [`rae_mail::ImapClient`] / [`rae_mail::Pop3Client`] — fetch the message
-//!     list + raw bodies over an INJECTABLE [`rae_mail::MailTransport`] byte pipe.
-//!   * [`rae_mail::FetchedMessage::parse`] — the never-panic RFC 822 / 2045 parse
+//!   * [`ath_mail::ImapClient`] / [`ath_mail::Pop3Client`] — fetch the message
+//!     list + raw bodies over an INJECTABLE [`ath_mail::MailTransport`] byte pipe.
+//!   * [`ath_mail::FetchedMessage::parse`] — the never-panic RFC 822 / 2045 parse
 //!     that turns a fetched `BODY[]` / `RETR` payload into headers + decoded parts
 //!     for the reading pane (multipart → pick text/plain, else stripped first part).
-//!   * [`rae_mail::SmtpClient`] / [`rae_mail::OutgoingMessage`] — the compose flow
+//!   * [`ath_mail::SmtpClient`] / [`ath_mail::OutgoingMessage`] — the compose flow
 //!     builds an RFC 822 message and runs the SMTP send dialog over the same
 //!     transport seam.
-//!   * [`rae_pim::parse_vcf`] — vCard import feeds the compose To: autocomplete.
-//!   * [`rae_kv::KvStore`] — the local mailbox cache (one entry per message),
+//!   * [`ath_pim::parse_vcf`] — vCard import feeds the compose To: autocomplete.
+//!   * [`ath_kv::KvStore`] — the local mailbox cache (one entry per message),
 //!     account settings, and drafts persist through its versioned, CRC-checked
 //!     snapshot.
 //!
@@ -25,12 +25,12 @@
 //! populate, the multipart reading-pane parse, and the compose-send-DATA contents
 //! are all asserted on the dev box. In the live ELF (`cfg(not(test))`) it is a
 //! [`SocketTransport`] over the kernel's userspace net syscalls (121-125) — no
-//! `raenet` dependency, so the host build never pulls a socket stack (and never
+//! `athnet` dependency, so the host build never pulls a socket stack (and never
 //! trips the poly1305 SIMD bare-build issue). Real send/receive is therefore
 //! iron-gated on networking; the host proof needs no network.
 //!
 //! ## Never panics on hostile input
-//! A mail server is untrusted: `rae_mail` bounds every line/literal/response and
+//! A mail server is untrusted: `ath_mail` bounds every line/literal/response and
 //! `FetchedMessage::parse` returns `Err` (never panics, never loops) on truncated
 //! or garbage bytes. The reading pane surfaces a parse failure as a message, never
 //! a crash — proven by the hostile-bytes KAT.
@@ -48,25 +48,25 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
-use rae_kv::KvStore;
-use rae_mail::{
+use ath_kv::KvStore;
+use ath_mail::{
     FetchedMessage, ImapClient, ImapState, MailTransport, OutgoingMessage, Pop3Client, SmtpClient,
 };
-use rae_pim::parse_vcf;
+use ath_pim::parse_vcf;
 
 // The render/run path is live-ELF only; under `cargo test` only the MailModel
 // (over the engines) is exercised, so the graphics/syscall imports are gated out
 // to keep the host test warning-clean.
 #[cfg(not(test))]
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 #[cfg(not(test))]
-use rae_tokens::DARK;
+use ath_tokens::DARK;
 #[cfg(not(test))]
-use raegfx::text::FontFamily;
+use athgfx::text::FontFamily;
 #[cfg(not(test))]
-use raegfx::Canvas;
+use athgfx::Canvas;
 
 // ── Window geometry (live ELF only) ──────────────────────────────────────
 
@@ -97,18 +97,18 @@ const PRESENT_X: i32 = 120;
 const PRESENT_Y: i32 = 50;
 
 /// Max messages we list/cache from one fetch — a hard cap so a server claiming a
-/// huge mailbox can never flood the list or the KV cache. (`rae_mail` itself
+/// huge mailbox can never flood the list or the KV cache. (`ath_mail` itself
 /// bounds each line/literal; this bounds how many we walk.)
 const MAX_MESSAGES: u32 = 200;
 
 /// Max raw message bytes we cache per message in KV (a reading-pane message, not
-/// an archive). `rae_mail::limits::MAX_LITERAL` is the protocol cap; this is the
+/// an archive). `ath_mail::limits::MAX_LITERAL` is the protocol cap; this is the
 /// per-entry storage cap.
 const MAX_CACHED_BODY: usize = 1024 * 1024;
 
 // ── KV cache keys ────────────────────────────────────────────────────────
 //
-// rae_kv is an ORDERED store, so message bodies key on a zero-padded sequence so
+// ath_kv is an ORDERED store, so message bodies key on a zero-padded sequence so
 // a prefix scan returns them in mailbox order. Settings + drafts use stable keys.
 
 /// Key for a cached raw message body: `msg/<5-digit seq>`.
@@ -183,7 +183,7 @@ pub struct OpenedMessage {
 /// (fetch → summarize, cache round-trip, open → parse, compose → build) is here
 /// and syscall-free, so the host KAT drives it directly against a mock transport.
 pub struct MailModel {
-    /// The local cache + settings store (the LIVE rae_kv).
+    /// The local cache + settings store (the LIVE ath_kv).
     kv: KvStore,
     /// The current message list (newest sequence first after a fetch).
     messages: Vec<MessageSummary>,
@@ -360,7 +360,7 @@ impl MailModel {
     /// Fetch the message list from an IMAP server over the injected transport:
     /// greeting → LOGIN → SELECT mailbox → FETCH envelope+flags for each message,
     /// caching each summary in KV. Replaces the current list. Returns the number
-    /// of messages listed, or the [`rae_mail::ImapError`] (the existing cache is
+    /// of messages listed, or the [`ath_mail::ImapError`] (the existing cache is
     /// left intact on failure).
     ///
     /// Bodies are fetched lazily by [`fetch_imap_body`] when a message is opened —
@@ -371,7 +371,7 @@ impl MailModel {
         mailbox: &str,
         user: &str,
         pass: &str,
-    ) -> Result<usize, rae_mail::ImapError> {
+    ) -> Result<usize, ath_mail::ImapError> {
         let mut client = ImapClient::new();
         client.read_greeting(t)?;
         if client.state() == ImapState::NotAuthenticated {
@@ -426,7 +426,7 @@ impl MailModel {
         user: &str,
         pass: &str,
         seq: u32,
-    ) -> Result<Vec<u8>, rae_mail::ImapError> {
+    ) -> Result<Vec<u8>, ath_mail::ImapError> {
         let mut client = ImapClient::new();
         client.read_greeting(t)?;
         if client.state() == ImapState::NotAuthenticated {
@@ -448,13 +448,13 @@ impl MailModel {
     /// Fetch the message list from a POP3 server: greeting → USER → PASS → STAT →
     /// RETR each message (POP3 has no envelope fetch, so we RETR + parse to get the
     /// summary, caching the raw body as we go). Replaces the current list. Returns
-    /// the count, or the [`rae_mail::Pop3Error`] (cache intact on failure).
+    /// the count, or the [`ath_mail::Pop3Error`] (cache intact on failure).
     pub fn fetch_pop3<T: MailTransport>(
         &mut self,
         t: &mut T,
         user: &str,
         pass: &str,
-    ) -> Result<usize, rae_mail::Pop3Error> {
+    ) -> Result<usize, ath_mail::Pop3Error> {
         let mut client = Pop3Client::new();
         client.read_greeting(t)?;
         client.user(t, user)?;
@@ -542,7 +542,7 @@ impl MailModel {
 
     /// Build an RFC 822 message from a draft and send it over the injected SMTP
     /// transport: greeting → EHLO → (AUTH if user/pass) → MAIL FROM → RCPT TO →
-    /// DATA. Returns Ok on a fully accepted send, else the [`rae_mail::SmtpError`].
+    /// DATA. Returns Ok on a fully accepted send, else the [`ath_mail::SmtpError`].
     /// On success the draft is cleared + the cleared draft persisted.
     pub fn send<T: MailTransport>(
         &mut self,
@@ -551,7 +551,7 @@ impl MailModel {
         user: &str,
         pass: &str,
         domain: &str,
-    ) -> Result<(), rae_mail::SmtpError> {
+    ) -> Result<(), ath_mail::SmtpError> {
         let msg = build_outgoing(from, &self.draft);
         let mut client = SmtpClient::new();
         client.read_greeting(t)?;
@@ -581,9 +581,9 @@ impl MailModel {
 
 // ── Free helpers (syscall-free, host-tested via MailModel) ──────────────────
 
-/// Render an [`rae_mail::Address`] as a display string: `Name <addr>` if a name is
+/// Render an [`ath_mail::Address`] as a display string: `Name <addr>` if a name is
 /// present, else the bare address.
-fn addr_display(a: &rae_mail::Address) -> String {
+fn addr_display(a: &ath_mail::Address) -> String {
     if a.name.is_empty() {
         a.addr.clone()
     } else {
@@ -849,8 +849,8 @@ fn push_num(s: &mut String, mut n: u64) {
 fn home_path(name: &str) -> String {
     let mut path = String::new();
     let mut info = [0u8; 96];
-    if raekit::sys::session_info(&mut info).is_some() {
-        if let Some(home) = raekit::sys::session_home_from(&info) {
+    if athkit::sys::session_info(&mut info).is_some() {
+        if let Some(home) = athkit::sys::session_home_from(&info) {
             path.push_str(home);
             path.push('/');
             path.push_str(name);
@@ -867,7 +867,7 @@ fn home_path(name: &str) -> String {
 #[cfg(not(test))]
 fn read_home_bytes(name: &str) -> Option<Vec<u8>> {
     let path = home_path(name);
-    let fd = raekit::sys::open(path.as_str(), 0);
+    let fd = athkit::sys::open(path.as_str(), 0);
     if fd == u64::MAX {
         return None;
     }
@@ -877,13 +877,13 @@ fn read_home_bytes(name: &str) -> Option<Vec<u8>> {
         if data.len() > 16 * 1024 * 1024 {
             break;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     if data.is_empty() {
         None
     } else {
@@ -903,7 +903,7 @@ fn read_home_string(name: &str) -> Option<String> {
 fn write_home_bytes(name: &str, bytes: &[u8]) {
     let path = home_path(name);
     // O_WRONLY (1) | O_CREAT (0x40) | O_TRUNC (0x200) — the VFS open flag layout.
-    let fd = raekit::sys::open(path.as_str(), 1 | 0x40 | 0x200);
+    let fd = athkit::sys::open(path.as_str(), 1 | 0x40 | 0x200);
     if fd == u64::MAX {
         return;
     }
@@ -911,8 +911,8 @@ fn write_home_bytes(name: &str, bytes: &[u8]) {
     while off < bytes.len() {
         let end = (off + 4096).min(bytes.len());
         let n = unsafe {
-            raekit::sys::syscall3(
-                raekit::sys::SYS_WRITE,
+            athkit::sys::syscall3(
+                athkit::sys::SYS_WRITE,
                 fd,
                 bytes[off..end].as_ptr() as u64,
                 (end - off) as u64,
@@ -923,7 +923,7 @@ fn write_home_bytes(name: &str, bytes: &[u8]) {
         }
         off += n;
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
 }
 
 /// Lossy UTF-8 decode of an owned byte vector (no_std-safe).
@@ -962,10 +962,10 @@ fn lossy_string(bytes: Vec<u8>) -> String {
 //
 // The live ELF wraps the userspace net syscalls (121-125) in a MailTransport so
 // the SAME engine dialogs that the host KAT proves against MockTransport run over
-// a real socket on iron. NO `raenet` dependency — the kernel owns the TCP stack;
+// a real socket on iron. NO `athnet` dependency — the kernel owns the TCP stack;
 // this is a thin syscall shim. (TLS is NOT yet wired here: this connects in the
 // clear, suitable for a local/test server; a STARTTLS upgrade is the documented
-// iron-gated follow-up coordinated with raenet.) Real send/receive is therefore
+// iron-gated follow-up coordinated with athnet.) Real send/receive is therefore
 // iron-gated on networking — the host proof never links this.
 
 /// A clear-text TCP transport over the kernel net syscalls. Reads are buffered so
@@ -984,15 +984,15 @@ impl SocketTransport {
     /// (resolved via SYS_NET_DNS). Returns `None` if the socket/connect fails.
     fn connect(host: &str, port: u16) -> Option<SocketTransport> {
         let ip = resolve_ip(host)?;
-        let fd = unsafe { raekit::sys::syscall1(raekit::sys::SYS_NET_SOCKET, 0) };
+        let fd = unsafe { athkit::sys::syscall1(athkit::sys::SYS_NET_SOCKET, 0) };
         if fd == u64::MAX {
             return None;
         }
         let r = unsafe {
-            raekit::sys::syscall3(raekit::sys::SYS_NET_CONNECT, fd, ip as u64, port as u64)
+            athkit::sys::syscall3(athkit::sys::SYS_NET_CONNECT, fd, ip as u64, port as u64)
         };
         if r == u64::MAX {
-            let _ = unsafe { raekit::sys::syscall1(raekit::sys::SYS_NET_CLOSE, fd) };
+            let _ = unsafe { athkit::sys::syscall1(athkit::sys::SYS_NET_CLOSE, fd) };
             return None;
         }
         Some(SocketTransport {
@@ -1009,8 +1009,8 @@ impl SocketTransport {
         }
         let mut chunk = [0u8; 2048];
         let n = unsafe {
-            raekit::sys::syscall3(
-                raekit::sys::SYS_NET_RECV,
+            athkit::sys::syscall3(
+                athkit::sys::SYS_NET_RECV,
                 self.fd,
                 chunk.as_mut_ptr() as u64,
                 chunk.len() as u64,
@@ -1022,7 +1022,7 @@ impl SocketTransport {
         }
         if n == 0 {
             // No data right now; yield and let the caller's bounded loop retry.
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             return true;
         }
         let n = (n as usize).min(chunk.len());
@@ -1034,32 +1034,32 @@ impl SocketTransport {
 #[cfg(not(test))]
 impl Drop for SocketTransport {
     fn drop(&mut self) {
-        let _ = unsafe { raekit::sys::syscall1(raekit::sys::SYS_NET_CLOSE, self.fd) };
+        let _ = unsafe { athkit::sys::syscall1(athkit::sys::SYS_NET_CLOSE, self.fd) };
     }
 }
 
 #[cfg(not(test))]
 impl MailTransport for SocketTransport {
-    fn send(&mut self, data: &[u8]) -> Result<(), rae_mail::TransportError> {
+    fn send(&mut self, data: &[u8]) -> Result<(), ath_mail::TransportError> {
         let mut off = 0;
         while off < data.len() {
             let n = unsafe {
-                raekit::sys::syscall3(
-                    raekit::sys::SYS_NET_SEND,
+                athkit::sys::syscall3(
+                    athkit::sys::SYS_NET_SEND,
                     self.fd,
                     data[off..].as_ptr() as u64,
                     (data.len() - off) as u64,
                 )
             };
             if n == u64::MAX || n == 0 {
-                return Err(rae_mail::TransportError::Closed);
+                return Err(ath_mail::TransportError::Closed);
             }
             off += (n as usize).min(data.len() - off);
         }
         Ok(())
     }
 
-    fn recv_line(&mut self) -> Result<Vec<u8>, rae_mail::TransportError> {
+    fn recv_line(&mut self) -> Result<Vec<u8>, ath_mail::TransportError> {
         // Bounded: never buffer past MAX_LINE, never loop forever.
         let mut spins = 0usize;
         loop {
@@ -1067,28 +1067,28 @@ impl MailTransport for SocketTransport {
                 let line: Vec<u8> = self.buf.drain(..=pos).collect();
                 return Ok(line);
             }
-            if self.buf.len() > rae_mail::limits::MAX_LINE {
-                return Err(rae_mail::TransportError::Io("line too long".into()));
+            if self.buf.len() > ath_mail::limits::MAX_LINE {
+                return Err(ath_mail::TransportError::Io("line too long".into()));
             }
             if !self.fill() {
-                return Err(rae_mail::TransportError::Closed);
+                return Err(ath_mail::TransportError::Closed);
             }
             spins += 1;
             if spins > 100_000 {
-                return Err(rae_mail::TransportError::Timeout);
+                return Err(ath_mail::TransportError::Timeout);
             }
         }
     }
 
-    fn recv_exact(&mut self, n: usize) -> Result<Vec<u8>, rae_mail::TransportError> {
+    fn recv_exact(&mut self, n: usize) -> Result<Vec<u8>, ath_mail::TransportError> {
         let mut spins = 0usize;
         while self.buf.len() < n {
             if !self.fill() {
-                return Err(rae_mail::TransportError::Closed);
+                return Err(ath_mail::TransportError::Closed);
             }
             spins += 1;
             if spins > 1_000_000 {
-                return Err(rae_mail::TransportError::Timeout);
+                return Err(ath_mail::TransportError::Timeout);
             }
         }
         Ok(self.buf.drain(..n).collect())
@@ -1103,8 +1103,8 @@ fn resolve_ip(host: &str) -> Option<u32> {
         return Some(ip);
     }
     let r = unsafe {
-        raekit::sys::syscall2(
-            raekit::sys::SYS_NET_DNS,
+        athkit::sys::syscall2(
+            athkit::sys::SYS_NET_DNS,
             host.as_ptr() as u64,
             host.len() as u64,
         )
@@ -1161,7 +1161,7 @@ const TEXT_TERTIARY: u32 = DARK.text_tertiary;
 
 #[cfg(not(test))]
 fn accent() -> u32 {
-    rae_tokens::derive_accent(raekit::sys::theme_accent(), &DARK).base
+    ath_tokens::derive_accent(athkit::sys::theme_accent(), &DARK).base
 }
 
 // ── Render ──────────────────────────────────────────────────────────────────
@@ -1174,9 +1174,9 @@ fn render(app: &App, canvas: &mut Canvas) {
     canvas.fill_rect(0, 0, WIN_W, TITLE_H, PANEL);
     canvas.draw_text_aa(
         10,
-        ((TITLE_H - rae_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
+        ((TITLE_H - ath_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
         "Mail",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_SECONDARY,
         FontFamily::Sans,
     );
@@ -1206,7 +1206,7 @@ fn render_toolbar(app: &App, canvas: &mut Canvas) {
             y + 5,
             92,
             TOOLBAR_H - 10,
-            rae_tokens::RADIUS_SM as usize,
+            ath_tokens::RADIUS_SM as usize,
             bg,
         );
         if active {
@@ -1217,7 +1217,7 @@ fn render_toolbar(app: &App, canvas: &mut Canvas) {
             (bx + 12) as i32,
             (y + 9) as i32,
             label,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             fg,
             FontFamily::Sans,
         );
@@ -1242,7 +1242,7 @@ fn render_inbox(app: &App, canvas: &mut Canvas) {
                 fy,
                 RAIL_W - 12,
                 26,
-                rae_tokens::RADIUS_SM as usize,
+                ath_tokens::RADIUS_SM as usize,
                 ROW_SEL,
             );
         }
@@ -1250,7 +1250,7 @@ fn render_inbox(app: &App, canvas: &mut Canvas) {
             16,
             (fy + 5) as i32,
             f,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             if selected {
                 TEXT_PRIMARY
             } else {
@@ -1269,7 +1269,7 @@ fn render_inbox(app: &App, canvas: &mut Canvas) {
             (list_x + 12) as i32,
             (top + 12) as i32,
             "No messages.",
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_TERTIARY,
             FontFamily::Sans,
         );
@@ -1285,7 +1285,7 @@ fn render_inbox(app: &App, canvas: &mut Canvas) {
                 ry + 2,
                 LIST_W - 8,
                 row_h - 4,
-                rae_tokens::RADIUS_SM as usize,
+                ath_tokens::RADIUS_SM as usize,
                 bg,
             );
             // Unread dot.
@@ -1296,7 +1296,7 @@ fn render_inbox(app: &App, canvas: &mut Canvas) {
                 (list_x + 22) as i32,
                 (ry + 6) as i32,
                 &m.from,
-                rae_tokens::TYPE_LABEL,
+                ath_tokens::TYPE_LABEL,
                 TEXT_PRIMARY,
                 FontFamily::Sans,
             );
@@ -1304,7 +1304,7 @@ fn render_inbox(app: &App, canvas: &mut Canvas) {
                 (list_x + 22) as i32,
                 (ry + 24) as i32,
                 &m.subject,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_SECONDARY,
                 FontFamily::Sans,
             );
@@ -1312,7 +1312,7 @@ fn render_inbox(app: &App, canvas: &mut Canvas) {
                 (list_x + 22) as i32,
                 (ry + 38) as i32,
                 &m.date,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_TERTIARY,
                 FontFamily::Sans,
             );
@@ -1332,7 +1332,7 @@ fn render_inbox(app: &App, canvas: &mut Canvas) {
             } else {
                 &om.subject
             },
-            rae_tokens::TYPE_TITLE,
+            ath_tokens::TYPE_TITLE,
             TEXT_PRIMARY,
             FontFamily::Sans,
         );
@@ -1356,7 +1356,7 @@ fn render_inbox(app: &App, canvas: &mut Canvas) {
             (pane_x + 12) as i32,
             (top + 12) as i32,
             "Select a message to read it.",
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_TERTIARY,
             FontFamily::Sans,
         );
@@ -1369,7 +1369,7 @@ fn header_line(canvas: &mut Canvas, x: usize, y: &mut usize, label: &str, value:
         x as i32,
         *y as i32,
         &format!("{}: {}", label, value),
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_SECONDARY,
         FontFamily::Sans,
     );
@@ -1379,7 +1379,7 @@ fn header_line(canvas: &mut Canvas, x: usize, y: &mut usize, label: &str, value:
 /// Word-wrap and draw a body string within `[x, x+w]`, stopping at `y_limit`.
 #[cfg(not(test))]
 fn render_body(canvas: &mut Canvas, x: usize, mut y: usize, w: usize, y_limit: usize, body: &str) {
-    let line_h = rae_tokens::TYPE_BODY.line_height as usize + 4;
+    let line_h = ath_tokens::TYPE_BODY.line_height as usize + 4;
     let approx_char_w = 7usize; // monospace-ish budget for wrap decisions
     let max_chars = (w / approx_char_w).max(8);
     for raw_line in body.split('\n') {
@@ -1403,7 +1403,7 @@ fn render_body(canvas: &mut Canvas, x: usize, mut y: usize, w: usize, y_limit: u
                 x as i32,
                 y as i32,
                 &chunk,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 TEXT_PRIMARY,
                 FontFamily::Sans,
             );
@@ -1430,7 +1430,7 @@ fn render_compose(app: &App, canvas: &mut Canvas) {
         x as i32,
         body_y as i32,
         "Message",
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_TERTIARY,
         FontFamily::Sans,
     );
@@ -1439,7 +1439,7 @@ fn render_compose(app: &App, canvas: &mut Canvas) {
         body_y + 16,
         w,
         body_h,
-        rae_tokens::RADIUS_MD as usize,
+        ath_tokens::RADIUS_MD as usize,
         ROW_BG,
     );
     render_body(
@@ -1458,16 +1458,16 @@ fn field(canvas: &mut Canvas, x: usize, y: usize, w: usize, label: &str, value: 
         x as i32,
         y as i32,
         label,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_TERTIARY,
         FontFamily::Sans,
     );
-    canvas.fill_rounded_rect(x, y + 16, w, 26, rae_tokens::RADIUS_SM as usize, ROW_BG);
+    canvas.fill_rounded_rect(x, y + 16, w, 26, ath_tokens::RADIUS_SM as usize, ROW_BG);
     canvas.draw_text_aa(
         (x + 8) as i32,
         (y + 21) as i32,
         value,
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         TEXT_PRIMARY,
         FontFamily::Sans,
     );
@@ -1483,13 +1483,13 @@ fn render_footer(app: &App, canvas: &mut Canvas) {
     };
     canvas.draw_text_aa(
         10,
-        fy as i32 + ((FOOTER_H - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
+        fy as i32 + ((FOOTER_H - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
         if app.toast.text.is_empty() {
             hint
         } else {
             app.toast.text.as_str()
         },
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         if app.toast.text.is_empty() {
             TEXT_TERTIARY
         } else {
@@ -1506,15 +1506,15 @@ fn render_footer(app: &App, canvas: &mut Canvas) {
 /// The freestanding userspace entry (called by the `_start` shim in `main.rs`).
 #[cfg(not(test))]
 pub fn run() -> ! {
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
     let mut app = App::new();
     render(&app, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     let mut extended = false;
 
@@ -1523,7 +1523,7 @@ pub fn run() -> ! {
         let mut left_down = false;
         let mut mouse_edge = false;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -1534,20 +1534,20 @@ pub fn run() -> ! {
             left_down = now_down;
         }
         if mouse_edge {
-            let (cx, cy, _btn) = raekit::sys::cursor_pos();
+            let (cx, cy, _btn) = athkit::sys::cursor_pos();
             let (ox, oy) =
-                raekit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
+                athkit::sys::surface_origin(sid).unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
             let lx = (cx as i32).saturating_sub(ox as i32);
             let ly = (cy as i32).saturating_sub(oy as i32);
             if handle_click(&mut app, lx, ly) {
                 render(&app, &mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
             }
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
 
@@ -1568,7 +1568,7 @@ pub fn run() -> ! {
         if code == 0x01 {
             // Esc → persist then quit.
             app.persist();
-            raekit::sys::exit(0);
+            athkit::sys::exit(0);
         } else if ext && code == 0x48 {
             // Up.
             if app.view == View::Inbox && app.sel > 0 {
@@ -1616,7 +1616,7 @@ pub fn run() -> ! {
 
         if changed {
             render(&app, &mut canvas);
-            raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+            athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         }
     }
 }
@@ -1663,7 +1663,7 @@ fn handle_click(app: &mut App, lx: i32, ly: i32) -> bool {
 }
 
 // ===========================================================================
-// Host KAT — links the LIVE rae_mail / rae_pim / rae_kv engines against a mock
+// Host KAT — links the LIVE ath_mail / ath_pim / ath_kv engines against a mock
 // transport, no kernel, no network. `cargo test -p mail --features host`.
 // ===========================================================================
 
@@ -1675,7 +1675,7 @@ mod tests {
     /// The injectable mock transport: replays scripted server bytes and records
     /// every byte the client sent. This is the WHOLE point of the transport seam —
     /// the SMTP/IMAP/POP3 dialogs are proven on the dev box with no socket. (It is
-    /// the same shape as `rae_mail`'s own internal `ScriptedTransport`, which is
+    /// the same shape as `ath_mail`'s own internal `ScriptedTransport`, which is
     /// `pub(crate)`, so the app crate carries its own.)
     struct MockTransport {
         inbox: VecDeque<u8>,
@@ -1701,14 +1701,14 @@ mod tests {
     }
 
     impl MailTransport for MockTransport {
-        fn send(&mut self, data: &[u8]) -> Result<(), rae_mail::TransportError> {
+        fn send(&mut self, data: &[u8]) -> Result<(), ath_mail::TransportError> {
             self.sent.extend_from_slice(data);
             Ok(())
         }
-        fn recv_line(&mut self) -> Result<Vec<u8>, rae_mail::TransportError> {
+        fn recv_line(&mut self) -> Result<Vec<u8>, ath_mail::TransportError> {
             self.reads += 1;
             if self.reads > 1_000_000 {
-                return Err(rae_mail::TransportError::Io("runaway".into()));
+                return Err(ath_mail::TransportError::Io("runaway".into()));
             }
             let mut line = Vec::new();
             loop {
@@ -1719,17 +1719,17 @@ mod tests {
                             return Ok(line);
                         }
                     }
-                    None => return Err(rae_mail::TransportError::Closed),
+                    None => return Err(ath_mail::TransportError::Closed),
                 }
             }
         }
-        fn recv_exact(&mut self, n: usize) -> Result<Vec<u8>, rae_mail::TransportError> {
+        fn recv_exact(&mut self, n: usize) -> Result<Vec<u8>, ath_mail::TransportError> {
             self.reads += 1;
             let mut out = Vec::with_capacity(n.min(4096));
             for _ in 0..n {
                 match self.inbox.pop_front() {
                     Some(b) => out.push(b),
-                    None => return Err(rae_mail::TransportError::Closed),
+                    None => return Err(ath_mail::TransportError::Closed),
                 }
             }
             Ok(out)
@@ -1741,7 +1741,7 @@ mod tests {
     // PLAIN part.
     const MULTIPART_BODY: &str = "\
 From: Ada Lovelace <ada@analytical.example>\r
-To: team@raeen.os\r
+To: team@athena.os\r
 Subject: Engine notes\r
 Date: Mon, 01 Jun 2026 09:30:00 +0000\r
 MIME-Version: 1.0\r
@@ -1772,7 +1772,7 @@ Content-Type: text/html; charset=utf-8\r
         s.push_str("* OK [UIDVALIDITY 1] Ok\r\n");
         s.push_str("A0002 OK [READ-WRITE] SELECT completed\r\n");
         // FETCH 1 (tag A0003)
-        s.push_str("* 1 FETCH (FLAGS (\\Seen) ENVELOPE (\"Mon, 01 Jun 2026 09:30:00 +0000\" \"Engine notes\" ((\"Ada Lovelace\" NIL \"ada\" \"analytical.example\")) NIL NIL ((\"team\" NIL \"team\" \"raeen.os\")) NIL NIL NIL NIL))\r\n");
+        s.push_str("* 1 FETCH (FLAGS (\\Seen) ENVELOPE (\"Mon, 01 Jun 2026 09:30:00 +0000\" \"Engine notes\" ((\"Ada Lovelace\" NIL \"ada\" \"analytical.example\")) NIL NIL ((\"team\" NIL \"team\" \"athena.os\")) NIL NIL NIL NIL))\r\n");
         s.push_str("A0003 OK FETCH completed\r\n");
         // FETCH 2 (tag A0004) — unread
         s.push_str("* 2 FETCH (FLAGS () ENVELOPE (\"Tue, 02 Jun 2026 10:00:00 +0000\" \"Re: Engine notes\" ((\"Charles Babbage\" NIL \"charles\" \"difference.example\")) NIL NIL ((\"ada\" NIL \"ada\" \"analytical.example\")) NIL NIL NIL NIL))\r\n");
@@ -1872,13 +1872,13 @@ Content-Type: text/html; charset=utf-8\r
         // SMTP script: greeting, EHLO reply, MAIL FROM ok, RCPT ok, DATA go-ahead,
         // body accepted, QUIT bye.
         let mut s = String::new();
-        s.push_str("220 mail.raeen.os ESMTP ready\r\n"); // greeting
-        s.push_str("250-mail.raeen.os\r\n"); // EHLO multiline
+        s.push_str("220 mail.athena.os ESMTP ready\r\n"); // greeting
+        s.push_str("250-mail.athena.os\r\n"); // EHLO multiline
         s.push_str("250-PIPELINING\r\n");
         s.push_str("250 SIZE 35882577\r\n");
         s.push_str("250 OK\r\n"); // MAIL FROM
-        s.push_str("250 OK\r\n"); // RCPT TO (team@raeen.os)
-        s.push_str("250 OK\r\n"); // RCPT TO (ops@raeen.os)
+        s.push_str("250 OK\r\n"); // RCPT TO (team@athena.os)
+        s.push_str("250 OK\r\n"); // RCPT TO (ops@athena.os)
         s.push_str("354 Start mail input\r\n"); // DATA go-ahead
         s.push_str("250 OK queued\r\n"); // body accepted
         s.push_str("221 Bye\r\n"); // QUIT
@@ -1887,25 +1887,25 @@ Content-Type: text/html; charset=utf-8\r
         let mut model = MailModel::new();
         {
             let d = model.draft_mut();
-            d.to = "team@raeen.os, ops@raeen.os".to_string();
+            d.to = "team@athena.os, ops@athena.os".to_string();
             d.subject = "Shipping Mail".to_string();
             d.body = "The Mail app is live.\nText body.".to_string();
         }
         model
-            .send(&mut t, "ada@analytical.example", "", "", "client.raeen.os")
+            .send(&mut t, "ada@analytical.example", "", "", "client.athena.os")
             .expect("smtp send");
 
         // FAIL-able anchors: the client emitted the right envelope commands AND a
         // well-formed RFC822 DATA payload (the actual message bytes, not "Ok").
         let sent = t.sent_str();
-        assert!(sent.contains("EHLO client.raeen.os"));
+        assert!(sent.contains("EHLO client.athena.os"));
         assert!(sent.contains("MAIL FROM:<ada@analytical.example>"));
-        assert!(sent.contains("RCPT TO:<team@raeen.os>"));
-        assert!(sent.contains("RCPT TO:<ops@raeen.os>"), "both recipients");
+        assert!(sent.contains("RCPT TO:<team@athena.os>"));
+        assert!(sent.contains("RCPT TO:<ops@athena.os>"), "both recipients");
         assert!(sent.contains("DATA"));
         // The serialized RFC822 headers + body landed in the DATA stream.
         assert!(sent.contains("Subject: Shipping Mail"));
-        assert!(sent.contains("To: team@raeen.os, ops@raeen.os"));
+        assert!(sent.contains("To: team@athena.os, ops@athena.os"));
         assert!(sent.contains("The Mail app is live."));
         // DATA must be terminated with the lone-dot per RFC 5321.
         assert!(sent.contains("\r\n.\r\n"), "DATA dot-terminated");
@@ -1925,8 +1925,8 @@ Content-Type: text/html; charset=utf-8\r
             d.subject = "Hi".to_string();
             d.body = "Line one.\nLine two.".to_string();
         }
-        let msg = model.compose_message("me@raeen.os");
-        assert_eq!(msg.from_addr, "me@raeen.os");
+        let msg = model.compose_message("me@athena.os");
+        assert_eq!(msg.from_addr, "me@athena.os");
         assert_eq!(
             msg.to,
             alloc::vec!["a@x.example".to_string(), "b@y.example".to_string()]
@@ -1959,7 +1959,7 @@ Content-Type: text/html; charset=utf-8\r
     #[test]
     fn kv_cache_round_trips_account_and_messages() {
         // Populate via a POP3 fetch, persist to bytes, reload, and assert the list
-        // + account survive the LIVE rae_kv snapshot round-trip.
+        // + account survive the LIVE ath_kv snapshot round-trip.
         let mut s = String::new();
         s.push_str("+OK ready\r\n");
         s.push_str("+OK\r\n");
@@ -1972,7 +1972,7 @@ Content-Type: text/html; charset=utf-8\r
         let mut t = MockTransport::new(s.as_bytes());
 
         let mut model = MailModel::new();
-        model.set_account("imap.raeen.os", "ada");
+        model.set_account("imap.athena.os", "ada");
         model.fetch_pop3(&mut t, "ada", "secret").unwrap();
         assert_eq!(model.message_count(), 1);
 
@@ -1980,7 +1980,7 @@ Content-Type: text/html; charset=utf-8\r
         assert!(!bytes.is_empty());
 
         let reloaded = MailModel::from_cache_bytes(&bytes);
-        assert_eq!(reloaded.account().host, "imap.raeen.os");
+        assert_eq!(reloaded.account().host, "imap.athena.os");
         assert_eq!(reloaded.account().user, "ada");
         assert_eq!(reloaded.message_count(), 1, "summary survived the snapshot");
         assert_eq!(reloaded.messages()[0].subject, "Engine notes");

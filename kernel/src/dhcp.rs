@@ -1033,7 +1033,7 @@ pub fn current_state() -> Option<DhcpState> {
     DHCP_CLIENT.lock().as_ref().map(|c| c.state)
 }
 
-/// /proc/raeen/dhcp dump.
+/// /proc/athena/dhcp dump.
 pub fn dump_text() -> alloc::string::String {
     use alloc::string::String;
     let g = DHCP_CLIENT.lock();

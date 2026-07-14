@@ -4,7 +4,7 @@
  #include "atom.h"
  
  /*
-+ * RaeenOS maps large DMA buffers write-back for usable CPU performance.  The
++ * AthenaOS maps large DMA buffers write-back for usable CPU performance.  The
 + * GPU is not cache-coherent with those userspace mappings, so publishing a
 + * ring write requires an explicit writeback before the MMIO wptr/doorbell.
 + */
@@ -27,7 +27,7 @@
  		ring->funcs->insert_nop(ring, count);
  
 +	/*
-+	 * Linux normally relies on dma_alloc_coherent() here.  RaeenOS uses a
++	 * Linux normally relies on dma_alloc_coherent() here.  AthenaOS uses a
 +	 * write-back CPU mapping for large rings, so evict exactly the dwords
 +	 * produced since amdgpu_ring_alloc() before making the new wptr visible.
 +	 * Handle the circular-buffer wrap as two cache-flush ranges.

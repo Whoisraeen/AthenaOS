@@ -15,9 +15,9 @@ is unblocked Concept work that advances the Steam thesis without waiting on the 
 ## Already in the tree (verify-before-implement)
 Verified by reading the source, not the stale crate table:
 
-- `components/raebridge/src/d3d_translate.rs` (~1961 lines) — **rich and real** for
+- `components/athbridge/src/d3d_translate.rs` (~1961 lines) — **rich and real** for
   *API state*, **stub** for *shaders*:
-  - `[x]` DONE: `DxgiFormat` (110 formats) → `raegfx::PixelFormat`, `bytes_per_pixel`,
+  - `[x]` DONE: `DxgiFormat` (110 formats) → `athgfx::PixelFormat`, `bytes_per_pixel`,
     `is_depth/compressed/srgb`; D3D11 rasterizer/blend/depth-stencil/buffer/texture
     descriptors → AthGFX state; D3D12 resource-state→barrier/layout/access/stage;
     D3D12 root-signature → `DescriptorSetLayoutBinding` + push-constant ranges;
@@ -29,14 +29,14 @@ Verified by reading the source, not the stale crate table:
   - `[ ]` STUB: `translate_shader()` calls `emit_stub_spirv()` (line 1770) which emits
     only the **5-word SPIR-V header** (magic/version/generator/bound/schema) — no
     types, no entry point, no function, no body. This is the gap.
-- `components/raebridge/src/dxgi.rs` — a **second, parallel** stub surface:
+- `components/athbridge/src/dxgi.rs` — a **second, parallel** stub surface:
   - `DxbcShader::parse()` (line 1579): checks magic only, returns empty signatures
     with a `// Stub` comment.
   - `ShaderTranslator::translate_dxbc_to_spirv()` / `translate_dxil_to_spirv()`
     (lines 1623/1641): both call a duplicate `emit_stub_spirv()` (line 1679).
   - `ShaderError` enum + `ShaderParameter`/`ComponentType` structs already exist here
     and are the natural error/signature types to reuse.
-- `components/raebridge/src/d3d9.rs`, `d3d11.rs`, `d3d12.rs` — COM-interface signature
+- `components/athbridge/src/d3d9.rs`, `d3d11.rs`, `d3d12.rs` — COM-interface signature
   surfaces; they call into the above. No shader logic of their own.
 
 **Delta this spec designs:** replace the two `emit_stub_spirv()` paths with a real
@@ -140,7 +140,7 @@ must converge on ONE new module (`dxbc_spirv`), with `dxgi::ShaderTranslator` an
      therefore assigns Locations by a deterministic (semantic-name, semantic-index)
      ordering shared across stages, not by raw register number.
 5. **Resource binding contract with AthGFX** (the descriptor-set layout): this MUST
-   match what `D3d12RootSignature::to_raegfx_bindings()` already produces. Adopt the
+   match what `D3d12RootSignature::to_athgfx_bindings()` already produces. Adopt the
    **DXVK binding convention**, namespaced per resource class to avoid `b#`/`t#`/`s#`
    collisions (D3D has separate register spaces; Vulkan has one binding number space):
    - cbuffers `cb#` → `set 0`, `binding = cb_index`, `OpTypeStruct{Block, Offset}` as
@@ -169,38 +169,38 @@ must converge on ONE new module (`dxbc_spirv`), with `dxgi::ShaderTranslator` an
   *input*.
 
 ## Interface needs (NEEDS-INTERFACE)
-**None for the translator itself.** It is pure CPU library code inside `raebridge`
-(no new syscall, no `rae_abi` change). The translated SPIR-V crosses into the kernel
+**None for the translator itself.** It is pure CPU library code inside `athbridge`
+(no new syscall, no `ath_abi` change). The translated SPIR-V crosses into the kernel
 only via the *existing/future* AthGFX submit path, which is GPU-gated and out of scope.
 If/when the GPU submit seam needs a "load SPIR-V module" syscall, that is a separate
-`[interface]` escalation to raeen-architect at Phase 6.3 time — flag it, do not bundle.
+`[interface]` escalation to athena-architect at Phase 6.3 time — flag it, do not bundle.
 
 ## File-by-file plan
-- `components/raebridge/src/dxbc_spirv/mod.rs` (NEW) — the one true translator module.
+- `components/athbridge/src/dxbc_spirv/mod.rs` (NEW) — the one true translator module.
   Public API: `pub fn translate(dxbc: &[u8], opts: TranslateOpts) -> Result<Translated,
-  ShaderError>` where `Translated { spirv: Vec<u8>, stage: raegfx::ShaderStage,
+  ShaderError>` where `Translated { spirv: Vec<u8>, stage: athgfx::ShaderStage,
   bindings: BindingLayout, io: SignatureMap }`.
-- `components/raebridge/src/dxbc_spirv/container.rs` (NEW) — chunk collector; reuses the
+- `components/athbridge/src/dxbc_spirv/container.rs` (NEW) — chunk collector; reuses the
   `parse_dxbc_header` logic, extends it to return `{ shex, isgn, osgn, rdef }` slices.
-- `components/raebridge/src/dxbc_spirv/decode.rs` (NEW) — SM4/SM5 token decoder:
+- `components/athbridge/src/dxbc_spirv/decode.rs` (NEW) — SM4/SM5 token decoder:
   `Instruction`, `Operand`, `RegisterFile`, swizzle/mask; pure, exhaustively KAT-able.
-- `components/raebridge/src/dxbc_spirv/signature.rs` (NEW) — ISGN/OSGN/RDEF parse →
+- `components/athbridge/src/dxbc_spirv/signature.rs` (NEW) — ISGN/OSGN/RDEF parse →
   `ShaderParameter` (reuse the dxgi.rs type) + cbuffer/resource binding tables.
-- `components/raebridge/src/dxbc_spirv/spirv.rs` (NEW) — `SpirvBuilder`: ID allocator,
+- `components/athbridge/src/dxbc_spirv/spirv.rs` (NEW) — `SpirvBuilder`: ID allocator,
   type/constant de-dup, instruction word emitter, module assembler. Pure word logic.
-- `components/raebridge/src/dxbc_spirv/lower.rs` (NEW) — the opcode→SPIR-V lowering
+- `components/athbridge/src/dxbc_spirv/lower.rs` (NEW) — the opcode→SPIR-V lowering
   (the instruction match: `mov`/`add`/`mul`/`mad`/`dp2-4`/`sample`/declarations…).
-- `components/raebridge/src/dxgi.rs` (EDIT, by implementer) — delete the local
+- `components/athbridge/src/dxgi.rs` (EDIT, by implementer) — delete the local
   `emit_stub_spirv`; `ShaderTranslator::translate_dxbc_to_spirv` delegates to
   `dxbc_spirv::translate`. (DXIL path stays an explicit `Unsupported` stub.)
-- `components/raebridge/src/d3d_translate.rs` (EDIT, by implementer) — delete
+- `components/athbridge/src/d3d_translate.rs` (EDIT, by implementer) — delete
   `emit_stub_spirv`; `D3dTranslationLayer::translate_shader` delegates to the same.
-- `components/raebridge/src/lib.rs` (EDIT) — `pub mod dxbc_spirv;`.
-- `components/raebridge/tests/dxbc_spirv_kat.rs` (NEW) — host KATs (see proof recipe).
-- `components/raebridge/tests/fixtures/` (NEW) — committed `.dxbc` fixtures + their
+- `components/athbridge/src/lib.rs` (EDIT) — `pub mod dxbc_spirv;`.
+- `components/athbridge/tests/dxbc_spirv_kat.rs` (NEW) — host KATs (see proof recipe).
+- `components/athbridge/tests/fixtures/` (NEW) — committed `.dxbc` fixtures + their
   expected `spirv-val`-clean disassembly snapshots.
 
-Constraint reminder: crate is `no_std` + `alloc` (depends on `raegfx`, `iced-x86`
+Constraint reminder: crate is `no_std` + `alloc` (depends on `athgfx`, `iced-x86`
 no_std, `object` no_std). The translator MUST be `no_std`-clean — `alloc::vec::Vec`,
 `BTreeMap`, no `std`. The KAT crate (`tests/`) builds for the host and may use `std`.
 
@@ -231,10 +231,10 @@ fxc /T ps_5_0 /E main /Fo solidcolor_ps.dxbc solidcolor.hlsl
 (`dxc /T vs_6_0` would produce DXIL — explicitly NOT slice 1; SM5 via `fxc` is the
 target. WSL2 alternative: `wine fxc.exe ...`, or check in pre-built fixtures so the KAT
 needs no Windows SDK at run time.) Commit the two `.dxbc` blobs to
-`components/raebridge/tests/fixtures/`.
+`components/athbridge/tests/fixtures/`.
 
-**Proof recipe (the KAT, FAIL-able):** `components/raebridge/tests/dxbc_spirv_kat.rs`,
-run with `cargo test -p raebridge` on the dev box:
+**Proof recipe (the KAT, FAIL-able):** `components/athbridge/tests/dxbc_spirv_kat.rs`,
+run with `cargo test -p athbridge` on the dev box:
 1. `translate(passthrough_vs.dxbc)` returns `Ok`, `stage == Vertex`.
 2. **Structural asserts on the emitted words** (no GPU needed): word[0] ==
    `0x07230203`; `bound` (word[3]) > 1 (proves it's not the stub's `bound = 1`); the
@@ -282,7 +282,7 @@ DXVK's `src/dxbc` (~15k LOC). This spec deliberately makes **slice 1 tiny and fu
 provable** and ladders the rest, rather than boiling the ocean.
 
 ## Acceptance criteria (the exact proof)
-- `cargo test -p raebridge` MUST show the new KAT module green, including:
+- `cargo test -p athbridge` MUST show the new KAT module green, including:
   - `dxbc_spirv_passthrough_vs -> PASS` with assertions: emitted `bound > 1`,
     contains `OpEntryPoint Vertex`, contains `BuiltIn Position` decoration.
   - `dxbc_spirv_solidcolor_ps -> PASS` with assertions: contains `OpEntryPoint
@@ -293,10 +293,10 @@ provable** and ladders the rest, rather than boiling the ocean.
     test can FAIL).
 - When `spirv-val` is present (CI / Vulkan SDK box): both emitted modules pass
   `spirv-val` with exit 0 (assert in the KAT, gated on `RAEEN_SPIRV_VAL`).
-- A `raebridge` boot smoketest line (the R10-style proof carried into QEMU, since
-  raebridge already prints `[raebridge] ...` self-tests): translate an *embedded*
+- A `athbridge` boot smoketest line (the R10-style proof carried into QEMU, since
+  athbridge already prints `[athbridge] ...` self-tests): translate an *embedded*
   passthrough-VS fixture at init and print
-  `[raebridge] DXBC->SPIR-V translate (passthrough VS): bound=<n> entrypoint=Vertex ->
+  `[athbridge] DXBC->SPIR-V translate (passthrough VS): bound=<n> entrypoint=Vertex ->
   PASS` (or `-> FAIL` on any error). The fixture is embedded with `include_bytes!` so it
   needs no filesystem.
 - The new module's top docstring MUST quote the Concept promise above (R10 / R1).
@@ -304,9 +304,9 @@ provable** and ladders the rest, rather than boiling the ocean.
   surviving stub twin); both call sites delegate to `dxbc_spirv::translate`.
 
 ## Handoff
-- **Implementer: raeen-compat** (owns `components/raebridge`). All work is in
-  `components/raebridge/src/dxbc_spirv/` + the two delegating edits + the tests crate;
-  isolated commits; no `rae_abi`/kernel changes.
+- **Implementer: athena-compat** (owns `components/athbridge`). All work is in
+  `components/athbridge/src/dxbc_spirv/` + the two delegating edits + the tests crate;
+  isolated commits; no `ath_abi`/kernel changes.
 - **Unblocks checklist lines:**
   - Phase 11.2 line 1432 "DXVK port: DirectX 9/10/11 → Vulkan translation" — the shader
     half (this spec is the shader translator; the API-state half already exists).
@@ -317,7 +317,7 @@ provable** and ladders the rest, rather than boiling the ocean.
   can start immediately. Slices 2–4 are linear after it. The DXIL/D3D12 path and the
   GPU submit consumer are explicitly out of this workstream (the latter waits on the
   amdgpu bring-up; flag a Phase 6.3 `[interface]` "load SPIR-V" syscall to
-  raeen-architect only when the GPU path is ready to consume the output).
+  athena-architect only when the GPU path is ready to consume the output).
 - **OSS hygiene for the implementer:** port DXVK's DXBC opcode tables / SSA pattern
   (zlib — keep the header on harvested files); do **not** pull in VKD3D-Proton (LGPL)
   or any DXIL/LLVM code; do not link `std` SPIRV-Tools into the `no_std` crate

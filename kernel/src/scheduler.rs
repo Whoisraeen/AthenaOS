@@ -39,11 +39,11 @@ pub static BOOT_COMPLETE: AtomicBool = AtomicBool::new(false);
 /// tripwire on BOTH switch paths (`yield_task` + `block_current_task_with`)
 /// that quarantines an insane `next` and counts `SWITCH_ABORTS` instead of
 /// double-faulting. These turn the silent #DF into a recoverable, OBSERVABLE
-/// event — the next iron boot reads `SWITCH_ABORTS` via /proc/raeen/sched_stats.
+/// event — the next iron boot reads `SWITCH_ABORTS` via /proc/athena/sched_stats.
 ///
 /// RE-ENABLED 2026-07-01 after the QEMU multi-boot soak the paragraph above
 /// demands (adapted to QEMU while iron flashing is paused): >=10 CI boots
-/// across RAEEN_SMP=2 / =4 / =1, every boot reaching the success marker with
+/// across ATHENA_SMP=2 / =4 / =1, every boot reaching the success marker with
 /// 0 panics, 0 double faults, `switch_aborts: 0`, and real steals recorded
 /// (PER_CPU_STEALS > 0 at SMP>=2) — see MasterChecklist "Latent kernel bugs"
 /// for the per-boot tally. The failure mode is also no longer a #DF: pick_next
@@ -68,7 +68,7 @@ const TICK_PERIOD_US: u64 = 1_000;
 ///
 /// Clock source: `fast_boot::tsc_mhz()` (TSC ticks per microsecond), populated
 /// from `apic::TSC_FREQ_MHZ` during boot's APIC calibration — the SAME calibrated
-/// frequency `/proc/raeen/perf` (`record_frame_present`) already uses. Critically
+/// frequency `/proc/athena/perf` (`record_frame_present`) already uses. Critically
 /// it requires NO spin/PIT calibration here, so it is safe to read on the IF=0
 /// SCHEDULER-lock hot path AND on the boot-tail idle context. (An earlier version
 /// PIT-spun `TscCalibration::calibrate()` from the boot tail; a timer tick could
@@ -408,7 +408,7 @@ impl Scheduler {
                     dl.wake(now_us);
                     // Global SCHED_BODY telemetry: one deadline period started.
                     // This is the miss-RATE denominator read by
-                    // /proc/raeen/gaming + sys_deadline_stats. Without it the
+                    // /proc/athena/gaming + sys_deadline_stats. Without it the
                     // aggregate's `total_invocations` stayed 0 forever, so the
                     // "missed N frames out of M" indicator had no M (rate
                     // permanently 0.00% even with misses). Bumped in lockstep
@@ -870,7 +870,7 @@ pub fn yield_task() {
 
         // Telemetry: a real context switch (next != current, sane stack) is
         // about to commit. Record it + which class won the CPU for
-        // /proc/raeen/perf. Lock-free relaxed atomics; SCHEDULER is held but no
+        // /proc/athena/perf. Lock-free relaxed atomics; SCHEDULER is held but no
         // new lock is taken (perf has none).
         crate::perf::record_context_switch(next.priority == TaskPriority::Game);
 
@@ -1141,7 +1141,7 @@ pub fn unblock_irq_waiters(vector: u8) {
 // Each LAPIC timer IRQ increments PER_CPU_TICKS[cpu_id]. If an AP's
 // counter never advances, it's not getting timer IRQs — its LAPIC is
 // dead, its IDT isn't installed, or it's stuck in a non-interruptible
-// section. /proc/raeen/smp reports per-CPU tick rates so we can spot
+// section. /proc/athena/smp reports per-CPU tick rates so we can spot
 // silent CPUs before they cost us throughput.
 
 use core::sync::atomic::AtomicU64;
@@ -1157,7 +1157,7 @@ pub static PER_CPU_PICKS: [AtomicU64; crate::gdt::MAX_CPUS] =
 
 /// Per-CPU count of tasks STOLEN from another core's runqueue (work-stealing
 /// load balancing). Replaces the old per-steal `serial_println!` that flooded
-/// ~30% of the boot log and slowed boot; surfaced via /proc/raeen/sched.
+/// ~30% of the boot log and slowed boot; surfaced via /proc/athena/sched.
 pub static PER_CPU_STEALS: [AtomicU64; crate::gdt::MAX_CPUS] =
     [const { AtomicU64::new(0) }; crate::gdt::MAX_CPUS];
 
@@ -1166,7 +1166,7 @@ pub static PER_CPU_STEALS: [AtomicU64; crate::gdt::MAX_CPUS] =
 /// this is ALWAYS 0 — pick_next already sane-checks every candidate. A non-zero
 /// value is the smoking gun for the intermittent SMP steal-resume #DF
 /// (MasterChecklist 4.8) being CAUGHT instead of double-faulting: the next iron
-/// boot can read it via /proc/raeen/sched_stats. Worth more than a green run.
+/// boot can read it via /proc/athena/sched_stats. Worth more than a green run.
 pub static SWITCH_ABORTS: AtomicU64 = AtomicU64::new(0);
 
 static POST_BOOT_TICKS: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
@@ -1326,7 +1326,7 @@ pub extern "C" fn exit_current_task(exit_code: u64) -> ! {
     //    sys_wait retry reap on a sibling CPU the moment we drop the lock —
     //    `try_wait_task` drops the Box, freeing this stack mid-exit. Observed
     //    2026-06-10 as non-canonical VirtAddr panics on string bytes
-    //    (0x6f52_6fe5_7473_7953) when user_init reaped raebridge_host.
+    //    (0x6f52_6fe5_7473_7953) when user_init reaped athbridge_host.
     //
     // Instead, ALWAYS hand the dying task to switch_stash[cpu_id]. After
     // switch_context flips to a DIFFERENT task's stack, finish_task_switch
@@ -1354,7 +1354,7 @@ pub extern "C" fn exit_current_task(exit_code: u64) -> ! {
     // conditional like the yield/block paths. NEVER write unconditionally:
     // Task::fs_base is inherited from the live MSR at creation, so an
     // unconditional write of a "default" would clobber pre-TLS state that
-    // userspace depends on (the raebridge child stall, 2026-06-10).
+    // userspace depends on (the athbridge child stall, 2026-06-10).
     let new_fs = next.fs_base;
     let new_gs = next.gs_base;
     sched.current_task[cpu_id] = Some(next);
@@ -1597,7 +1597,7 @@ pub fn run_boot_smoketest() {
     //
     // Part 1 — pure accounting logic: drive a synthetic DeadlineTask through
     // the exact wake/miss path pick_next + check_deadline_misses use, and
-    // verify the per-task counters + the /proc/raeen/gaming miss-rate formula.
+    // verify the per-task counters + the /proc/athena/gaming miss-rate formula.
     let logic_ok = {
         use crate::task::DeadlineTask;
         let mut dl = DeadlineTask::new(1000, 1000, 500);
@@ -2296,7 +2296,7 @@ pub fn find_cap_children(
     children
 }
 
-/// SCHED_BODY deadline-miss telemetry for `/proc/raeen/perf`: returns
+/// SCHED_BODY deadline-miss telemetry for `/proc/athena/perf`: returns
 /// `(total_misses, worst_miss_us)`. Uses `try_lock` so a telemetry read can
 /// never deadlock the dump path; returns `(0, 0)` if the scheduler is busy.
 pub fn deadline_miss_stats() -> (u64, u64) {

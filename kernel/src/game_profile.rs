@@ -152,7 +152,7 @@ impl GameProfileAbi {
 // ── Profile store ──────────────────────────────────────────────────────
 
 struct ProfileStore {
-    /// game id (e.g. "raeplay:steam:730", binary sha-256 prefix, etc.) → profile
+    /// game id (e.g. "athplay:steam:730", binary sha-256 prefix, etc.) → profile
     profiles: BTreeMap<String, GameProfileAbi>,
     /// Counter for diagnostics.
     apply_count: u64,
@@ -488,7 +488,7 @@ fn read_user_string(ptr: u64, len: u64) -> String {
     crate::uaccess::read_user_string(ptr, len)
 }
 
-// ── /proc/raeen/games ──────────────────────────────────────────────────
+// ── /proc/athena/games ──────────────────────────────────────────────────
 
 pub fn dump_text() -> String {
     let g = STORE.lock();

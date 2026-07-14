@@ -1,24 +1,24 @@
-//! Browser JS↔DOM bridge — wiring `rae_js`'s host-object API to `raeweb`'s live DOM.
+//! Browser JS↔DOM bridge — wiring `ath_js`'s host-object API to `athweb`'s live DOM.
 //!
 //! LEGACY_GAMING_CONCEPT.md §"3. Web apps via PWA support that actually feels native (renders
 //! through AthUI)": a page is only interactive if its script can read and mutate the
-//! document. The two engines now each ship half of that — `rae_js` exposes a host-object
-//! embedder API ([`rae_js::HostObject`]) and `raeweb` exposes a mutable document
-//! ([`raeweb::DomDocument`]). This module is the join that lives where both crates are in
+//! document. The two engines now each ship half of that — `ath_js` exposes a host-object
+//! embedder API ([`ath_js::HostObject`]) and `athweb` exposes a mutable document
+//! ([`athweb::DomDocument`]). This module is the join that lives where both crates are in
 //! scope (the browser app), so neither engine depends on the other.
 //!
 //! ## What it builds
 //! A `document` host object whose `getElementById(id)` returns an **element handle** host
 //! object (or `null` for a missing id). The element handle reflects `textContent`:
 //!   - **read** `el.textContent` → the live element's current text,
-//!   - **write** `el.textContent = 'new'` → mutates the `raeweb` DOM and marks it dirty,
+//!   - **write** `el.textContent = 'new'` → mutates the `athweb` DOM and marks it dirty,
 //! and `setAttribute(name, value)` / `getAttribute(name)`. The browser runs the page's
 //! inline scripts with this `document` installed, then — if the document went dirty —
 //! re-lays-out the mutated DOM so the change shows. That is the engine gap closed:
 //! `document.getElementById('out').textContent = 'new'` actually changes what renders.
 //!
 //! ## Shared state
-//! One [`raeweb::DomDocument`] is shared (via `Rc<RefCell<…>>`) between the render loop and
+//! One [`athweb::DomDocument`] is shared (via `Rc<RefCell<…>>`) between the render loop and
 //! every host object. Both the `document` host and each element handle hold a clone of that
 //! `Rc`; an element handle additionally remembers its element `id` so a write knows which
 //! node to mutate. (v1 keys elements by `id` — the common interactive case; node-handle
@@ -33,8 +33,8 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 
-use rae_js::{native_function_value, HostObject, Interpreter, JsValue, RuntimeError};
-use raeweb::DomDocument;
+use ath_js::{native_function_value, HostObject, Interpreter, JsValue, RuntimeError};
+use athweb::DomDocument;
 
 use crate::events::{ListenerRegistry, SharedRegistry};
 
@@ -210,7 +210,7 @@ fn set_attribute(
 }
 
 /// `el.addEventListener(type, listener)` — register `listener` (must be callable) against the
-/// element's id + event type in the shared registry, and tag the raeweb `EventListener` seam
+/// element's id + event type in the shared registry, and tag the athweb `EventListener` seam
 /// with the assigned callback id. Returns `undefined`. A non-function listener or a missing
 /// arg is ignored (matches the DOM's lenient `addEventListener`, which throws only on the
 /// modern overloads — v1 degrades to a no-op rather than risk a crash on hostile input).

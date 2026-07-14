@@ -4,7 +4,7 @@
  *
  * High-resolution timer. amdgpu arms these for VRR/vblank pacing and precise
  * delays. The callback struct uses the upstream member names amdgpu sets
- * (`function`, `_softexpires`); arming/cancel is backed by raeen_linuxkpi's timer
+ * (`function`, `_softexpires`); arming/cancel is backed by ath_linuxkpi's timer
  * facade at M4 (a no-op that never fired would stall vblank waits — SCOPE.md
  * rule 9). License boundary (../../README.md): API surface.
  */

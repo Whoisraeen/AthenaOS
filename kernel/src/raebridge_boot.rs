@@ -16,7 +16,7 @@
 //!      the registry. Resolves > 0 means import-table walking + name
 //!      lookup work; resolves == imports.len() means full coverage.
 //!
-//! Output appears in the boot log under `[raebridge]`. Run on every
+//! Output appears in the boot log under `[athbridge]`. Run on every
 //! boot — when this stops printing OK we've broken something foundational
 //! in the loader.
 
@@ -26,7 +26,7 @@ extern crate alloc;
 
 use alloc::string::String;
 
-use raebridge::pe_loader::{self, DllRegistry};
+use athbridge::pe_loader::{self, DllRegistry};
 
 /// Minimal valid PE32+ image. Sixty-four-bit `_start` is one byte at the
 /// end of the .text section: `0xC3 RET`. No imports, no relocations, no
@@ -189,12 +189,12 @@ pub fn run_boot_smoketest() {
     match pe_loader::parse_pe(MINIMAL_PE) {
         Ok(image) => {
             crate::serial_println!(
-                "[raebridge] minimal PE32+ parsed: machine=x86_64({}), entry=0x{:x}, {} section(s), {} import(s)",
+                "[athbridge] minimal PE32+ parsed: machine=x86_64({}), entry=0x{:x}, {} section(s), {} import(s)",
                 image.is_64bit, image.entry_point, image.sections.len(), image.imports.len(),
             );
         }
         Err(e) => {
-            crate::serial_println!("[raebridge] [WARN] minimal PE parse failed: {:?}", e,);
+            crate::serial_println!("[athbridge] [WARN] minimal PE parse failed: {:?}", e,);
         }
     }
 
@@ -224,7 +224,7 @@ pub fn run_boot_smoketest() {
         }
     }
     crate::serial_println!(
-        "[raebridge] reachability sample: {}/{} top-tier Win32 names resolved",
+        "[athbridge] reachability sample: {}/{} top-tier Win32 names resolved",
         hits,
         hits + misses,
     );
@@ -233,7 +233,7 @@ pub fn run_boot_smoketest() {
     //    registry and the per-DLL Rust implementations. First the static
     //    round-trip checks (no context needed):
     {
-        use raebridge::thunks::{lookup, ALL_THUNKS};
+        use athbridge::thunks::{lookup, ALL_THUNKS};
         let mut roundtrip_ok = 0usize;
         let mut registry_hit = 0usize;
         let mut failures: alloc::vec::Vec<&'static str> = alloc::vec::Vec::new();
@@ -242,7 +242,7 @@ pub fn run_boot_smoketest() {
                 Some(id) if id == t => roundtrip_ok += 1,
                 _ => failures.push(t.name()),
             }
-            if raebridge::pe_dll_registry::KERNEL32_NAMES
+            if athbridge::pe_dll_registry::KERNEL32_NAMES
                 .iter()
                 .any(|n| *n == t.name())
             {
@@ -250,7 +250,7 @@ pub fn run_boot_smoketest() {
             }
         }
         crate::serial_println!(
-            "[raebridge] thunks Phase-B: {}/{} registered, {}/{} in name registry, {} failure(s)",
+            "[athbridge] thunks Phase-B: {}/{} registered, {}/{} in name registry, {} failure(s)",
             roundtrip_ok,
             ALL_THUNKS.len(),
             registry_hit,
@@ -258,7 +258,7 @@ pub fn run_boot_smoketest() {
             failures.len(),
         );
         for f in &failures {
-            crate::serial_println!("[raebridge] thunk FAIL: {}", f);
+            crate::serial_println!("[athbridge] thunk FAIL: {}", f);
         }
 
         // The full INVOKE proof (construct a CompatContext + run every thunk) is
@@ -275,10 +275,10 @@ pub fn run_boot_smoketest() {
     // 5. iced-x86 decoder + object PE reader self-tests. These are the new
     //    instruction-level / robust-PE foundations for x64 marshaling, SEH
     //    unwind, and untrusted-PE validation. Each can print FAIL.
-    let disasm_ok = raebridge::disasm::run_self_test();
-    let pe_inspect_ok = raebridge::pe_inspect::run_self_test();
+    let disasm_ok = athbridge::disasm::run_self_test();
+    let pe_inspect_ok = athbridge::pe_inspect::run_self_test();
     crate::serial_println!(
-        "[raebridge] iced-x86 decode={} object PE parse={} -> {}",
+        "[athbridge] iced-x86 decode={} object PE parse={} -> {}",
         disasm_ok,
         pe_inspect_ok,
         if disasm_ok && pe_inspect_ok {
@@ -295,9 +295,9 @@ pub fn run_boot_smoketest() {
     //    fault. The self-test builds synthetic .pdata/.xdata + a model stack,
     //    unwinds one frame, and checks every restored value — it prints FAIL on
     //    any wrong byte.
-    let seh_ok = raebridge::seh::run_self_test();
+    let seh_ok = athbridge::seh::run_self_test();
     crate::serial_println!(
-        "[raebridge] SEH x64 unwind+dispatch self-test -> {}",
+        "[athbridge] SEH x64 unwind+dispatch self-test -> {}",
         if seh_ok { "PASS" } else { "FAIL" }
     );
 
@@ -307,9 +307,9 @@ pub fn run_boot_smoketest() {
     //    Global\Name rendezvous silently broke. Drives the full state machine
     //    (acquire/contend/release, auto-reset, semaphore count, named reopen)
     //    and prints FAIL on any wrong transition.
-    let sync_ok = raebridge::run_sync_self_test();
+    let sync_ok = athbridge::run_sync_self_test();
     crate::serial_println!(
-        "[raebridge] sync objects (mutex/event/semaphore) self-test -> {}",
+        "[athbridge] sync objects (mutex/event/semaphore) self-test -> {}",
         if sync_ok { "PASS" } else { "FAIL" }
     );
 
@@ -318,22 +318,22 @@ pub fn run_boot_smoketest() {
     //    are wired to it AND exposed on the IAT (a guest now reaches the real
     //    versioned-config hive instead of the fail-loud trampoline). Round-trips
     //    a value through the thunk layer and prints FAIL on any wrong code.
-    let reg_ok = raebridge::run_registry_thunk_self_test();
+    let reg_ok = athbridge::run_registry_thunk_self_test();
     crate::serial_println!(
-        "[raebridge] advapi32 registry thunks self-test -> {}",
+        "[athbridge] advapi32 registry thunks self-test -> {}",
         if reg_ok { "PASS" } else { "FAIL" }
     );
 
     // 9. Cross-process sync broker namespace (broker §6.1, Slice 1). The
     //    in-process sync objects (step 7) share state only within one .exe; this
-    //    is the cross-process namespace the `raebridge_server` daemon owns —
+    //    is the cross-process namespace the `athbridge_server` daemon owns —
     //    two processes naming `Global\Foo` resolve to ONE shared page. Drives
     //    the create/open/close + refcount + kind-collision invariants and prints
     //    FAIL on any wrong result. (Slice 2 layers SYS_CHANNEL_SHMEM_MAP pages +
     //    SYS_FUTEX wait/signal onto these page ids — true cross-process blocking.)
-    let broker_ok = raebridge::broker::run_namespace_self_test();
+    let broker_ok = athbridge::broker::run_namespace_self_test();
     crate::serial_println!(
-        "[raebridge] cross-process sync broker namespace self-test -> {}",
+        "[athbridge] cross-process sync broker namespace self-test -> {}",
         if broker_ok { "PASS" } else { "FAIL" }
     );
 
@@ -342,9 +342,9 @@ pub fn run_boot_smoketest() {
     //     this drives the event/mutex/semaphore atomic transitions + wake counts
     //     that the live SYS_FUTEX wiring (Slice 2b) will block/wake on. FAIL on
     //     any wrong transition.
-    let broker_state_ok = raebridge::broker::run_shared_state_self_test();
+    let broker_state_ok = athbridge::broker::run_shared_state_self_test();
     crate::serial_println!(
-        "[raebridge] cross-process sync broker shared-state self-test -> {}",
+        "[athbridge] cross-process sync broker shared-state self-test -> {}",
         if broker_state_ok { "PASS" } else { "FAIL" }
     );
 
@@ -357,9 +357,9 @@ pub fn run_boot_smoketest() {
     //     uncontended batch (zero syscalls), wake-elision, and a bounded end-to-end
     //     rendezvous (park -> signal-while-parked -> WAIT_OBJECT_0). The live
     //     blocking SYS_FUTEX re-key is the HUMAN-GATED kernel half.
-    let sync_engine_ok = raebridge::sync_engine::run_sync_engine_self_test();
+    let sync_engine_ok = athbridge::sync_engine::run_sync_engine_self_test();
     crate::serial_println!(
-        "[raebridge] cross-process sync engine (fast-path/wake-elision) self-test -> {}",
+        "[athbridge] cross-process sync engine (fast-path/wake-elision) self-test -> {}",
         if sync_engine_ok { "PASS" } else { "FAIL" }
     );
 
@@ -370,9 +370,9 @@ pub fn run_boot_smoketest() {
     //     one SharedSyncState (unnamed objects never route here), then drives that
     //     shared page via sync_engine. The live SYS_FUTEX key it rides is now the
     //     physical-frame key landed in item 1828. FAIL on any wrong routing/refcount.
-    let named_routing_ok = raebridge::broker::run_named_routing_self_test();
+    let named_routing_ok = athbridge::broker::run_named_routing_self_test();
     crate::serial_println!(
-        "[raebridge] cross-process named-object routing self-test -> {}",
+        "[athbridge] cross-process named-object routing self-test -> {}",
         if named_routing_ok { "PASS" } else { "FAIL" }
     );
 }
@@ -392,8 +392,8 @@ pub fn run_boot_smoketest() {
 extern "C" fn thunk_invoke_thread_entry() {
     use alloc::string::String;
     use alloc::vec::Vec;
-    use raebridge::thunks::{invoke, ThunkId, ThunkResult, ALL_THUNKS};
-    use raebridge::{FullCompatSession, SessionId};
+    use athbridge::thunks::{invoke, ThunkId, ThunkResult, ALL_THUNKS};
+    use athbridge::{FullCompatSession, SessionId};
 
     let mut ctx = match FullCompatSession::new(
         SessionId(7),
@@ -403,7 +403,7 @@ extern "C" fn thunk_invoke_thread_entry() {
     ) {
         Ok(c) => c,
         Err(e) => {
-            crate::serial_println!("[raebridge] thunk INVOKE: session build FAILED ({:?})", e);
+            crate::serial_println!("[athbridge] thunk INVOKE: session build FAILED ({:?})", e);
             crate::scheduler::exit_current_task(0);
         }
     };
@@ -428,7 +428,7 @@ extern "C" fn thunk_invoke_thread_entry() {
     }
     let pass = failures.is_empty() && ok + skipped == ALL_THUNKS.len();
     crate::serial_println!(
-        "[raebridge] thunk INVOKE (spawned thread, ctx={}B): {}/{} invoked, {} void, {} skipped(lifetime), {} unimpl -> {}",
+        "[athbridge] thunk INVOKE (spawned thread, ctx={}B): {}/{} invoked, {} void, {} skipped(lifetime), {} unimpl -> {}",
         core::mem::size_of::<FullCompatSession>(),
         ok,
         ALL_THUNKS.len(),
@@ -438,7 +438,7 @@ extern "C" fn thunk_invoke_thread_entry() {
         if pass { "PASS" } else { "FAIL" },
     );
     for f in &failures {
-        crate::serial_println!("[raebridge] thunk INVOKE FAIL: {}", f);
+        crate::serial_println!("[athbridge] thunk INVOKE FAIL: {}", f);
     }
     crate::scheduler::exit_current_task(0);
 }
@@ -452,12 +452,12 @@ pub fn spawn_thunk_invoke_thread() {
     crate::scheduler::spawn_on_bsp(task);
 }
 
-/// `/proc/raeen/raebridge_seh` — the x64 SEH engine's capability surface and
+/// `/proc/athena/athbridge_seh` — the x64 SEH engine's capability surface and
 /// live self-test result. Concept §Compatibility Strategy: the unwind/dispatch
 /// engine has to be measurable in the boot log and via procfs, not just compile.
 pub fn seh_dump_text() -> String {
     use core::fmt::Write;
-    let ok = raebridge::seh::run_self_test();
+    let ok = athbridge::seh::run_self_test();
     let mut s = String::new();
     let _ = writeln!(s, "AthBridge x64 SEH engine (MasterChecklist Phase 11.2)");
     let _ = writeln!(s, "self_test: {}", if ok { "PASS" } else { "FAIL" });
@@ -488,28 +488,28 @@ pub fn seh_dump_text() -> String {
     s
 }
 
-/// `/proc/raeen/raebridge_sync` — the synchronization-object model's capability
+/// `/proc/athena/athbridge_sync` — the synchronization-object model's capability
 /// surface and live self-test result (broker §6.1, in-process half).
 pub fn sync_dump_text() -> String {
-    raebridge::sync_self_test_text()
+    athbridge::sync_self_test_text()
 }
 
-/// `/proc/raeen/raebridge_registry` — the advapi32 registry-thunk layer's
+/// `/proc/athena/athbridge_registry` — the advapi32 registry-thunk layer's
 /// capability surface and live self-test result (Phase A.3).
 pub fn registry_dump_text() -> String {
-    raebridge::registry_thunk_self_test_text()
+    athbridge::registry_thunk_self_test_text()
 }
 
-/// `/proc/raeen/raebridge_syncbroker` — the cross-process sync engine's
+/// `/proc/athena/athbridge_syncbroker` — the cross-process sync engine's
 /// fsync-parity counters (live) + self-test result (broker §6.1, Slice 2b). The
 /// headline `uncontended_op_syscalls` MUST read 0; a nonzero value here is a
 /// visible regression of Invariant 1/4 (a hot-path syscall leak).
 pub fn sync_broker_dump_text() -> String {
-    raebridge::sync_engine::sync_engine_self_test_text()
+    athbridge::sync_engine::sync_engine_self_test_text()
 }
 
 fn total_function_count(_reg: &DllRegistry) -> usize {
-    use raebridge::pe_dll_registry as r;
+    use athbridge::pe_dll_registry as r;
     // Batch 1
     r::KERNEL32_NAMES.len() + r::NTDLL_NAMES.len() + r::USER32_NAMES.len()
         + r::GDI32_NAMES.len() + r::ADVAPI32_NAMES.len() + r::MSVCRT_NAMES.len()

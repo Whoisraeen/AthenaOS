@@ -7,7 +7,7 @@
  * BO embeds one; amdgpu syncs submissions against it.
  *
  * The LOCK is real (ww_mutex — genuine exclusion + the modeset/exec ww ordering).
- * The FENCE-SET management (add/iterate/test/wait) is backed by raeen_linuxkpi at
+ * The FENCE-SET management (add/iterate/test/wait) is backed by ath_linuxkpi at
  * M4: a fake that dropped fences or reported "always signalled" would let the GPU
  * stomp a buffer still in flight (SCOPE.md rule 9). License boundary: API surface.
  */
@@ -52,7 +52,7 @@ static inline bool dma_resv_is_locked(struct dma_resv *obj) { return ww_mutex_is
 static inline bool dma_resv_held(struct dma_resv *obj) { return ww_mutex_is_locked(&obj->lock); }
 #define dma_resv_assert_held(obj) do { } while (0)
 
-/* fence-set management — backed by raeen_linuxkpi (M4). */
+/* fence-set management — backed by ath_linuxkpi (M4). */
 void dma_resv_init(struct dma_resv *obj);
 void dma_resv_fini(struct dma_resv *obj);
 int  dma_resv_reserve_fences(struct dma_resv *obj, unsigned int num_fences);
@@ -63,7 +63,7 @@ long dma_resv_wait_timeout(struct dma_resv *obj, enum dma_resv_usage usage, bool
 bool dma_resv_test_signaled(struct dma_resv *obj, enum dma_resv_usage usage);
 int  dma_resv_copy_fences(struct dma_resv *dst, struct dma_resv *src);
 
-/* iteration — backed by raeen_linuxkpi (M4). */
+/* iteration — backed by ath_linuxkpi (M4). */
 struct dma_resv_iter {
 	struct dma_resv     *obj;
 	enum dma_resv_usage  usage;

@@ -5,7 +5,7 @@
  * POSIX capability constants + the capable() privilege check. amdgpu gates a few
  * actions on these (e.g. CAP_SYS_NICE for a high-priority GPU context). On
  * AthenaOS the real authority is `crate::capability` (the Cap enum) — capable() is
- * backed by raeen_linuxkpi at M4, mapping these onto the daemon's AthGuard grant.
+ * backed by ath_linuxkpi at M4, mapping these onto the daemon's AthGuard grant.
  * License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_CAPABILITY_H
@@ -18,7 +18,7 @@
 #define CAP_SYS_NICE      23
 #define CAP_SYS_RESOURCE  24
 
-/* privilege checks — backed by raeen_linuxkpi (M4, via AthGuard) */
+/* privilege checks — backed by ath_linuxkpi (M4, via AthGuard) */
 bool capable(int cap);
 bool perfmon_capable(void);
 

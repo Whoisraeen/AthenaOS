@@ -1,0 +1,53 @@
+[package]
+name = "athgfx"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "AthGFX — native graphics API. Vulkan-equivalent capabilities, friendlier surface, first-class HDR/VRR."
+
+[dependencies]
+font8x8 = { version = "0.3", default-features = false, features = ["unicode"] }
+# athfont — the one wired TrueType engine (the athgfx/src/font.rs twin is dead,
+# flagged for quarantine). Supplies the crisp grayscale-AA glyph path that
+# Canvas::draw_text_aa composites source-over via blend_pixel. no_std, alloc-only.
+athfont = { path = "../athfont" }
+# ath_tokens — the §6 type ramp (TypeStyle / TYPE_*). no_std.
+ath_tokens = { path = "../ath_tokens" }
+# wgpu-hal/wgpu-core require std and pull in tracing/termcolor/etc. athgfx
+# is a kernel dep (Canvas + font path), so wgpu must be opt-in via a
+# userspace-only feature. Userspace consumers (athui's wgpu renderer)
+# turn it on; the kernel build leaves it off.
+wgpu-hal   = { version = "0.19", optional = true }
+wgpu-core  = { version = "0.19", optional = true }
+wgpu-types = { version = "0.19.2", optional = true }
+raw-window-handle = "0.6"
+# bytemuck gives us Pod/Zeroable derives for the VirtIO Venus token layouts
+# the wgpu_backend serializes into the GPU command ring. derive is needed
+# so we don't have to hand-roll the unsafe impls; default-features = false
+# keeps it no_std-compatible (the kernel does not turn this on, so even
+# its host-only re-export of athgfx stays bare-metal).
+bytemuck = { version = "1", default-features = false, features = ["derive"], optional = true }
+# lyon — path tessellation (vector shapes -> triangle meshes) for GPU-accelerated
+# vector/UI rendering and the SW-raster fallback. Tried no_std (default-features
+# off); behind the `tessellate` feature so the bare Canvas/font path stays lean.
+lyon = { version = "1", default-features = false, optional = true }
+# naga — wgpu's shader translator (WGSL/SPIR-V). Already present transitively via
+# wgpu-core; a direct dep under gpu_userspace makes the shader-compile step usable.
+naga = { version = "0.19", optional = true }
+
+[features]
+default = []
+# Enable to compile the wgpu-backed userspace renderer. Bare-metal kernel
+# build must leave this off — wgpu-types pulls std unconditionally.
+gpu_userspace = ["wgpu-hal", "wgpu-core", "wgpu-types", "bytemuck", "naga"]
+# WGSL -> SPIR-V shader toolchain (Concept §Language Stack — extended). Pulls
+# only naga's wgsl-in + spv-out (NOT the heavy wgpu stack), so userspace
+# AthGFX/AthUI can compile effect/theme shaders without the full renderer.
+# naga needs std, so the bare-metal kernel build leaves this off.
+wgsl = ["naga/wgsl-in", "naga/spv-out"]
+# Vector path tessellation (lyon). Userspace UI / SW-raster path.
+tessellate = ["lyon"]
+
+[dev-dependencies]
+# (none yet)

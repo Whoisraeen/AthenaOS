@@ -426,7 +426,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/hid_pad` — generic gamepad decoder state.
+/// `/proc/athena/hid_pad` — generic gamepad decoder state.
 pub fn dump_text() -> String {
     alloc::format!(
         "# generic HID gamepad decoder (report-descriptor-driven)\ndescriptors_parsed: {}\nreports_decoded: {}\n",

@@ -28,10 +28,10 @@ own apps, files, and settings actions — there is no ad inventory to inject.
 AthenaOS does not collect, broker, or sell user data. There is no data-broker
 relationship, no behavioral-profile export, no "anonymized analytics" sold downstream.
 
-**Enforced by:** no telemetry-exfiltration path exists. AthSync (`components/raesync`)
+**Enforced by:** no telemetry-exfiltration path exists. AthSync (`components/athsync`)
 is **end-to-end encrypted** (x25519 + HKDF + ChaCha20-Poly1305) — AthenaOS servers, if
 present, see ciphertext only and could not sell what they cannot read. AthID
-(`components/raeid`) is **optional**; the OS boots to a full guest desktop with no
+(`components/athid`) is **optional**; the OS boots to a full guest desktop with no
 account.
 
 ## 3. No telemetry without explicit, revocable opt-in.
@@ -40,7 +40,7 @@ No usage data leaves the machine unless the user has explicitly opted in, and op
 is revocable at any time. The default state is **off**.
 
 **Enforced by:** there is no always-on telemetry daemon. Diagnostic surfaces
-(`/proc/raeen/*`, the boot log, netlog) are **local**, developer-facing, and not
+(`/proc/athena/*`, the boot log, netlog) are **local**, developer-facing, and not
 transmitted off-box except by an explicit user action (e.g. attaching a bootlog to a
 bug report).
 
@@ -49,7 +49,7 @@ bug report).
 The OS will never install an update the user did not consent to, and never reboots
 into one without permission.
 
-**Enforced by:** `components/raeupdate` gates auto-install on a **user-controlled
+**Enforced by:** `components/athupdate` gates auto-install on a **user-controlled
 policy** — `Disabled` never auto-installs (host-KAT `auto_update_is_user_consent_gated`),
 the shipped default `SecurityOnly` installs only Critical/Security fixes, and `All`
 is strictly opt-in. Update **channels** (Stable ⊆ Beta ⊆ Nightly) are the user's

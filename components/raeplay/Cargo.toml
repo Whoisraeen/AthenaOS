@@ -1,7 +1,0 @@
-[package]
-name = "raeplay"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-authors.workspace = true
-description = "AthPlay — built-in game launcher / library aggregator (Steam, Epic, GOG, AthStore unified)."

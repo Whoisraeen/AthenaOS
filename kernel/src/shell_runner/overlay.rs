@@ -5,7 +5,7 @@
 //! private to the overlay-rendering concern.
 //!
 //! `use super::*` inherits the parent module namespace (ShellRunnerState,
-//! SHELL_STATE, the compositor/raeshell imports, and the sibling helpers
+//! SHELL_STATE, the compositor/athshell imports, and the sibling helpers
 //! like `overview_grid_ids`) so the move needed no import churn.
 
 #![allow(clippy::too_many_arguments)]
@@ -23,9 +23,9 @@ pub(super) fn render_overview_chrome(state: &mut ShellRunnerState) {
     let pixels = state.width as usize * state.height as usize;
     let buf = unsafe { core::slice::from_raw_parts_mut(state.surface_ptr as *mut u32, pixels) };
 
-    let seed = raeshell::active_accent();
-    let ring = raeshell::spaces::selection_ring(seed);
-    let glow = raeshell::spaces::selection_glow(seed);
+    let seed = athshell::active_accent();
+    let ring = athshell::spaces::selection_ring(seed);
+    let glow = athshell::spaces::selection_glow(seed);
 
     // ── Spaces strip (top): one chip per space; current = accent ring ───────
     let chip_w = 96i32;
@@ -237,9 +237,9 @@ fn render_alt_tab_overlay(state: &ShellRunnerState, surfaces: &[(u64, u32)]) {
     let buf = unsafe { core::slice::from_raw_parts_mut(state.surface_ptr as *mut u32, pixels) };
 
     // Tokenized accent (re-skins with Vibe Mode — the cohesion proof).
-    let seed = raeshell::active_accent();
-    let ring = raeshell::spaces::selection_ring(seed);
-    let glow = raeshell::spaces::selection_glow(seed);
+    let seed = athshell::active_accent();
+    let ring = athshell::spaces::selection_ring(seed);
+    let glow = athshell::spaces::selection_glow(seed);
 
     let row_h = (SWITCHER_THUMB_H as i32 + 16).max(48); // ≥48px couch floor
     let overlay_w = 420i32;

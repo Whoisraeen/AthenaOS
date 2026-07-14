@@ -1,8 +1,8 @@
-/* C-link smoke test for raeen_linuxkpi.
+/* C-link smoke test for ath_linuxkpi.
  *
  * A stand-in "driver" translation unit that calls a broad slice of the LinuxKPI
  * C surface. Its job is purely to LINK: if this object resolves cleanly against
- * libraeen_linuxkpi.a (the `--features clib --crate-type staticlib` build), then
+ * libath_linuxkpi.a (the `--features clib --crate-type staticlib` build), then
  * a real Linux .ko — which references the same exported symbols — links the same
  * way. This is the gating proof that the shim is genuinely usable from C, not
  * just self-consistent Rust. Run via scripts/linuxkpi-clink-test.sh.

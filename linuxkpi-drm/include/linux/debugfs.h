@@ -6,7 +6,7 @@
  * present in the AthenaOS model (the CONFIG_DEBUG_FS=n posture — a legitimate
  * config, not a fake): create returns NULL and remove is a no-op. amdgpu treats a
  * NULL debugfs handle as "unavailable" and skips, so no functional path breaks;
- * the real diagnostic surface is /proc/raeen instead. License boundary: surface.
+ * the real diagnostic surface is /proc/athena instead. License boundary: surface.
  */
 #ifndef _LINUXKPI_LINUX_DEBUGFS_H
 #define _LINUXKPI_LINUX_DEBUGFS_H

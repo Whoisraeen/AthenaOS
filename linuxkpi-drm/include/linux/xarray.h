@@ -7,7 +7,7 @@
  *
  * `xa_init*` is a pure reset (inlined). The store/load/alloc/erase + iteration
  * machinery is a real data structure with allocation + locking, so it is
- * declaration-only, backed by raeen_linuxkpi at M4 — NOT faked to "always empty"
+ * declaration-only, backed by ath_linuxkpi at M4 — NOT faked to "always empty"
  * (that would silently lose every stored object, SCOPE.md rule 9). The mark/value
  * tag helpers are pure bit-twiddling and inlined. License boundary: API surface.
  */
@@ -71,7 +71,7 @@ static inline void *xa_mk_internal(unsigned long v) { return (void *)((v << 2) |
 static inline bool xa_is_err(const void *e)       { return (unsigned long)e > (unsigned long)-4096; }
 static inline int  xa_err(void *e)                { return xa_is_err(e) ? (int)(long)e : 0; }
 
-/* data structure ops — backed by raeen_linuxkpi (M4) */
+/* data structure ops — backed by ath_linuxkpi (M4) */
 void *xa_load(struct xarray *xa, unsigned long index);
 void *xa_store(struct xarray *xa, unsigned long index, void *entry, gfp_t gfp);
 void *xa_erase(struct xarray *xa, unsigned long index);

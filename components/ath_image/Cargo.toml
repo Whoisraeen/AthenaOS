@@ -1,0 +1,33 @@
+[package]
+name = "ath_image"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS unified image-decode dispatcher — the COHESION SEAM (LEGACY_GAMING_CONCEPT.md
+# criterion #5) that turns the five separate still-image decoders (ath_png,
+# ath_jpeg, ath_bmp, ath_gif, ath_webp) into ONE "open any image" call. Photos,
+# athplay, and athgfx call `ath_image::decode(bytes)` and get back a single
+# unified ARGB8888 `Image` regardless of format — the format is chosen by MAGIC
+# BYTES via ath_formats::detect (NEVER by extension, criterion #6 security).
+#
+# This crate is deliberately a THIN dispatcher: it owns no decode logic. Every
+# decoder already emits the same ARGB8888 `Vec<u32>` model, so dispatch is a sniff
+# + a field move + error mapping. The value is the single entry point + the
+# detection wiring + the one unified type, NOT new decoding.
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_png / ath_formats pattern): `no_std` +
+# `alloc` in every shipped build, `std` only under `cfg(test)` for the host KAT
+# harness. `#![forbid(unsafe_code)]`, never-panic (it maps the underlying decoders'
+# `Err`s, never unwraps). Run the FAIL-able proof with `cargo test -p ath_image` —
+# no QEMU, no image build.
+
+[dependencies]
+ath_formats = { path = "../ath_formats" }
+ath_png = { path = "../ath_png" }
+ath_jpeg = { path = "../ath_jpeg" }
+ath_bmp = { path = "../ath_bmp" }
+ath_gif = { path = "../ath_gif" }
+ath_webp = { path = "../ath_webp" }

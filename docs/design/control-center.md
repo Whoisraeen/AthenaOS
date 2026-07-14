@@ -8,7 +8,7 @@
 > friction or Win11's cramped 2-column-only grid.
 
 **All tokens below are defined in [`design-language.md`](./design-language.md)**
-and live in `rae_tokens`. This spec only assigns them; it introduces no new magic
+and live in `ath_tokens`. This spec only assigns them; it introduces no new magic
 numbers. It **supersedes and deepens** `desktop-shell.md` §3 (which sketched the
 flyout in half a page) — that section now defers here.
 
@@ -35,12 +35,12 @@ flyout in half a page) — that section now defers here.
 | Piece | Where | Today | This spec changes |
 |---|---|---|---|
 | Quick-settings flyout (sketch) | `desktop-shell.md` §3 | half-page: 2-col toggle tiles, 2 sliders, footer | → full module model, expandable tiles, media card, RGB/Game tiles, complete states |
-| Tray cluster trigger | `raeshell::SystemTray` (`desktop.rs`/`lib.rs`) | clock + (sketched) icons | → opens this flyout; tray icons reflect live state |
+| Tray cluster trigger | `athshell::SystemTray` (`desktop.rs`/`lib.rs`) | clock + (sketched) icons | → opens this flyout; tray icons reflect live state |
 | Toggle / Slider controls | `control_panel.rs::SettingControl` + the control kit (`settings.md` §4) | LIVE model + spec'd widgets | → **reuse** the control kit widgets; do not re-invent |
 | Game Mode | `kernel`/`gameos.rs` + `game.mode` setting | LIVE | → a Control Center tile (fast lane) |
 | RGB engine | `kernel/src/rgb.rs` (9 modes) + `rgb_api.rs` | LIVE | → an expandable RGB tile (effect quick-pick) |
 | Vibe presets | `vibe_mode::ALL_PRESETS` (12) | LIVE | → an optional Vibe quick-switch row |
-| Media player | `raeshell::media_player` | LIVE | → the inline media-transport card source |
+| Media player | `athshell::media_player` | LIVE | → the inline media-transport card source |
 | `material.glass` / `elev.*` | `compositor.rs` | LIVE (shadow fix pending — see `material-and-shadow.md`) | reused |
 
 **Not a rebuild** — it composes the existing control kit + live subsystems into a
@@ -89,7 +89,7 @@ honors "gaming isn't a mode."
 - **type:** `type.subtitle` (section header, e.g. "Gaming"), `type.label` (tile
   labels, media title), `type.body` (expanded sub-panel rows), `type.caption`
   (tile sub-state e.g. network name, media artist).
-- **accent model:** seed = `ThemeAbi.accent_argb`; `rae_tokens::derive_accent`.
+- **accent model:** seed = `ThemeAbi.accent_argb`; `ath_tokens::derive_accent`.
   An **on** tile = `accent.subtle` fill + `accent.text` icon; off = `bg.elevated`.
   Sliders fill `accent.base`. Same ramp as the whole shell — no private accent.
 - **material:** `material.glass` (the panel + expanded sub-panels + media card —
@@ -159,7 +159,7 @@ honors "gaming isn't a mode."
 - A full-width `material.glass` `radius.md` `elev.2` card: album art (48px, left),
   title (`type.label` `text.primary`, 1-line clamp) + artist (`type.caption`
   `text.secondary`), and prev / play-pause / next buttons (32px targets,
-  `radius.xs` hover, icon `text.primary`). Sourced from `raeshell::media_player`.
+  `radius.xs` hover, icon `text.primary`). Sourced from `athshell::media_player`.
 - Hidden entirely when nothing is playing (no empty card). **focus:** tab through
   the transport buttons; reduced-motion: no art cross-fade on track change.
 
@@ -216,15 +216,15 @@ Control Center ships only when:
 3. **Expand-in-place feels native:** Wi-Fi expands within the panel, not a new
    window; reflow is smooth and reduced-motion-safe.
 4. **Focus everywhere:** every tile, slider, expanded row, media button, footer
-   icon has a focus state distinct from hover (raeen-accessibility sign-off).
+   icon has a focus state distinct from hover (athena-accessibility sign-off).
 5. **Dark + light parity:** both palettes render with passing contrast.
 
 ---
 
 ## Proposed tokens
 
-None new required — all values compose from existing `rae_tokens`. Tile sizes
-(168×60, 360px panel) are *local layout constants* for raeen-shell-apps, expressed
+None new required — all values compose from existing `ath_tokens`. Tile sizes
+(168×60, 360px panel) are *local layout constants* for athena-shell-apps, expressed
 as `space.*` multiples, deliberately not global tokens.
 
 ---
@@ -232,29 +232,29 @@ as `space.*` multiples, deliberately not global tokens.
 ## Handoff
 
 ### Implementers
-- **raeen-ui (framework):** reuse the control kit (Toggle, Slider, Segmented) from
+- **athena-ui (framework):** reuse the control kit (Toggle, Slider, Segmented) from
   `settings.md` §4; add the **expandable-tile container** (a tile that pushes an
   in-place glass sub-panel) and the **media-transport card** as reusable widgets.
-- **raeen-shell-apps (the surface):** build the Control Center flyout — panel
+- **athena-shell-apps (the surface):** build the Control Center flyout — panel
   geometry, the 2–4 col tile grid, expandable Wi-Fi/BT/RGB/Performance sub-panels
   (wired to the live net / `rgb.rs` / power subsystems), the always-visible slider
   row (wired to volume/brightness), the media card (wired to `media_player`), the
   Gaming row (wired to `gameos` + `rgb_api`), the footer, and edit-tiles mode. Tray
   cluster opens it; tray icons reflect live state. Replace the `desktop-shell.md`
   §3 sketch.
-- **raeen-gfx:** the panel + sub-panels are `material.glass` (bounded transient
+- **athena-gfx:** the panel + sub-panels are `material.glass` (bounded transient
   blur — correct use); they inherit the soft-shadow fix from
   `material-and-shadow.md` (must land first or the panel shows the hard-block
   shadow). Confirm in-place reflow doesn't re-blur the whole backdrop per frame
   (blur the panel region only).
 - **theme_engine (kernel):** honor accent + `corner_radius`/`blur_radius` so the
   flyout re-skins on a Vibe switch; persist the edit-tiles layout per user.
-- **raeen-accessibility (flagged):** focus states across tiles/sliders/expanded
+- **athena-accessibility (flagged):** focus states across tiles/sliders/expanded
   rows; 32px/48px hit targets (tiles are 60px tall — fine; verify chevron/footer
   hit areas); reduced-motion expand path; AA contrast (on-tile `accent.text` on
   `accent.subtle` must clear 4.5:1) on both palettes.
 
-### On-screen / boot-log evidence (raeen-visual-qa + smoketests)
+### On-screen / boot-log evidence (athena-visual-qa + smoketests)
 - **Panel:** QEMU screenshot of Control Center open over wallpaper — glass blur
   visible, 2-col tile grid (on + off tiles distinguishable), volume + brightness
   sliders, footer. Log: `[cc] open tiles=N sliders=2 accent=0x.. blur=16`.

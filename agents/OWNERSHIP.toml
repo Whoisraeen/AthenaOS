@@ -9,15 +9,15 @@
 # The architecture-gate (scripts/architecture-gate.sh) still runs for opus:
 # no Linux clones (§R7), no deleted AthGuard capability checks, the R10
 # 4-artifact contract for new kernel modules, and the [interface] sign-off for
-# rae_abi / rae_driver_api. Full access, same quality bar.
+# ath_abi / ath_driver_api. Full access, same quality bar.
 #
 # `gemini` and `composer` are retained as historical co-development identities;
 # if reactivated they remain constrained to the areas marked with their name.
 #
 # RULES:
 #   * Concept doc (LEGACY_GAMING_CONCEPT.md) wins every conflict.
-#   * Interface changes (rae_abi, rae_driver_api, root Cargo.toml, syscall
-#     surface) carry the `[interface]` tag and RAEEN_AGENT=opus.
+#   * Interface changes (ath_abi, ath_driver_api, root Cargo.toml, syscall
+#     surface) carry the `[interface]` tag and ATHENA_AGENT=opus.
 #   * A crate appears exactly once. New crates are added here before commit.
 
 [meta]
@@ -34,8 +34,8 @@ paths = [
   "agents/",
   "scripts/",
   ".git/hooks/pre-commit",
-  "components/rae_abi/",
-  "components/rae_driver_api/",
+  "components/ath_abi/",
+  "components/ath_driver_api/",
   "Cargo.toml",
   "docs/SYSCALL_TABLE.md",
   ".gitignore",
@@ -55,46 +55,46 @@ prefixes = ["docs/", "MasterChecklist.md", "README.md", "Audit.md", "AGENTS.md"]
 # Core slice + interface steward
 "kernel" = "opus"
 "xtask" = "opus"
-"components/raeshield" = "opus"
-"components/rae_abi" = "opus"
-"components/rae_driver_api" = "opus"
+"components/athshield" = "opus"
+"components/ath_abi" = "opus"
+"components/ath_driver_api" = "opus"
 
 # Area: mid-tier subsystems (filesystem, audio, net, graphics API, UI stack)
-"components/raefs" = "opus"
-"components/raefat" = "opus"
-"components/raeaudio" = "opus"
-"components/raemedia" = "opus"
-"components/raenet" = "opus"
-"components/raevpn" = "opus"
-"components/raegfx" = "opus"
-"components/raeui" = "opus"
-"components/raekit" = "opus"
-"components/raefont" = "opus"
-"components/raeshell" = "opus"
-"components/raelocale" = "opus"
-"components/raeaccessibility" = "opus"
+"components/athfs" = "opus"
+"components/athfat" = "opus"
+"components/athaudio" = "opus"
+"components/athmedia" = "opus"
+"components/athnet" = "opus"
+"components/athvpn" = "opus"
+"components/athgfx" = "opus"
+"components/athui" = "opus"
+"components/athkit" = "opus"
+"components/athfont" = "opus"
+"components/athshell" = "opus"
+"components/athlocale" = "opus"
+"components/athaccessibility" = "opus"
 
 # Area: drivers/hardware + LinuxKPI shim + installer + services + apps + tests
 "components/pcid" = "opus"
-"components/raeen_linuxkpi" = "opus"
-"components/raeen_drm" = "opus"
+"components/ath_linuxkpi" = "opus"
+"components/ath_drm" = "opus"
 "amdgpud" = "opus"
 "i915d" = "opus"
-"raeinstaller" = "opus"
+"athinstaller" = "opus"
 "components/kanata_daemon" = "opus"
-"components/raestore" = "opus"
-"components/raeid" = "opus"
-"components/raesync" = "opus"
-"components/raeplay" = "opus"
-"components/raeprint" = "opus"
-"components/raeweb" = "opus"
-"components/raecloud" = "opus"
-"components/raeupdate" = "opus"
-"components/raesettings" = "opus"
-"components/raeai" = "opus"
-"components/raebackup" = "opus"
-"components/raecontainer" = "opus"
-"components/raepackage" = "opus"
+"components/athstore" = "opus"
+"components/athid" = "opus"
+"components/athsync" = "opus"
+"components/athplay" = "opus"
+"components/athprint" = "opus"
+"components/athweb" = "opus"
+"components/athcloud" = "opus"
+"components/athupdate" = "opus"
+"components/athsettings" = "opus"
+"components/athai" = "opus"
+"components/athbackup" = "opus"
+"components/athcontainer" = "opus"
+"components/athpackage" = "opus"
 "user_init" = "opus"
 "driver_supervisor" = "opus"
 "hello_window" = "opus"
@@ -102,13 +102,13 @@ prefixes = ["docs/", "MasterChecklist.md", "README.md", "Audit.md", "AGENTS.md"]
 "hello_linuxkpi" = "opus"
 "apps/terminal" = "opus"
 "apps/calculator" = "opus"
-"apps/rae-sh" = "opus"
+"apps/ath-sh" = "opus"
 "apps/files" = "opus"
 "apps/settings" = "opus"
 "apps/text_editor" = "opus"
 "apps/task_mgr" = "opus"
-"apps/hello_raeui" = "opus"
+"apps/hello_athui" = "opus"
 "ports" = "opus"
 
 # Area: Windows compatibility (AthBridge) — now owned by opus (was OWNERLESS).
-"components/raebridge" = "opus"
+"components/athbridge" = "opus"

@@ -140,7 +140,7 @@ pub fn sys_perm_stats(
     16
 }
 
-// ── /proc/raeen/perm ───────────────────────────────────────────────────
+// ── /proc/athena/perm ───────────────────────────────────────────────────
 
 pub fn dump_text() -> alloc::string::String {
     use alloc::string::String;

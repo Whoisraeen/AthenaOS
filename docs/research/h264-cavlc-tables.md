@@ -2,7 +2,7 @@
 
 Authoritative, inlined, dual-sourced VLC table data for the H.264/AVC **CAVLC** residual layer
 (ITU-T H.264 §9.2). This is the prerequisite the pipeline spec
-(`docs/research/h264-baseline-decode.md` §4.4) flagged: the `rae_h264` implementer **has no web
+(`docs/research/h264-baseline-decode.md` §4.4) flagged: the `ath_h264` implementer **has no web
 access**, so every `coeff_token` / `total_zeros` / `run_before` table is reproduced here **verbatim
 in generator-input-ready form**, the `level` decode is given as exact pseudo-code, and the `nC`
 context derivation is fully specified. Every numeric table is **dual-sourced** — combining a
@@ -22,7 +22,7 @@ these tables through a prefix-free-checking generator (`tools/h264_vlc_gen`, the
 > "A daily driver must 'play my movies' and 'play my music.' MP4 … (the ISO Base Media File
 > Format) is the dominant container for both — phone video, downloaded video, and AAC audio
 > (`.m4a`/`.mp4`) all ship as BMFF."
-> (LEGACY_GAMING_CONCEPT.md §creators / media — the line `rae_mp4/src/lib.rs` + `apps/video/src/lib.rs`
+> (LEGACY_GAMING_CONCEPT.md §creators / media — the line `ath_mp4/src/lib.rs` + `apps/video/src/lib.rs`
 > quote in their docstrings; the "it just works" media pillar. CAVLC residual decode is the entropy
 > layer without which an I-macroblock has no coefficients, so the picture can never reconstruct.)
 
@@ -33,14 +33,14 @@ slice codes its transform coefficients. Without these tables `coeff_token` canno
 
 ## Already in the tree (verify-before-implement)
 
-Do **not** rebuild these; this spec is pure table data feeding the NEW `components/rae_h264` crate.
+Do **not** rebuild these; this spec is pure table data feeding the NEW `components/ath_h264` crate.
 
 - `docs/research/h264-baseline-decode.md` — **[x] written (the parent pipeline spec).** Defines the
-  full NAL→pixels flow, scopes Baseline (CAVLC, no CABAC/B/8×8), names `rae_h264` as the new crate,
+  full NAL→pixels flow, scopes Baseline (CAVLC, no CABAC/B/8×8), names `ath_h264` as the new crate,
   and (§4 / §4.4) explicitly defers the CAVLC table transcription to **this** doc. §3.1 lists the
   `h264_cavlc_coeff_token_known` / `_total_zeros_known` / `_run_before_known` host KATs this spec's
   Verification section pins concrete values for.
-- `components/raemedia/src/lib.rs` — **[~] parse-shell.** `H264Decoder` / `H264Sps` / `H264Pps`
+- `components/athmedia/src/lib.rs` — **[~] parse-shell.** `H264Decoder` / `H264Sps` / `H264Pps`
   structs exist but `process_nal` hardcodes geometry and `produce_frame` emits gray. The CAVLC
   residual decode does **not** exist anywhere yet — there is no `coeff_token` reader, no
   `total_zeros`, no `run_before`, no `level` decode in the tree. This is greenfield table data.
@@ -49,7 +49,7 @@ Do **not** rebuild these; this spec is pure table data feeding the NEW `componen
   2-tuple or a single small int, not the MP3 4-tuple), so the implementer adds a **sibling**
   `tools/h264_vlc_gen/gen.rs` modeled on it (Verification §V.1). Same guarantee: a transcription
   typo cannot reach the decoder silently.
-- `components/rae_mp4/src/lib.rs` — **[x] built.** Surfaces the H.264 elementary-stream + `avcC`
+- `components/ath_mp4/src/lib.rs` — **[x] built.** Surfaces the H.264 elementary-stream + `avcC`
   SPS/PPS. Out of scope here (container side, already done); listed so the implementer does not
   re-demux. CAVLC operates on the RBSP bit-stream the parent spec's `BitReader` exposes.
 
@@ -60,7 +60,7 @@ Status to flip when this + the parent slice land: the H.264 / video rows under m
 
 Every numeric table below is **spec-defined (ITU-T H.264 = ISO/IEC 14496-10 §9.2, Tables 9-5
 through 9-10)** and cross-checked across two independent open decoders. Neither project is vendored
-or linked — read-only spec oracles; `rae_h264` is original `#![no_std]`, no-libm, integer Rust.
+or linked — read-only spec oracles; `ath_h264` is original `#![no_std]`, no-libm, integer Rust.
 
 - **ITU-T H.264 (= ISO/IEC 14496-10) — the normative source.** §9.2.1 + **Table 9-5**
   (`coeff_token`, all five contexts), §9.2.2 (level: `level_prefix`/`level_suffix`, the
@@ -77,7 +77,7 @@ or linked — read-only spec oracles; `rae_h264` is original `#![no_std]`, no-li
   (LGPL) — the canonical `{code, length, value}` length-source; `decode_residual` is the algorithm
   cross-check. 📖 **study/isolate (LGPL)** — source-of-numbers cross-check only; no code copied.
 - **Concept §R7 (no Linux-clone lineage):** satisfied — H.264 is an ITU/ISO codec, not a Linux
-  subsystem; pure userspace `rae_h264`, no kernel/ABI/DRM/KMS surface.
+  subsystem; pure userspace `ath_h264`, no kernel/ABI/DRM/KMS surface.
 
 **Corroboration gate:** every `(codeword, length) → value` row below was taken from ITU Table 9-x
 and cross-checked **openh264 (BSD) ↔ FFmpeg `h264_cavlc.c` (LGPL)** entry-for-entry. The generator
@@ -398,7 +398,7 @@ T1 TC  bits      code len
 ### §1.6 — `coeff_token`, chroma DC `nC == −2` (4:2:2, 2×4 = 8 coeffs) — OUT OF BASELINE SCOPE
 
 `nC == −2` selects the 4:2:2 chroma-DC `coeff_token` (ITU §9.2.1, the `ChromaArrayType==2` table,
-`TC ∈ 0..=8`). **Baseline is 4:2:0 only** (parent spec §1), so `rae_h264` v1 never reaches this
+`TC ∈ 0..=8`). **Baseline is 4:2:0 only** (parent spec §1), so `ath_h264` v1 never reaches this
 context — but it is named here for completeness and so the `nC` derivation (§5) is total.
 
 > **FLAGGED (§1.6) / DEFERRED:** the full 2×4 chroma-DC `coeff_token` table is NOT transcribed
@@ -998,7 +998,7 @@ identical guarantee to the MP3/AAC generators. Run this FIRST (cheapest proof, n
 
 ### §V.2 — `coeff_token` KATs (one per context, FAIL-able)
 
-`cargo test -p rae_h264 h264_cavlc_coeff_token_known`:
+`cargo test -p ath_h264 h264_cavlc_coeff_token_known`:
 - **Num-VLC0 (§1.1):** bit-string `1` (code=1,len=1) → `(T1=0, TC=0)`. bit-string `01` (code=1,
   len=2) → `(T1=1, TC=1)`. bit-string `001` (code=1,len=3) → `(T1=2, TC=2)`. bit-string `0001 1`
   (code=3,len=5) → `(T1=3, TC=3)`.
@@ -1124,21 +1124,21 @@ shipping that row; none may be transcribed from this doc's human bit-grouping al
 
 ## Interface needs (NEEDS-INTERFACE)
 
-**None.** Pure table data inside the NEW `components/rae_h264` userspace crate (the parent spec's
-`cavlc.rs` table module). No syscall, no `rae_abi`, no kernel ABI surface.
+**None.** Pure table data inside the NEW `components/ath_h264` userspace crate (the parent spec's
+`cavlc.rs` table module). No syscall, no `ath_abi`, no kernel ABI surface.
 
 ## File-by-file plan
 
 - `tools/h264_vlc_gen/gen.rs` (NEW, with this spec) — the prefix-free + Kraft-sum generator (§V.1).
   Holds the coeff_token / total_zeros / run_before rows; emits `cavlc_tables.rs`; prints
   `All H.264 CAVLC tables verified prefix-free (Kraft==1).` or `FAIL <table>: ...` and exits 1.
-- `components/rae_h264/src/cavlc_tables.rs` (NEW) — generator output: `COEFF_TOKEN_VLC0..2`,
+- `components/ath_h264/src/cavlc_tables.rs` (NEW) — generator output: `COEFF_TOKEN_VLC0..2`,
   `COEFF_TOKEN_CHROMA_DC`, `TOTAL_ZEROS_4X4[15]`, `TOTAL_ZEROS_CHROMA_DC[3]`, `RUN_BEFORE[7]`,
   the `coeff_token` FLC is a closed-form fn (no table). Do NOT hand-type — emit via the generator.
-- `components/rae_h264/src/cavlc.rs` (NEW) — the residual decoder consuming the tables: the §0
+- `components/ath_h264/src/cavlc.rs` (NEW) — the residual decoder consuming the tables: the §0
   matcher, the §4 level loop, the §5 `nC` derivation, `residual_block(nC, maxNumCoeff) ->
   [i32; 16]`. Concept docstring quoting the promise above; FAIL-able `run_boot_smoketest()`.
-- (Parent spec §6 owns the rest of `rae_h264`: NAL/Exp-Golomb/SPS/PPS/slice/macroblock/transform/
+- (Parent spec §6 owns the rest of `ath_h264`: NAL/Exp-Golomb/SPS/PPS/slice/macroblock/transform/
   intra/deblock. This spec is ONLY the CAVLC table + algorithm layer those depend on.)
 
 ## Acceptance criteria (the exact proof)
@@ -1146,22 +1146,22 @@ shipping that row; none may be transcribed from this doc's human bit-grouping al
 - **Generator gate (cheapest, run first):** `rustc -O tools/h264_vlc_gen/gen.rs && ./gen` MUST
   print `All H.264 CAVLC tables verified prefix-free (Kraft==1).` and exit 0; a bad transcription
   prints `FAIL <table>: ...` and exits 1.
-- **Host KATs (FAIL-able, `cargo test -p rae_h264`):** `h264_cavlc_coeff_token_known` (§V.2, one
+- **Host KATs (FAIL-able, `cargo test -p ath_h264`):** `h264_cavlc_coeff_token_known` (§V.2, one
   assertion per context incl. the FLC + chroma-DC + a negative case), `h264_cavlc_total_zeros_known`
   (§V.3, 4×4 + chroma-DC), `h264_cavlc_run_before_known` (§V.3, incl. zerosLeft>6),
   `h264_cavlc_level_known` (§V.4, incl. the `+2` bias + a prefix>=15 escape), and the integration
   `h264_cavlc_decode_known_block` (§V.5, the worked-example bit-stream → exact 16-entry array).
 - **Boot smoketest line:** the CAVLC layer's `run_boot_smoketest()` MUST emit
-  `[rae_h264] cavlc: coeff_token=ok total_zeros=ok run_before=ok level=ok -> PASS` (FAIL if the
+  `[ath_h264] cavlc: coeff_token=ok total_zeros=ok run_before=ok level=ok -> PASS` (FAIL if the
   worked-example block does not decode to the embedded expected array). Must be able to print FAIL.
 - **Docstring:** `cavlc.rs` MUST quote the Concept promise at the top of this spec (R10).
 
 ## Handoff
 
-- **Implementer: raeen-media.** Pure userspace; no kernel/ABI touch. This is the prerequisite
+- **Implementer: athena-media.** Pure userspace; no kernel/ABI touch. This is the prerequisite
   data-spec the parent `docs/research/h264-baseline-decode.md` §8 named ("should be written next so
   the implementer has the inlined, corroborated VLC tables (no web)").
-- **Foundation slice files:** new `components/rae_h264` crate — `cavlc_tables.rs` (this spec's tables
+- **Foundation slice files:** new `components/ath_h264` crate — `cavlc_tables.rs` (this spec's tables
   fed through `tools/h264_vlc_gen`), `cavlc.rs` (residual decode using §0 matcher + §4 level loop +
   §5 nC), then the parent spec's SPS/PPS/NAL/Exp-Golomb/transform/intra-pred/deblock layers built on
   top. The §V KATs prove the CAVLC layer before any of those exist.

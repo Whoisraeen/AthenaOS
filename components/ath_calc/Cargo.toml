@@ -1,0 +1,21 @@
+[package]
+name = "ath_calc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS Calculator math engine — a zero-dependency expression evaluator that
+# powers the bundled Calculator app (LEGACY_GAMING_CONCEPT.md §Three User Experiences:
+# "apps that just work"). Factored OUT of `apps/calculator` (a `#![no_main]` bin
+# that links athkit's `#[panic_handler]`) so the math logic is host-testable:
+# `cargo test -p ath_calc` runs the FAIL-able KATs on the dev box, no QEMU.
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_tokens pattern) so the lib is
+# `no_std` in the shipped app build and toggles to `std` only under `cfg(test)`
+# for the harness — never run host tests on a bare no_std bin or `--workspace`.
+# Pure f64 arithmetic (no `libm`): the optional sqrt/pow niceties use Newton /
+# exponentiation-by-squaring polynomials, so no transcendental intrinsics.
+
+[dependencies]

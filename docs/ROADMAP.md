@@ -4,8 +4,8 @@ Milestone philosophy: prove AthKernel, then close the sense→act loop in simula
 
 ## M1 — Brand, boot, docs (done)
 
-- [x] Independent AthenaOS repo (not a GitHub fork of RaeenOS)
-- [x] Remotes: `origin` → AthenaOS; optional `upstream-raeenos` reference only
+- [x] Independent AthenaOS repo (not a GitHub fork of AthenaOS)
+- [x] Remotes: `origin` → AthenaOS; optional `upstream-athenaos` reference only
 - [x] Athena manifesto + AthKernel banner
 - [x] QEMU boot proof (`BOOT_STATUS.md`)
 - [x] Architecture / cognitive / safety docs + ADR 0001
@@ -35,4 +35,4 @@ Milestone philosophy: prove AthKernel, then close the sense→act loop in simula
 
 - Gaming desktop (AthPlay, Steam day-one, anti-cheat vendors, GameOS)
 - Claiming AGI/consciousness as scientific fact
-- Pushing Athena commits into RaeenOS
+- Pushing Athena commits into AthenaOS

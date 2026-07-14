@@ -2,11 +2,11 @@
 #![no_main]
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
-use rae_tokens::{DARK, RAEBLUE};
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
+use ath_tokens::{DARK, RAEBLUE};
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
 
 const WIN_W: usize = 640;
 const WIN_H: usize = 400;
@@ -17,7 +17,7 @@ const ROWS: usize = 50;
 const GLYPH_W: usize = 8;
 const GLYPH_H: usize = 8;
 
-// Generic chrome on `rae_tokens::DARK` + the RaeBlue accent ramp (whole-OS
+// Generic chrome on `ath_tokens::DARK` + the RaeBlue accent ramp (whole-OS
 // cohesion). `BG`/`FG` stay `const` because `Cell::blank()` is a `const fn`
 // (the palette fields are const-accessible). The prompt/cursor accent is
 // derived (non-const) so it lives in `accent()`. Per-cell SGR text colors are
@@ -30,11 +30,11 @@ const TITLE_BG: u32 = DARK.bg_overlay; // title strip
 /// the theme syscall is unavailable. Read at launch so the terminal re-skins to
 /// the active theme (Concept §Customization Engine).
 fn theme_seed() -> u32 {
-    raekit::sys::theme_accent()
+    athkit::sys::theme_accent()
 }
 /// Prompt / cursor accent (live ramp base). Matches the desktop accent.
 fn accent() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).base
+    ath_tokens::derive_accent(theme_seed(), &DARK).base
 }
 
 struct Term {
@@ -132,7 +132,7 @@ impl Term {
             8,
             -1,
             "AthenaOS Terminal",
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             DARK.text_secondary,
             FontFamily::Mono,
         );
@@ -140,7 +140,7 @@ impl Term {
         // Grid: the 80x50 cell matrix is a fixed-pitch 8px monospace grid — the
         // caret lands at `cursor_col * GLYPH_W` and each cell carries its own SGR
         // fg, so per-cell glyphs stay on the 8x8 bitmap font (same approach as the
-        // live raeshell terminal grid). A proportional AA grid would desync the
+        // live athshell terminal grid). A proportional AA grid would desync the
         // caret + cell backgrounds from the glyphs.
         for row in 0..ROWS {
             let y = 12 + row * GLYPH_H;
@@ -198,8 +198,8 @@ fn scancode_to_ascii(code: u8, shift: bool) -> Option<u8> {
 
 fn drain_pty(term: &mut Term, pty_id: u64) {
     let mut buf = [0u8; 256];
-    while raekit::sys::pty_poll(pty_id) > 0 {
-        let n = raekit::sys::pty_read(pty_id, &mut buf);
+    while athkit::sys::pty_poll(pty_id) > 0 {
+        let n = athkit::sys::pty_read(pty_id, &mut buf);
         if n == 0 || n == u64::MAX {
             break;
         }
@@ -209,21 +209,21 @@ fn drain_pty(term: &mut Term, pty_id: u64) {
 
 // ── Design proof (R10: a fail-able check the token wiring is correct) ─────
 //
-// `cargo test` can't host a libtest harness in this `#![no_main]` bin (raekit's
-// `#[panic_handler]` + std's = duplicate lang item). This pure `rae_tokens`
+// `cargo test` can't host a libtest harness in this `#![no_main]` bin (athkit's
+// `#[panic_handler]` + std's = duplicate lang item). This pure `ath_tokens`
 // proof is the fail-able authority; the ramp is host-KAT'd by
-// `cargo test -p rae_tokens`.
+// `cargo test -p ath_tokens`.
 
 /// True iff the Terminal's generic chrome is wired to the shared tokens. (The
 /// VT engine's per-cell SGR colors are deliberately out of scope.)
 #[must_use]
 pub fn design_proof() -> bool {
-    let ramp = rae_tokens::derive_accent(theme_seed(), &DARK);
+    let ramp = ath_tokens::derive_accent(theme_seed(), &DARK);
     accent() == ramp.base
         && BG == DARK.bg_base
         && FG == DARK.text_primary
         && TITLE_BG == DARK.bg_overlay
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE
 }
 
 #[no_mangle]
@@ -231,38 +231,38 @@ pub extern "C" fn _start() -> ! {
     // exit(4) reserved for a token-wiring regression (1..=3 are already used
     // below for surface/pty/spawn failures).
     if !design_proof() {
-        raekit::sys::exit(4);
+        athkit::sys::exit(4);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
-    let _ = raekit::sys::surface_focus(sid);
+    let _ = athkit::sys::surface_focus(sid);
 
-    let pty_id = raekit::sys::pty_open();
+    let pty_id = athkit::sys::pty_open();
     if pty_id == u64::MAX {
-        raekit::sys::exit(2);
+        athkit::sys::exit(2);
     }
 
-    let shell_pid = raekit::sys::spawn_pty("rae-sh", pty_id);
+    let shell_pid = athkit::sys::spawn_pty("ath-sh", pty_id);
     if shell_pid == u64::MAX {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
 
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
     let mut term = Term::new();
 
     term.put_bytes(b"AthenaOS Terminal (PTY)\n", accent());
-    term.put_bytes(b"Attached to rae-sh.\n\n", FG);
+    term.put_bytes(b"Attached to ath-sh.\n\n", FG);
 
     canvas.clear(BG);
     term.render(&mut canvas);
-    raekit::sys::surface_present(sid, 0, 0);
+    athkit::sys::surface_present(sid, 0, 0);
 
     loop {
         drain_pty(&mut term, pty_id);
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key != 0 {
             let scancode = key as u8;
             let is_release = scancode & 0x80 != 0;
@@ -272,14 +272,14 @@ pub extern "C" fn _start() -> ! {
                 term.shift_held = !is_release;
             } else if !is_release {
                 if code == 0x0E {
-                    let _ = raekit::sys::pty_write(pty_id, &[0x08]);
+                    let _ = athkit::sys::pty_write(pty_id, &[0x08]);
                 } else if code == 0x1C {
-                    let _ = raekit::sys::pty_write(pty_id, b"\n");
+                    let _ = athkit::sys::pty_write(pty_id, b"\n");
                 } else if let Some(ascii) = scancode_to_ascii(code, term.shift_held) {
                     if ascii == b'\t' {
-                        let _ = raekit::sys::pty_write(pty_id, b"\t");
+                        let _ = athkit::sys::pty_write(pty_id, b"\t");
                     } else if ascii >= 0x20 {
-                        let _ = raekit::sys::pty_write(pty_id, &[ascii]);
+                        let _ = athkit::sys::pty_write(pty_id, &[ascii]);
                     }
                 }
             }
@@ -289,7 +289,7 @@ pub extern "C" fn _start() -> ! {
 
         canvas.clear(BG);
         term.render(&mut canvas);
-        raekit::sys::surface_present(sid, 0, 0);
-        raekit::sys::yield_now();
+        athkit::sys::surface_present(sid, 0, 0);
+        athkit::sys::yield_now();
     }
 }

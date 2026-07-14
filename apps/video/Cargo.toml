@@ -8,7 +8,7 @@ repository.workspace = true
 
 # Library target: the app's state + open/demux pipeline + the syscall-free
 # decode-dispatch (`open_media` / `decode_first_video` / `decode_audio_pcm`) so a
-# host KAT can link the LIVE engines (rae_mp4 demuxer + raemedia H264/AAC) with no
+# host KAT can link the LIVE engines (ath_mp4 demuxer + athmedia H264/AAC) with no
 # kernel. Same lib+bin split the `photos` / `files` apps use.
 [lib]
 name = "video"
@@ -25,20 +25,20 @@ path = "src/main.rs"
 test = false
 
 [features]
-# Forwards to `raekit/host`: lets the std `cargo test` harness link `video`
-# (-> `raekit`) without raekit's bare-ELF lang items colliding with std (E0152
+# Forwards to `athkit/host`: lets the std `cargo test` harness link `video`
+# (-> `athkit`) without athkit's bare-ELF lang items colliding with std (E0152
 # duplicate panic_impl). The normal `cargo build -p video --target
 # x86_64-unknown-none` ELF leaves this off and is unchanged. The host KAT runs
 # with `cargo test -p video --features host`.
-host = ["raekit/host"]
+host = ["athkit/host"]
 
 [dependencies]
-raegfx = { path = "../../components/raegfx" }
-raekit = { path = "../../components/raekit" }
-rae_tokens = { path = "../../components/rae_tokens" }
+athgfx = { path = "../../components/athgfx" }
+athkit = { path = "../../components/athkit" }
+ath_tokens = { path = "../../components/ath_tokens" }
 # The MP4 / ISO-BMFF container demuxer: box tree -> tracks -> sample tables ->
 # per-sample offset/size/dts/keyframe + codec fourcc + codec-private (avcC/esds).
-rae_mp4 = { path = "../../components/rae_mp4" }
+ath_mp4 = { path = "../../components/ath_mp4" }
 # The codec engines: H264Decoder (VideoDecoder), AacDecoder (AudioDecoder), the
 # MediaPacket shape, and PixelConverter (YUV420 -> RGB for the ARGB8888 blit).
-raemedia = { path = "../../components/raemedia" }
+athmedia = { path = "../../components/athmedia" }

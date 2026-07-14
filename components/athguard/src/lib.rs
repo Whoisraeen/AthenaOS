@@ -1,7 +1,7 @@
 //! AthGuard — safety and capability face of AthenaOS.
 //!
 //! Dominates AthBody / AthMind / AthVoice. Policy cannot be silently
-//! rewritten by the cognitive loop. Inherited AthGuard (`raeshield`)
+//! rewritten by the cognitive loop. Inherited AthGuard (`athshield`)
 //! remains the deep capability engine until the rename pass merges them.
 #![cfg_attr(not(test), no_std)]
 

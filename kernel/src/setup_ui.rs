@@ -6,7 +6,7 @@
 //! flag in `config_registry`, and transitions straight to the desktop
 //! (auto-login as the just-created user — same convention as Windows OOBE).
 //!
-//! Until this lands, AthenaOS booted to a pre-seeded `raeen`/`raeen` account
+//! Until this lands, AthenaOS booted to a pre-seeded `athena`/`athena` account
 //! that no real user ever chose — fine for a debug kernel, not for an OS
 //! you'd hand to anyone. The wizard makes first boot feel like a fresh
 //! Windows or macOS install: you see your own name on the lock screen
@@ -21,11 +21,11 @@
 extern crate alloc;
 
 use alloc::string::String;
-use rae_tokens::{
+use ath_tokens::{
     AccentRamp, Palette, DARK, GLASS_PANEL_DARK, RADIUS_MD, RADIUS_SM, RADIUS_XL, SPACE_2, SPACE_3,
     SPACE_4, SPACE_5, SPACE_6, TYPE_BODY, TYPE_CAPTION, TYPE_LABEL, TYPE_SUBTITLE, TYPE_TITLE,
 };
-use raegfx::text::FontFamily;
+use athgfx::text::FontFamily;
 
 /// Active palette for the OOBE surface — dark default (the first-boot wizard
 /// wears the same dark Liquid Glass identity as the lock / login screens).
@@ -41,7 +41,7 @@ const PALETTE: &Palette = &DARK;
 /// (`login_ui.rs`); only the accent fill/ring is tokenized on top.
 #[inline]
 fn accent() -> AccentRamp {
-    rae_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE)
+    ath_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE)
 }
 
 /// The accent base actually painted on the wizard — public so the
@@ -309,11 +309,11 @@ impl SetupState {
     /// aurora backdrop (IDENTITY.md §3 Aurora Mesh) with a centered frosted
     /// `glass.panel` card (§7 tiers) holding the account fields, floating on the
     /// aurora. The public signature is unchanged (the boot caller passes `ptr` +
-    /// `w`/`h`); internally we wrap the buffer in a [`raegfx::Canvas`] and draw
+    /// `w`/`h`); internally we wrap the buffer in a [`athgfx::Canvas`] and draw
     /// through the shared `glass`/`draw_text_aa` primitives instead of hand-rolled
     /// hex pixels. Token-derived colours only — a Vibe re-skin flows here too.
     pub fn render(&self, ptr: *mut u8, w: u32, h: u32) {
-        let mut canvas = unsafe { raegfx::Canvas::new(ptr, w as usize, h as usize, 4) };
+        let mut canvas = unsafe { athgfx::Canvas::new(ptr, w as usize, h as usize, 4) };
         let (w, h) = (w as usize, h as usize);
 
         // Live accent (tracks Vibe Mode) for the primary button + focus ring.
@@ -325,7 +325,7 @@ impl SetupState {
         // ── Background → the signature Aurora Mesh (IDENTITY.md §3): the same
         //    living backdrop the desktop / lock / login wear — visual continuity
         //    from first power-on onward. Replaces the old flat blue gradient.
-        raegfx::glass::render_aurora_dark(&mut canvas, 0, 0, w, h, 0);
+        athgfx::glass::render_aurora_dark(&mut canvas, 0, 0, w, h, 0);
 
         // ── Centered glass card: the wizard content floats on a `glass.panel`
         //    frosted surface (the workhorse large-card tier) with the shipped
@@ -335,7 +335,7 @@ impl SetupState {
         let c = lay.card;
         let cr = CARD_RADIUS as usize;
         canvas.fill_rounded_rect_shadow(c.x, c.y, c.w, c.h, cr, 0x0A_10_1C, 44, 18);
-        raegfx::glass::draw_glass_surface(&mut canvas, c.x, c.y, c.w, c.h, cr, GLASS_PANEL_DARK);
+        athgfx::glass::draw_glass_surface(&mut canvas, c.x, c.y, c.w, c.h, cr, GLASS_PANEL_DARK);
 
         // ── Brand emblem: a rounded accent tile carrying the white Rae diamond.
         //    Gives the OOBE a real product mark (the top "feels finished" gap vs
@@ -562,7 +562,7 @@ impl SetupState {
     /// tertiary is tuned for bg.base, and over the frost-lifted field fill on
     /// the glass card it measured near-invisible on the live OOBE (QMP
     /// screenshot 2026-07-01); the user couldn't read what a field wanted.
-    fn draw_placeholder(&self, canvas: &mut raegfx::Canvas, field: Rect, ty: usize, s: &str) {
+    fn draw_placeholder(&self, canvas: &mut athgfx::Canvas, field: Rect, ty: usize, s: &str) {
         canvas.draw_text_aa(
             (field.x + 14) as i32,
             (field.y + ty) as i32,
@@ -578,7 +578,7 @@ impl SetupState {
     /// tracks the real glyph positions instead of a fixed cell width.
     fn draw_caret(
         &self,
-        canvas: &mut raegfx::Canvas,
+        canvas: &mut athgfx::Canvas,
         field: Rect,
         ty: usize,
         text: &str,
@@ -606,7 +606,7 @@ impl SetupState {
 /// card, so the field reads as a brighter inset on the panel); the focus ring is
 /// the LIVE accent (`acc.base` border + `acc.glow` inner ring), recolouring with
 /// a Vibe re-skin; the resting border is a token `stroke.subtle` hairline.
-fn draw_field(canvas: &mut raegfx::Canvas, f: Rect, active: bool, acc: &AccentRamp) {
+fn draw_field(canvas: &mut athgfx::Canvas, f: Rect, active: bool, acc: &AccentRamp) {
     let r = FIELD_RADIUS as usize; // radius.sm (8) — concentric inside the radius.xl card
     canvas.fill_rounded_rect(f.x, f.y, f.w, f.h, r, GLASS_PANEL_DARK.frost);
     if active {
@@ -794,7 +794,7 @@ fn submit(state: &mut SetupState) -> bool {
     // would also restore the user back to the wizard — intentional.
     mark_first_boot_done();
     // Persist last-used username so the next boot's login screen
-    // greets the right person instead of the hardcoded "Raeen" default.
+    // greets the right person instead of the hardcoded "Athena" default.
     crate::config_registry::set_text("/session/last_user", username);
 
     // Auto-sign-in as the freshly created account so the user lands on
@@ -870,7 +870,7 @@ pub fn run_boot_smoketest() {
     // derive_accent(active_accent()).base; the full-screen card must be radius.xl
     // (24); and the card now draws on the `glass.panel` tier over the aurora (not
     // a flat opaque card). If any drifts, prints FAIL.
-    let want_accent = rae_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE).base;
+    let want_accent = ath_tokens::derive_accent(crate::theme_engine::active_accent(), PALETTE).base;
     let accent_ok = proof_accent() == want_accent;
     let card_xl = CARD_RADIUS == RADIUS_XL;
     // Glass tier the render actually paints — panel (the large-card workhorse).

@@ -562,7 +562,7 @@ pub fn unlink_at(path: &str) -> Result<(), u64> {
         }
     }
 
-    if crate::raefs::AthFS::delete_file(&path) {
+    if crate::athfs::AthFS::delete_file(&path) {
         return Ok(());
     }
     Err(E_VFS_NOT_FOUND)
@@ -618,7 +618,7 @@ pub fn rename_at(old_path: &str, new_path: &str) -> Result<(), u64> {
         }
     }
 
-    if crate::raefs::AthFS::rename_file(&old_path, &new_path) {
+    if crate::athfs::AthFS::rename_file(&old_path, &new_path) {
         return Ok(());
     }
     Err(E_VFS_NOT_FOUND)
@@ -826,7 +826,7 @@ fn open_path_exact(path: &str) -> Option<Arc<dyn Inode>> {
     // RAM-file behaviour); the data lives in TMPFS_INSTANCES keyed by inode, so
     // a write then a fresh read-open of the same name see the same bytes.
     // The AthBridge Windows drive namespace `C:\...` maps to `/mnt/win_<drive>/...`
-    // (raebridge::translate_win_path). Back it with create-on-open tmpfs so a guest
+    // (athbridge::translate_win_path). Back it with create-on-open tmpfs so a guest
     // `CreateFileW(CREATE_ALWAYS)` + `WriteFile` actually persists (and a later read
     // sees the bytes) — without it a guest save fails ERROR_FILE_NOT_FOUND because
     // the underlying `open_path` never created. (The Concept-ideal per-app AthFS
@@ -895,8 +895,8 @@ fn open_path_exact(path: &str) -> Option<Arc<dyn Inode>> {
             return Some(Arc::new(InitramfsInode { data }));
         }
     }
-    if let Some(inode_id) = crate::raefs::AthFS::find_or_create_file(&norm) {
-        return Some(Arc::new(crate::raefs::AthFSInode { id: inode_id }));
+    if let Some(inode_id) = crate::athfs::AthFS::find_or_create_file(&norm) {
+        return Some(Arc::new(crate::athfs::AthFSInode { id: inode_id }));
     }
     None
 }

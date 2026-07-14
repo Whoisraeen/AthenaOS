@@ -2,7 +2,7 @@
 
 - Status: accepted (plan); execution gated on Slice 0b (kernel lane)
 - Date: 2026-06-22
-- Owner: raeen-lead (autonomous)
+- Owner: athena-lead (autonomous)
 - Spec: docs/research/aarch64-bringup-spec.md
 - Extends: ADR 0007 (multi-arch strategy) — this drills the aarch64 column into a
   QEMU-virt-specific, slice-ordered execution plan (ADR 0007 §5 deferred this).
@@ -50,8 +50,8 @@ IMMEDIATELY as "x86_64 still 7/7," needs no aarch64 code, and unblocks every aar
 slice.
 
 ## Named first hand-off
-**Slice 0b** — owner raeen-kernel, with raeen-architect signing the widened arch:: seam
-contract (internal kernel ABI; rae_abi ABI_VERSION unchanged). Gated only on the kernel
+**Slice 0b** — owner athena-kernel, with athena-architect signing the widened arch:: seam
+contract (internal kernel ABI; ath_abi ABI_VERSION unchanged). Gated only on the kernel
 core lane being free of the concurrent sys_mprotect WIP. Proof line: `[ OS ] System
 successfully booted.` + `boot health: 6/6 critical PASS -> HEALTHY`, no [PANIC],
 [BOOT-BENCH] not regressed, ≥5 boots SMP=1/=2.

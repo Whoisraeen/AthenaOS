@@ -1,7 +1,7 @@
 # M5 on-path stub audit — what must become *real* for a functional Phoenix init
 
 **Status (2026-06-30):** M4c reached — the amdgpu Phoenix bring-up graph LINKS
-(`m4c-link.sh`: 53 real objects + raeen_linuxkpi + 569 auto-stubs →
+(`m4c-link.sh`: 53 real objects + ath_linuxkpi + 569 auto-stubs →
 `amdgpu-bringup.o`, 0 unresolved). This doc audits which of those **569 stubs are
 on the real init path** (the ones a live `amdgpu_device_init` dereferences or
 executes), and therefore must be replaced with real compiled `.c` before an M5 run

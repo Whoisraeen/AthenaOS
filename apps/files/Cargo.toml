@@ -25,42 +25,42 @@ path = "src/main.rs"
 test = false
 
 [features]
-# Forwards to `raekit/host`: lets the std `tools/ui_screenshot` harness link
-# `files` (-> `raekit`) to render the LIVE Files surface via the syscall-free
-# `files::render_preview` seam, without raekit's bare-ELF lang items colliding
+# Forwards to `athkit/host`: lets the std `tools/ui_screenshot` harness link
+# `files` (-> `athkit`) to render the LIVE Files surface via the syscall-free
+# `files::render_preview` seam, without athkit's bare-ELF lang items colliding
 # with std (E0152 duplicate panic_impl). The normal
 # `cargo build -p files --target x86_64-unknown-none` ELF leaves this off and is
 # unchanged.
-host = ["raekit/host"]
+host = ["athkit/host"]
 
 [dependencies]
-raegfx = { path = "../../components/raegfx" }
-raekit = { path = "../../components/raekit" }
-rae_tokens = { path = "../../components/rae_tokens" }
-rae_files = { path = "../../components/rae_files" }
-rae_diff = { path = "../../components/rae_diff" }
-rae_zip = { path = "../../components/rae_zip" }
-rae_tar = { path = "../../components/rae_tar" }
-rae_deflate = { path = "../../components/rae_deflate" }
-raemedia = { path = "../../components/raemedia" }
-rae_gif = { path = "../../components/rae_gif" }
-rae_csv = { path = "../../components/rae_csv" }
-rae_hash = { path = "../../components/rae_hash" }
-rae_mime = { path = "../../components/rae_mime" }
-rae_toml = { path = "../../components/rae_toml" }
+athgfx = { path = "../../components/athgfx" }
+athkit = { path = "../../components/athkit" }
+ath_tokens = { path = "../../components/ath_tokens" }
+ath_files = { path = "../../components/ath_files" }
+ath_diff = { path = "../../components/ath_diff" }
+ath_zip = { path = "../../components/ath_zip" }
+ath_tar = { path = "../../components/ath_tar" }
+ath_deflate = { path = "../../components/ath_deflate" }
+athmedia = { path = "../../components/athmedia" }
+ath_gif = { path = "../../components/ath_gif" }
+ath_csv = { path = "../../components/ath_csv" }
+ath_hash = { path = "../../components/ath_hash" }
+ath_mime = { path = "../../components/ath_mime" }
+ath_toml = { path = "../../components/ath_toml" }
 # Magic-byte content sniffer (never trust the extension) — the dispatch entry for
 # the document/preview open path.
-rae_formats = { path = "../../components/rae_formats" }
+ath_formats = { path = "../../components/ath_formats" }
 # Document/preview engines: open PDFs (text extraction), DOCX (paragraphs/
 # headings/tables), XLSX (CSV grid), and the unified image decoder
 # (PNG/JPEG/BMP/GIF/WebP -> ARGB8888) used for image preview.
-rae_pdf = { path = "../../components/rae_pdf" }
-rae_docx = { path = "../../components/rae_docx" }
-rae_xlsx = { path = "../../components/rae_xlsx" }
-rae_image = { path = "../../components/rae_image" }
+ath_pdf = { path = "../../components/ath_pdf" }
+ath_docx = { path = "../../components/ath_docx" }
+ath_xlsx = { path = "../../components/ath_xlsx" }
+ath_image = { path = "../../components/ath_image" }
 # AthBridge handoff codec — the proven per-process Windows-app launch channel
-# (components/raebridge/src/handoff.rs). Files double-clicking a `.exe` writes the
-# launch target to `handoff::HANDOFF_PATH` then spawns `raebridge_run`, which
+# (components/athbridge/src/handoff.rs). Files double-clicking a `.exe` writes the
+# launch target to `handoff::HANDOFF_PATH` then spawns `athbridge_run`, which
 # loads that PE as its OWN AthenaOS process (commit d5db628). We CONSUME the
 # handoff codec here (rule 7: reuse, never twin) — no parallel encoder.
-raebridge = { path = "../../components/raebridge" }
+athbridge = { path = "../../components/athbridge" }

@@ -3,7 +3,7 @@
  * <linux/slab.h> shim (MPL-2.0, original work).
  *
  * The kernel heap allocator. amdgpu allocates virtually all of its state through
- * kzalloc/kmalloc/kmem_cache. Backed by raeen_linuxkpi's allocator (one of its
+ * kzalloc/kmalloc/kmem_cache. Backed by ath_linuxkpi's allocator (one of its
  * 488 exports) at M4 — never faked (a kzalloc returning NULL silently would crash
  * init; SCOPE.md rule 9). The GFP_* flags are the allocation-context vocabulary;
  * their real meaning is interpreted by the M4 allocator. kzalloc/kcalloc are thin
@@ -43,7 +43,7 @@
 #define GFP_KERNEL_ACCOUNT GFP_KERNEL
 #endif
 
-/* core allocator — backed by raeen_linuxkpi (M4) */
+/* core allocator — backed by ath_linuxkpi (M4) */
 void *kmalloc(size_t size, gfp_t flags);
 void *kmalloc_array(size_t n, size_t size, gfp_t flags);
 void *krealloc(const void *p, size_t new_size, gfp_t flags);
@@ -124,7 +124,7 @@ static inline void *kzalloc(size_t size, gfp_t flags)            { return kmallo
 static inline void *kcalloc(size_t n, size_t size, gfp_t flags)  { return kmalloc_array(n, size, flags | __GFP_ZERO); }
 static inline void *kzalloc_node(size_t size, gfp_t flags, int node) { (void)node; return kzalloc(size, flags); }
 
-/* slab caches — backed by raeen_linuxkpi (M4) */
+/* slab caches — backed by ath_linuxkpi (M4) */
 struct kmem_cache;
 struct kmem_cache *kmem_cache_create(const char *name, unsigned int size, unsigned int align,
 				     unsigned long flags, void (*ctor)(void *));

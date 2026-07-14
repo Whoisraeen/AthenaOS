@@ -7,19 +7,19 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
-use rae_calc::Calculator;
-use rae_tokens::{DARK, RAEBLUE};
-use rae_toml::Toml;
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
+use ath_calc::Calculator;
+use ath_tokens::{DARK, RAEBLUE};
+use ath_toml::Toml;
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
 
 const WIN_W: usize = 300;
 const WIN_H: usize = 460;
 const SURFACE_VIRT: u64 = 0x0000_7900_0000;
 
-// Generic chrome on `rae_tokens::DARK` + the RaeBlue accent ramp (whole-OS
+// Generic chrome on `ath_tokens::DARK` + the RaeBlue accent ramp (whole-OS
 // cohesion). Operator buttons + the active mode tab take the accent; equals
 // takes `state_ok`. No app-specific colors remain. Live Vibe accent is read at
 // launch via `SYS_THEME_GET`.
@@ -34,11 +34,11 @@ const TITLE_BG: u32 = DARK.bg_base;
 /// the theme syscall is unavailable. Read at launch so Calculator re-skins to the
 /// active theme (Concept §Customization Engine).
 fn theme_seed() -> u32 {
-    raekit::sys::theme_accent()
+    athkit::sys::theme_accent()
 }
 /// Operator-button accent (live ramp base). Non-const → computed in render.
 fn btn_op() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).base
+    ath_tokens::derive_accent(theme_seed(), &DARK).base
 }
 
 const BTN_W: usize = 64;
@@ -576,7 +576,7 @@ fn action_for(label: &str, mode: Mode) -> Action {
 }
 
 /// A free-form expression buffer used by Scientific + Programmer modes (the user
-/// types an expression, then `=`/Enter evaluates it through `rae_calc`). Fixed
+/// types an expression, then `=`/Enter evaluates it through `ath_calc`). Fixed
 /// capacity, never allocates, never panics.
 const EXPR_CAP: usize = 63;
 struct ExprBuf {
@@ -769,7 +769,7 @@ fn fmt_radix(mut v: u64, radix: u64, out: &mut [u8]) -> usize {
     count
 }
 
-// ── Persistent preferences (rae_toml) ─────────────────────────────────────────
+// ── Persistent preferences (ath_toml) ─────────────────────────────────────────
 //
 // LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. Calculator persists its VIEW state — the active mode (Std/Sci/Prog/Conv),
@@ -826,7 +826,7 @@ impl Prefs {
     }
 
     /// Serialize the live preferences into an order-stable `Toml::Table` ready for
-    /// `rae_toml::to_string`. The schema is flat (no headers), human-editable.
+    /// `ath_toml::to_string`. The schema is flat (no headers), human-editable.
     fn to_toml(&self) -> Toml {
         let mut table: Vec<(String, Toml)> = Vec::new();
         table.push((
@@ -894,8 +894,8 @@ impl CfgPath {
 fn prefs_dir() -> CfgPath {
     let mut p = CfgPath::new();
     let mut info = [0u8; 96];
-    if raekit::sys::session_info(&mut info).is_some() {
-        if let Some(home) = raekit::sys::session_home_from(&info) {
+    if athkit::sys::session_info(&mut info).is_some() {
+        if let Some(home) = athkit::sys::session_home_from(&info) {
             p.set(home);
             p.push_component(".config");
             return p;
@@ -906,12 +906,12 @@ fn prefs_dir() -> CfgPath {
 }
 
 /// Load preferences from `<home>/.config/calculator.toml`. On ANY failure — file
-/// absent, unreadable, not UTF-8, or a `rae_toml::parse` error — returns the typed
+/// absent, unreadable, not UTF-8, or a `ath_toml::parse` error — returns the typed
 /// defaults. Never panics, never blocks the app from launching.
 fn load_prefs() -> Prefs {
     let mut path = prefs_dir();
     path.push_component("calculator.toml");
-    let fd = raekit::sys::open(path.as_str(), 0);
+    let fd = athkit::sys::open(path.as_str(), 0);
     if fd == u64::MAX {
         return Prefs::defaults();
     }
@@ -922,34 +922,34 @@ fn load_prefs() -> Prefs {
         if data.len() > 64 * 1024 {
             break;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     let text = match core::str::from_utf8(&data) {
         Ok(s) => s,
         Err(_) => return Prefs::defaults(),
     };
-    match rae_toml::parse(text) {
+    match ath_toml::parse(text) {
         Ok(t) => Prefs::from_toml(&t),
         Err(_) => Prefs::defaults(),
     }
 }
 
 /// Persist `prefs` to `<home>/.config/calculator.toml` (best effort). Creates the
-/// `.config` directory if missing, serializes via `rae_toml::to_string`, and
+/// `.config` directory if missing, serializes via `ath_toml::to_string`, and
 /// writes O_CREAT|O_TRUNC. A failure is silent — the app keeps running.
 fn save_prefs(prefs: &Prefs) {
     let dir = prefs_dir();
-    let _ = raekit::sys::mkdir(dir.as_str());
+    let _ = athkit::sys::mkdir(dir.as_str());
     let mut path = dir;
     path.push_component("calculator.toml");
-    let text = rae_toml::to_string(&prefs.to_toml());
+    let text = ath_toml::to_string(&prefs.to_toml());
     // O_WRONLY | O_CREAT | O_TRUNC = 0x0241.
-    let fd = raekit::sys::open(path.as_str(), 0x0241);
+    let fd = athkit::sys::open(path.as_str(), 0x0241);
     if fd == u64::MAX {
         return;
     }
@@ -957,13 +957,13 @@ fn save_prefs(prefs: &Prefs) {
     let mut off = 0usize;
     while off < bytes.len() {
         let end = (off + 4096).min(bytes.len());
-        let n = raekit::sys::write(fd, &bytes[off..end]) as usize;
+        let n = athkit::sys::write(fd, &bytes[off..end]) as usize;
         if n == 0 {
             break;
         }
         off += n;
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
 }
 
 struct App {
@@ -1114,7 +1114,7 @@ impl App {
         let res = if self.degrees {
             eval_degrees(s)
         } else {
-            rae_calc::eval(s)
+            ath_calc::eval(s)
         };
         match res {
             Ok(v) => {
@@ -1132,7 +1132,7 @@ impl App {
         if s.is_empty() {
             return;
         }
-        match rae_calc::eval_int(s) {
+        match ath_calc::eval_int(s) {
             Ok(v) => {
                 self.prog_value = v;
                 let mut out = [0u8; EXPR_CAP];
@@ -1380,9 +1380,9 @@ impl App {
         canvas.fill_rect(0, 0, WIN_W, 28, TITLE_BG);
         canvas.draw_text_aa(
             8,
-            ((28 - rae_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
+            ((28 - ath_tokens::TYPE_SUBTITLE.line_height as usize) / 2) as i32,
             "Calculator",
-            rae_tokens::TYPE_SUBTITLE,
+            ath_tokens::TYPE_SUBTITLE,
             DARK.text_secondary,
             FontFamily::Sans,
         );
@@ -1409,9 +1409,9 @@ impl App {
     fn draw_element(&self, canvas: &mut Canvas, e: &Element) {
         let is_tab = matches!(e.action, Action::SwitchMode(_));
         let font = if is_tab {
-            rae_tokens::TYPE_CAPTION
+            ath_tokens::TYPE_CAPTION
         } else {
-            rae_tokens::TYPE_BODY
+            ath_tokens::TYPE_BODY
         };
         let active_tab = matches!(e.action, Action::SwitchMode(m) if m == self.mode);
         let fg = if is_tab && !active_tab {
@@ -1428,15 +1428,15 @@ impl App {
 
     fn render_display_standard(&self, canvas: &mut Canvas) {
         let txt = self.calc.display();
-        let disp_w = canvas.measure_text_aa(txt, rae_tokens::TYPE_TITLE, FontFamily::Sans);
+        let disp_w = canvas.measure_text_aa(txt, ath_tokens::TYPE_TITLE, FontFamily::Sans);
         let text_x = (WIN_W - 20) as i32 - disp_w;
         let text_y =
-            (DISPLAY_Y + (DISPLAY_H - rae_tokens::TYPE_TITLE.line_height as usize) / 2) as i32;
+            (DISPLAY_Y + (DISPLAY_H - ath_tokens::TYPE_TITLE.line_height as usize) / 2) as i32;
         canvas.draw_text_aa(
             text_x,
             text_y,
             txt,
-            rae_tokens::TYPE_TITLE,
+            ath_tokens::TYPE_TITLE,
             TEXT_FG,
             FontFamily::Sans,
         );
@@ -1445,22 +1445,22 @@ impl App {
     fn render_display_expr(&self, canvas: &mut Canvas, e: &ExprBuf) {
         // Top: the editable expression (secondary). Bottom: the result (primary).
         let expr = e.as_str();
-        let ew = canvas.measure_text_aa(expr, rae_tokens::TYPE_BODY, FontFamily::Sans);
+        let ew = canvas.measure_text_aa(expr, ath_tokens::TYPE_BODY, FontFamily::Sans);
         canvas.draw_text_aa(
             (WIN_W - 20) as i32 - ew,
             (DISPLAY_Y + 8) as i32,
             expr,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             DARK.text_secondary,
             FontFamily::Sans,
         );
         let res = e.result_str();
-        let rw = canvas.measure_text_aa(res, rae_tokens::TYPE_TITLE, FontFamily::Sans);
+        let rw = canvas.measure_text_aa(res, ath_tokens::TYPE_TITLE, FontFamily::Sans);
         canvas.draw_text_aa(
             (WIN_W - 20) as i32 - rw,
-            (DISPLAY_Y + DISPLAY_H - rae_tokens::TYPE_TITLE.line_height as usize - 8) as i32,
+            (DISPLAY_Y + DISPLAY_H - ath_tokens::TYPE_TITLE.line_height as usize - 8) as i32,
             res,
-            rae_tokens::TYPE_TITLE,
+            ath_tokens::TYPE_TITLE,
             TEXT_FG,
             FontFamily::Sans,
         );
@@ -1469,23 +1469,23 @@ impl App {
     fn render_display_programmer(&self, canvas: &mut Canvas) {
         // Editable expression (right-aligned, top).
         let expr = self.prog.as_str();
-        let ew = canvas.measure_text_aa(expr, rae_tokens::TYPE_BODY, FontFamily::Sans);
+        let ew = canvas.measure_text_aa(expr, ath_tokens::TYPE_BODY, FontFamily::Sans);
         canvas.draw_text_aa(
             (WIN_W - 20) as i32 - ew,
             (DISPLAY_Y + 4) as i32,
             expr,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             DARK.text_secondary,
             FontFamily::Sans,
         );
         if self.prog.error {
             let res = "Error";
-            let rw = canvas.measure_text_aa(res, rae_tokens::TYPE_SUBTITLE, FontFamily::Sans);
+            let rw = canvas.measure_text_aa(res, ath_tokens::TYPE_SUBTITLE, FontFamily::Sans);
             canvas.draw_text_aa(
                 (WIN_W - 20) as i32 - rw,
                 (DISPLAY_Y + 24) as i32,
                 res,
-                rae_tokens::TYPE_SUBTITLE,
+                ath_tokens::TYPE_SUBTITLE,
                 DARK.state_danger,
                 FontFamily::Sans,
             );
@@ -1513,17 +1513,17 @@ impl App {
                 14,
                 y,
                 lbl,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 DARK.text_secondary,
                 FontFamily::Sans,
             );
             let val = core::str::from_utf8(&out[..n]).unwrap_or("0");
-            let vw = canvas.measure_text_aa(val, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+            let vw = canvas.measure_text_aa(val, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
             canvas.draw_text_aa(
                 (WIN_W - 20) as i32 - vw,
                 y,
                 val,
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 TEXT_FG,
                 FontFamily::Sans,
             );
@@ -1541,7 +1541,7 @@ impl App {
             14,
             (DISPLAY_Y + 6) as i32,
             cat.name,
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             DARK.text_secondary,
             FontFamily::Sans,
         );
@@ -1569,12 +1569,12 @@ impl App {
             }
         }
         let in_str = core::str::from_utf8(&line[..n]).unwrap_or("0");
-        let iw = canvas.measure_text_aa(in_str, rae_tokens::TYPE_SUBTITLE, FontFamily::Sans);
+        let iw = canvas.measure_text_aa(in_str, ath_tokens::TYPE_SUBTITLE, FontFamily::Sans);
         canvas.draw_text_aa(
             (WIN_W - 20) as i32 - iw,
             (DISPLAY_Y + 24) as i32,
             in_str,
-            rae_tokens::TYPE_SUBTITLE,
+            ath_tokens::TYPE_SUBTITLE,
             DARK.text_secondary,
             FontFamily::Sans,
         );
@@ -1601,12 +1601,12 @@ impl App {
             }
         }
         let res_str = core::str::from_utf8(&res_line[..rl]).unwrap_or("0");
-        let rw = canvas.measure_text_aa(res_str, rae_tokens::TYPE_TITLE, FontFamily::Sans);
+        let rw = canvas.measure_text_aa(res_str, ath_tokens::TYPE_TITLE, FontFamily::Sans);
         canvas.draw_text_aa(
             (WIN_W - 20) as i32 - rw,
-            (DISPLAY_Y + DISPLAY_H - rae_tokens::TYPE_TITLE.line_height as usize - 6) as i32,
+            (DISPLAY_Y + DISPLAY_H - ath_tokens::TYPE_TITLE.line_height as usize - 6) as i32,
             res_str,
-            rae_tokens::TYPE_TITLE,
+            ath_tokens::TYPE_TITLE,
             TEXT_FG,
             FontFamily::Sans,
         );
@@ -1623,20 +1623,20 @@ impl App {
             // The small caption (left of the value, after the `<` arrow).
             canvas.draw_text_aa(
                 (10 + CONV_ARROW_W + 6) as i32,
-                (y + (CONV_STEP_H - rae_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
+                (y + (CONV_STEP_H - ath_tokens::TYPE_CAPTION.line_height as usize) / 2) as i32,
                 captions[i],
-                rae_tokens::TYPE_CAPTION,
+                ath_tokens::TYPE_CAPTION,
                 DARK.text_secondary,
                 FontFamily::Sans,
             );
             // The selected value, centered in the row.
-            let lw = canvas.measure_text_aa(labels[i], rae_tokens::TYPE_BODY, FontFamily::Sans);
+            let lw = canvas.measure_text_aa(labels[i], ath_tokens::TYPE_BODY, FontFamily::Sans);
             let lx = (WIN_W as i32 - lw) / 2;
             canvas.draw_text_aa(
                 lx,
-                (y + (CONV_STEP_H - rae_tokens::TYPE_BODY.line_height as usize) / 2) as i32,
+                (y + (CONV_STEP_H - ath_tokens::TYPE_BODY.line_height as usize) / 2) as i32,
                 labels[i],
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 TEXT_FG,
                 FontFamily::Sans,
             );
@@ -1815,7 +1815,7 @@ impl App {
 /// trig" by substituting `sin(x)` → `sin((x)*0.0174532925199433)` for the three
 /// direct trig functions. Allocation-free: builds into a fixed scratch buffer;
 /// on overflow falls back to a plain radians eval (never panics).
-fn eval_degrees(s: &str) -> Result<f64, rae_calc::CalcError> {
+fn eval_degrees(s: &str) -> Result<f64, ath_calc::CalcError> {
     const D2R: &str = "*0.017453292519943295";
     let mut out = [0u8; 256];
     let mut n = 0usize;
@@ -1874,10 +1874,10 @@ fn eval_degrees(s: &str) -> Result<f64, rae_calc::CalcError> {
             i += 1;
         }
         if !ok {
-            return rae_calc::eval(s); // overflow fallback (radians)
+            return ath_calc::eval(s); // overflow fallback (radians)
         }
     }
-    rae_calc::eval(core::str::from_utf8(&out[..n]).unwrap_or(s))
+    ath_calc::eval(core::str::from_utf8(&out[..n]).unwrap_or(s))
 }
 
 fn scancode_to_ascii(code: u8, shift: bool) -> Option<u8> {
@@ -1916,33 +1916,33 @@ fn scancode_to_ascii(code: u8, shift: bool) -> Option<u8> {
 
 // ── Design proof (R10: a fail-able check the token wiring is correct) ─────
 //
-// `cargo test` can't host a libtest harness in this `#![no_main]` bin (raekit's
+// `cargo test` can't host a libtest harness in this `#![no_main]` bin (athkit's
 // `#[panic_handler]` + std's = duplicate lang item). This pure proof is the
-// fail-able authority; the ramp is host-KAT'd by `cargo test -p rae_tokens` and
-// the MATH engine (Standard, Scientific, Programmer) by `cargo test -p rae_calc`.
+// fail-able authority; the ramp is host-KAT'd by `cargo test -p ath_tokens` and
+// the MATH engine (Standard, Scientific, Programmer) by `cargo test -p ath_calc`.
 
 /// True iff Calculator's chrome is wired to the shared design tokens AND all
-/// three math modes round-trip through `rae_calc`.
+/// three math modes round-trip through `ath_calc`.
 #[must_use]
 pub fn design_proof() -> bool {
-    let ramp = rae_tokens::derive_accent(theme_seed(), &DARK);
+    let ramp = ath_tokens::derive_accent(theme_seed(), &DARK);
     let chrome = btn_op() == ramp.base
         && BG == DARK.bg_raised
         && DISPLAY_BG == DARK.bg_base
         && BTN_BG == DARK.bg_elevated
         && BTN_EQ == DARK.state_ok
         && TEXT_FG == DARK.text_primary
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
     // Standard (float), Scientific (trig), Programmer (bitwise) all wired in.
-    let math = rae_calc::eval("2+3*4") == Ok(14.0)
-        && rae_calc::eval("10/4") == Ok(2.5)
-        && rae_calc::eval("sin(0)") == Ok(0.0)
-        && rae_calc::eval_int("0xFF & 0x0F") == Ok(15);
+    let math = ath_calc::eval("2+3*4") == Ok(14.0)
+        && ath_calc::eval("10/4") == Ok(2.5)
+        && ath_calc::eval("sin(0)") == Ok(0.0)
+        && ath_calc::eval_int("0xFF & 0x0F") == Ok(15);
     chrome && math && hit_test_proof() && convert_proof() && prefs_round_trip_ok()
 }
 
 /// Prove the Calculator PREFS SCHEMA: a known non-default `Prefs` serialized via
-/// `rae_toml` then re-parsed restores every field exactly (active mode token, the
+/// `ath_toml` then re-parsed restores every field exactly (active mode token, the
 /// deg/rad toggle, the Converter category), AND a corrupt / missing-key document
 /// resolves to the typed defaults (NOT a panic, NOT a wrong value). Also proves
 /// the mode + converter-category token round-trips and that an UNKNOWN mode token
@@ -1955,8 +1955,8 @@ fn prefs_round_trip_ok() -> bool {
         degrees: true,
         conv_category: String::from("Temp"),
     };
-    let text = rae_toml::to_string(&p.to_toml());
-    let parsed = match rae_toml::parse(&text) {
+    let text = ath_toml::to_string(&p.to_toml());
+    let parsed = match ath_toml::parse(&text) {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -1987,7 +1987,7 @@ fn prefs_round_trip_ok() -> bool {
 
     // (c) A corrupt document → typed defaults (parse FAILS, we don't panic).
     let corrupt = "mode = = oops\n[unterminated\n";
-    let d = match rae_toml::parse(corrupt) {
+    let d = match ath_toml::parse(corrupt) {
         Ok(t) => Prefs::from_toml(&t), // shouldn't reach here for this input
         Err(_) => Prefs::defaults(),
     };
@@ -1996,7 +1996,7 @@ fn prefs_round_trip_ok() -> bool {
     }
 
     // (d) A well-formed doc MISSING every prefs key → typed defaults per field.
-    let empty = match rae_toml::parse("unrelated = 1\n") {
+    let empty = match ath_toml::parse("unrelated = 1\n") {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -2008,7 +2008,7 @@ fn prefs_round_trip_ok() -> bool {
     // (e) A wrong-TYPED field (degrees as a string) is ignored → default; an
     // unknown converter category name is rejected → default category; a valid
     // mode token still parses.
-    let wrong = match rae_toml::parse(
+    let wrong = match ath_toml::parse(
         "mode = \"scientific\"\ndegrees = \"yes\"\nconv_category = \"NoSuchCat\"\n",
     ) {
         Ok(t) => t,
@@ -2175,20 +2175,20 @@ fn hit_test_proof() -> bool {
 
 /// A cheap runtime gate that the real math engine is wired in (precedence +
 /// float division — the integer-only bug this app fixes). Returns false if the
-/// linked `rae_calc` ever regresses; the authoritative proof is the host KATs.
+/// linked `ath_calc` ever regresses; the authoritative proof is the host KATs.
 #[must_use]
 pub fn eval_proof() -> bool {
-    rae_calc::eval("2+3*4") == Ok(14.0) && rae_calc::eval("10/4") == Ok(2.5)
+    ath_calc::eval("2+3*4") == Ok(14.0) && ath_calc::eval("10/4") == Ok(2.5)
 }
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     if !design_proof() || !eval_proof() {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
 
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
@@ -2196,7 +2196,7 @@ pub extern "C" fn _start() -> ! {
     let mut app = App::new();
 
     app.render(&mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
 
     // Live left-button state, tracked across frames for click-EDGE detection
     // (fire once on was-up -> now-down, not every frame the button is held).
@@ -2210,7 +2210,7 @@ pub extern "C" fn _start() -> ! {
         let mut mouse_activity = false;
         let mut left_down = left_was_down;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -2220,27 +2220,27 @@ pub extern "C" fn _start() -> ! {
         if mouse_activity || left_down != left_was_down {
             // Left-click edge: was up, now down.
             if left_down && !left_was_down {
-                let (cx, cy, _btn) = raekit::sys::cursor_pos();
+                let (cx, cy, _btn) = athkit::sys::cursor_pos();
                 // Subtract the LIVE window origin (not the stale present-time
                 // PRESENT_X/Y) so clicks land correctly after the window manager
                 // moves the window (Overview / Spaces / tiling). Falls back to the
                 // present origin if the surface isn't found. Saturating-sub keeps a
                 // cursor above/left of the window from underflowing.
-                let (ox, oy) = raekit::sys::surface_origin(sid)
+                let (ox, oy) = athkit::sys::surface_origin(sid)
                     .unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
                 let lx = (cx as i32).saturating_sub(ox as i32);
                 let ly = (cy as i32).saturating_sub(oy as i32);
                 if app.on_click(lx, ly) {
                     app.render(&mut canvas);
-                    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 }
             }
             left_was_down = left_down;
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
 
@@ -2263,28 +2263,28 @@ pub extern "C" fn _start() -> ! {
                 app.mode = Mode::Standard;
                 app.persist();
                 app.render(&mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 continue;
             }
             0x3C => {
                 app.mode = Mode::Scientific;
                 app.persist();
                 app.render(&mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 continue;
             }
             0x3D => {
                 app.mode = Mode::Programmer;
                 app.persist();
                 app.render(&mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 continue;
             }
             0x3E => {
                 app.mode = Mode::Converter;
                 app.persist();
                 app.render(&mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                 continue;
             }
             _ => {}
@@ -2295,6 +2295,6 @@ pub extern "C" fn _start() -> ! {
         }
 
         app.render(&mut canvas);
-        raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+        athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
     }
 }

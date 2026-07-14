@@ -36,14 +36,14 @@ submit pipeline (compositor → wgpu/Vulkan-equivalent → games); the APU then 
 The multi-week investment in Strategy-B is **largely GPU-family-agnostic** and comes
 along for free:
 
-- **The LinuxKPI shim** (`components/raeen_linuxkpi/`, ~1400+ C-ABI symbols; the real
+- **The LinuxKPI shim** (`components/ath_linuxkpi/`, ~1400+ C-ABI symbols; the real
   upstream `amdgpu` compiles + links against it) — the genuinely hard, done part.
 - **The reloc fix** (`c0e350d`: `-fvisibility=hidden` + `-Bsymbolic`) — link-level,
   totally family-independent. Free.
 - **`SYS_LINUXKPI_MAP_PHYS` (144)** and the device-access facade (PCI cfg / `ioremap`
   / `dma_alloc_coherent` / BAR claim) — all family-independent.
 - **The daemon entry** (`amdgpud` → `rae_amdgpu_device_init` → real `amdgpu_device_init`)
-  and the `RAEEN_AMDGPU_REAL=1` build path in `xtask`.
+  and the `ATHENA_AMDGPU_REAL=1` build path in `xtask`.
 - **The proof loop** — VFIO passthrough capture + persistent serial (works today), and
   on a discrete card it becomes *repeatable* (clean FLR).
 
@@ -136,8 +136,8 @@ evidence — same bar as everywhere else.
 ## 7. First step when a card is in hand
 
 1. Seat the RX 6600 in a tower; boot Arch; confirm `lspci` shows the Navi 23 + set up
-   the VFIO loop (mirror `scripts/athena-*` / `~/raeen-vm/run-vfio-persist.sh`).
-2. Do **R1** (swap the IP `.c` set in `m4-link.sh`) + `FREESTANDING=1 RAEEN_AMDGPU_REAL=1`
+   the VFIO loop (mirror `scripts/athena-*` / `~/athena-vm/run-vfio-persist.sh`).
+2. Do **R1** (swap the IP `.c` set in `m4-link.sh`) + `FREESTANDING=1 ATHENA_AMDGPU_REAL=1`
    build; run the daemon; iterate the per-file shim delta to a clean link.
 3. Boot it → read the serial log → chase `amdgpu_device_init` to **first light (R3)**.
 

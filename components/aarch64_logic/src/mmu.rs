@@ -238,7 +238,7 @@ pub mod mair {
 
     /// AthenaOS's canonical MAIR for QEMU-virt bring-up:
     /// index 0 = Normal WB (RAM), index 1 = Device-nGnRnE (MMIO), rest unused.
-    pub const fn raeen_default() -> u64 {
+    pub const fn athena_default() -> u64 {
         build([NORMAL_WB, DEVICE_NGNRNE, 0, 0, 0, 0, 0, 0])
     }
 }
@@ -428,10 +428,10 @@ mod tests {
     #[test]
     fn mair_default_known_value() {
         // index0 Normal-WB(0xFF), index1 Device-nGnRnE(0x00).
-        assert_eq!(mair::raeen_default(), 0x0000_0000_0000_00FF);
+        assert_eq!(mair::athena_default(), 0x0000_0000_0000_00FF);
         // FAIL-able: putting device at index0 would change the low byte.
         let swapped = mair::build([mair::DEVICE_NGNRNE, mair::NORMAL_WB, 0, 0, 0, 0, 0, 0]);
-        assert_ne!(mair::raeen_default(), swapped);
+        assert_ne!(mair::athena_default(), swapped);
     }
 
     #[test]

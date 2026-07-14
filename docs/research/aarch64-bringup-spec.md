@@ -31,7 +31,7 @@ qemu-system-aarch64 -M virt -cpu cortex-a72 -smp 4 -m 512 \
   -kernel target/aarch64-unknown-none-softfloat/release/kernel \
   ... (xtask --target aarch64-... --ci adds the disk/exit-on-marker plumbing)
 ```
-exits 0, and `$env:TEMP\raeen-serial.log` contains, with NO `[PANIC]`:
+exits 0, and `$env:TEMP\athena-serial.log` contains, with NO `[PANIC]`:
 ```
 [arch] aarch64 cortex-a72 (ptr=64, page=4096) HAL online — EL1
 [mmu] TTBR1_EL1 kernel root active (4KB granule, 48-bit VA)
@@ -58,12 +58,12 @@ follow-on, NOT part of this spec.
 - **Slice 0 landed** (`kernel/src/arch/mod.rs`, `arch/x86_64/mod.rs`, commit 5079a90): the
   `#[cfg(target_arch=…)]` re-export skeleton + a working x86_64 backend for **three** seams —
   arch identity, CPU control, port I/O — plus the R10 trio (`arch::init()` @ `main.rs:417`,
-  `arch::run_boot_smoketest()` @ `main.rs:418`, `/proc/raeen/arch` via `dump_text()`). Status: `[x]`.
+  `arch::run_boot_smoketest()` @ `main.rs:418`, `/proc/athena/arch` via `dump_text()`). Status: `[x]`.
 - **`compile_error!` guard is live** (`arch/mod.rs:47`): any non-x86_64 `target_arch` fails loudly
   at the boundary. This is the slot the aarch64 backend fills.
 - **ADR 0007 accepted** (`docs/decisions/0007-multi-arch-strategy.md`): bring-up order
   x86_64→aarch64→i686; `arch::` is monomorphized free-fns/assoc-types (NO `dyn`); the user/syscall
-  ABI stays arch-neutral (NO `rae_abi`/`ABI_VERSION` change); the heavy Slice-0b refactor is its
+  ABI stays arch-neutral (NO `ath_abi`/`ABI_VERSION` change); the heavy Slice-0b refactor is its
   own serialized round.
 - **The seam taxonomy + per-arch acceptance table already exist** in
   `docs/research/multi-arch-abstraction.md` §"The seam list". **This spec does NOT re-derive it** —
@@ -213,20 +213,20 @@ the aarch64 column exists, then proves aarch64 incrementally. Slices 0b and 1 ar
 prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new aarch64 work.
 
 ### Slice 0b — relocate seams behind `arch::` (x86 still the only impl) — **PREREQUISITE**
-- **Owner:** raeen-kernel. **Files:** move `{gdt,interrupts,apic,smp,context,msr,cpu_features,
+- **Owner:** athena-kernel. **Files:** move `{gdt,interrupts,apic,smp,context,msr,cpu_features,
   hpet,timers}.rs` + the paging half of `memory.rs` into `kernel/src/arch/x86_64/`; widen
   `arch/x86_64/mod.rs` + `arch/mod.rs` to the full seam contract (mmu/irq/time/smp/context/
   syscall_entry/percpu/firmware), re-export so `crate::apic::x` callers keep working via `pub use`.
   **No logic edits.** Defer the MM newtype change to Slice 1.
-- **arch:: surface added:** the full seam fn-signature set (the `NEEDS-INTERFACE` raeen-architect
-  owns as an internal contract doc — NOT `rae_abi`, NO `ABI_VERSION` bump).
+- **arch:: surface added:** the full seam fn-signature set (the `NEEDS-INTERFACE` athena-architect
+  owns as an internal contract doc — NOT `ath_abi`, NO `ABI_VERSION` bump).
 - **Proof line:** UNCHANGED x86 boot — `[ OS ] System successfully booted.` + `boot health: 6/6
   critical PASS -> HEALTHY`, no `[PANIC]`, `[BOOT-BENCH]` not regressed. **≥5 boots at
-  `RAEEN_SMP=1` and `=2`** (CLAUDE.md §17 — it touches the SMP path).
+  `ATHENA_SMP=1` and `=2`** (CLAUDE.md §17 — it touches the SMP path).
 - **Verifiable immediately** as "still 7/7 on x86_64." Pure-refactor risk only.
 
 ### Slice 1 — arch-neutral MM newtypes (`PhysAddr/VirtAddr/Frame/Page/AddressSpace`) — **PREREQUISITE**
-- **Owner:** raeen-kernel. **Files:** `arch/x86_64/mmu.rs` (x86 impls wrapping the `x86_64`
+- **Owner:** athena-kernel. **Files:** `arch/x86_64/mmu.rs` (x86 impls wrapping the `x86_64`
   crate), `memory.rs` + the ~31 `use x86_64` callers swap to `arch::mmu::*`. Kills the 385
   `x86_64::` leaks into shared code — the single highest-fan-out aarch64 de-risk.
 - **Proof line:** same x86 baseline (`System successfully booted.` + `6/6 critical PASS`). Host-KAT
@@ -235,7 +235,7 @@ prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new
   x86 assumptions.
 
 ### Slice A2 — aarch64 target triple + xtask build path (compiles, doesn't boot)
-- **Owner:** raeen-kernel. **Files:** `rust-toolchain.toml` (+`aarch64-unknown-none-softfloat`),
+- **Owner:** athena-kernel. **Files:** `rust-toolchain.toml` (+`aarch64-unknown-none-softfloat`),
   `.cargo/config.toml` (per-target rustflags block), `xtask/src/main.rs` (`--target <triple>`
   plumbing, default `x86_64-unknown-none`), `arch/aarch64/mod.rs` (NEW — identity consts +
   `unimplemented!`-free *compiling* stubs that `panic!("aarch64 <seam> not yet up")` so it links).
@@ -248,7 +248,7 @@ prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new
   later refinement, not a boot blocker.
 
 ### Slice A3 — boot entry + EL1 + UART (first serial byte on aarch64)
-- **Owner:** raeen-arch (core) + raeen-architect (the `BootContext` shape, if not done in 0b).
+- **Owner:** athena-arch (core) + athena-architect (the `BootContext` shape, if not done in 0b).
   **Files:** `arch/aarch64/boot.rs` (the A64 entry stub: image header, read `CurrentEL`, drop
   EL2→EL1 *if* needed, set up `SP_EL1`, stash `x0`=DTB, clear BSS, call shared init),
   `arch/aarch64/io.rs` (PL011 UART @ `0x0900_0000`: write `UARTDR`, poll `UARTFR.TXFF`).
@@ -260,7 +260,7 @@ prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new
   seam — that's expected; the line printing IS the proof.)
 
 ### Slice A4 — MMU + exception vectors
-- **Owner:** raeen-arch. **Files:** `arch/aarch64/mmu.rs` (build identity + higher-half tables,
+- **Owner:** athena-arch. **Files:** `arch/aarch64/mmu.rs` (build identity + higher-half tables,
   program `MAIR_EL1`/`TCR_EL1`/`TTBR0_EL1`/`TTBR1_EL1`, `sctlr_el1.M=1`, `isb`),
   `arch/aarch64/irq.rs` (the 16-entry `VBAR_EL1` table + Sync handler decoding `ESR_EL1.EC`,
   reading `FAR_EL1`).
@@ -274,7 +274,7 @@ prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new
   FAIL-able smoketest that maps, reads back, and checks.
 
 ### Slice A5 — generic timer + GIC (interrupts live)
-- **Owner:** raeen-arch. **Files:** `arch/aarch64/time.rs` (CNTFRQ/CNTPCT/CNTP_TVAL/CNTP_CTL),
+- **Owner:** athena-arch. **Files:** `arch/aarch64/time.rs` (CNTFRQ/CNTPCT/CNTP_TVAL/CNTP_CTL),
   `arch/aarch64/irq.rs` (GICv2 dist+cpu init: `GICD_CTLR`, `GICC_CTLR`, `GICC_PMR`, `ISENABLER`;
   `GICC_IAR`/`GICC_EOIR` ack/eoi; `GICD_SGIR` self-IPI).
 - **arch:: surface:** `arch::time::{now_ns, set_oneshot, calibrate, tick_hz}` +
@@ -284,7 +284,7 @@ prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new
   drives the scheduler tick; a self-SGI delivered+acked is the `arch-smoke` IPI assertion.
 
 ### Slice A6 — PSCI SMP (secondary cores)
-- **Owner:** raeen-arch. **Files:** `arch/aarch64/smp.rs` (PSCI `CPU_ON` via HVC/SMC; secondary
+- **Owner:** athena-arch. **Files:** `arch/aarch64/smp.rs` (PSCI `CPU_ON` via HVC/SMC; secondary
   entry stub sets up its own `SP_EL1`/`TTBR`/`VBAR`/GIC CPU-iface; `this_cpu_id` from `MPIDR_EL1`).
 - **arch:: surface:** `arch::smp::{cpu_count, start_ap(id, entry), this_cpu_id}`.
 - **Keystone:** each secondary's per-CPU syscall/exception stack must be set before it can block
@@ -293,7 +293,7 @@ prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new
 - **Proof line:** `[smp] PSCI CPU_ON: 4/4 cores online`. Run ≥5 boots (SMP path; CLAUDE.md §17).
 
 ### Slice A7 — boot marker + `[arch-smoke] aarch64 -> PASS`
-- **Owner:** raeen-arch. **Files:** wire the aarch64 backend into `arch::run_boot_smoketest()` so
+- **Owner:** athena-arch. **Files:** wire the aarch64 backend into `arch::run_boot_smoketest()` so
   the four shared assertions (MMU round-trip, self-IPI ack, clock advance, context-switch reg
   preservation) execute on aarch64; ensure the shared `kernel_main` tiers that are arch-neutral
   reach `[ OS ] System successfully booted.` under QEMU virt (tiers that need ACPI/x86 firmware
@@ -306,7 +306,7 @@ prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new
   under `qemu-system-aarch64 -M virt -cpu cortex-a72 -smp 4`, no `[PANIC]`, xtask `--ci` exit 0.
 
 ### Slice A8 — DeviceTree firmware discovery (replaces ACPI)
-- **Owner:** raeen-arch. **Files:** `arch/aarch64/firmware.rs` (vendor `fdt` crate; parse the
+- **Owner:** athena-arch. **Files:** `arch/aarch64/firmware.rs` (vendor `fdt` crate; parse the
   DTB at `x0` → CPU count, GIC base/version, UART base, memory size, PSCI method). Replaces the
   static QEMU-virt memmap from A3 with discovered values; makes the backend work on non-virt
   boards. **This can land after A7** (boot works on the hardcoded virt map first).
@@ -315,7 +315,7 @@ prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new
   prior slices' hardcoded bases now match discovered values (a FAIL-able cross-check).
 
 ### Slice A9 — context switch + svc syscall entry (userspace on aarch64)
-- **Owner:** raeen-arch. **Files:** `arch/aarch64/context.rs` (callee-saved x19–x30 + sp + TTBR0
+- **Owner:** athena-arch. **Files:** `arch/aarch64/context.rs` (callee-saved x19–x30 + sp + TTBR0
   swap), `arch/aarch64/syscall_entry.rs` (`svc #0` → `ESR_EL1.EC==0x15` → marshal x0–x7,x8 →
   shared `syscall::dispatch`). Per-CPU base via `TPIDR_EL1`.
 - **arch:: surface:** `arch::context::{switch, new_kernel_thread, new_user_thread, TaskContext}`,
@@ -354,7 +354,7 @@ prerequisites (x86-only refactor) restated for completeness; A2–A9 are the new
 scheduler policy + EDF/SCHED_BODY, the MM allocator *logic* (buddy/slab/heap — only the page-table
 *backend* is arch), IPC, VFS, AthFS, **every syscall handler** (the 3296-line `syscall::dispatch`),
 capability/AthGuard, the entire `components/*` Rae* userspace stack, AthNet above the NIC, crypto,
-the procfs surface. The user/syscall **ABI is arch-neutral** — NO `rae_abi`/`ABI_VERSION` change.
+the procfs surface. The user/syscall **ABI is arch-neutral** — NO `ath_abi`/`ABI_VERSION` change.
 
 **Must be per-arch (the HAL only):** boot/early-init, CPU feature init, MMU/paging backend,
 interrupt controller, timer, SMP bring-up, context switch, syscall entry, per-CPU base,
@@ -402,7 +402,7 @@ port-vs-MMIO I/O, firmware discovery (ACPI vs DTB).
 ## Acceptance criteria (the exact proof)
 
 - **Slices 0b/1 (x86 unchanged):** `[ OS ] System successfully booted.` + `boot health: 6/6
-  critical PASS -> HEALTHY`, no `[PANIC]`, `[BOOT-BENCH]` not regressed, ≥5 boots `RAEEN_SMP=1`/`=2`.
+  critical PASS -> HEALTHY`, no `[PANIC]`, `[BOOT-BENCH]` not regressed, ≥5 boots `ATHENA_SMP=1`/`=2`.
 - **Slice A2:** `cargo build -p kernel --target aarch64-unknown-none-softfloat` exits 0.
 - **Slices A3–A7 (the `[x]` aarch64 boot gate):** under `qemu-system-aarch64 -M virt -cpu
   cortex-a72 -smp 4`, the boot log shows, with no `[PANIC]`:
@@ -415,7 +415,7 @@ port-vs-MMIO I/O, firmware discovery (ACPI vs DTB).
   [arch-smoke] aarch64 -> PASS
   [ OS ] System successfully booted.
   ```
-- `/proc/raeen/arch` on aarch64 MUST report: `arch=aarch64`, `interrupt_controller=GICv2`,
+- `/proc/athena/arch` on aarch64 MUST report: `arch=aarch64`, `interrupt_controller=GICv2`,
   `timer=ARM generic timer`, CPUs online, page-table levels (4), syscall-entry mechanism (`svc`).
 - `arch::run_boot_smoketest()` on aarch64 MUST be able to print FAIL (MMU map mismatch, SGI not
   acked, `CNTPCT` not advancing, or context-switch reg corruption).
@@ -424,17 +424,17 @@ port-vs-MMIO I/O, firmware discovery (ACPI vs DTB).
 ## Handoff — the named first slice
 
 - **Execute FIRST: Slice 0b (relocate seams behind `arch::`, x86 still the only impl).**
-  - **Owner:** raeen-kernel (core); **raeen-architect** signs off the widened seam contract as the
-    internal `arch::` interface (NOT `rae_abi` — confirm `ABI_VERSION` unchanged).
+  - **Owner:** athena-kernel (core); **athena-architect** signs off the widened seam contract as the
+    internal `arch::` interface (NOT `ath_abi` — confirm `ABI_VERSION` unchanged).
   - **Why first / why immediately verifiable:** it's a pure, fully-QEMU-gated refactor — the proof
     is "x86_64 STILL 7/7 green." It needs no aarch64 code, no new hardware understanding, and it is
     the precondition for *every* aarch64 slice (the seam contract must exist before a second backend
     can fill it). It de-risks the whole epic at the lowest possible cost.
   - **Boot-log proof line:** `[ OS ] System successfully booted.` + `boot health: 6/6 critical
-    PASS -> HEALTHY`, no `[PANIC]`, `[BOOT-BENCH]` not regressed, ≥5 boots at `RAEEN_SMP=1` and `=2`.
-- **Then Slice 1** (arch-neutral MM newtypes, raeen-kernel) — same x86 baseline, host-KAT the
+    PASS -> HEALTHY`, no `[PANIC]`, `[BOOT-BENCH]` not regressed, ≥5 boots at `ATHENA_SMP=1` and `=2`.
+- **Then Slice 1** (arch-neutral MM newtypes, athena-kernel) — same x86 baseline, host-KAT the
   newtype arithmetic. **No aarch64 code until Slice 1 lands** (ADR 0007 gate).
-- **Then A2 → A9** (raeen-arch), per the order above. **Recommend the lead add a MasterChecklist
+- **Then A2 → A9** (athena-arch), per the order above. **Recommend the lead add a MasterChecklist
   Phase "Multi-architecture: aarch64"** with A2–A9 as sub-items and the per-slice proof lines as
   acceptance. i686 is a separate follow-on spec after aarch64 is green.
 

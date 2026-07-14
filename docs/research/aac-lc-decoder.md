@@ -1,7 +1,7 @@
 # Spec: AAC-LC decoder — make `.m4a` / `.aac` audible end-to-end
 
 Authoritative data + implementation spec to make AAC Low-Complexity (`.m4a`, `.mp4` audio,
-raw `.aac`/ADTS) **audible** in `raemedia`. The container side already landed (`rae_mp4`
+raw `.aac`/ADTS) **audible** in `athmedia`. The container side already landed (`ath_mp4`
 surfaces AAC elementary-stream samples + the `AudioSpecificConfig` in `Track::codec_private`);
 the audio output side already exists (`AudioFrame`, the proven MP3 DSP path is the model). This
 doc is what the implementer follows; the implementer does **not** invent values — they
@@ -18,7 +18,7 @@ generator-input-ready data, and flag anything single-sourced rather than guessin
 > "A daily driver must 'play my movies' and 'play my music.' MP4 … (the ISO Base Media File
 > Format) is the dominant container for both — phone video, downloaded video, and AAC audio
 > (`.m4a`/`.mp4`) all ship as BMFF."
-> (LEGACY_GAMING_CONCEPT.md §creators / media — the same line `rae_mp4/src/lib.rs` quotes in its
+> (LEGACY_GAMING_CONCEPT.md §creators / media — the same line `ath_mp4/src/lib.rs` quotes in its
 > module docstring; the "it just works" media pillar.)
 
 AAC-LC is the dominant lossy audio format alongside MP3 — Apple Music, iTunes downloads,
@@ -30,7 +30,7 @@ companion spec; this closes the AAC half.
 
 Do **not** rebuild these. The decoder is the **delta** between them.
 
-- `components/rae_mp4/src/lib.rs` — **[x] built (host-KAT'd).** The demuxer resolves every AAC
+- `components/ath_mp4/src/lib.rs` — **[x] built (host-KAT'd).** The demuxer resolves every AAC
   sample's absolute offset/size and hands raw elementary-stream bytes via
   `Track::sample_data(data, i)` / the `audio_samples(&mp4, &file)` iterator. It surfaces
   `Track::codec_private` = the **`esds` payload** (which contains the `AudioSpecificConfig`, ASC)
@@ -39,7 +39,7 @@ Do **not** rebuild these. The decoder is the **delta** between them.
   NOTE: `codec_private` is the **whole `esds` box payload**, not the bare ASC — the decoder must
   walk the esds descriptor chain (ES_Descriptor → DecoderConfigDescriptor → DecoderSpecificInfo)
   to reach the ASC. See Design §1.0.
-- `components/raemedia/src/lib.rs` — **[~] scaffold, emits silence.** `AacDecoder`
+- `components/athmedia/src/lib.rs` — **[~] scaffold, emits silence.** `AacDecoder`
   (`AacProfile`, `decode_adts_header()`, `generate_silence()`) + the `AudioDecoder` trait
   (`decode() -> Option<AudioFrame>`, `sample_rate()`, `channels()`) + `AudioFrame { samples:
   Vec<f32>, sample_rate, channels, channel_layout, pts, duration, nb_samples }`. The ADTS header
@@ -47,12 +47,12 @@ Do **not** rebuild these. The decoder is the **delta** between them.
   (verified against ISO §1 below — they match verbatim). `decode()` currently calls
   `generate_silence()`. **This is the call site to rewire**; reuse the existing ADTS parse and
   geometry fields.
-- `components/raemedia/src/mp3_dsp.rs` — **[x] built, the no-libm DSP model.** `cbrt_no_libm`,
+- `components/athmedia/src/mp3_dsp.rs` — **[x] built, the no-libm DSP model.** `cbrt_no_libm`,
   `pow2_quarter`, `signed_pow43` (the exact `|x|^(4/3)` power law AAC inverse-quant reuses),
   `imdct()` (the computed-cosine IMDCT with overlap-add carried in `ChannelState`), `synthesis`.
   AAC's IMDCT is the **same math, different sizes** (1024/128 instead of 36/12) and **no**
   polyphase synthesis stage. Reuse `cbrt_no_libm`/`signed_pow43`/`pow2_quarter` directly.
-- `components/raemedia/src/mp3_imdct_tables.rs` — **[x] built, the table-build precedent.**
+- `components/athmedia/src/mp3_imdct_tables.rs` — **[x] built, the table-build precedent.**
   `IMDCT_LONG`/`WIN0..3` are `const` cosine/window tables emitted by `tools/mp3_huff_gen`'s
   table generator (sin/cos run on the host at gen time only). The AAC IMDCT cosine tables and
   the sine + KBD windows are produced the **same way** (see §5 + §8).
@@ -106,7 +106,7 @@ here) — they must match entry-for-entry. Any mismatch is flagged, not guessed.
 AAC arrives in two framings; both yield the same payload (a `raw_data_block`, RDB) the §2
 pipeline decodes. The decoder MUST accept both.
 
-**Path A — MP4/`.m4a` (the dominant case).** `rae_mp4` already did the demux. Per AAC frame the
+**Path A — MP4/`.m4a` (the dominant case).** `ath_mp4` already did the demux. Per AAC frame the
 decoder receives one `Track::sample_data()` slice = a bare RDB (no ADTS). Config comes **once**
 from the ASC inside `Track::codec_private` (the `esds` payload). `frame_length` is 1024 PCM
 samples/channel (the AAC-LC default; the 960 variant is signalled by `frameLengthFlag` in the
@@ -142,7 +142,7 @@ inside it tag `0x04` (DecoderConfigDescriptor: 1 objectTypeIndication byte = `0x
 streamType byte, 3 bufferSizeDB, 4 maxBitrate, 4 avgBitrate), inside it tag `0x05`
 (DecoderSpecificInfo) whose payload **is the ASC**. Expandable lengths use the 7-bit-per-byte
 varint (high bit = continuation). Bound every read; a malformed esds yields a clean error, never
-a panic (match `rae_mp4`'s hostile-input posture).
+a panic (match `ath_mp4`'s hostile-input posture).
 
 ### §1.2 — ADTS header — Path B config (ALREADY CORRECT in lib.rs, documented for completeness)
 
@@ -516,7 +516,7 @@ pathological dequant cannot emit NaN/inf PCM.
 side-info-derived counts (`max_sfb`, `sect_len`, `order`, `n_filt`) MUST be clamped to their ISO
 maxima before use (max_sfb ≤ 51 long / 14×? ; order ≤ 12; n_filt ≤ 3) so a crafted RDB cannot
 OOB. A bitreader that runs past the RDB end returns 0/Err → that frame yields silence, never a
-panic. Match `rae_mp4`'s posture: parsers are the #1 RCE surface.
+panic. Match `ath_mp4`'s posture: parsers are the #1 RCE surface.
 
 ---
 
@@ -642,8 +642,8 @@ escape, decoded per §2.4 `get_escape`). The scalefactor book maps index→delta
 
 ## Interface needs (NEEDS-INTERFACE)
 
-**None.** Entirely inside the `raemedia` userspace crate (consuming `rae_mp4` output through its
-existing public API). No new syscall, no `rae_abi` change, no kernel ABI surface. The decoder
+**None.** Entirely inside the `athmedia` userspace crate (consuming `ath_mp4` output through its
+existing public API). No new syscall, no `ath_abi` change, no kernel ABI surface. The decoder
 already returns `AudioFrame` through the existing `AudioDecoder` trait; only the *contents* go
 from silence to real PCM.
 
@@ -652,17 +652,17 @@ from silence to real PCM.
 - `tools/aac_huff_gen/gen.rs` — **new.** The prefix-free generator (§4.1), modeled on
   `tools/mp3_huff_gen/gen.rs`. Holds the 12 codebooks as `Quad`/`Pair`/`Sf` rows; emits
   `aac_tables.rs` arrays; prints `All 12 AAC tables verified prefix-free.`
-- `components/raemedia/src/aac_tables.rs` — **new.** Generator output: `AAC_HCB_1..11`,
+- `components/athmedia/src/aac_tables.rs` — **new.** Generator output: `AAC_HCB_1..11`,
   `AAC_HCB_SF`, the codebook metadata table (dim/signed/lav/escape), `AAC_SAMPLE_RATES`, the
   channel-config element-sequence table. Plus `SINE_LONG/SHORT`, `KBD_LONG/SHORT`,
   `IMDCT_AAC_*` (or the IMDCT FFT twiddle tables), and the 4 small TNS coef tables — all `const`,
   emitted by the table side of the generator (sin/cos/I0 on host only).
-- `components/raemedia/src/aac.rs` — **new.** The decoder: ASC/esds parse (§1.1), the RDB element
+- `components/athmedia/src/aac.rs` — **new.** The decoder: ASC/esds parse (§1.1), the RDB element
   loop (§2), section/scalefactor/spectral decode, inverse-quant (reusing `mp3_dsp::signed_pow43`
   + `pow2_quarter`), M/S + TNS, the IMDCT+window+overlap filterbank (§5), `AacChannelState`. A
   `BitReader` (reuse the MP3 one's pattern, or share it). Concept docstring quoting the promise
   above. A FAIL-able `run_boot_smoketest()`.
-- `components/raemedia/src/lib.rs` — rewire `AacDecoder::decode()` to call into `aac::decode_rdb`
+- `components/athmedia/src/lib.rs` — rewire `AacDecoder::decode()` to call into `aac::decode_rdb`
   (Path A from MP4 samples; Path B from ADTS via the existing `decode_adts_header`) and emit the
   real `AudioFrame` instead of `generate_silence()`. Keep the existing ASC/ADTS geometry fields.
   Add the host-KAT module asserts (Verification) to the `#[cfg(test)]` block. Add index 12
@@ -674,7 +674,7 @@ from silence to real PCM.
   ./gen` MUST print `All 12 AAC tables verified prefix-free.` and exit 0. A bad transcription
   prints `FAIL cb<k>: ...` and exits 1. This proves all 12 codebooks are well-formed before any
   decode runs.
-- **Host KAT — codebook prefix-free + known codeword (FAIL-able):** `cargo test -p raemedia
+- **Host KAT — codebook prefix-free + known codeword (FAIL-able):** `cargo test -p athmedia
   aac_huff` MUST pass `aac_hcb_all_prefix_free` (iterates cb 1..=11 + SF, asserts prefix-free at
   runtime too) AND `aac_hcb_decodes_known_codeword`: feed a hand-built bitstream of the
   single-bit `0x000`/len-1 codeword for **cb1** → assert quad `(0,0,0,0)`; for **cb7** → assert
@@ -713,20 +713,20 @@ from silence to real PCM.
   at the encoded tone frequency ±1 bin) is the fallback FAIL-able audible proof. Name both; prefer
   the RMS reference.
 - **Boot smoketest line:** `aac::run_boot_smoketest()` MUST emit
-  `[raemedia] aac-lc: frames=<n> ch=<c> peak=<f> nonsilent=<bool> -> PASS` (FAIL if a decoded known
+  `[athmedia] aac-lc: frames=<n> ch=<c> peak=<f> nonsilent=<bool> -> PASS` (FAIL if a decoded known
   clip is silent or peak is 0). This is the serial marker to grep.
-- **procfs:** the raemedia status line (wherever the crate reports, alongside the MP3 `mp3=...`
+- **procfs:** the athmedia status line (wherever the crate reports, alongside the MP3 `mp3=...`
   line) MUST report `aac=audible` (was `aac=silent`) once decode is wired.
 - **Docstring:** `aac::decode_rdb` (and the `aac.rs` module) MUST quote the Concept promise at the
   top of this spec.
 
 ## Handoff
 
-- **Implementer: raeen-media.** Pure `raemedia` userspace work over `rae_mp4`'s existing API; no
+- **Implementer: athena-media.** Pure `athmedia` userspace work over `ath_mp4`'s existing API; no
   kernel/ABI touch.
 - **Precise files touched:** new `tools/aac_huff_gen/gen.rs`, new
-  `components/raemedia/src/aac.rs`, new `components/raemedia/src/aac_tables.rs`, and a rewire of
-  `components/raemedia/src/lib.rs` (`AacDecoder::decode`). Reuse `mp3_dsp::{signed_pow43,
+  `components/athmedia/src/aac.rs`, new `components/athmedia/src/aac_tables.rs`, and a rewire of
+  `components/athmedia/src/lib.rs` (`AacDecoder::decode`). Reuse `mp3_dsp::{signed_pow43,
   pow2_quarter, cbrt_no_libm}` and the `mp3_imdct_tables.rs` table-build pattern; do NOT duplicate
   the power-law or the table-generator scaffolding.
 - **Self-sufficiency for a NO-WEB implementer (confirmed):** all **12 Huffman codebooks** are
@@ -735,7 +735,7 @@ from silence to real PCM.
   with the index→tuple map and the cb11 escape procedure spelled out. The **4 windows** (SINE_LONG,
   SINE_SHORT, KBD_LONG α=4, KBD_SHORT α=6) are fully specified by their closed-form generators in
   §5 (computed at table-build, no web/lib needed). The implementer transcribes the codebooks into
-  `tools/aac_huff_gen` (which re-verifies prefix-freeness) and `components/raemedia/src/aac_tables.rs`
+  `tools/aac_huff_gen` (which re-verifies prefix-freeness) and `components/athmedia/src/aac_tables.rs`
   and emits the windows from the §5 formulas — **nothing in this spec requires opening
   FFmpeg/FAAD2/ISO.**
 - **Unblocks checklist lines:** the AAC / `.m4a` rows under media / Phase-7 audio in
@@ -774,7 +774,7 @@ from silence to real PCM.
 ### Provenance / corroboration note (for the reviewer)
 
 - **Config tables (§1.3/§1.4):** corroborated FFmpeg ↔ MPEG-4 Audio wiki ↔ the table already
-  hand-written and shipping in `raemedia/src/lib.rs::decode_adts_header` — three-way agreement.
+  hand-written and shipping in `athmedia/src/lib.rs::decode_adts_header` — three-way agreement.
 - **Codebook metadata (§4):** corroborated FFmpeg `ff_aac_spectral_sizes`
   `{81,81,81,81,81,81,64,64,169,169,289}` ↔ MultimediaWiki "AAC Huffman Tables"
   (dim/signed/LAV per book) ↔ the FFmpeg search-result classification (cb1-2 quad LAV1, cb3-4 quad

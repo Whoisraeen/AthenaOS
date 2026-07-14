@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0 */
 /*
  * <linux/firmware.h> shim (MPL). request_firmware/release_firmware surface —
- * amdgpu loads its ucode blobs through this. Backed by raeen_linuxkpi's firmware
+ * amdgpu loads its ucode blobs through this. Backed by ath_linuxkpi's firmware
  * facade at link time (M4); a declaration-only header for M2/M3 typecheck.
  */
 #ifndef _LINUXKPI_LINUX_FIRMWARE_H

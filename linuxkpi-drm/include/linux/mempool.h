@@ -4,7 +4,7 @@
  *
  * Pre-allocated memory pool (a reserve so an allocation can't fail under
  * pressure). The amd RAS subsystem keeps error-record pools here. Out of the MES
- * bring-up subset; backed by raeen_linuxkpi at M4 (a fake alloc returning NULL
+ * bring-up subset; backed by ath_linuxkpi at M4 (a fake alloc returning NULL
  * would defeat the whole "can't fail" point; SCOPE.md rule 9). License boundary
  * (../../README.md): API surface.
  */
@@ -25,7 +25,7 @@ typedef struct mempool_s {
 	mempool_free_t  free;
 } mempool_t;
 
-/* pool lifecycle + alloc/free — backed by raeen_linuxkpi (M4) */
+/* pool lifecycle + alloc/free — backed by ath_linuxkpi (M4) */
 mempool_t *mempool_create(int min_nr, mempool_alloc_t alloc_fn, mempool_free_t free_fn, void *pool_data);
 void  mempool_destroy(mempool_t *pool);
 void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask);

@@ -5,7 +5,7 @@
 //!
 //! Bare-metal Athena has no serial cable, boots fast enough that the
 //! framebuffer text mirror scrolls past anything interesting, and (today)
-//! has no working keyboard — so there's no way to dump `/proc/raeen/bootlog`
+//! has no working keyboard — so there's no way to dump `/proc/athena/bootlog`
 //! interactively. The RAM ring captures everything but dies on power-cycle.
 //! We need the transcript on disk so it can be read after a reboot to
 //! Windows.

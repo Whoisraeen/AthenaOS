@@ -27,7 +27,7 @@ Globally: parity = every **Daily-Driver (must)** gap closed + the **Ship gate GR
 
 1. **Pick** the smallest *unblocked* `[ ]` or `[~]` item **in your slice** (filter by the Slice routing key).
 2. **Build** working code. No stubs, no TODO placeholders, no "will wire later."
-3. **Gate:** `RAEEN_AGENT=opus bash scripts/ownership-lock.sh && bash scripts/architecture-gate.sh`
+3. **Gate:** `ATHENA_AGENT=opus bash scripts/ownership-lock.sh && bash scripts/architecture-gate.sh`
 4. **Build:** `cargo run -p xtask --release -- build --release` — must be clean.
 5. **Prove:** QEMU boot reaches `[ OS ] System successfully booted.`, boot health 7/7 critical PASS, no *new* `[ WARN ]`/`[FAIL]`/`[PANIC]` lines, and the item's own smoketest prints its PASS marker.
 6. **Record:** update the item's status honestly, quoting the proof line. Commit with a message naming the row and the artifact.
@@ -49,7 +49,7 @@ Globally: parity = every **Daily-Driver (must)** gap closed + the **Ship gate GR
 
 ### Quality bars
 
-- Every new module honors the **R10 4-artifact contract**: init log line + smoketest log line + `/proc/raeen/X` entry + Concept-doc quote in the docstring. Without all four it doesn't count as shipped.
+- Every new module honors the **R10 4-artifact contract**: init log line + smoketest log line + `/proc/athena/X` entry + Concept-doc quote in the docstring. Without all four it doesn't count as shipped.
 - LOC is a cost, not a deliverable. A commit adding ~1000 LOC without a new boot artifact or shipped feature does not land. Optimize **capability per kLOC**.
 - Check the **OSS Reference Library** before adding any crate or borrowing from any project. The rejected list is binding.
 - No GC-runtime languages anywhere in the stack. Rust is the spine; the only sanctioned exceptions are in Concept §Language Stack — extended.
@@ -85,13 +85,13 @@ Mission: advance AthenaOS toward the 1.0 Ship gate in `MasterChecklist.md`. `LEG
 
 "Windows 11 level / macOS parity" is defined per feature, never as a vibe: a feature is at parity when its checklist row matches or beats the named best rival AND its acceptance smoketest passes at the tier the row demands (host KAT / QEMU PASS marker / iron). Global parity = all Daily-Driver (must) rows in `docs/PARITY_MATRIX.md` closed + Ship gate GREEN. Claim rows with artifacts, never parity in prose.
 
-Loop (repeat until budget is spent): pick the smallest unblocked `[ ]`/`[~]` item in your slice (`agents/OWNERSHIP.toml`; filter by the Slice routing key) → working code, no stubs → `RAEEN_AGENT=opus bash scripts/ownership-lock.sh && bash scripts/architecture-gate.sh` → `cargo run -p xtask --release -- build --release` clean → QEMU boot reaches `[ OS ] System successfully booted.`, boot health 7/7, no new [WARN]/[FAIL]/[PANIC], item's smoketest prints PASS → update `[ ]`/`[~]`/`[x]` honestly, quoting the proof line.
+Loop (repeat until budget is spent): pick the smallest unblocked `[ ]`/`[~]` item in your slice (`agents/OWNERSHIP.toml`; filter by the Slice routing key) → working code, no stubs → `ATHENA_AGENT=opus bash scripts/ownership-lock.sh && bash scripts/architecture-gate.sh` → `cargo run -p xtask --release -- build --release` clean → QEMU boot reaches `[ OS ] System successfully booted.`, boot health 7/7, no new [WARN]/[FAIL]/[PANIC], item's smoketest prints PASS → update `[ ]`/`[~]`/`[x]` honestly, quoting the proof line.
 
 Priority: 1) regressions vs the every-commit checks, 2) Latent kernel bugs blocking production-ready, 3) Ship-gate-blocking phase-acceptance items, earliest phase first, 4) Parity gaps marked Daily-Driver (must), 5) breadth in-slice.
 
 Status discipline: when in doubt, downgrade. "Compiles" is not done. `[x]` needs the row's acceptance artifact at the required tier; iron-gated items stay `[~]` with the QEMU/KVM proof quoted. Never change a status without an artifact; never re-status another agent's slice.
 
-Quality: every new module honors the R10 4-artifact contract (init line + smoketest line + /proc/raeen/X + Concept quote in docstring). ~1000 LOC without a new artifact → don't land it. Check the OSS Reference Library before adding any crate; the rejected list is binding. Optimize capability per kLOC.
+Quality: every new module honors the R10 4-artifact contract (init line + smoketest line + /proc/athena/X + Concept quote in docstring). ~1000 LOC without a new artifact → don't land it. Check the OSS Reference Library before adding any crate; the rejected list is binding. Optimize capability per kLOC.
 
 Cross-slice: new syscall/ABI/signature → file a `NEEDS-INTERFACE:` note; only opus lands it, in a separate `[interface]` commit first.
 

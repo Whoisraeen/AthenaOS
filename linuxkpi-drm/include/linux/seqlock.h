@@ -5,7 +5,7 @@
  * Sequence locks — lockless reads that retry if a writer intervened. drm_vblank
  * keeps its vblank timestamp in a seqcount_latch so the present path can read it
  * without blocking the IRQ writer. Real inline counter logic (the read/retry
- * dance is correct); the embedded spinlock_t comes from the raeen_linuxkpi sync
+ * dance is correct); the embedded spinlock_t comes from the ath_linuxkpi sync
  * facade. License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_SEQLOCK_H

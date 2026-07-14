@@ -22,14 +22,14 @@ not a "subsystem," not a launcher you have to configure — Windows apps just ru
 
 ## Layering
 
-- **raebridge-runtime**: the integrated Wine/Proton-lineage userland.
-- **raebridge-d3d**: from-scratch Rust *shader translator* (DXBC/DXIL→SPIR-V,
+- **athbridge-runtime**: the integrated Wine/Proton-lineage userland.
+- **athbridge-d3d**: from-scratch Rust *shader translator* (DXBC/DXIL→SPIR-V,
   `dxbc_spirv.rs`) + source-ported DXVK/VKD3D *runtime* (via `zig cc`), output to
-  AthGFX. Split ratified 2026-06-26 — see `raebridge-wine-strategy.md` §5. Not a
+  AthGFX. Split ratified 2026-06-26 — see `athbridge-wine-strategy.md` §5. Not a
   DXVK `.so` bolt-on; not a from-scratch runtime.
-- **raebridge-sandbox**: capability-mapped Windows API shims (file system, registry,
+- **athbridge-sandbox**: capability-mapped Windows API shims (file system, registry,
   IPC, networking).
-- **raebridge-install**: per-app install profile (overrides, DLL versions) maintained
+- **athbridge-install**: per-app install profile (overrides, DLL versions) maintained
   by us, not the user.
 
 ## Open design questions

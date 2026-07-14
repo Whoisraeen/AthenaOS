@@ -2,9 +2,9 @@
 //! AthenaOS machines find each other and advertise services without any
 //! server). MasterChecklist Phase 10.2 — "mDNS / DNS-SD for LAN discovery".
 //!
-//! The wire-format engine is `raenet::discovery::MdnsResponder` (RFC 6762/6763
+//! The wire-format engine is `athnet::discovery::MdnsResponder` (RFC 6762/6763
 //! encode/decode, PTR/SRV/TXT/A records, response cache). The kernel registers
-//! the machine's own `_raeen._tcp.local` service at boot and answers queries
+//! the machine's own `_athena._tcp.local` service at boot and answers queries
 //! through `handle_packet`. The smoketest proves the full DNS-SD round trip
 //! deterministically — PTR + SRV queries are serialized to wire bytes,
 //! answered by the live responder, and the responses fed back through the
@@ -19,7 +19,7 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, Ordering};
-use raenet::discovery::{DnsRecordType, MdnsResponder, MdnsService};
+use athnet::discovery::{DnsRecordType, MdnsResponder, MdnsService};
 use spin::Mutex;
 
 pub static RESPONDER: Mutex<Option<MdnsResponder>> = Mutex::new(None);
@@ -34,7 +34,7 @@ const SERVICE_PORT: u16 = 7690;
 pub fn init() {
     let mut responder = MdnsResponder::new("athenaos");
     responder.register_service(
-        MdnsService::new(SERVICE_NAME, SERVICE_TYPE, SERVICE_PORT).with_txt("os", "raeen"),
+        MdnsService::new(SERVICE_NAME, SERVICE_TYPE, SERVICE_PORT).with_txt("os", "athena"),
     );
     *RESPONDER.lock() = Some(responder);
     crate::serial_println!(
@@ -127,7 +127,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/mdns` — responder state.
+/// `/proc/athena/mdns` — responder state.
 pub fn dump_text() -> String {
     let guard = RESPONDER.lock();
     match guard.as_ref() {

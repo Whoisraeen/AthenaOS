@@ -1,0 +1,28 @@
+[package]
+name = "ath_mp4"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS MP4 / ISO-BMFF container DEMUXER — "play my movies" + .m4a/.mp4 audio
+# (LEGACY_GAMING_CONCEPT.md §creators / media). MP4 is the dominant video/audio
+# container: phone videos, downloads, streaming downloads, AAC music (.m4a) all
+# ship as ISO Base Media File Format. This crate parses the box tree → tracks →
+# sample tables, and resolves each sample's absolute file offset/size/timestamp so
+# a player (or a future AAC/H.264 decoder) can pull elementary-stream frames. It
+# is the DEMUXER only — it never decodes codec internals; it surfaces the codec
+# fourcc + raw codec-private config bytes (esds/AudioSpecificConfig, avcC) so a
+# downstream decoder gets what it needs.
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_png / ath_pdf pattern): `no_std` +
+# `alloc` in every shipped build, `std` only under `cfg(test)` for the host KAT
+# harness. Self-contained — no codec/compression dep needed (BMFF demux is plain
+# big-endian box parsing). Run the FAIL-able proof with `cargo test -p ath_mp4`
+# (no QEMU). Every byte is treated as hostile (container parsers are a known RCE
+# surface): box depth/count/size, sample/chunk counts, and every offset are
+# bounded/validated before allocation or slicing; malformed input returns `Err`,
+# never panics, never infinite-loops, never OOMs.
+
+[dependencies]

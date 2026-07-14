@@ -1,6 +1,6 @@
 # AthenaOS — Agent Context Document
 
-**You are working on AthenaOS**, an embodied-AGI OS in an independent repository (bootstrapped from RaeenOS source — not a GitHub fork). Close the distance to `Athena_Concept.md`, one proven slice at a time. Gaming-desktop goals are **non-goals**.
+**You are working on AthenaOS**, an embodied-AGI OS in an independent repository (bootstrapped from AthenaOS source — not a GitHub fork). Close the distance to `Athena_Concept.md`, one proven slice at a time. Gaming-desktop goals are **non-goals**.
 
 ---
 
@@ -15,7 +15,7 @@
 | Safety | `docs/SAFETY.md` |
 | Roadmap | `docs/ROADMAP.md` |
 | Boot proof | `docs/BOOT_STATUS.md` |
-| Lineage ADR | `docs/decisions/0001-fork-from-raeenos.md` |
+| Lineage ADR | `docs/decisions/0001-fork-from-athenaos.md` |
 | Build / boot | `cargo run -p xtask --release -- run --release --ci` |
 | Success markers | AthKernel / AthenaOS banner + `[ OS ] System successfully booted.` |
 

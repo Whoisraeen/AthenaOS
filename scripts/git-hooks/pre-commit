@@ -2,12 +2,12 @@
 # AthenaOS three-agent guardrail pre-commit hook (TRACKED COPY).
 # Install into .git/hooks/ via: bash scripts/install-hooks.sh
 # Runs the ownership lock then the architecture gate. Either failing aborts the
-# commit. Identity comes from $RAEEN_AGENT (opus|gemini|composer).
+# commit. Identity comes from $ATHENA_AGENT (opus|gemini|composer).
 set -uo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
-echo "── AthenaOS pre-commit guardrails (RAEEN_AGENT=${RAEEN_AGENT:-<unset>}) ──"
+echo "── AthenaOS pre-commit guardrails (ATHENA_AGENT=${ATHENA_AGENT:-<unset>}) ──"
 
 bash "$REPO_ROOT/scripts/ownership-lock.sh"    || exit 1
 bash "$REPO_ROOT/scripts/architecture-gate.sh" || exit 1

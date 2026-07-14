@@ -5,7 +5,7 @@
 //!
 //! Five tabs across the top toolbar, accent-active like Notes' edit/preview chips:
 //!   - **Clock**     — a large digital HH:MM:SS readout + the long date line, plus
-//!                     an analog face drawn with raegfx circles/lines, ticking each
+//!                     an analog face drawn with athgfx circles/lines, ticking each
 //!                     second off the system wall clock.
 //!   - **Alarms**    — a list of HH:MM alarms with an enabled toggle; an alarm
 //!                     whose minute matches the wall clock shows a "RINGING" state.
@@ -16,15 +16,15 @@
 //!                     highlighted in the accent, prev/next month navigation.
 //!
 //! Standalone userspace ELF (`exec_path = "clock"`). Chrome rides the shared
-//! `rae_tokens` design language; the live desktop accent comes through
-//! `SYS_THEME_GET` (raekit::sys::theme_accent) at launch, so Clock matches the
+//! `ath_tokens` design language; the live desktop accent comes through
+//! `SYS_THEME_GET` (athkit::sys::theme_accent) at launch, so Clock matches the
 //! desktop 1:1 (whole-OS cohesion).
 //!
 //! TIME SOURCE: the wall clock is `SYS_WALL_CLOCK` (syscall 40 — unix-epoch
 //! nanoseconds, UTC), the SAME source the tray clock reads (kernel
-//! `game_session::sys_wall_clock`). raekit exposes no wrapper for it, so we call
-//! `raekit::sys::syscall0(40)` directly rather than add an ABI surface. Monotonic
-//! elapsed time (timer / stopwatch) uses `raekit::sys::time_ns()` (SYS_TIME — ns
+//! `game_session::sys_wall_clock`). athkit exposes no wrapper for it, so we call
+//! `athkit::sys::syscall0(40)` directly rather than add an ABI surface. Monotonic
+//! elapsed time (timer / stopwatch) uses `athkit::sys::time_ns()` (SYS_TIME — ns
 //! from boot) so it is immune to any wall-clock adjustment.
 //!
 //! NEVER PANICS: a bad/zero wall-clock read degrades the readout to `--:--:--`
@@ -43,13 +43,13 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
 use alloc::string::String;
-use rae_tokens::{TypeStyle, DARK, RAEBLUE};
-use rae_toml::Toml;
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
+use ath_tokens::{TypeStyle, DARK, RAEBLUE};
+use ath_toml::Toml;
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
 
 // ── Window geometry ─────────────────────────────────────────────────────
 
@@ -97,7 +97,7 @@ fn content_btn_y() -> usize {
     WIN_H - STATUS_H - TR_BTN_H - 24
 }
 
-// ── Palette (rae_tokens, docs/design/design-language.md) ──────────────────
+// ── Palette (ath_tokens, docs/design/design-language.md) ──────────────────
 
 const BG: u32 = DARK.bg_raised;
 const TITLE_BG: u32 = DARK.bg_base;
@@ -110,28 +110,28 @@ const STROKE_HL: u32 = DARK.stroke_strong;
 const PANEL_BG: u32 = DARK.bg_base;
 
 fn theme_seed() -> u32 {
-    raekit::sys::theme_accent()
+    athkit::sys::theme_accent()
 }
 
 /// Accent base, derived through the shared ramp from the live theme seed.
 fn accent() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).base
+    ath_tokens::derive_accent(theme_seed(), &DARK).base
 }
 
 /// Opaque selection/active fill: the accent's pressed/active shade.
 fn sel_fill() -> u32 {
-    rae_tokens::derive_accent(theme_seed(), &DARK).active
+    ath_tokens::derive_accent(theme_seed(), &DARK).active
 }
 
 // ── Wall clock (SYS_WALL_CLOCK = 40, unix-epoch ns) ───────────────────────
 //
-// raekit has no wrapper for SYS_WALL_CLOCK, so we issue the raw syscall through
-// the public `raekit::sys::syscall0`. 0 means "unavailable" → the readout shows
+// athkit has no wrapper for SYS_WALL_CLOCK, so we issue the raw syscall through
+// the public `athkit::sys::syscall0`. 0 means "unavailable" → the readout shows
 // `--:--:--`. We never add a new ABI surface for this slice.
 const SYS_WALL_CLOCK: u64 = 40;
 
 fn wall_clock_ns() -> u64 {
-    unsafe { raekit::sys::syscall0(SYS_WALL_CLOCK) }
+    unsafe { athkit::sys::syscall0(SYS_WALL_CLOCK) }
 }
 
 /// Whole seconds since the Unix epoch (UTC). 0 if the clock is unavailable.
@@ -314,7 +314,7 @@ impl CountdownTimer {
         match self.state {
             TimerState::Running => {
                 let elapsed =
-                    raekit::sys::time_ns().saturating_sub(self.run_start_ns) / 1_000_000_000;
+                    athkit::sys::time_ns().saturating_sub(self.run_start_ns) / 1_000_000_000;
                 self.remaining.saturating_sub(elapsed)
             }
             _ => self.remaining,
@@ -353,7 +353,7 @@ impl CountdownTimer {
                 if self.remaining == 0 {
                     return;
                 }
-                self.run_start_ns = raekit::sys::time_ns();
+                self.run_start_ns = athkit::sys::time_ns();
                 self.state = TimerState::Running;
             }
             TimerState::Running => {
@@ -362,7 +362,7 @@ impl CountdownTimer {
                 self.state = TimerState::Paused;
             }
             TimerState::Paused => {
-                self.run_start_ns = raekit::sys::time_ns();
+                self.run_start_ns = athkit::sys::time_ns();
                 self.state = TimerState::Running;
             }
             TimerState::Fired => {}
@@ -400,7 +400,7 @@ impl Stopwatch {
     fn elapsed_ns(&self) -> u64 {
         if self.running {
             self.accum_ns
-                .saturating_add(raekit::sys::time_ns().saturating_sub(self.seg_start_ns))
+                .saturating_add(athkit::sys::time_ns().saturating_sub(self.seg_start_ns))
         } else {
             self.accum_ns
         }
@@ -411,7 +411,7 @@ impl Stopwatch {
             self.accum_ns = self.elapsed_ns();
             self.running = false;
         } else {
-            self.seg_start_ns = raekit::sys::time_ns();
+            self.seg_start_ns = athkit::sys::time_ns();
             self.running = true;
         }
     }
@@ -441,7 +441,7 @@ struct Alarm {
 
 const MAX_ALARMS: usize = 16;
 
-// ── Persistent preferences (rae_toml) ─────────────────────────────────────────
+// ── Persistent preferences (ath_toml) ─────────────────────────────────────────
 //
 // LEGACY_GAMING_CONCEPT.md §"The user owns the machine": "remember my settings" must be
 // real. Clock persists its active tab AND — most importantly — the ALARM LIST
@@ -554,7 +554,7 @@ impl Prefs {
     }
 
     /// Serialize the live preferences into an order-stable `Toml::Table` ready for
-    /// `rae_toml::to_string`. The tab is a flat key; the alarm list is an
+    /// `ath_toml::to_string`. The tab is a flat key; the alarm list is an
     /// array-of-tables (`[[alarm]]`) so it round-trips one entry per alarm.
     fn to_toml(&self) -> Toml {
         let mut table: Vec<(String, Toml)> = Vec::new();
@@ -597,8 +597,8 @@ fn default_alarms() -> Vec<Alarm> {
 fn prefs_dir() -> PathBuf {
     let mut p = PathBuf::new();
     let mut info = [0u8; 96];
-    if raekit::sys::session_info(&mut info).is_some() {
-        if let Some(home) = raekit::sys::session_home_from(&info) {
+    if athkit::sys::session_info(&mut info).is_some() {
+        if let Some(home) = athkit::sys::session_home_from(&info) {
             p.set(home);
             p.push_component(".config");
             return p;
@@ -609,12 +609,12 @@ fn prefs_dir() -> PathBuf {
 }
 
 /// Load preferences from `<home>/.config/clock.toml`. On ANY failure — file
-/// absent, unreadable, not UTF-8, or a `rae_toml::parse` error — returns the typed
+/// absent, unreadable, not UTF-8, or a `ath_toml::parse` error — returns the typed
 /// defaults. Never panics, never blocks the app from launching.
 fn load_prefs() -> Prefs {
     let mut path = prefs_dir();
     path.push_component("clock.toml");
-    let fd = raekit::sys::open(path.as_str(), 0);
+    let fd = athkit::sys::open(path.as_str(), 0);
     if fd == u64::MAX {
         return Prefs::defaults();
     }
@@ -625,34 +625,34 @@ fn load_prefs() -> Prefs {
         if data.len() > 64 * 1024 {
             break;
         }
-        let n = raekit::sys::read(fd, &mut chunk) as usize;
+        let n = athkit::sys::read(fd, &mut chunk) as usize;
         if n == 0 || n > chunk.len() {
             break;
         }
         data.extend_from_slice(&chunk[..n]);
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
     let text = match core::str::from_utf8(&data) {
         Ok(s) => s,
         Err(_) => return Prefs::defaults(),
     };
-    match rae_toml::parse(text) {
+    match ath_toml::parse(text) {
         Ok(t) => Prefs::from_toml(&t),
         Err(_) => Prefs::defaults(),
     }
 }
 
 /// Persist `prefs` to `<home>/.config/clock.toml` (best effort). Creates the
-/// `.config` directory if missing, serializes via `rae_toml::to_string`, and
+/// `.config` directory if missing, serializes via `ath_toml::to_string`, and
 /// writes O_CREAT|O_TRUNC. A failure is silent — the app keeps running.
 fn save_prefs(prefs: &Prefs) {
     let dir = prefs_dir();
-    let _ = raekit::sys::mkdir(dir.as_str());
+    let _ = athkit::sys::mkdir(dir.as_str());
     let mut path = dir;
     path.push_component("clock.toml");
-    let text = rae_toml::to_string(&prefs.to_toml());
+    let text = ath_toml::to_string(&prefs.to_toml());
     // O_WRONLY | O_CREAT | O_TRUNC = 0x0241.
-    let fd = raekit::sys::open(path.as_str(), 0x0241);
+    let fd = athkit::sys::open(path.as_str(), 0x0241);
     if fd == u64::MAX {
         return;
     }
@@ -660,13 +660,13 @@ fn save_prefs(prefs: &Prefs) {
     let mut off = 0usize;
     while off < bytes.len() {
         let end = (off + 4096).min(bytes.len());
-        let n = raekit::sys::write(fd, &bytes[off..end]) as usize;
+        let n = athkit::sys::write(fd, &bytes[off..end]) as usize;
         if n == 0 {
             break;
         }
         off += n;
     }
-    let _ = raekit::sys::close(fd);
+    let _ = athkit::sys::close(fd);
 }
 
 // ── App state ─────────────────────────────────────────────────────────────
@@ -1048,7 +1048,7 @@ impl App {
                 self.cal_selected_day = day;
                 true
             }
-            Action::Close => raekit::sys::exit(0),
+            Action::Close => athkit::sys::exit(0),
             Action::None => false,
         }
     }
@@ -1155,9 +1155,9 @@ fn render(app: &mut App, canvas: &mut Canvas) {
     canvas.fill_rect_gradient(0, 0, WIN_W, TITLE_H, DARK.bg_elevated, TITLE_BG);
     canvas.draw_text_aa(
         12,
-        ((TITLE_H.saturating_sub(rae_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
+        ((TITLE_H.saturating_sub(ath_tokens::TYPE_SUBTITLE.line_height as usize)) / 2) as i32,
         "Clock",
-        rae_tokens::TYPE_SUBTITLE,
+        ath_tokens::TYPE_SUBTITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -1166,15 +1166,15 @@ fn render(app: &mut App, canvas: &mut Canvas) {
         4,
         20,
         20,
-        rae_tokens::RADIUS_XS as usize,
+        ath_tokens::RADIUS_XS as usize,
         DARK.state_danger,
     );
-    let x_w = canvas.measure_text_aa("X", rae_tokens::TYPE_LABEL, FontFamily::Sans);
+    let x_w = canvas.measure_text_aa("X", ath_tokens::TYPE_LABEL, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 18) as i32 - x_w / 2,
-        (4 + (20 - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
+        (4 + (20 - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32,
         "X",
-        rae_tokens::TYPE_LABEL,
+        ath_tokens::TYPE_LABEL,
         0xFF_FF_FF_FF,
         FontFamily::Sans,
     );
@@ -1193,20 +1193,20 @@ fn render(app: &mut App, canvas: &mut Canvas) {
             y,
             TAB_BTN_W,
             TAB_BTN_H,
-            rae_tokens::RADIUS_XS as usize,
+            ath_tokens::RADIUS_XS as usize,
             fill,
         );
         if active {
             canvas.fill_rect(tx, y + TAB_BTN_H - 2, TAB_BTN_W, 2, accent());
         }
-        let lw = canvas.measure_text_aa(label, rae_tokens::TYPE_LABEL, FontFamily::Sans);
-        let ty = (y + (TAB_BTN_H.saturating_sub(rae_tokens::TYPE_LABEL.line_height as usize)) / 2)
+        let lw = canvas.measure_text_aa(label, ath_tokens::TYPE_LABEL, FontFamily::Sans);
+        let ty = (y + (TAB_BTN_H.saturating_sub(ath_tokens::TYPE_LABEL.line_height as usize)) / 2)
             as i32;
         canvas.draw_text_aa(
             tx as i32 + (TAB_BTN_W as i32 - lw) / 2,
             ty,
             label,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             if active { TEXT_FG } else { TEXT_MUTED },
             FontFamily::Sans,
         );
@@ -1233,14 +1233,14 @@ fn render(app: &mut App, canvas: &mut Canvas) {
     let st_y = WIN_H - STATUS_H;
     canvas.fill_rect(0, st_y, WIN_W, STATUS_H, STATUS_BG);
     let st_ty = (st_y
-        + (STATUS_H.saturating_sub(rae_tokens::TYPE_CAPTION.line_height as usize)) / 2)
+        + (STATUS_H.saturating_sub(ath_tokens::TYPE_CAPTION.line_height as usize)) / 2)
         as i32;
     if !app.toast_str().is_empty() {
         canvas.draw_text_aa(
             12,
             st_ty,
             app.toast_str(),
-            rae_tokens::TYPE_CAPTION,
+            ath_tokens::TYPE_CAPTION,
             accent(),
             FontFamily::Sans,
         );
@@ -1252,12 +1252,12 @@ fn render(app: &mut App, canvas: &mut Canvas) {
         Tab::Stopwatch => "Space:start/stop  L:lap  R:reset",
         Tab::Calendar => "Left/Right:month   T:today   Esc:quit",
     };
-    let hw = canvas.measure_text_aa(hint, rae_tokens::TYPE_CAPTION, FontFamily::Sans);
+    let hw = canvas.measure_text_aa(hint, ath_tokens::TYPE_CAPTION, FontFamily::Sans);
     canvas.draw_text_aa(
         (WIN_W - 12) as i32 - hw,
         st_ty,
         hint,
-        rae_tokens::TYPE_CAPTION,
+        ath_tokens::TYPE_CAPTION,
         TEXT_DIM,
         FontFamily::Sans,
     );
@@ -1301,7 +1301,7 @@ fn render_clock(
     let mut dbuf = [0u8; 64];
     let dn = fmt_long_date(now, &mut dbuf);
     if let Ok(ds) = core::str::from_utf8(&dbuf[..dn]) {
-        let dw = canvas.measure_text_aa(ds, rae_tokens::TYPE_SUBTITLE, FontFamily::Sans);
+        let dw = canvas.measure_text_aa(ds, ath_tokens::TYPE_SUBTITLE, FontFamily::Sans);
         canvas.draw_text_aa(
             ((w as i32) - dw) / 2,
             read_y + TYPE_CLOCK.line_height as i32 + 6,
@@ -1310,7 +1310,7 @@ fn render_clock(
             } else {
                 ds
             },
-            rae_tokens::TYPE_SUBTITLE,
+            ath_tokens::TYPE_SUBTITLE,
             if now_secs == 0 { TEXT_DIM } else { accent() },
             FontFamily::Sans,
         );
@@ -1455,7 +1455,7 @@ fn render_alarms(
         (x + pad) as i32,
         (y + 12) as i32,
         "Alarms",
-        rae_tokens::TYPE_TITLE,
+        ath_tokens::TYPE_TITLE,
         TEXT_FG,
         FontFamily::Sans,
     );
@@ -1467,7 +1467,7 @@ fn render_alarms(
             (x + pad) as i32,
             (list_y) as i32,
             "No alarms. Type HHMM then Enter to add one.",
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -1491,7 +1491,7 @@ fn render_alarms(
             ry,
             w - pad * 2,
             row_h - 8,
-            rae_tokens::RADIUS_SM as usize,
+            ath_tokens::RADIUS_SM as usize,
             fill,
         );
         if selected {
@@ -1508,7 +1508,7 @@ fn render_alarms(
                 (x + pad + 14) as i32,
                 (ry + 4) as i32,
                 ts,
-                rae_tokens::TYPE_SUBTITLE,
+                ath_tokens::TYPE_SUBTITLE,
                 TEXT_FG,
                 FontFamily::Sans,
             );
@@ -1521,12 +1521,12 @@ fn render_alarms(
         } else {
             "Off"
         };
-        let lw = canvas.measure_text_aa(label, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+        let lw = canvas.measure_text_aa(label, ath_tokens::TYPE_LABEL, FontFamily::Sans);
         canvas.draw_text_aa(
             (x + w - pad - 16) as i32 - lw,
             (ry + 6) as i32,
             label,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             if is_ringing {
                 0xFF_FF_FF_FF
             } else if a.enabled {
@@ -1552,7 +1552,7 @@ fn render_alarms(
         (x + pad) as i32,
         entry_y as i32,
         prefix,
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -1561,7 +1561,7 @@ fn render_alarms(
             pw,
             entry_y as i32,
             es,
-            rae_tokens::TYPE_BODY,
+            ath_tokens::TYPE_BODY,
             accent(),
             FontFamily::Sans,
         );
@@ -1604,12 +1604,12 @@ fn render_timer(app: &App, canvas: &mut Canvas, x: usize, y: usize, w: usize, h:
         TimerState::Paused => "Paused",
         TimerState::Fired => "",
     };
-    let sw = canvas.measure_text_aa(state_txt, rae_tokens::TYPE_BODY, FontFamily::Sans);
+    let sw = canvas.measure_text_aa(state_txt, ath_tokens::TYPE_BODY, FontFamily::Sans);
     canvas.draw_text_aa(
         ((w as i32) - sw) / 2,
         (y + 60 + big.line_height as usize + 8) as i32,
         state_txt,
-        rae_tokens::TYPE_BODY,
+        ath_tokens::TYPE_BODY,
         TEXT_MUTED,
         FontFamily::Sans,
     );
@@ -1625,21 +1625,21 @@ fn render_timer(app: &App, canvas: &mut Canvas, x: usize, y: usize, w: usize, h:
     // "Time's up" banner.
     if app.timer.state == TimerState::Fired {
         let banner = "Time's up!";
-        let bw = canvas.measure_text_aa(banner, rae_tokens::TYPE_TITLE, FontFamily::Sans);
+        let bw = canvas.measure_text_aa(banner, ath_tokens::TYPE_TITLE, FontFamily::Sans);
         let by = y + h - 70;
         canvas.fill_rounded_rect(
             (w - (bw as usize + 48)) / 2,
             by,
             bw as usize + 48,
             44,
-            rae_tokens::RADIUS_MD as usize,
+            ath_tokens::RADIUS_MD as usize,
             DARK.state_warn,
         );
         canvas.draw_text_aa(
             ((w as i32) - bw) / 2,
             (by + 10) as i32,
             banner,
-            rae_tokens::TYPE_TITLE,
+            ath_tokens::TYPE_TITLE,
             0xFF_FF_FF_FF,
             FontFamily::Sans,
         );
@@ -1696,12 +1696,12 @@ fn render_stopwatch(app: &App, canvas: &mut Canvas, x: usize, y: usize, w: usize
                 (x + pad) as i32,
                 ly as i32,
                 ls,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 TEXT_MUTED,
                 FontFamily::Sans,
             );
         }
-        ly += rae_tokens::TYPE_BODY.line_height as usize + 4;
+        ly += ath_tokens::TYPE_BODY.line_height as usize + 4;
         if ly + 20 > y + h {
             break;
         }
@@ -1730,16 +1730,16 @@ fn draw_content_buttons(app: &App, canvas: &mut Canvas, area_w: usize, active_id
             by,
             TR_BTN_W,
             TR_BTN_H,
-            rae_tokens::RADIUS_XS as usize,
+            ath_tokens::RADIUS_XS as usize,
             fill,
         );
-        let lw = canvas.measure_text_aa(label, rae_tokens::TYPE_LABEL, FontFamily::Sans);
-        let ly = (by + (TR_BTN_H - rae_tokens::TYPE_LABEL.line_height as usize) / 2) as i32;
+        let lw = canvas.measure_text_aa(label, ath_tokens::TYPE_LABEL, FontFamily::Sans);
+        let ly = (by + (TR_BTN_H - ath_tokens::TYPE_LABEL.line_height as usize) / 2) as i32;
         canvas.draw_text_aa(
             bx as i32 + (TR_BTN_W as i32 - lw) / 2,
             ly,
             label,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             if active { TEXT_FG } else { TEXT_MUTED },
             FontFamily::Sans,
         );
@@ -1790,12 +1790,12 @@ fn render_calendar(
     hn += 1;
     hn += fmt_u64(app.cal_year.max(0) as u64, &mut hbuf[hn..]);
     if let Ok(hs) = core::str::from_utf8(&hbuf[..hn]) {
-        let hw = canvas.measure_text_aa(hs, rae_tokens::TYPE_TITLE, FontFamily::Sans);
+        let hw = canvas.measure_text_aa(hs, ath_tokens::TYPE_TITLE, FontFamily::Sans);
         canvas.draw_text_aa(
             ((w as i32) - hw) / 2,
             (y + 8) as i32,
             hs,
-            rae_tokens::TYPE_TITLE,
+            ath_tokens::TYPE_TITLE,
             TEXT_FG,
             FontFamily::Sans,
         );
@@ -1805,16 +1805,16 @@ fn render_calendar(
         (x + pad) as i32,
         (y + 12) as i32,
         "<",
-        rae_tokens::TYPE_TITLE,
+        ath_tokens::TYPE_TITLE,
         accent(),
         FontFamily::Sans,
     );
-    let rw = canvas.measure_text_aa(">", rae_tokens::TYPE_TITLE, FontFamily::Sans);
+    let rw = canvas.measure_text_aa(">", ath_tokens::TYPE_TITLE, FontFamily::Sans);
     canvas.draw_text_aa(
         (x + w - pad) as i32 - rw,
         (y + 12) as i32,
         ">",
-        rae_tokens::TYPE_TITLE,
+        ath_tokens::TYPE_TITLE,
         accent(),
         FontFamily::Sans,
     );
@@ -1829,12 +1829,12 @@ fn render_calendar(
     // Weekday header row.
     for (i, wd) in WEEKDAY_SHORT.iter().enumerate() {
         let cellx = grid_x + i * col_w;
-        let ww = canvas.measure_text_aa(wd, rae_tokens::TYPE_LABEL, FontFamily::Sans);
+        let ww = canvas.measure_text_aa(wd, ath_tokens::TYPE_LABEL, FontFamily::Sans);
         canvas.draw_text_aa(
             (cellx + (col_w - ww as usize) / 2) as i32,
             header_y as i32,
             wd,
-            rae_tokens::TYPE_LABEL,
+            ath_tokens::TYPE_LABEL,
             TEXT_MUTED,
             FontFamily::Sans,
         );
@@ -1871,7 +1871,7 @@ fn render_calendar(
                 celly + 2,
                 col_w.saturating_sub(4),
                 cell_h.saturating_sub(4),
-                rae_tokens::RADIUS_XS as usize,
+                ath_tokens::RADIUS_XS as usize,
                 sel_fill(),
             );
             canvas.draw_rect_outline(
@@ -1886,12 +1886,12 @@ fn render_calendar(
         let mut dbuf = [0u8; 2];
         let dn = fmt_u64(day as u64, &mut dbuf);
         if let Ok(ds) = core::str::from_utf8(&dbuf[..dn]) {
-            let dw = canvas.measure_text_aa(ds, rae_tokens::TYPE_BODY, FontFamily::Sans);
+            let dw = canvas.measure_text_aa(ds, ath_tokens::TYPE_BODY, FontFamily::Sans);
             canvas.draw_text_aa(
                 (cellx + (col_w - dw as usize) / 2) as i32,
-                (celly + cell_h / 2 - rae_tokens::TYPE_BODY.line_height as usize / 2) as i32,
+                (celly + cell_h / 2 - ath_tokens::TYPE_BODY.line_height as usize / 2) as i32,
                 ds,
-                rae_tokens::TYPE_BODY,
+                ath_tokens::TYPE_BODY,
                 if is_today || is_selected {
                     TEXT_FG
                 } else {
@@ -1931,7 +1931,7 @@ fn scancode_digit(code: u8) -> Option<u64> {
 /// is the date-math proof the app carries.
 #[must_use]
 pub fn design_proof() -> bool {
-    let ramp = rae_tokens::derive_accent(theme_seed(), &DARK);
+    let ramp = ath_tokens::derive_accent(theme_seed(), &DARK);
     let tokens_ok = accent() == ramp.base
         && sel_fill() == ramp.active
         && BG == DARK.bg_raised
@@ -1941,13 +1941,13 @@ pub fn design_proof() -> bool {
         && TEXT_MUTED == DARK.text_secondary
         && TEXT_DIM == DARK.text_tertiary
         && STROKE_HL == DARK.stroke_strong
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
 
     tokens_ok && date_math_ok() && hit_test_proof() && prefs_round_trip_ok()
 }
 
 /// Prove the Clock PREFS SCHEMA: a known non-default `Prefs` serialized via
-/// `rae_toml` then re-parsed restores the active tab AND the full ALARM LIST
+/// `ath_toml` then re-parsed restores the active tab AND the full ALARM LIST
 /// (count + each HH:MM + enabled) exactly, AND a corrupt / missing-key document
 /// resolves to the typed defaults (NOT a panic, NOT a wrong value). The alarm-list
 /// round-trip is the load-bearing assertion: alarms that don't survive a relaunch
@@ -1975,8 +1975,8 @@ fn prefs_round_trip_ok() -> bool {
         tab: Tab::Stopwatch,
         alarms,
     };
-    let text = rae_toml::to_string(&p.to_toml());
-    let parsed = match rae_toml::parse(&text) {
+    let text = ath_toml::to_string(&p.to_toml());
+    let parsed = match ath_toml::parse(&text) {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -2011,7 +2011,7 @@ fn prefs_round_trip_ok() -> bool {
     // (c) A corrupt document → typed defaults (parse FAILS, we don't panic). The
     // defaults restore the two seeded alarms + the Clock tab.
     let corrupt = "tab = = oops\n[[unterminated\n";
-    let d = match rae_toml::parse(corrupt) {
+    let d = match ath_toml::parse(corrupt) {
         Ok(t) => Prefs::from_toml(&t), // shouldn't reach here for this input
         Err(_) => Prefs::defaults(),
     };
@@ -2021,7 +2021,7 @@ fn prefs_round_trip_ok() -> bool {
 
     // (d) A well-formed doc MISSING every prefs key → typed defaults (Clock tab +
     // the two seeded alarms).
-    let empty = match rae_toml::parse("unrelated = 1\n") {
+    let empty = match ath_toml::parse("unrelated = 1\n") {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -2032,7 +2032,7 @@ fn prefs_round_trip_ok() -> bool {
 
     // (e) An out-of-range alarm time is CLAMPED, not rejected, and a malformed
     // entry (missing `min`) is SKIPPED — never a panic, never the whole-file drop.
-    let oor = match rae_toml::parse(
+    let oor = match ath_toml::parse(
         "tab = \"bogus\"\n[[alarm]]\nhour = 99\nmin = 88\nenabled = true\n[[alarm]]\nhour = 5\n",
     ) {
         Ok(t) => t,
@@ -2050,7 +2050,7 @@ fn prefs_round_trip_ok() -> bool {
 
     // (f) An explicit EMPTY alarm array yields an empty list (distinct from the
     // missing-key default that restores the seeds).
-    let emptyarr = match rae_toml::parse("alarm = []\n") {
+    let emptyarr = match ath_toml::parse("alarm = []\n") {
         Ok(t) => t,
         Err(_) => return false,
     };
@@ -2221,18 +2221,18 @@ fn date_math_ok() -> bool {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     if !design_proof() {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
 
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
 
     let mut app = App::new();
     render(&mut app, &mut canvas);
-    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
     app.last_secs = wall_secs();
 
     let mut extended = false;
@@ -2243,7 +2243,7 @@ pub extern "C" fn _start() -> ! {
         let mut mouse_activity = false;
         let mut left_down = left_was_down;
         loop {
-            let ev = raekit::sys::poll_mouse();
+            let ev = athkit::sys::poll_mouse();
             if ev == 0 {
                 break;
             }
@@ -2252,27 +2252,27 @@ pub extern "C" fn _start() -> ! {
         }
         if mouse_activity || left_down != left_was_down {
             if left_down && !left_was_down {
-                let (cx, cy, _btn) = raekit::sys::cursor_pos();
+                let (cx, cy, _btn) = athkit::sys::cursor_pos();
                 // Subtract the LIVE window origin (not the stale present-time
                 // PRESENT_X/Y) so clicks land correctly after the window manager
                 // moves the window (Overview / Spaces / tiling). Falls back to the
                 // present origin if the surface isn't found. Saturating-sub keeps a
                 // cursor above/left of the window from underflowing.
-                let (ox, oy) = raekit::sys::surface_origin(sid)
+                let (ox, oy) = athkit::sys::surface_origin(sid)
                     .unwrap_or((PRESENT_X as u32, PRESENT_Y as u32));
                 let lx = (cx as i32).saturating_sub(ox as i32);
                 let ly = (cy as i32).saturating_sub(oy as i32);
                 if app.dispatch(app.hit(lx, ly)) {
                     app.toast_len = 0;
                     render(&mut app, &mut canvas);
-                    raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                    athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
                     app.last_secs = wall_secs();
                 }
             }
             left_was_down = left_down;
         }
 
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
             // Idle: tick the clock once per second + run the timer state machine.
             let mut need_render = false;
@@ -2292,9 +2292,9 @@ pub extern "C" fn _start() -> ! {
             }
             if need_render {
                 render(&mut app, &mut canvas);
-                raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+                athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
             }
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
 
@@ -2317,7 +2317,7 @@ pub extern "C" fn _start() -> ! {
 
         // Esc always quits.
         if !ext && code == 0x01 {
-            raekit::sys::exit(0);
+            athkit::sys::exit(0);
         }
 
         // Tab cycles forward; 1-5 jump to a tab (when not consumed by a tab).
@@ -2407,7 +2407,7 @@ pub extern "C" fn _start() -> ! {
 
         // Any handled keypress repaints (every branch above mutates view state).
         render(&mut app, &mut canvas);
-        raekit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
+        athkit::sys::surface_present(sid, PRESENT_X as u64, PRESENT_Y as u64);
         app.last_secs = wall_secs();
     }
 }
@@ -2429,7 +2429,7 @@ fn handle_tab_keys(app: &mut App, ext: bool, code: u8) {
     }
 }
 
-// FOLLOW-UP: register Clock tile in raeshell/start_menu (the concurrent opus
-// session owns raeshell/start_menu — this slice deliberately does NOT edit it).
+// FOLLOW-UP: register Clock tile in athshell/start_menu (the concurrent opus
+// session owns athshell/start_menu — this slice deliberately does NOT edit it).
 // Once that session lands, add a "Clock" entry with exec_path = "clock" so the
 // app is launchable from the Start menu, not only via the initramfs bundle.

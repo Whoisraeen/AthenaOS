@@ -23,7 +23,7 @@ setting names the subsystem that backs it + honest status).
   2. **Live subsystem syscalls** — for things applied immediately to running state
      (set volume, change resolution, pin a driver, set a fan curve). The registry
      stores the *desired* value; a syscall pushes it to the live subsystem.
-  3. **`/proc/raeen/*`** — read-only live state the UI displays (current driver pick,
+  3. **`/proc/athena/*`** — read-only live state the UI displays (current driver pick,
      thermals, link status, battery health, sandbox denials).
 - **Every write is capability-gated** via AthGuard: changing security/driver/network
   settings requires the matching `Cap`, and sensitive changes route through
@@ -43,15 +43,15 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 
 | Setting | Notes | Backing | Status |
 |---|---|---|---|
-| About (device name, CPU/RAM/GPU, OS build, serial) | mirrors Win "About" / mac "About This Mac" | cpu_features, acpi, `/proc/raeen/*` | 🟡 |
+| About (device name, CPU/RAM/GPU, OS build, serial) | mirrors Win "About" / mac "About This Mac" | cpu_features, acpi, `/proc/athena/*` | 🟡 |
 | Rename device | hostname | config_registry | ⬜ |
-| OS updates (check, download, schedule, history) | Win Update / Software Update | raeupdate + A/B slots | 🟡 |
+| OS updates (check, download, schedule, history) | Win Update / Software Update | athupdate + A/B slots | 🟡 |
 | Active hours / update deferral | | config_registry | ⬜ |
 | Atomic update slots (A/B), rollback to previous build | AthenaOS-native | Phase 3.6 update slots | 🟡 |
-| Storage overview + Storage Sense (auto-clean) | Win Storage Sense / mac Storage | raefs, tiered storage | 🟡 |
+| Storage overview + Storage Sense (auto-clean) | Win Storage Sense / mac Storage | athfs, tiered storage | 🟡 |
 | Multitasking (snap layouts, alt-tab, virtual desktops) | | compositor | 🟡 |
-| Clipboard history + sync | Win clipboard | clipboard (`/proc/raeen/clipboard`) | 🟡 |
-| Recovery / Reset this PC (keep files / wipe) | | installer, raefs snapshots | 🟡 |
+| Clipboard history + sync | Win clipboard | clipboard (`/proc/athena/clipboard`) | 🟡 |
+| Recovery / Reset this PC (keep files / wipe) | | installer, athfs snapshots | 🟡 |
 | Activation / licensing | | AthID | ⬜ |
 | Telemetry / diagnostics level (Off/Basic/Full) | privacy-first default Off | audit, config_registry | 🟡 |
 
@@ -75,15 +75,15 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 
 | Setting | Notes | Backing | Status |
 |---|---|---|---|
-| Output device + per-app volume mixer | Win Volume Mixer | raeaudio | 🟡 |
-| Input device, mic level, mic boost | | raeaudio | 🟡 |
-| Master volume / mute / balance | | raeaudio | 🟡 |
-| Sample rate / bit depth / **latency (sub-3ms)** | pro/gaming audio | raeaudio | 🟡 |
-| Spatial audio / surround | | raeaudio | ⬜ |
-| **Routing matrix** (VoiceMeeter-class input→fx→output) | AthenaOS-native | raeaudio AudioRouter | 🟡 |
-| Per-app audio device routing | | raeaudio | ⬜ |
+| Output device + per-app volume mixer | Win Volume Mixer | athaudio | 🟡 |
+| Input device, mic level, mic boost | | athaudio | 🟡 |
+| Master volume / mute / balance | | athaudio | 🟡 |
+| Sample rate / bit depth / **latency (sub-3ms)** | pro/gaming audio | athaudio | 🟡 |
+| Spatial audio / surround | | athaudio | ⬜ |
+| **Routing matrix** (VoiceMeeter-class input→fx→output) | AthenaOS-native | athaudio AudioRouter | 🟡 |
+| Per-app audio device routing | | athaudio | ⬜ |
 | Sound effects / system sounds theme | | theme_engine | ⬜ |
-| Mono audio (accessibility) | → §11 | raeaudio | ⬜ |
+| Mono audio (accessibility) | → §11 | athaudio | ⬜ |
 
 ## 4. Bluetooth & Devices
 
@@ -106,12 +106,12 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 | Wi-Fi (scan, connect, known networks, metered) | | net_drivers, LinuxKPI iwlwifi | 🟡 |
 | Ethernet (IP, DHCP/static, DNS) | | net_drivers, smoltcp, DHCP | 🟡 |
 | **VPN / WireGuard** (tunnels, keys, on-demand) | native WireGuard | tunnel.rs, WireGuard Noise | 🟡 |
-| Proxy (manual/auto/PAC) | | raenet | ⬜ |
-| DNS (servers, DoH/DoT) | | raenet, TLS 1.3 | 🟡 |
+| Proxy (manual/auto/PAC) | | athnet | ⬜ |
+| DNS (servers, DoH/DoT) | | athnet, TLS 1.3 | 🟡 |
 | **Firewall** (per-app, inbound/outbound rules, zones) | | AthGuard, sandbox net classes | 🟡 |
 | Mobile hotspot / Internet sharing | | net_drivers | ⬜ |
 | Airplane mode | | net_drivers, bluetooth | ⬜ |
-| Data usage / per-app network stats | | raenet | ⬜ |
+| Data usage / per-app network stats | | athnet | ⬜ |
 
 ## 6. Personalization
 
@@ -125,24 +125,24 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 | **Live wallpaper** (GPU, pause when occluded) | AthenaOS-native | live_wallpaper | 🟡 |
 | **Glassmorphism** (blur radius, transparency, vibrancy) | AthenaOS-native | compositor | 🟡 |
 | Window animations (speed, curve editor, reduce-motion) | | compositor | 🟡 |
-| Fonts (system font, size, install/manage) | | raeui, font engine | 🟡 |
+| Fonts (system font, size, install/manage) | | athui, font engine | 🟡 |
 | Cursor (theme, size, trail, color) | | compositor | 🟡 |
 | Lock screen (wallpaper, widgets, clock) | | compositor | ⬜ |
-| Start/Taskbar/Dock (position, size, behavior, pinned) | | raeshell | 🟡 |
-| Sounds (system sound scheme) | | theme_engine, raeaudio | ⬜ |
+| Start/Taskbar/Dock (position, size, behavior, pinned) | | athshell | 🟡 |
+| Sounds (system sound scheme) | | theme_engine, athaudio | ⬜ |
 
 ## 7. Apps
 
 | Setting | Notes | Backing | Status |
 |---|---|---|---|
-| Installed apps (list, uninstall, repair, move) | | app_bundle, raestore | 🟡 |
+| Installed apps (list, uninstall, repair, move) | | app_bundle, athstore | 🟡 |
 | Default apps (by type / by protocol) | | config_registry | ⬜ |
 | Startup apps (enable/disable, impact) | | shell_runner | 🟡 |
 | **App permissions** (per-app: camera/mic/location/files/…) | → §12 | AthGuard, rae_manifest | ✅ |
 | Optional features / components | | app_bundle | ⬜ |
 | **App bundle dependency view** (hashed deps) | AthenaOS-native | app_bundle (SYS_BUNDLE_VERIFY) | 🟡 |
-| Offline maps / per-app storage / app data buckets | | raefs data buckets | 🟡 |
-| App store settings (AthStore: auto-update, sources) | | raestore | ⬜ |
+| Offline maps / per-app storage / app data buckets | | athfs data buckets | 🟡 |
+| App store settings (AthStore: auto-update, sources) | | athstore | ⬜ |
 
 ## 8. Accounts & Users
 
@@ -160,12 +160,12 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 
 | Setting | Notes | Backing | Status |
 |---|---|---|---|
-| Date & time (auto/manual, NTP server) | | rtc, raenet NTP | 🟡 |
+| Date & time (auto/manual, NTP server) | | rtc, athnet NTP | 🟡 |
 | Time zone (auto-by-location/manual) | | config_registry | ⬜ |
 | Region / formats (number, currency, first day) | | config_registry | ⬜ |
 | Language (display, preferred order) | | i18n | ⬜ |
 | Keyboard layouts / input methods (IME) | | input | ⬜ |
-| Speech (TTS voice, recognition language) | | raeaudio | ⬜ |
+| Speech (TTS voice, recognition language) | | athaudio | ⬜ |
 
 ## 10. Gaming (AthenaOS flagship)
 
@@ -173,13 +173,13 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 |---|---|---|---|
 | **Game Mode / SCHED_BODY** (auto-prioritize foreground game) | hard real-time class | scheduler SCHED_BODY | 🟡 |
 | Game Bar / in-game overlay (FPS, perf, chat) | | compositor | ⬜ |
-| **Captures** (clips, screenshots, hotkeys, bitrate) | | compositor, raeplay | ⬜ |
-| **GameOS / Couch mode** (big-picture UI) | AthenaOS-native | raeplay GameOS | 🟡 |
+| **Captures** (clips, screenshots, hotkeys, bitrate) | | compositor, athplay | ⬜ |
+| **GameOS / Couch mode** (big-picture UI) | AthenaOS-native | athplay GameOS | 🟡 |
 | Per-game profiles (power, RGB, resolution, fan) | AthenaOS-native | overclock, rgb, power_supply | 🟡 |
 | **Anti-cheat — Tier 1 attestation** (per-game status) | userspace attestation, no ring-0 | anticheat | ✅ |
 | **Anti-cheat — Tier 2 kernel AC consent** (per-game allow/revoke, "games allowed to load kernel AC", audit view, global hard-off) | for titles that require it (EAC/BattlEye/Vanguard); load-on-launch, signed, audited — see `ANTICHEAT_STRATEGY.md` | anticheat Tier 2, perm_prompt, rae_manifest | ⬜ |
-| **AthBridge / Windows-game compatibility** (per-title) | Proton-lineage | raebridge | 🟡 |
-| Shader cache management | | raegfx | ⬜ |
+| **AthBridge / Windows-game compatibility** (per-title) | Proton-lineage | athbridge | 🟡 |
+| Shader cache management | | athgfx | ⬜ |
 | VRR/low-latency mode per game | | compositor | 🟡 |
 
 ## 11. Accessibility
@@ -187,9 +187,9 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 | Group | Settings | Backing | Status |
 |---|---|---|---|
 | Vision | text size, magnifier, high contrast, color filters (color-blind), cursor size, reduce transparency/motion | compositor, theme_engine | 🟡 |
-| Hearing | mono audio, visual alerts, live captions | raeaudio, compositor | ⬜ |
+| Hearing | mono audio, visual alerts, live captions | athaudio, compositor | ⬜ |
 | Interaction | sticky/filter/toggle keys, mouse keys, on-screen keyboard, dwell, voice control | input | ⬜ |
-| Narrator / screen reader | speech, verbosity, braille | raeaudio, raeui a11y tree | ⬜ |
+| Narrator / screen reader | speech, verbosity, braille | athaudio, athui a11y tree | ⬜ |
 
 ## 12. Privacy & Security (AthGuard)
 
@@ -199,7 +199,7 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 | **App sandbox level** (Trusted/AppSandbox/Strict) per app | AthenaOS-native | sandbox.rs | 🟡 |
 | **Code signing / app trust** (verified developer, sideload warning) | | rae_manifest, secure_boot | 🟡 |
 | Permission activity / which app used the mic | | audit, cap_audit | 🟡 |
-| **Full-disk encryption (FDE)** on/off, recovery key | LUKS-equiv | raefs, rae_crypto | ⬜ |
+| **Full-disk encryption (FDE)** on/off, recovery key | LUKS-equiv | athfs, ath_crypto | ⬜ |
 | **Secure Boot** status, key enrollment | | secure_boot | 🟡 |
 | **TPM** / measured boot / sealing | | tpm, security.rs | 🟡 |
 | Firewall (→ §5) | | AthGuard | 🟡 |
@@ -211,7 +211,7 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 
 | Setting | Notes | Backing | Status |
 |---|---|---|---|
-| **Device Manager** (tree of all devices, status, conflicts) | Win Device Manager | driver_manifest, pci, `/proc/raeen/drivers` | 🟡 |
+| **Device Manager** (tree of all devices, status, conflicts) | Win Device Manager | driver_manifest, pci, `/proc/athena/drivers` | 🟡 |
 | **Driver backend per device** (Native Rust ⇄ LinuxKPI) | the choosable default — see `NATIVE_DRIVER_PLAN.md` | driver_manifest selection layer | 🟡 |
 | Per-device **pin** to a specific driver | | driver_manifest DriverPolicy | ⬜ |
 | Per-class preference (native-first / linuxkpi-first) | | driver_manifest DriverPolicy | ⬜ |
@@ -240,23 +240,23 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 
 | Setting | Notes | Backing | Status |
 |---|---|---|---|
-| Disks & volumes (manage, format, mount) | | raefs, gpt, block_io | 🟡 |
-| **Snapshots** (list, create, **one-click rollback**) | AthenaOS-native | raefs snapshots/CoW | ✅ |
-| **Tiered storage** (hot/cold placement policy) | | raefs tiered storage | 🟡 |
-| **Per-app data buckets** (quota, isolation) | AthenaOS-native | raefs data buckets | 🟡 |
-| Trash / recycle bin (size, auto-empty) | | raefs | ⬜ |
-| Drive optimization / TRIM | | nvme, raefs | ⬜ |
-| Network drives / file shares | | raenet | ⬜ |
+| Disks & volumes (manage, format, mount) | | athfs, gpt, block_io | 🟡 |
+| **Snapshots** (list, create, **one-click rollback**) | AthenaOS-native | athfs snapshots/CoW | ✅ |
+| **Tiered storage** (hot/cold placement policy) | | athfs tiered storage | 🟡 |
+| **Per-app data buckets** (quota, isolation) | AthenaOS-native | athfs data buckets | 🟡 |
+| Trash / recycle bin (size, auto-empty) | | athfs | ⬜ |
+| Drive optimization / TRIM | | nvme, athfs | ⬜ |
+| Network drives / file shares | | athnet | ⬜ |
 | Versioned config history (the registry itself) | AthenaOS-native | config_registry snapshots | ✅ |
 
 ## 16. Notifications & Focus
 
 | Setting | Notes | Backing | Status |
 |---|---|---|---|
-| Notification center on/off, per-app | | compositor, raeshell | ⬜ |
+| Notification center on/off, per-app | | compositor, athshell | ⬜ |
 | **Focus / Do Not Disturb** (schedules, priority, game auto-DND) | | compositor, scheduler | ⬜ |
 | Banners, sounds, badges per app | | compositor | ⬜ |
-| Notification history | | raeshell | ⬜ |
+| Notification history | | athshell | ⬜ |
 
 ## 17. Search & Indexing
 
@@ -271,11 +271,11 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 
 | Setting | Notes | Backing | Status |
 |---|---|---|---|
-| Windows-app compatibility layer on/off | | raebridge | 🟡 |
-| Per-app compat profile (Windows version, DLL overrides) | | raebridge | 🟡 |
-| Proton/Wine-lineage runtime selection | | raebridge | 🟡 |
+| Windows-app compatibility layer on/off | | athbridge | 🟡 |
+| Per-app compat profile (Windows version, DLL overrides) | | athbridge | 🟡 |
+| Proton/Wine-lineage runtime selection | | athbridge | 🟡 |
 | POSIX/Linux-binary compatibility | | linux_syscall, linux_compat | 🟡 |
-| DXVK/D3D→Vulkan translation toggles | | raebridge, raegfx | ⬜ |
+| DXVK/D3D→Vulkan translation toggles | | athbridge, athgfx | ⬜ |
 
 ## 19. Developer & Advanced
 
@@ -283,12 +283,12 @@ backing yet). The Settings *UI itself* is ⬜ today — this doc is its blueprin
 |---|---|---|---|
 | **Developer mode** (sideload unsigned, verbose logs) | | rae_manifest, AthGuard | 🟡 |
 | Unverified-developer sideload UX (warn, not block) | AthenaOS-native | rae_manifest | 🟡 |
-| Terminal / shell defaults (AthShell) | | raeshell terminal | 🟡 |
-| SSH / remote access | | raenet | ⬜ |
+| Terminal / shell defaults (AthShell) | | athshell terminal | 🟡 |
+| SSH / remote access | | athnet | ⬜ |
 | **Scripting layer** (Swift-like scripts) enable | | scripting.rs | ⬜ |
 | Kernel/boot diagnostics (serial log, bootlog, procfs browser) | | bootlog, procfs | ✅ |
 | Window manager API (tile/stack/float/hybrid swap) | AthenaOS-native | compositor | ⬜ |
-| Swappable shell (replace AthShell) | AthenaOS-native | raeshell | ⬜ |
+| Swappable shell (replace AthShell) | AthenaOS-native | athshell | ⬜ |
 
 ---
 

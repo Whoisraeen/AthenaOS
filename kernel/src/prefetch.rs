@@ -27,7 +27,7 @@ use alloc::string::String;
 use core::sync::atomic::{AtomicU64, Ordering};
 use spin::Mutex;
 
-/// Must equal `raefs::BLOCK_SIZE` (4 KiB blocks = 8 × 512 sectors).
+/// Must equal `athfs::BLOCK_SIZE` (4 KiB blocks = 8 × 512 sectors).
 pub const BLOCK: usize = 4096;
 /// Consecutive blocks before read-ahead arms.
 pub const RUN_THRESHOLD: u32 = 2;
@@ -158,15 +158,15 @@ pub fn init() {
 pub fn run_boot_smoketest() {
     let (runs0, pre0, hits0, _miss0) = stats();
 
-    let io = crate::raefs::with_custom_raefs_device(
+    let io = crate::athfs::with_custom_athfs_device(
         alloc::boxed::Box::new(crate::fde::SharedRamDisk::new(4096).0),
         || {
             let mut data = alloc::vec![0u8; 8 * BLOCK];
             for (i, b) in data.iter_mut().enumerate() {
                 *b = (i % 251) as u8;
             }
-            let wrote = crate::raefs::write_flat_file("prefetch-stream.bin", &data);
-            let read = crate::raefs::read_flat_file("prefetch-stream.bin");
+            let wrote = crate::athfs::write_flat_file("prefetch-stream.bin", &data);
+            let read = crate::athfs::read_flat_file("prefetch-stream.bin");
             (wrote, read.as_deref() == Some(&data[..]))
         },
     );
@@ -196,7 +196,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/prefetch` — read-ahead engine state.
+/// `/proc/athena/prefetch` — read-ahead engine state.
 pub fn dump_text() -> String {
     let st = STATE.lock();
     let (runs, pre, hits, misses) = stats();

@@ -8,7 +8,7 @@
 //! `honesty_audit()` and the HONESTY NOTICE in `dump_text()`).
 //!
 //! R10 contract: `init()` (kernel_main) + `run_boot_smoketest()` +
-//! `dump_text()`/`status()` for `/proc/raeen/hardening`.
+//! `dump_text()`/`status()` for `/proc/athena/hardening`.
 #![allow(dead_code)]
 
 extern crate alloc;
@@ -1088,7 +1088,7 @@ pub mod kasan {
         kasan_is_live()
     }
 
-    /// Total KASAN findings classified so far (for `/proc/raeen/hardening`).
+    /// Total KASAN findings classified so far (for `/proc/athena/hardening`).
     pub fn error_count() -> u64 {
         kasan_error_count()
     }
@@ -2212,7 +2212,7 @@ pub fn init() {
     }
 }
 
-/// Snapshot of hardening state for `/proc/raeen/hardening`.
+/// Snapshot of hardening state for `/proc/athena/hardening`.
 /// Required by `kernelchecklist.md` R3 (every subsystem gets a procfs endpoint).
 pub fn status() -> Option<HardeningStatus> {
     HARDENING.lock().as_ref().map(|m| m.security_status())
@@ -2300,7 +2300,7 @@ pub fn run_boot_smoketest() {
     }
 }
 
-/// Text dump for `/proc/raeen/hardening`.
+/// Text dump for `/proc/athena/hardening`.
 pub fn dump_text() -> alloc::string::String {
     use alloc::string::String;
     let s = match status() {

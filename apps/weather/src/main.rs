@@ -3,7 +3,7 @@
 //!
 //! A standalone userspace ELF (`exec_path = "weather"`). The rich data model
 //! (`model` — conditions, forecasts, units, weather codes) was the previously
-//! UNWIRED `raeshell::weather_app`; it moved here and became a live app. This
+//! UNWIRED `athshell::weather_app`; it moved here and became a live app. This
 //! `main.rs` is the app shell: it builds a demo `LocationWeather` (there is no
 //! live weather-service syscall yet — a `NEEDS-INTERFACE` follow-up), renders
 //! the current conditions + a short daily forecast on the OBSIDIAN design
@@ -12,7 +12,7 @@
 //! PROOF: a `#![no_main]` ELF can't run `cargo test`, so `design_proof()` (a
 //! fail-able runtime gate at `_start`) asserts the model builds a sane demo
 //! (named location, plausible temperature) AND the chrome is wired to the shared
-//! `rae_tokens` tokens — `exit(3)` on any drift.
+//! `ath_tokens` tokens — `exit(3)` on any drift.
 
 #![no_std]
 #![no_main]
@@ -23,11 +23,11 @@ use alloc::format;
 use alloc::string::String;
 
 #[allow(unused_imports)]
-use raekit;
+use athkit;
 
-use rae_tokens::{DARK, RAEBLUE, TYPE_BODY, TYPE_CAPTION, TYPE_DISPLAY, TYPE_LABEL, TYPE_TITLE};
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
+use ath_tokens::{DARK, RAEBLUE, TYPE_BODY, TYPE_CAPTION, TYPE_DISPLAY, TYPE_LABEL, TYPE_TITLE};
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
 
 mod model;
 use model::{Location, LocationWeather, WeatherCode};
@@ -36,7 +36,7 @@ const WIN_W: usize = 720;
 const WIN_H: usize = 460;
 const SURFACE_VIRT: u64 = 0x0000_7C00_0000;
 
-// OBSIDIAN chrome on the shared `rae_tokens::DARK` palette — near-black tiers,
+// OBSIDIAN chrome on the shared `ath_tokens::DARK` palette — near-black tiers,
 // no frost, accent glow. Live Vibe accent via SYS_THEME_GET (whole-OS cohesion).
 const BG: u32 = DARK.bg_base;
 const CARD_BG: u32 = DARK.bg_raised;
@@ -45,7 +45,7 @@ const TEXT_DIM: u32 = DARK.text_secondary;
 const TEXT_MUTE: u32 = DARK.text_tertiary;
 
 fn accent() -> u32 {
-    rae_tokens::derive_accent(raekit::sys::theme_accent(), &DARK).base
+    ath_tokens::derive_accent(athkit::sys::theme_accent(), &DARK).base
 }
 
 /// A 5-day forecast row: (day, high°C, low°C, code). Kept local (the live
@@ -139,7 +139,7 @@ fn render(lw: &LocationWeather, canvas: &mut Canvas) {
             y,
             pill_w,
             pill_h,
-            rae_tokens::RADIUS_MD as usize,
+            ath_tokens::RADIUS_MD as usize,
             CARD_BG,
         );
         canvas.draw_text_aa(
@@ -160,7 +160,7 @@ fn render(lw: &LocationWeather, canvas: &mut Canvas) {
         fc_y,
         WIN_W - 56,
         fc_h,
-        rae_tokens::RADIUS_LG as usize,
+        ath_tokens::RADIUS_LG as usize,
         CARD_BG,
     );
     canvas.draw_text_aa(
@@ -182,8 +182,8 @@ fn render(lw: &LocationWeather, canvas: &mut Canvas) {
                 cy as usize - 6,
                 col_w - 8,
                 104,
-                rae_tokens::RADIUS_MD as usize,
-                rae_tokens::derive_accent(raekit::sys::theme_accent(), &DARK).subtle,
+                ath_tokens::RADIUS_MD as usize,
+                ath_tokens::derive_accent(athkit::sys::theme_accent(), &DARK).subtle,
             );
         }
         canvas.draw_text_aa(cx as i32, cy, day, TYPE_BODY, TEXT_FG, FontFamily::Sans);
@@ -225,29 +225,29 @@ pub fn design_proof() -> bool {
     let wind_ok = lw.current.wind_direction_str() == "W";
     let tokens_ok = BG == DARK.bg_base
         && TEXT_FG == DARK.text_primary
-        && raekit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
+        && athkit::sys::THEME_DEFAULT_ACCENT == RAEBLUE;
     named && sane_temp && wind_ok && tokens_ok
 }
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     if !design_proof() {
-        raekit::sys::exit(3);
+        athkit::sys::exit(3);
     }
-    let sid = raekit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
+    let sid = athkit::sys::surface_create(WIN_W as u64, WIN_H as u64, SURFACE_VIRT);
     if sid == u64::MAX {
-        raekit::sys::exit(1);
+        athkit::sys::exit(1);
     }
     let mut canvas = unsafe { Canvas::new(SURFACE_VIRT as *mut u8, WIN_W, WIN_H, 4) };
     let lw = demo();
     render(&lw, &mut canvas);
-    raekit::sys::surface_present(sid, 180, 90);
+    athkit::sys::surface_present(sid, 180, 90);
 
     let mut extended = false;
     loop {
-        let key = raekit::sys::read_key();
+        let key = athkit::sys::read_key();
         if key == 0 {
-            raekit::sys::yield_now();
+            athkit::sys::yield_now();
             continue;
         }
         let sc = key as u8;
@@ -261,7 +261,7 @@ pub extern "C" fn _start() -> ! {
         }
         // Esc closes.
         if sc & 0x7F == 0x01 {
-            raekit::sys::exit(0);
+            athkit::sys::exit(0);
         }
     }
 }

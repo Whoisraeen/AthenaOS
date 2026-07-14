@@ -412,7 +412,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/update_slots` — A/B slot state.
+/// `/proc/athena/update_slots` — A/B slot state.
 pub fn dump_text() -> String {
     let guard = SLOT_CONFIG.lock();
     match guard.as_ref() {

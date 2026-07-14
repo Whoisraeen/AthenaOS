@@ -1,5 +1,5 @@
 //! Contacts data model for the AthenaOS Contacts app (Contact/Phone/Email/vCard,
-//! sort/filter/groups). Moved from the former `raeshell::contacts_app`; the app
+//! sort/filter/groups). Moved from the former `athshell::contacts_app`; the app
 //! renders a subset, so unused model surface is expected.
 #![allow(dead_code, unused_imports, static_mut_refs)]
 

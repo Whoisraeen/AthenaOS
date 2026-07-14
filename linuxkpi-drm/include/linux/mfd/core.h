@@ -5,7 +5,7 @@
  * Multi-function device cells. amdgpu uses this only for the ACP (Audio
  * CoProcessor) sub-device registration — out of the MES bring-up subset
  * (SCOPE.md). Reached via amdgpu_acp.h for type/decl layout; the add/remove ops
- * are backed by raeen_linuxkpi at M4 if ACP is ever brought into scope. License
+ * are backed by ath_linuxkpi at M4 if ACP is ever brought into scope. License
  * boundary (../../README.md): API surface, no GPL source.
  */
 #ifndef _LINUXKPI_LINUX_MFD_CORE_H

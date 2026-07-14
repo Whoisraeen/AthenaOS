@@ -1,12 +1,12 @@
 # AthenaOS App Developer Guide
 
 How to build, bundle, sign, and ship an app for AthenaOS. Grounded in the real SDK
-(`components/raekit`), manifest parser (`kernel/src/rae_manifest.rs`), bundle format
+(`components/athkit`), manifest parser (`kernel/src/rae_manifest.rs`), bundle format
 (`kernel/src/app_bundle.rs`), and signing chain (xtask + `keys/`).
 
 > **Status honesty:** the SDK (`view!` macro, widgets, syscall surface) works; permission
 > manifests + Ed25519 signing work end-to-end today; the one-command packager
-> (`raekit bundle`) and the AthStore submission flow are **planned** — for now apps are
+> (`athkit bundle`) and the AthStore submission flow are **planned** — for now apps are
 > bundled by xtask into the initramfs. Each section flags what's real vs planned.
 
 ---
@@ -56,7 +56,7 @@ the Linux-ABI translation path. So both native and ported apps coexist.
 #![no_std]
 #![no_main]
 
-use raekit::{view, App};
+use athkit::{view, App};
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
@@ -74,20 +74,20 @@ pub extern "C" fn _start() -> ! {
 ```
 
 The `view!` macro builds a `ViewNode` tree from `VStack`/`HStack`/`ZStack` containers and
-`Text`/`Button`/`Spacer`/`Divider` terminals (`components/raekit/src/lib.rs`). State and
-data-binding come from `raekit::state` (`State`, `Binding`, `ObservableObject`); layout
-from `raekit::layout` (flexbox-style: `ZStack`, `Padding`, `Frame`, `Overlay`).
+`Text`/`Button`/`Spacer`/`Divider` terminals (`components/athkit/src/lib.rs`). State and
+data-binding come from `athkit::state` (`State`, `Binding`, `ObservableObject`); layout
+from `athkit::layout` (flexbox-style: `ZStack`, `Padding`, `Frame`, `Overlay`).
 
-`apps/calculator/` is a complete worked example (draws with `raegfx::Canvas` into a
+`apps/calculator/` is a complete worked example (draws with `athgfx::Canvas` into a
 surface — see §6).
 
 ---
 
 ## 4. The app directory & Cargo.toml
 
-`apps/myapp/Cargo.toml` builds a `#![no_std] #![no_main]` ELF that depends on `raekit`
-(and `raegfx` if you draw). Add the crate as a workspace member (root `Cargo.toml`) so
-xtask builds and bundles it into the initramfs. *(The `raekit new myapp` scaffolder is
+`apps/myapp/Cargo.toml` builds a `#![no_std] #![no_main]` ELF that depends on `athkit`
+(and `athgfx` if you draw). Add the crate as a workspace member (root `Cargo.toml`) so
+xtask builds and bundles it into the initramfs. *(The `athkit new myapp` scaffolder is
 planned; today copy `apps/calculator/` as the template.)*
 
 ---
@@ -118,14 +118,14 @@ forward-compat.
 - **Surfaces:** `App::surface_create(w, h, user_virt)` gives you a framebuffer mapped at
   `user_virt`; draw into it, then `App::surface_present(id, x, y)` to composite. The
   compositor handles glassmorphism/VRR — you just present.
-- **Canvas:** `raegfx::Canvas` wraps a surface with primitives (rects, text via the font
+- **Canvas:** `athgfx::Canvas` wraps a surface with primitives (rects, text via the font
   engine, blits) — see `apps/calculator/src/main.rs`.
 - **Input:** `App::read_key()`, `App::poll_mouse()` (and the full input pipeline routes
   focus to you — see `INPUT_PIPELINE.md`).
 - **Higher-level:** the AthKit `view!` tree + layout engine is the SwiftUI-style path;
-  Skia/wgpu backends are Phase 8 (`raeui.md`).
+  Skia/wgpu backends are Phase 8 (`athui.md`).
 
-The app syscall surface (`raekit::syscalls` / `App`): `exit`, `write`, `spawn`,
+The app syscall surface (`athkit::syscalls` / `App`): `exit`, `write`, `spawn`,
 `pty_*`, `read_key`, `poll_mouse`, `mmap`/`munmap`, `surface_create`/`surface_present`,
 `yield_now`. Full numbers in `docs/SYSCALL_TABLE.md`.
 
@@ -133,10 +133,10 @@ The app syscall surface (`raekit::syscalls` / `App`): `exit`, `write`, `spawn`,
 
 ## 7. Storage, data & limits
 
-- **Per-app data bucket:** an isolated AthFS subtree per app id (`raefs::create_bucket`),
+- **Per-app data bucket:** an isolated AthFS subtree per app id (`athfs::create_bucket`),
   with a quota. Your app can't see another app's bucket — sandboxing at the FS layer.
 - **Memory limit:** a per-bundle address-space cap (`process::set_bundle_memory_limit`);
-  `mmap`/`brk` past it return `MemoryLimitExceeded`. Visible at `/proc/raeen/memlimits`.
+  `mmap`/`brk` past it return `MemoryLimitExceeded`. Visible at `/proc/athena/memlimits`.
 - **Config:** persistent prefs belong in the versioned `config_registry` (snapshotted,
   rollback-able), not ad-hoc files.
 
@@ -196,7 +196,7 @@ own developer cert + revocation is the planned store-PKI step.)
 
 ## 11. Shipping on AthStore  *(planned)*
 
-`raestore` is the store service. The intended flow: `raekit bundle` produces a signed
+`athstore` is the store service. The intended flow: `athkit bundle` produces a signed
 `.raeapp` → submit to AthStore → automated checks (manifest sanity, declared-permission
 review, signature) → store countersign → users install with one click, auto-updated.
 First-year developers get **free signing** (build-system support). Today this path is
@@ -215,7 +215,7 @@ scaffolding; the kernel-side trust + bundle format it depends on are real.
    bucket, and the memory limit; AthGuard arms the syscall-edge gate for the assigned
    level.
 5. App runs; sensitive permissions prompt on first use; everything is auditable
-   (`/proc/raeen/sandbox`, `/proc/raeen/manifests`).
+   (`/proc/athena/sandbox`, `/proc/athena/manifests`).
 6. On exit/crash, the sandbox grants are torn down.
 
 ---
@@ -232,7 +232,7 @@ scaffolding; the kernel-side trust + bundle format it depends on are real.
 | Per-app data buckets + memory limits | 🟡 |
 | Hashed-dependency verify (`.raeapp`) | 🟡 |
 | POSIX port via relibc | 🟡 |
-| `raekit bundle` one-command packager | ⬜ planned |
+| `athkit bundle` one-command packager | ⬜ planned |
 | AthStore submission / review / auto-update | ⬜ planned |
 | Unverified-developer warning UI | ⬜ (kernel posture exists; UI pending) |
 
@@ -241,12 +241,12 @@ scaffolding; the kernel-side trust + bundle format it depends on are real.
 ## 14. From-zero checklist
 
 1. Copy `apps/calculator/` → `apps/myapp/`; add it as a workspace member.
-2. Write `src/main.rs` (`#![no_std] #![no_main]`, `_start`, AthKit `view!` or `raegfx`).
+2. Write `src/main.rs` (`#![no_std] #![no_main]`, `_start`, AthKit `view!` or `athgfx`).
 3. Write `RaeManifest.toml` (name = dir, version, sandbox level, only the permissions you
    need — least privilege).
 4. Build via xtask; it bundles into the initramfs and signs with the dev key.
-5. Boot QEMU; launch from AthShell; check `/proc/raeen/manifests` shows your bundle
+5. Boot QEMU; launch from AthShell; check `/proc/athena/manifests` shows your bundle
    `signed=true` and the right level.
 6. Verify least-privilege: a denied class should log `[sandbox] DENY ... pid=<you>`.
-7. (Planned) `raekit bundle` → submit to AthStore.
+7. (Planned) `athkit bundle` → submit to AthStore.
 ```

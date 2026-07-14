@@ -177,7 +177,7 @@ THE next data (still the KIQ-fetch gate): kprobe amdgpu's KIQ doorbell/wptr writ
 to capture the EXACT value it rings the KIQ doorbell with (AthenaOS rings dword-count=7 via
 mes_ring_push; amdgpu may encode the wptr differently — unit/wrap-bit). Candidates for the gate:
 (1) doorbell value/encoding mismatch, (2) a coherency/flush of the KIQ ring or wptr memory amdgpu does
-that AthenaOS omits (no HDP/cache flush exists anywhere in raeen_amdgpu; check if the daemon's KIQ-ring
+that AthenaOS omits (no HDP/cache flush exists anywhere in ath_amdgpu; check if the daemon's KIQ-ring
 DmaBuf is WB-cached vs UC — if WB, the MES reads a stale/empty ring => rptr=0 fits exactly).
 
 ### Update 2026-06-28 (5th pass): doorbell + HDP RULED OUT — bug is a runtime precondition

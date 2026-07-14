@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-13
 **Auditor:** Opus (Claude Code), static review — no build/boot was run (this box has no toolchain).
-**Scope this pass:** `kernel/src/**` (194 files) + first-party components touched along the way. Vendored trees (`components/vendored/*`, `components/kanata_daemon/vendor/*`, `components/raebridge/relibc/*`, `dlmalloc-rs`) were treated as upstream snapshots and **excluded**.
+**Scope this pass:** `kernel/src/**` (194 files) + first-party components touched along the way. Vendored trees (`components/vendored/*`, `components/kanata_daemon/vendor/*`, `components/athbridge/relibc/*`, `dlmalloc-rs`) were treated as upstream snapshots and **excluded**.
 
 > This is a **point-in-time static audit**. Every finding below was read and reasoned about in source; none were reproduced on hardware or in QEMU. Severities reflect *potential* impact. Where I could not confirm a precondition, the item is filed under **Audit (unconfirmed)** rather than asserted as a bug.
 
@@ -21,9 +21,9 @@ Two techniques, combined:
    - length-to-`u8`/`u16` truncation
    - integer-division/modulo by a possibly-zero divisor
 2. **Deep reads** of ~12 high-risk files (parsers of untrusted input + security + DMA core):
-   `edid.rs`, `dhcp.rs`, `sandbox.rs`, `nvme.rs`, `elf.rs`, `acpi_full.rs` (battery), `raefs.rs` (name path), `audio.rs` (DMA), `atombios.rs`, plus `scheduler.rs`/`context.rs` (skimmed).
+   `edid.rs`, `dhcp.rs`, `sandbox.rs`, `nvme.rs`, `elf.rs`, `acpi_full.rs` (battery), `athfs.rs` (name path), `audio.rs` (DMA), `atombios.rs`, plus `scheduler.rs`/`context.rs` (skimmed).
 
-**Not yet deep-reviewed** (next passes): the bulk of `components/*` (raeaudio, raegfx, raeui, raenet, raeshield, rae_crypto), the `amdgpud`/`i915d`/`raeinstaller`/`xtask` binaries, and large kernel files only pattern-scanned (`compositor.rs`, `usb_core.rs`, `xhci.rs`, `ahci.rs`, `linux_compat.rs`, `ipc.rs`, `scheduler.rs` in depth).
+**Not yet deep-reviewed** (next passes): the bulk of `components/*` (athaudio, athgfx, athui, athnet, athshield, ath_crypto), the `amdgpud`/`i915d`/`athinstaller`/`xtask` binaries, and large kernel files only pattern-scanned (`compositor.rs`, `usb_core.rs`, `xhci.rs`, `ahci.rs`, `linux_compat.rs`, `ipc.rs`, `scheduler.rs` in depth).
 
 ---
 
@@ -46,7 +46,7 @@ Two techniques, combined:
 | BUG-002 | 🟠 | Storage/DMA | `kernel/src/nvme.rs` | `alloc_dma_frames_mapped` builds a multi-page DMA buffer non-contiguously (latent pitfall #7) |
 | BUG-003 | 🟡 | Net | `kernel/src/dhcp.rs` | `lease_time * 7 / 8` overflows `u32` on the RFC-legal infinite lease (`0xFFFFFFFF`) |
 | BUG-004 | 🟡 | Security | `kernel/src/sandbox.rs` | Linux network gate denylist omits `sendmsg`/`recvmsg`/`shutdown` (latent sandbox gap) |
-| BUG-005 | 🟡 | GPU | `components/raeen_amdgpu/src/atombios.rs` | `parse_rom` accepts a zero master-command-table offset its own comment forbids |
+| BUG-005 | 🟡 | GPU | `components/ath_amdgpu/src/atombios.rs` | `parse_rom` accepts a zero master-command-table offset its own comment forbids |
 | BUG-006 | 🟡 | Exec | `kernel/src/elf.rs` | Per-page zero erases data when two PT_LOAD segments share a sub-page-aligned page |
 | AUDIT-1 | 🔵 | Several | (see below) | Integer div/mod by values that *might* be zero (compositor Hz, cpufreq perf, audio ring size) |
 
@@ -174,7 +174,7 @@ The range `41..=45` then `49 | 50` deliberately steps over `46`/`47`/`48` = `sen
 ---
 
 ### BUG-005 — 🟡 ATOMBIOS `parse_rom` accepts a zero command-table offset it claims to reject
-**File:** [components/raeen_amdgpu/src/atombios.rs:92](components/raeen_amdgpu/src/atombios.rs:92)
+**File:** [components/ath_amdgpu/src/atombios.rs:92](components/ath_amdgpu/src/atombios.rs:92)
 
 ```rust
 // A zero data-table offset would be nonsensical; both must land in-image.
@@ -222,7 +222,7 @@ Note: [compositor.rs:3086](kernel/src/compositor.rs:3086) already uses `.max(1)`
 
 Listed so a future pass doesn't re-flag them:
 
-- **AthFS `name_len: name.len() as u8`** ([raefs.rs:2507](kernel/src/raefs.rs:2507) et al.) — guarded everywhere by `name.len() > 55` before the cast (`DirEntry.name` is `[u8; 55]`). Safe.
+- **AthFS `name_len: name.len() as u8`** ([athfs.rs:2507](kernel/src/athfs.rs:2507) et al.) — guarded everywhere by `name.len() > 55` before the cast (`DirEntry.name` is `[u8; 55]`). Safe.
 - **Battery `time_remaining_minutes` div-by-zero** ([acpi_full.rs:2411](kernel/src/acpi_full.rs:2411)) — guarded by `if self.present_rate == 0 || !self.is_discharging() { return None; }` immediately above. `percentage()` likewise guards `full_capacity == 0`. Safe.
 - **ELF header / program-header table bounds** ([elf.rs:42-117](kernel/src/elf.rs:42)) — `checked_mul`/`checked_add` + `data.len()` bounds + entry-in-userspace. Well done.
 - **HDA audio single-page DMA allocs** ([audio.rs:533](kernel/src/audio.rs:533), 543, 756, 766) — each structure (CORB 1 KiB, RIRB 2 KiB, BDL, data) is ≤1 page, so single-frame `allocate_frame()` is correct (no contiguity requirement). Distinct from BUG-002.
@@ -236,5 +236,5 @@ Listed so a future pass doesn't re-flag them:
 
 1. Fix BUG-002 (swap to `allocate_contiguous_frames`) and BUG-001 (correct math + real-EDID KAT) — both are cheap and BUG-002 removes a memory-corruption landmine.
 2. Resolve AUDIT-1 divisors with `.max(1)`/guards — div-by-zero is a hard kernel crash for a one-line fix.
-3. Extend the audit to the unreviewed surface: `components/rae_crypto` (security-critical, host-testable), `raenet`, `raeaudio`, and the large pattern-scanned kernel files (`compositor.rs`, `usb_core.rs`, `xhci.rs`, `ahci.rs`, `linux_compat.rs`).
+3. Extend the audit to the unreviewed surface: `components/ath_crypto` (security-critical, host-testable), `athnet`, `athaudio`, and the large pattern-scanned kernel files (`compositor.rs`, `usb_core.rs`, `xhci.rs`, `ahci.rs`, `linux_compat.rs`).
 4. Adopt a lint pass for the recurring classes here: width-before-multiply for wire-derived integers, and `allocate_contiguous_frames` for any DMA buffer > 1 page.

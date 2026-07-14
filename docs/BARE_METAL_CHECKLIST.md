@@ -16,11 +16,11 @@ We hold this checklist to one curated machine first: **Beelink Athena (AMD Ryzen
 | 0.4 | GPT partition table parsed (or raw boot tolerated) | Doesn't panic on disk discovery | ❌ |
 | 0.5 | GOP framebuffer accepted, mode logged | `[ OK ] Framebuffer: WxH @ Nbpp` | ❌ |
 | 0.6 | Kernel triangle visible on screen | Photo of screen shows the red/green/blue triangle | ❌ |
-| 0.7 | SMBIOS parses Athena's real DMI tables | `/proc/raeen/hardware` reports `match: beelink-athena` | ❌ |
+| 0.7 | SMBIOS parses Athena's real DMI tables | `/proc/athena/hardware` reports `match: beelink-athena` | ❌ |
 | 0.8 | Hardware profile applies Zen 4 quirks at boot | `[hwprof] applied: QUIRK_AMD_TSC_DEADLINE_UNRELIABLE \| QUIRK_IGPU_ONLY \| QUIRK_AMD_ZEN4_SMCA` | ❌ |
 | 0.9 | ACPI tables parse without panic | `[ OK ] ACPI tables parsed` | ❌ |
 | 0.10 | MADT discovers all 16 logical CPUs of 8845HS | `[smp] bringing up 15 Application Processor(s)...` | ❌ |
-| 0.11 | All 16 CPUs heartbeating | `/proc/raeen/smp` shows 16/16 cpu ticks > 0 | ❌ |
+| 0.11 | All 16 CPUs heartbeating | `/proc/athena/smp` shows 16/16 cpu ticks > 0 | ❌ |
 | 0.12 | CMOS RTC reads correct year | `[ OK ] RTC wall-clock: 2026-...` | ❌ |
 | 0.13 | TSC calibration succeeds | `[apic] Calibrated TSC: <correct MHz>` matching the chip's nominal | ❌ |
 | 0.14 | LAPIC timer fires on BSP | `cpu0: ticks > 0` after 1 second | ❌ |
@@ -44,10 +44,10 @@ We hold this checklist to one curated machine first: **Beelink Athena (AMD Ryzen
 | 1.3 | NVMe driver detects real Samsung 980 / WD SN770 / Crucial P3 | `[nvme] controller: <real model name> serial=<real>` | ❌ |
 | 1.4 | NVMe sector 0 round-trip | `[nvme] smoketest: read sector 0 (Ncycles) marker=<MBR signature or AthFS magic>` | ❌ |
 | 1.5 | EDID parsing accepts monitor | `[gop] EDID: <vendor> <model> <native mode>` | ❌ |
-| 1.6 | Battery presence detected via `_BIF`/`_BST` | `/proc/raeen/power` reports battery percentage | ❌ |
+| 1.6 | Battery presence detected via `_BIF`/`_BST` | `/proc/athena/power` reports battery percentage | ❌ |
 | 1.7 | AC adapter state detected | `[power] AC: present` (or `absent` if unplugged) | ❌ |
 | 1.8 | Lid switch event handled | Closing lid logs `[acpi] lid closed` | ❌ |
-| 1.9 | Thermal zone read | `/proc/raeen/thermal` reports CPU temp ≥ 0 | ❌ |
+| 1.9 | Thermal zone read | `/proc/athena/thermal` reports CPU temp ≥ 0 | ❌ |
 | 1.10 | Real network driver (e1000e or igc for Athena's I225) | `[net] e1000e/igc online, MAC=<real MAC>` | ❌ |
 | 1.11 | DHCP DORA on real network | `state: Bound, lease_ip: <real DHCP-assigned IP>` | ❌ |
 | 1.12 | HDA codec detected | `[audio] HDA codec at <BDF> vendor=<v>` | ❌ |
@@ -107,7 +107,7 @@ We hold this checklist to one curated machine first: **Beelink Athena (AMD Ryzen
 | 3.11 | Battery depletion → safe shutdown | At 5% remaining: warn; at 2%: clean shutdown to AthFS | ❌ |
 | 3.12 | Crash dump written to disk | Forced panic produces parseable dump in AthFS `/var/crash` | ❌ |
 | 3.13 | Watchdog reboots a wedged kernel | Hung kernel reboots within 30s instead of staying down | ❌ |
-| 3.14 | Network: 10 Gbps stress to localhost | Sustained throughput with no packet loss in `/proc/raeen/network` | ❌ |
+| 3.14 | Network: 10 Gbps stress to localhost | Sustained throughput with no packet loss in `/proc/athena/network` | ❌ |
 | 3.15 | Storage: 1 GB/s sustained reads via NVMe | `dd if=/dev/nvme0n1 of=/dev/null bs=1M count=10000` near nominal | ❌ |
 
 **Known gaps blocking Tier 3:**

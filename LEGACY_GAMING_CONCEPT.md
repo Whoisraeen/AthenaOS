@@ -21,4 +21,4 @@ Historical design notes may still mention Steam, GameOS, or anti-cheat in
 `docs/` and kernel comments. Treat those as **bootstrap residue**, not roadmap.
 
 Sibling project (separate repo, not a parent fork):
-[Whoisraeen/RaeenOS](https://github.com/Whoisraeen/RaeenOS).
+[Whoisraeen/AthenaOS](https://github.com/Whoisraeen/AthenaOS).

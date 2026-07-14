@@ -1,8 +1,8 @@
 //! AthenaOS Mail — userspace ELF entry shim.
 //!
-//! All the app (the syscall-free [`mail::MailModel`] over the LIVE `rae_mail`
-//! SMTP/IMAP/POP3 + RFC822/MIME engines, the `rae_pim` vCard contacts, and the
-//! `rae_kv` local cache, plus the draw path + syscall wiring) lives in the `mail`
+//! All the app (the syscall-free [`mail::MailModel`] over the LIVE `ath_mail`
+//! SMTP/IMAP/POP3 + RFC822/MIME engines, the `ath_pim` vCard contacts, and the
+//! `ath_kv` local cache, plus the draw path + syscall wiring) lives in the `mail`
 //! LIBRARY crate (`src/lib.rs`) so a host test can link it and exercise the real
 //! engines against a scripted (mock) transport with no kernel and no network.
 //! This bin is just the freestanding `_start` that hands control to `mail::run()`.

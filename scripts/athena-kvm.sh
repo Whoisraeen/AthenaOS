@@ -21,7 +21,7 @@
 # ──────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-H="${RAEEN_ATHENA:-whoisraeen@192.168.1.244}"
+H="${RAEEN_ATHENA:-whoisathena@192.168.1.244}"
 DEVSET="${1:-minimal}"
 SMP="${2:-1}"
 NOBUILD="${3:-}"
@@ -34,19 +34,19 @@ if [ "$NOBUILD" != "--no-build" ]; then
 fi
 [ -f "$IMG" ] || { echo "[athena-kvm] ERROR: $IMG not found (build first)"; exit 1; }
 
-echo "[athena-kvm] shipping image -> $H:~/raeen-vm/ ($(du -h "$IMG" | cut -f1))"
-scp -C "$IMG" "$H:raeen-vm/kernel.uefi.img"
+echo "[athena-kvm] shipping image -> $H:~/athena-vm/ ($(du -h "$IMG" | cut -f1))"
+scp -C "$IMG" "$H:athena-vm/kernel.uefi.img"
 # Ship the USB-MSC backing images once (only if absent on Athena).
 for f in usb-msc.img usb-msc2.img; do
   if [ -f "$ROOT/target/$f" ]; then
-    ssh "$H" "test -f raeen-vm/$f" || scp -C "$ROOT/target/$f" "$H:raeen-vm/$f"
+    ssh "$H" "test -f athena-vm/$f" || scp -C "$ROOT/target/$f" "$H:athena-vm/$f"
   fi
 done
 
 echo "[athena-kvm] KVM boot on real Ryzen (DEVSET=$DEVSET SMP=$SMP)..."
-ssh "$H" "cd raeen-vm && DEVSET=$DEVSET SMP=$SMP CPU=host TIMEOUT=120 ./run.sh"
+ssh "$H" "cd athena-vm && DEVSET=$DEVSET SMP=$SMP CPU=host TIMEOUT=120 ./run.sh"
 
 OUT="$ROOT/target/athena-serial.log"
-ssh "$H" 'cat /tmp/raeen-serial.log' > "$OUT"
+ssh "$H" 'cat /tmp/athena-serial.log' > "$OUT"
 echo "[athena-kvm] serial -> target/athena-serial.log ($(wc -l < "$OUT") lines)"
 echo "[athena-kvm] marker: $(grep -c 'System successfully booted' "$OUT" || true)   panics: $(grep -cE '\[PANIC\]|\[EXCEPTION\].*FAULT' "$OUT" || true)"

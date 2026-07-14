@@ -1,5 +1,5 @@
 // Generate + verify MP3 Huffman big_value tables (ISO/IEC 11172-3 Table B.7) as
-// Rust `HuffEntry` arrays for components/raemedia/src/mp3_tables.rs.
+// Rust `HuffEntry` arrays for components/athmedia/src/mp3_tables.rs.
 //
 // Input: per-table (xlen, ylen, linbits, hlen[], hcod[]) row-major over (x,y).
 // hlen = code length, hcod = the code value at that length. This is the canonical
@@ -7,7 +7,7 @@
 //
 // The generator VERIFIES every table is prefix-free + dimension-correct before
 // emitting; a transcription typo is caught here, not at runtime. Run:
-//   rustc -O gen.rs -o gen && ./gen > ../../components/raemedia/src/mp3_tables_gen.txt
+//   rustc -O gen.rs -o gen && ./gen > ../../components/athmedia/src/mp3_tables_gen.txt
 
 struct Tab { n: u32, x: usize, y: usize, lin: u32, hlen: &'static [u8], hcod: &'static [u32] }
 

@@ -24,11 +24,11 @@ TCP, UDP, QUIC, TLS, WireGuard, and the gaming traffic shaper live in user space
 ```
 app sockets (POSIX-compatible)
   ↓
-raenet-runtime (TCP/UDP/QUIC, in user space, per-app context)
+athnet-runtime (TCP/UDP/QUIC, in user space, per-app context)
   ↓
-raenet-vpn (WireGuard, optionally always-on)
+athnet-vpn (WireGuard, optionally always-on)
   ↓
-raenet-shaper (fq_codel + game-priority queue)
+athnet-shaper (fq_codel + game-priority queue)
   ↓
 kernel L2/L3 + driver (IOMMU-sandboxed NIC driver)
 ```

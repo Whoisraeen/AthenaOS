@@ -73,13 +73,13 @@ fn main() {
     let timeout_s: u64 = arg_after(&args, "--timeout").and_then(|v| v.parse().ok()).unwrap_or(180);
 
     // 1. Device + BAR registration — the same calls amdgpud makes before the C init.
-    raeen_linuxkpi::device_map::lkpi_set_current_device(1);
-    raeen_linuxkpi::device_map::lkpi_register_bar(0, BAR0.0, BAR0.1);
-    raeen_linuxkpi::device_map::lkpi_register_bar(2, BAR2.0, BAR2.1);
-    raeen_linuxkpi::device_map::lkpi_register_bar(5, BAR5.0, BAR5.1);
+    ath_linuxkpi::device_map::lkpi_set_current_device(1);
+    ath_linuxkpi::device_map::lkpi_register_bar(0, BAR0.0, BAR0.1);
+    ath_linuxkpi::device_map::lkpi_register_bar(2, BAR2.0, BAR2.1);
+    ath_linuxkpi::device_map::lkpi_register_bar(5, BAR5.0, BAR5.1);
 
     // 2. Arm the functional host seam.
-    raeen_linuxkpi::host::hostrun_install(&fw_dir);
+    ath_linuxkpi::host::hostrun_install(&fw_dir);
 
     // 3. Seed the fake PCI config space from the REAL GPU's captured 4 KiB dump
     //    (oracle bytes, not guesses).
@@ -90,7 +90,7 @@ fn main() {
             for (i, chunk) in cfg.chunks_exact(4).enumerate() {
                 let v = u32::from_le_bytes(chunk.try_into().unwrap());
                 if v != 0 {
-                    raeen_linuxkpi::host::hostrun_set_cfg_dword((i * 4) as u16, v);
+                    ath_linuxkpi::host::hostrun_set_cfg_dword((i * 4) as u16, v);
                 }
             }
             eprintln!("[hostrun] pci config seeded from {cfg_path} ({} bytes)", cfg.len());
@@ -101,7 +101,7 @@ fn main() {
     // 4. Pre-map the register BAR so oracle register values can be prefilled
     //    before the C init's first RREG32. (ioremap caches per-BAR, so the C
     //    side sees this same mapping.)
-    let bar5_va = raeen_linuxkpi::device_map::ioremap_phys(BAR5.0, BAR5.1 as usize) as u64;
+    let bar5_va = ath_linuxkpi::device_map::ioremap_phys(BAR5.0, BAR5.1 as usize) as u64;
     assert!(bar5_va != 0, "BAR5 pre-map failed");
     // `--real-bar5`: umr-class READ-THROUGH to the live GPU. Register reads in
     // the BAR5 window return the REAL silicon's values (mmap of the device's
@@ -111,7 +111,7 @@ fn main() {
     // garbage-but-harmless (the live driver's index selects them).
     if args.iter().any(|a| a == "--real-bar5") {
         let path = "/sys/bus/pci/devices/0000:c4:00.0/resource5";
-        if raeen_linuxkpi::host::hostrun_set_real_bar(5, path) {
+        if ath_linuxkpi::host::hostrun_set_real_bar(5, path) {
             eprintln!("[hostrun] BAR5 READ-THROUGH armed: reads come from live silicon ({path})");
         } else {
             eprintln!("[hostrun] WARN: --real-bar5 failed ({path}; need root) — staying fully fake");

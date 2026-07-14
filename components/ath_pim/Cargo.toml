@@ -1,0 +1,28 @@
+[package]
+name = "ath_pim"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS PIM (Personal Information Management) data layer — "import my calendar &
+# contacts from Google/Apple/Outlook" (LEGACY_GAMING_CONCEPT.md §Compatibility Strategy:
+# "let people switch without conscious effort"). Every platform exports its
+# calendar as iCalendar (.ics, RFC 5545) and its contacts as vCard (.vcf, RFC 6350
+# / 3.0), so these two parsers ARE the switcher data on-ramp for criterion #5.
+#
+# Zero runtime dependencies: both formats are the same line-oriented text grammar
+# (content lines, parameters, line folding, value escaping), so there is no codec
+# to reuse — PHOTO/embedded binary is captured as its raw value + encoding param
+# (a higher layer decodes on demand). Pure text parsing only.
+#
+# `#![cfg_attr(not(test), no_std)]` (the ath_docx / ath_mail pattern): `no_std` +
+# `alloc` in every shipped build, `std` only under `cfg(test)` for the host KATs.
+# `#![forbid(unsafe_code)]`, never-panic / never-infinite-loop on hostile input (a
+# .ics/.vcf arrives from an untrusted export or a malicious peer): line length,
+# line count, fold-continuation count, component nesting depth, and property count
+# are all bounded before allocation. Run the FAIL-able proof with
+# `cargo test -p ath_pim` — no QEMU, no image build.
+
+[dependencies]

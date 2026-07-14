@@ -29,7 +29,7 @@
 //! a living **Aurora Mesh** backdrop (IDENTITY.md §3) with the wizard content
 //! floating on a centered frosted `glass.panel` card (§7 tiers) — tint → frost →
 //! legibility cap → iridescent rim, lifted off the aurora by a soft ambient
-//! shadow. Every colour is token-derived (`rae_tokens::DARK` + the LIVE
+//! shadow. Every colour is token-derived (`ath_tokens::DARK` + the LIVE
 //! `derive_accent`), so a one-tap Vibe re-skin flows through the installer too;
 //! text is crisp AA RaeSans. The reskin is render-only — the install state
 //! machine, disk-write pipeline and `safe_mode_guard_write` guards are untouched.
@@ -41,16 +41,16 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, AtomicU8, Ordering};
-use rae_tokens::{
+use ath_tokens::{
     AccentRamp, Palette, DARK, GLASS_PANEL_DARK, RADIUS_LG, RADIUS_MD, RADIUS_SM, RADIUS_XL,
     TYPE_BODY, TYPE_CAPTION, TYPE_LABEL, TYPE_SUBTITLE, TYPE_TITLE,
 };
-use raegfx::text::FontFamily;
+use athgfx::text::FontFamily;
 
 use crate::installer::LayoutPlan;
 
 // ── Palette (shared visual language with setup_ui / login_ui) ───────────────
-// Every static colour is a `rae_tokens::DARK` value so the installer reads the
+// Every static colour is a `ath_tokens::DARK` value so the installer reads the
 // same palette as the desktop/OOBE/login; the accent is LIVE (see `accent()`).
 const BG: u32 = DARK.bg_base; // desktop void
 const RAIL_BG: u32 = DARK.bg_raised; // left-rail panel surface
@@ -95,7 +95,7 @@ struct Rect {
 /// one-tap Vibe re-skin instead of being frozen to a hand-picked blue.
 #[inline]
 fn accent() -> AccentRamp {
-    rae_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK)
+    ath_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK)
 }
 
 /// The accent base actually painted — public so the cross-surface cohesion
@@ -358,11 +358,11 @@ impl InstallState {
     /// a frosted `glass.panel` step rail and content card (§7 tiers, with the
     /// iridescent rim + soft ambient shadow) and crisp AA RaeSans text. The
     /// public signature is unchanged (the boot caller passes `ptr` + `w`/`h`);
-    /// internally we wrap the buffer in a [`raegfx::Canvas`] and draw through the
+    /// internally we wrap the buffer in a [`athgfx::Canvas`] and draw through the
     /// shared `glass`/`draw_text_aa` primitives. Token-derived colours only — a
     /// Vibe re-skin flows here too. RENDER-ONLY: no install/disk logic touched.
     pub fn render(&self, ptr: *mut u8, w: u32, h: u32) {
-        let mut canvas = unsafe { raegfx::Canvas::new(ptr, w as usize, h as usize, 4) };
+        let mut canvas = unsafe { athgfx::Canvas::new(ptr, w as usize, h as usize, 4) };
         let (w, h) = (w as usize, h as usize);
 
         // Live accent (tracks Vibe Mode) + active palette, computed once.
@@ -373,7 +373,7 @@ impl InstallState {
         // ── Background → the signature Aurora Mesh (IDENTITY.md §3): the same
         //    living backdrop the desktop / lock / login / OOBE wear — visual
         //    continuity from the very first install onward. Replaces the flat fill.
-        raegfx::glass::render_aurora_dark(&mut canvas, 0, 0, w, h, 0);
+        athgfx::glass::render_aurora_dark(&mut canvas, 0, 0, w, h, 0);
 
         // ── Left step rail → a frosted glass card down the left edge, lifted off
         //    the aurora by a soft ambient shadow. radius.lg (16) for the tall rail.
@@ -395,7 +395,7 @@ impl InstallState {
             40,
             16,
         );
-        raegfx::glass::draw_glass_surface(
+        athgfx::glass::draw_glass_surface(
             &mut canvas,
             rail.x,
             rail.y,
@@ -426,7 +426,7 @@ impl InstallState {
             44,
             18,
         );
-        raegfx::glass::draw_glass_surface(
+        athgfx::glass::draw_glass_surface(
             &mut canvas,
             card.x,
             card.y,
@@ -512,7 +512,7 @@ impl InstallState {
         }
     }
 
-    fn render_rail(&self, canvas: &mut raegfx::Canvas, rail: Rect, acc: &AccentRamp) {
+    fn render_rail(&self, canvas: &mut athgfx::Canvas, rail: Rect, acc: &AccentRamp) {
         let p: &Palette = PALETTE;
         let sans = FontFamily::Sans;
         let lx = rail.x + 20;
@@ -599,7 +599,7 @@ impl InstallState {
         }
     }
 
-    fn render_welcome(&self, canvas: &mut raegfx::Canvas, x: usize, y: usize, _w: usize) {
+    fn render_welcome(&self, canvas: &mut athgfx::Canvas, x: usize, y: usize, _w: usize) {
         let p: &Palette = PALETTE;
         let sans = FontFamily::Sans;
         let lines = [
@@ -630,7 +630,7 @@ impl InstallState {
 
     fn render_disks(
         &self,
-        canvas: &mut raegfx::Canvas,
+        canvas: &mut athgfx::Canvas,
         x: usize,
         y: usize,
         w: usize,
@@ -705,7 +705,7 @@ impl InstallState {
 
     fn render_layout(
         &self,
-        canvas: &mut raegfx::Canvas,
+        canvas: &mut athgfx::Canvas,
         x: usize,
         y: usize,
         w: usize,
@@ -716,7 +716,7 @@ impl InstallState {
         let rw = w.min(540);
         // A selectable option row: frosted glass card, accent rim + accent title
         // when chosen, stroke.subtle hairline otherwise.
-        let option = |canvas: &mut raegfx::Canvas, oy: usize, sel: bool, title: &str, sub: &str| {
+        let option = |canvas: &mut athgfx::Canvas, oy: usize, sel: bool, title: &str, sub: &str| {
             let rh = 52usize;
             canvas.fill_rounded_rect(x, oy, rw, rh, ROW_RADIUS, GLASS_PANEL_DARK.frost);
             if sel {
@@ -743,8 +743,8 @@ impl InstallState {
         };
 
         match &self.detected {
-            Some(LayoutPlan::DualBoot { raefs_sectors, .. }) => {
-                let gb = (raefs_sectors * 512) / (1024 * 1024 * 1024);
+            Some(LayoutPlan::DualBoot { athfs_sectors, .. }) => {
+                let gb = (athfs_sectors * 512) / (1024 * 1024 * 1024);
                 canvas.draw_text_aa(
                     x as i32,
                     y as i32,
@@ -836,7 +836,7 @@ impl InstallState {
 
     fn render_account(
         &self,
-        canvas: &mut raegfx::Canvas,
+        canvas: &mut athgfx::Canvas,
         x: usize,
         y: usize,
         w: usize,
@@ -848,7 +848,7 @@ impl InstallState {
         let fh = 40usize;
         // A glass-card input pill: label above, frosted field with a LIVE-accent
         // focus ring when active (matches login_ui/setup_ui), placeholder/text AA.
-        let field = |canvas: &mut raegfx::Canvas,
+        let field = |canvas: &mut athgfx::Canvas,
                      fy: usize,
                      label: &str,
                      text: &str,
@@ -929,7 +929,7 @@ impl InstallState {
 
     fn render_review(
         &self,
-        canvas: &mut raegfx::Canvas,
+        canvas: &mut athgfx::Canvas,
         x: usize,
         y: usize,
         w: usize,
@@ -1015,7 +1015,7 @@ impl InstallState {
 
     fn render_installing(
         &self,
-        canvas: &mut raegfx::Canvas,
+        canvas: &mut athgfx::Canvas,
         x: usize,
         y: usize,
         w: usize,
@@ -1052,13 +1052,13 @@ impl InstallState {
         }
     }
 
-    fn render_done(&self, canvas: &mut raegfx::Canvas, x: usize, y: usize, _acc: &AccentRamp) {
+    fn render_done(&self, canvas: &mut athgfx::Canvas, x: usize, y: usize, _acc: &AccentRamp) {
         let p: &Palette = PALETTE;
         let sans = FontFamily::Sans;
         let all = crate::installer::STAGE_GPT
             | crate::installer::STAGE_ESP_FORMAT
             | crate::installer::STAGE_BOOT_TREE
-            | crate::installer::STAGE_RAEFS_FORMAT
+            | crate::installer::STAGE_ATHFS_FORMAT
             | crate::installer::STAGE_VERIFY;
         let got = (self.stage_result & all).count_ones();
         let body_row = TYPE_BODY.line_height as usize + 8;
@@ -1532,8 +1532,8 @@ pub fn run_boot_smoketest() {
     s.detected = Some(LayoutPlan::DualBoot {
         esp_lba: 34,
         esp_sectors: 200,
-        raefs_start: 2240,
-        raefs_sectors: 40_000_000,
+        athfs_start: 2240,
+        athfs_sectors: 40_000_000,
     });
     s.layout_sel = 0;
     handle_key(&mut s, false, 0x1C);
@@ -1544,8 +1544,8 @@ pub fn run_boot_smoketest() {
     s.detected = Some(LayoutPlan::DualBoot {
         esp_lba: 34,
         esp_sectors: 200,
-        raefs_start: 2240,
-        raefs_sectors: 40_000_000,
+        athfs_start: 2240,
+        athfs_sectors: 40_000_000,
     });
     s.layout_sel = 0;
     handle_key(&mut s, true, 0x50); // Down -> erase
@@ -1594,7 +1594,7 @@ pub fn run_boot_smoketest() {
     // The wizard's header/rail/active-step accent must be
     // derive_accent(active_accent()).base, and the static palette must be the
     // DARK tokens (not re-hardcoded hex). If either drifts, prints FAIL.
-    let want_accent = rae_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK).base;
+    let want_accent = ath_tokens::derive_accent(crate::theme_engine::active_accent(), &DARK).base;
     let accent_ok = proof_accent() == want_accent;
     let palette_ok = BG == DARK.bg_base
         && RAIL_BG == DARK.bg_raised

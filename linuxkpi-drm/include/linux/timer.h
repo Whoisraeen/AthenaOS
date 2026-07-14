@@ -3,7 +3,7 @@
  * <linux/timer.h> shim (MPL-2.0, original work).
  *
  * Kernel one-shot timers. amdgpu/DRM arm these for reset watchdogs and the
- * scheduler's job-timeout. Backed by raeen_linuxkpi's timer facade at M4 (it is
+ * scheduler's job-timeout. Backed by ath_linuxkpi's timer facade at M4 (it is
  * PUMP-DRIVEN — the daemon calls the run-timers hook each loop), so the arming
  * API is declaration-only here; a no-op timer that never fires would silently
  * disable every watchdog (SCOPE.md rule 9). The struct uses the upstream member
@@ -38,7 +38,7 @@ static inline void timer_setup(struct timer_list *t,
 	t->entry.next = (struct hlist_node *)0;
 }
 
-/* arming/cancel — real scheduling, backed by raeen_linuxkpi (M4) */
+/* arming/cancel — real scheduling, backed by ath_linuxkpi (M4) */
 int  mod_timer(struct timer_list *timer, unsigned long expires);
 void add_timer(struct timer_list *timer);
 int  del_timer(struct timer_list *timer);

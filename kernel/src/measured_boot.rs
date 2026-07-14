@@ -10,11 +10,11 @@
 //!
 //! Here the kernel measures the authentic in-memory `crate::INITRAMFS` (the userspace
 //! image that actually booted) into a boot-chain PCR. The measurement engine is the
-//! shared [`rae_crypto::pcr`] core (host-KAT'd), so this matches a hardware TPM for the
+//! shared [`ath_crypto::pcr`] core (host-KAT'd), so this matches a hardware TPM for the
 //! same events; the hardware TPM chip + key sealing remain the iron-gated half.
 
 use core::sync::atomic::{AtomicU32, Ordering};
-use rae_crypto::pcr::PcrBank;
+use ath_crypto::pcr::PcrBank;
 use spin::Mutex;
 
 /// PCR index for the kernel/boot-manager stage — the signed boot manifest, which
@@ -65,7 +65,7 @@ pub fn init() {
 /// detectable), and (c) the live initramfs PCR is non-zero AND reproducible by an
 /// independent re-measurement of the same bytes (determinism on the REAL image).
 pub fn run_boot_smoketest() {
-    use rae_crypto::sha256::sha256;
+    use ath_crypto::sha256::sha256;
 
     // (a) measure == extend(sha256(data)).
     let probe = b"measured-boot-probe";
@@ -103,7 +103,7 @@ pub fn run_boot_smoketest() {
     );
 }
 
-/// `/proc/raeen/measured_boot` — the live PCR bank + measurement log, the attestation
+/// `/proc/athena/measured_boot` — the live PCR bank + measurement log, the attestation
 /// evidence a verifier reads.
 pub fn dump_text() -> alloc::string::String {
     use core::fmt::Write;

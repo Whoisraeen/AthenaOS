@@ -9,15 +9,15 @@
 //!
 //! This is the Phase-2 browser surface (docs/research/web-engine.md): a minimal but
 //! REAL browser that fetches → parses → lays out → paints a web document through the
-//! `raeweb` engine and presents the painted [`raegfx::Canvas`] via the compositor —
+//! `athweb` engine and presents the painted [`athgfx::Canvas`] via the compositor —
 //! exactly like the live `Settings`/`GameOS` shell surfaces, NOT a userspace ELF
 //! (the userspace `apps/web` build hits the known `poly1305`/`sha2` SIMD-split LLVM
-//! error; the kernel's build-std/soft-float config already links `raenet` cleanly,
+//! error; the kernel's build-std/soft-float config already links `athnet` cleanly,
 //! so the browser rides the kernel surface path for this slice — a standalone
 //! `apps/web` crate with `-Z build-std` flags is a documented later slice).
 //!
 //! No new syscall / ABI: this is kernel-side rendering over the existing
-//! `raenet`/`raegfx` APIs (web-engine.md §"Interface needs": Phase 1–3 needs no
+//! `athnet`/`athgfx` APIs (web-engine.md §"Interface needs": Phase 1–3 needs no
 //! syscall). `#![no_std]`-clean (the kernel is no_std), never panics on malformed
 //! HTML or a network error — the engine is resilient and the surface renders an
 //! error page rather than crashing.
@@ -27,11 +27,11 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use rae_tokens::{derive_accent, AccentRamp, Palette, DARK, RADIUS_SM, TYPE_BODY};
-use raegfx::text::FontFamily;
-use raegfx::Canvas;
-use raeweb::loader::{self, Mime};
-use raeweb::{build_display_list, count_dom_nodes, parse_html, DomNode, LayoutBox, RenderPipeline};
+use ath_tokens::{derive_accent, AccentRamp, Palette, DARK, RADIUS_SM, TYPE_BODY};
+use athgfx::text::FontFamily;
+use athgfx::Canvas;
+use athweb::loader::{self, Mime};
+use athweb::{build_display_list, count_dom_nodes, parse_html, DomNode, LayoutBox, RenderPipeline};
 use spin::Mutex;
 
 /// Active palette — the browser chrome is dark glass like the rest of the shell.
@@ -68,7 +68,7 @@ pub fn proof_accent() -> u32 {
 
 // ─── Bundled pages (deterministic content; the loopback/offline corpus) ─────
 //
-// These render through the SAME real `raenet::http1::fetch_with` path as a live
+// These render through the SAME real `athnet::http1::fetch_with` path as a live
 // fetch — they're served from an in-memory `MockTransport` (a canned 200 OK), so
 // `fetched=bundled` still exercises the genuine HTTP parse + engine pipeline. They
 // also give link navigation a deterministic graph (home ↔ about) the smoketest
@@ -110,7 +110,7 @@ const PAGE_HOME: &str = "<!DOCTYPE html><html><body>\
 const PAGE_ABOUT: &str = "<!DOCTYPE html><html><body>\
     <h1>About</h1>\
     <p>RaeWeb is a from-scratch no_std HTML/CSS/layout/paint engine.</p>\
-    <p>It renders through raegfx::Canvas, the same crisp-AA path as AthUI.</p>\
+    <p>It renders through athgfx::Canvas, the same crisp-AA path as AthUI.</p>\
     <a href=\"rae://home\">Back home</a>\
     </body></html>";
 
@@ -120,7 +120,7 @@ const PAGE_WELCOME: &str = "<!DOCTYPE html><html><body>\
     <a href=\"rae://home\">Back home</a>\
     </body></html>";
 
-/// Build a canned HTTP/1.1 200 response carrying `body` — fed to raenet's
+/// Build a canned HTTP/1.1 200 response carrying `body` — fed to athnet's
 /// `MockTransport` so a bundled navigation exercises the real fetch+parse path.
 fn canned_http_response(body: &str) -> Vec<u8> {
     let mut out = String::new();
@@ -150,7 +150,7 @@ fn error_page(url: &str, reason: &str) -> String {
 
 /// One web-view surface (single-tab for this slice). Owns the render pipeline,
 /// the current document (DOM + layout for hit-test/link-nav), the chrome state
-/// (address bar, history), and the last render stats for `/proc/raeen/web`.
+/// (address bar, history), and the last render stats for `/proc/athena/web`.
 pub struct WebView {
     pipeline: RenderPipeline,
     /// Current document URL (shown in the address bar).
@@ -204,7 +204,7 @@ impl WebView {
             pipeline,
             url: String::new(),
             dom: parse_html(""),
-            layout: LayoutBox::new(raeweb::DisplayMode::Block),
+            layout: LayoutBox::new(athweb::DisplayMode::Block),
             scroll_y: 0.0,
             back: Vec::new(),
             forward: Vec::new(),
@@ -241,7 +241,7 @@ impl WebView {
     ///
     /// Bundled pages are served from an in-memory `MockTransport` (real fetch+parse,
     /// deterministic); a real `http://host/...` triggers a best-effort live
-    /// `raenet` fetch. Any failure renders the error page — never a panic, never a
+    /// `athnet` fetch. Any failure renders the error page — never a panic, never a
     /// blank surface.
     fn load(&mut self, url: &str, push_history: bool) {
         if push_history && !self.url.is_empty() && self.url != url {
@@ -261,7 +261,7 @@ impl WebView {
         //    MockTransport ignores the host and serves the canned bytes). The DISPLAY
         //    url stays `rae://…`; this is purely the wire form the parser accepts.
         if let Some(body) = bundled_page(url) {
-            let mut transport = raenet::http1::MockTransport::new(canned_http_response(body));
+            let mut transport = athnet::http1::MockTransport::new(canned_http_response(body));
             match loader::fetch_document("http://localhost/", &mut transport) {
                 Ok(res) if res.mime == Mime::Html || res.mime == Mime::Other => {
                     return (res.as_text(), PageSource::Bundled);
@@ -454,7 +454,7 @@ impl WebView {
 
     /// Paint the whole surface (chrome + page) into `canvas`, returning the page
     /// paint stats (proof: a non-zero `text_draws` means the page actually drew).
-    pub fn render(&mut self, canvas: &mut Canvas) -> raeweb::backend::PaintStats {
+    pub fn render(&mut self, canvas: &mut Canvas) -> athweb::backend::PaintStats {
         let w = canvas.width();
         let h = canvas.height();
         let acc = accent();
@@ -469,7 +469,7 @@ impl WebView {
         //    worth of negative scroll to push content down.
         let dl = build_display_list(&self.layout, &self.pipeline.viewport);
         self.paint_cmds = dl.commands.len();
-        let stats = raeweb::backend::paint_displaylist_to_canvas(
+        let stats = athweb::backend::paint_displaylist_to_canvas(
             &dl,
             canvas,
             0.0,
@@ -575,7 +575,7 @@ fn collect_hrefs(node: &DomNode, out: &mut Vec<String>) {
 fn live_fetch(url: &str) -> Result<String, &'static str> {
     // HttpUrl::parse rejects any non-`http://` scheme (incl. https) — TLS 1.3 is a
     // Phase-4 dependency (web-engine.md §security), so an https:// URL fails here.
-    let parsed = raenet::http1::HttpUrl::parse(url)
+    let parsed = athnet::http1::HttpUrl::parse(url)
         .map_err(|_| "Unsupported URL (http:// only — HTTPS is a later phase).")?;
     let host = parsed.host.clone();
     let port = parsed.port;
@@ -693,9 +693,9 @@ static SMOKETEST_PASSED: AtomicU64 = AtomicU64::new(0);
 static LAST_URL: Mutex<String> = Mutex::new(String::new());
 static LAST_SOURCE: AtomicU64 = AtomicU64::new(0); // 0=err 1=bundled 2=live
 
-/// `/proc/raeen/web` — engine status line (R10).
+/// `/proc/athena/web` — engine status line (R10).
 ///
-/// Format: `engine=raeweb tabs=<n> last_url=<…> dom_nodes=<n> paint_cmds=<n> js=disabled`
+/// Format: `engine=athweb tabs=<n> last_url=<…> dom_nodes=<n> paint_cmds=<n> js=disabled`
 pub fn dump_text() -> String {
     let url = LAST_URL.lock().clone();
     let dom_nodes = LAST_DOM_NODES.load(Ordering::Relaxed);
@@ -709,7 +709,7 @@ pub fn dump_text() -> String {
     let mut out = String::new();
     out.push_str("# RaeWeb — native web surface (renders through AthUI, no Electron tax)\n");
     out.push_str(&alloc::format!(
-        "engine=raeweb tabs=1 last_url={} dom_nodes={} paint_cmds={} source={} js=disabled\n",
+        "engine=athweb tabs=1 last_url={} dom_nodes={} paint_cmds={} source={} js=disabled\n",
         if url.is_empty() { "-" } else { url.as_str() },
         dom_nodes,
         paint_cmds,
@@ -750,7 +750,7 @@ pub fn run_boot_smoketest() {
     let fetched = view.last_source();
     let dom_nodes = view.dom_nodes();
 
-    // 2. Paint into a real raegfx Canvas backed by an owned buffer (exercises the
+    // 2. Paint into a real athgfx Canvas backed by an owned buffer (exercises the
     //    genuine draw_text_aa / fill_* path, not a counting stub).
     let mut buf = alloc::vec![0u8; W * H * 4];
     // SAFETY: `buf` outlives the Canvas (both dropped at end of fn); the Canvas only

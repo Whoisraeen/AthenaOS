@@ -133,7 +133,7 @@ pub struct ShellDescriptor {
 
 impl ShellDescriptor {
     /// The default AthShell descriptor.
-    pub fn raeenshell() -> Self {
+    pub fn athenashell() -> Self {
         Self {
             id: ShellId::RAEENSHELL,
             name: String::from("AthShell"),
@@ -142,8 +142,8 @@ impl ShellDescriptor {
             description: String::from(
                 "Default desktop shell — taskbar, start menu, file manager, system tray",
             ),
-            binary_path: String::from("/system/shells/raeshell"),
-            icon_path: Some(String::from("/system/icons/raeshell.png")),
+            binary_path: String::from("/system/shells/athshell"),
+            icon_path: Some(String::from("/system/icons/athshell.png")),
             capabilities: ShellCapabilities::full(),
             compositor_mode: CompositorMode::FullDesktop,
             input_mode: InputMode::KeyboardMouse,
@@ -357,9 +357,9 @@ impl ShellRegistry {
         };
 
         // Register the built-in shells
-        let raeshell = ShellDescriptor::raeenshell();
+        let athshell = ShellDescriptor::athenashell();
         let gameos = ShellDescriptor::gameos_shell();
-        registry.register_internal(raeshell);
+        registry.register_internal(athshell);
         registry.register_internal(gameos);
         registry
     }
@@ -831,7 +831,7 @@ pub fn run_boot_smoketest() {
         && get_shell(ShellId::GAMEOS).is_some();
 
     // Register a third-party (non-builtin) shell — "AthShell can be replaced".
-    let mut custom = ShellDescriptor::raeenshell();
+    let mut custom = ShellDescriptor::athenashell();
     custom.name = String::from("Test Shell");
     custom.is_builtin = false;
     custom.is_signed = false;

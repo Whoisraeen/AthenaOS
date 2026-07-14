@@ -850,7 +850,7 @@ pub fn run_traffic_shaper_smoketest() {
     }
 }
 
-/// `/proc/raeen/shaper` — gaming traffic-shaper queue depths and counters.
+/// `/proc/athena/shaper` — gaming traffic-shaper queue depths and counters.
 /// MasterChecklist Phase 10.2.
 pub fn dump_shaper_text() -> alloc::string::String {
     let guard = TRAFFIC_SHAPER.lock();
@@ -1114,7 +1114,7 @@ pub fn sys_net_close(fd: u64, task_pid: u64) -> u64 {
 }
 
 /// Socket readiness flags returned by `sys_net_status` (mirror
-/// `rae_abi::syscall::NET_STATUS_*`). A client polls these between `connect`
+/// `ath_abi::syscall::NET_STATUS_*`). A client polls these between `connect`
 /// and `send`/`recv` so it never sends before the handshake completes or
 /// mistakes "no data yet" for "connection closed".
 pub const NET_STATUS_CONNECTED: u64 = 1 << 0;

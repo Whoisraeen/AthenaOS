@@ -5,7 +5,7 @@
  * sysfs attribute model. amdgpu exposes RAS/ACA/clock state as sysfs files and
  * embeds `struct device_attribute`/`struct attribute_group` BY VALUE in its
  * device state, so the types must be fully defined for layout. The create/remove
- * ops are backed by raeen_linuxkpi at M4 (the daemon's introspection surface
+ * ops are backed by ath_linuxkpi at M4 (the daemon's introspection surface
  * stands in for sysfs). License boundary (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_SYSFS_H
@@ -63,7 +63,7 @@ struct file;
 #define sysfs_attr_init(attr)     do { } while (0)
 #define sysfs_bin_attr_init(attr) do { } while (0)
 
-/* create/remove — backed by raeen_linuxkpi (M4) */
+/* create/remove — backed by ath_linuxkpi (M4) */
 int  sysfs_create_file(struct kobject *kobj, const struct attribute *attr);
 void sysfs_remove_file(struct kobject *kobj, const struct attribute *attr);
 int  sysfs_create_group(struct kobject *kobj, const struct attribute_group *grp);

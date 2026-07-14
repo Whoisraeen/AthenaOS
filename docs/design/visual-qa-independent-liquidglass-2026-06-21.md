@@ -1,16 +1,16 @@
 # Visual QA — INDEPENDENT acceptance pass — Liquid Glass identity — 2026-06-21
 
 > This is the **independent** acceptance pass required by Goal #1 ("UI visually
-> stunning, proven by raeen-visual-qa screenshots judged against current macOS /
+> stunning, proven by athena-visual-qa screenshots judged against current macOS /
 > Windows 11 references"). It is deliberately a DISTINCT document from the concurrent
 > session's `visual-qa-round1..6` docs — I did not read their verdicts before judging.
 > I re-rendered the current pixels myself (`tools/ui_screenshot` → exit 0, 15 PNGs at
 > 2026-06-21 12:45) and inspected each at full resolution (full-res crops via a
-> throwaway raemedia decode/crop tool, outside the repo). Harsh, specific, pixel-level.
+> throwaway athmedia decode/crop tool, outside the repo). Harsh, specific, pixel-level.
 
 - **Booted to:** N/A — host-render harness (the live desktop is unreachable in
   headless CI; this is the sanctioned host-render proof path, ADR 0004). Atoms +
-  surfaces rendered on the SAME `raegfx::Canvas` software rasterizer the kernel
+  surfaces rendered on the SAME `athgfx::Canvas` software rasterizer the kernel
   composites with.
 - **Screenshots judged (all `docs/design/screenshots/`, regenerated this session):**
   `wallpaper-aurora-dark.png`, `glass-tiers-over-aurora.png`,
@@ -99,7 +99,7 @@ weeks.
    flat uniform slab with **no aurora bleed-through** (unlike Control Center).
    *Should be:* RaeSans 500 labels (typography-rendering.md), real tinted icons from
    the icon sheet, panel tier = `glass.panel` over the aurora so it reads as glass.
-   **Owner: raeshell** (label font + icon wiring), **raegfx** (panel must composite
+   **Owner: athshell** (label font + icon wiring), **athgfx** (panel must composite
    over the live backdrop, not a flat fill).
 
 2. **Taskbar — same monospace-label + placeholder-letter-icon problem.**
@@ -109,7 +109,7 @@ weeks.
    it reads ~60% opaque.
    *Should be:* RaeSans labels, real app icons, chrome at 25% effective alpha.
    The active-app pill (bright RaeBlue) and the red unread dot on Messages are good —
-   keep those. **Owner: raeshell** (font + icons), **raegfx** (chrome tier alpha).
+   keep those. **Owner: athshell** (font + icons), **athgfx** (chrome tier alpha).
 
 3. **Files toolbar buttons are flat gray rectangles — the spec's own §0 "Buttons
    FAIL."** "Up / New Folder / Rename / Trash" are bare text on flat fills, no pill
@@ -117,27 +117,27 @@ weeks.
    otherwise strong surface, and they clash with the pill toggles in Control Center.
    *Should be:* pill controls (`radius_pill`, IDENTITY.md §"radii"), subtle glass
    fill, leading icons from the 36-icon set (macOS Finder / Win11 Explorer both lead
-   toolbar actions with icons). **Owner: raeui** (button component), **raeshell/files**.
+   toolbar actions with icons). **Owner: athui** (button component), **athshell/files**.
 
 ### Medium (polish gaps to reach Tahoe)
 
 4. **Notification action buttons (Reply / More / Install) are near-illegible.** Very
    low-contrast pills over the popover glass — fail WCAG at a glance. *Should be:*
    accent-tinted or `stroke.strong`-bordered pills with legible label contrast.
-   **Owner: raeui** — coordinate contrast target with **raeen-accessibility**.
+   **Owner: athui** — coordinate contrast target with **athena-accessibility**.
 
 5. **Iridescent rim is pixelated/steppy at the corners** (visible in
    `glass-iridescent-edge-3x.png`: the violet→amber sweep jaggies on the corner
    arc). It reads as aliasing rather than smooth refraction. *Should be:* AA the rim
    band along the rounded-rect path (sub-pixel coverage), not a stair-stepped stroke.
-   **Owner: raegfx.**
+   **Owner: athgfx.**
 
 6. **Controls are flat-filled, not glossy.** The reference UI Kit's defining button
    look is a **pill with a colored inner glow + glossy top sheen**
    (`reference/Liquid Glass UI Kit`). AthenaOS toggles are pills with accent glow
    (good) but buttons/tiles are flat. This is the biggest single gap vs both Tahoe
-   and the reference kit. **Owner: raeui** (a glossy-pill control recipe), spec
-   already calls for it — **owner: raeen-design-researcher** to lock the inner-glow
+   and the reference kit. **Owner: athui** (a glossy-pill control recipe), spec
+   already calls for it — **owner: athena-design-researcher** to lock the inner-glow
    token if missing.
 
 7. **`atom-glass-panel.png` reads muddy/dark over a LIGHT backdrop.** Over the light
@@ -146,14 +146,14 @@ weeks.
    theme** (IDENTITY.md §2.2) is not what the atom is showing — the milky-light glass
    that matches `reference/download (1).jpg` is not yet demonstrated in any
    screenshot. *Action:* render a Lumen (light-theme) capture to prove §2.2 exists.
-   **Owner: raeshell/ui** (light-theme surface render).
+   **Owner: athshell/ui** (light-theme surface render).
 
 ### Low / type
 
 8. **Type weight contrast is thin.** Display vs Title differ mostly by *size*; macOS
    SF gets premium feel from heavier Display weights. *Should be:* consider a heavier
    Display weight per the §"Headings 600" rule applied with more separation.
-   **Owner: raeen-design-researcher** (weight ramp), **raegfx/raefont**.
+   **Owner: athena-design-researcher** (weight ramp), **athgfx/athfont**.
 
 ---
 

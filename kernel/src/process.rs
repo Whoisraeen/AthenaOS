@@ -1302,10 +1302,10 @@ pub fn read_proc_entry(entry: &ProcEntry) -> String {
             }
         }
         ProcEntryType::SystemVersion => {
-            String::from("AthenaOS version 0.0.1 (raeen@athenaos) (rustc 1.80.0) #1 SMP")
+            String::from("AthenaOS version 0.0.1 (athena@athenaos) (rustc 1.80.0) #1 SMP")
         }
         ProcEntryType::SystemMounts => {
-            String::from("raefs / raefs rw,relatime 0 0\nproc /proc proc rw,nosuid,nodev,noexec 0 0\nsysfs /sys sysfs rw,nosuid,nodev,noexec 0 0\ntmpfs /tmp tmpfs rw,nosuid,nodev 0 0\n")
+            String::from("athfs / athfs rw,relatime 0 0\nproc /proc proc rw,nosuid,nodev,noexec 0 0\nsysfs /sys sysfs rw,nosuid,nodev,noexec 0 0\ntmpfs /tmp tmpfs rw,nosuid,nodev 0 0\n")
         }
         ProcEntryType::SystemNetDev => {
             String::from("Inter-|   Receive                                                |  Transmit\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n    lo:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0\n  eth0:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0\n")
@@ -1351,7 +1351,7 @@ pub fn bundle_memory_limit(bundle: &str) -> u64 {
         .unwrap_or(0)
 }
 
-/// `/proc/raeen/memlimits` body: one `bundle = bytes` line per registered cap.
+/// `/proc/athena/memlimits` body: one `bundle = bytes` line per registered cap.
 pub fn dump_memlimits() -> String {
     use core::fmt::Write;
     let mut out = String::from("# AthenaOS per-bundle memory limits (Phase 4.1)\n");
@@ -1397,10 +1397,10 @@ pub fn run_boot_smoketest() {
     let beyond_denied = matches!(beyond, Err(ProcessError::MemoryLimitExceeded));
 
     // Registry round-trip.
-    set_bundle_memory_limit("com.raeen.test", 64 * 1024 * 1024);
-    let reg_ok = bundle_memory_limit("com.raeen.test") == 64 * 1024 * 1024;
-    set_bundle_memory_limit("com.raeen.test", 0);
-    let clear_ok = bundle_memory_limit("com.raeen.test") == 0;
+    set_bundle_memory_limit("com.athena.test", 64 * 1024 * 1024);
+    let reg_ok = bundle_memory_limit("com.athena.test") == 64 * 1024 * 1024;
+    set_bundle_memory_limit("com.athena.test", 0);
+    let clear_ok = bundle_memory_limit("com.athena.test") == 0;
 
     let pass = within_ok && beyond_denied && reg_ok && clear_ok;
     crate::serial_println!(

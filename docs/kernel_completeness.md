@@ -14,7 +14,7 @@
 | Checklist partial (`[~]`) | **38** | `MasterChecklist.md` |
 | Checklist open (`[ ]`) | **100** | `MasterChecklist.md` |
 | Checklist completion (strict done only) | **39.7%** (91/229) | computed from checklist |
-| Native syscall surface | **98 live syscalls across 18+ blocks** | `proc_raeen_syscalls()` text |
+| Native syscall surface | **98 live syscalls across 18+ blocks** | `proc_athena_syscalls()` text |
 | QEMU boot reaches success marker | **Yes (fixed + verified 2026-06-01)** | Full UEFI boot reaches `[ OS ] System successfully booted.` (fresh `serial.log` line 1292) + spawns userspace. The old `serial-input.log` had **0** markers (boot stalled in the AthFS smoketest); a chain of boot-path deadlocks was fixed — virtio-blk IRQ re-entrant `queue.lock()`, rtc/session re-entrant `dump_text` locks, buddy free-list dump guard, bounded virtio/NVMe completion polls, and high-BAR `ioremap` (was masked under WHPX). See MasterChecklist Latent-bugs. |
 | Athena (real hardware) acceptance proof | **No evidence in repo logs** | no Athena serial capture in tree |
 
@@ -59,11 +59,11 @@
 | Boot pipeline (GDT/IDT/APIC/SMP to userspace spawn) | Boot reaches system success marker and task spawn lines. |
 | Procfs snapshot + observability | Snapshot endpoints are present with structured output in log. |
 | Syscall surface (native) | Runtime table reports **98 live** syscalls; syscall guard endpoint populated. |
-| NVMe (QEMU path) | `/proc/raeen/nvme` is present with controller/namespace info. |
-| AHCI (QEMU path) | `/proc/raeen/ahci` endpoint present; controller/ports reported. |
-| USB HID boot-path telemetry | `/proc/raeen/usb_hid` counters populated (kbd/mouse report stats). |
-| Clipboard path | `/proc/raeen/clipboard` shows set/get counters and preview text. |
-| Storage IRQ accounting | `/proc/raeen/storage_irq` populated (NVMe MSI-X, AHCI INTx fallback). |
+| NVMe (QEMU path) | `/proc/athena/nvme` is present with controller/namespace info. |
+| AHCI (QEMU path) | `/proc/athena/ahci` endpoint present; controller/ports reported. |
+| USB HID boot-path telemetry | `/proc/athena/usb_hid` counters populated (kbd/mouse report stats). |
+| Clipboard path | `/proc/athena/clipboard` shows set/get counters and preview text. |
+| Storage IRQ accounting | `/proc/athena/storage_irq` populated (NVMe MSI-X, AHCI INTx fallback). |
 
 ### Partial
 

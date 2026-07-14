@@ -5,7 +5,7 @@
  * Swap / memory-reclaim surface. amdgpu_ttm.c includes it for the global page
  * accounting it consults when sizing the TTM pools (si_meminfo / total RAM).
  * The reclaim machinery itself is out of the bring-up subset — TTM uses the GTT
- * size the host reports. Backed by raeen_linuxkpi at M4. License boundary
+ * size the host reports. Backed by ath_linuxkpi at M4. License boundary
  * (../../README.md): API surface.
  */
 #ifndef _LINUXKPI_LINUX_SWAP_H

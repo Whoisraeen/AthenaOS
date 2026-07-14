@@ -17,7 +17,7 @@
 struct module;
 #define THIS_MODULE ((struct module *)0)
 #ifndef KBUILD_MODNAME
-#define KBUILD_MODNAME "raeen_amdgpu"
+#define KBUILD_MODNAME "ath_amdgpu"
 #endif
 
 /* registration macros — no-ops in the userspace-daemon model */

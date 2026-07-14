@@ -22,7 +22,7 @@
 //!     detection in `MemoryProtectionEngine`) are the kernel-side API such a module
 //!     builds on. **Tier 2 is strategy-only today — the framework is not yet built.**
 //!
-//! Syscall interface (numbers 284-290; renumbered from 100-106 — see rae_abi):
+//! Syscall interface (numbers 284-290; renumbered from 100-106 — see ath_abi):
 //!   SYS_AC_REQUEST_ATTESTATION  — start a new attestation session
 //!   SYS_AC_VERIFY_ATTESTATION   — verify session result
 //!   SYS_AC_REGISTER_GAME        — register a game process
@@ -772,17 +772,17 @@ impl AttestationService {
 // 4. Anti-Cheat Syscall Interface
 // ───────────────────────────────────────────────────────────────────────────────
 
-// Canonical numbers live in rae_abi (Block 34, 284–290). Re-exported here so
+// Canonical numbers live in ath_abi (Block 34, 284–290). Re-exported here so
 // the handlers read by name. RENUMBERED 2026-06-25 from 100–106, which collided
 // with SYS_OOM_SUBSCRIBE (100) + AthFS snapshots (101–103) — calling the old
-// SYS_AC_REGISTER_GAME (102) ran a destructive raefs::snapshot_restore.
-pub const SYS_AC_REQUEST_ATTESTATION: u64 = rae_abi::syscall::SYS_AC_REQUEST_ATTESTATION;
-pub const SYS_AC_VERIFY_ATTESTATION: u64 = rae_abi::syscall::SYS_AC_VERIFY_ATTESTATION;
-pub const SYS_AC_REGISTER_GAME: u64 = rae_abi::syscall::SYS_AC_REGISTER_GAME;
-pub const SYS_AC_UNREGISTER_GAME: u64 = rae_abi::syscall::SYS_AC_UNREGISTER_GAME;
-pub const SYS_AC_REPORT_VIOLATION: u64 = rae_abi::syscall::SYS_AC_REPORT_VIOLATION;
-pub const SYS_AC_QUERY_STATUS: u64 = rae_abi::syscall::SYS_AC_QUERY_STATUS;
-pub const SYS_AC_HEARTBEAT: u64 = rae_abi::syscall::SYS_AC_HEARTBEAT;
+// SYS_AC_REGISTER_GAME (102) ran a destructive athfs::snapshot_restore.
+pub const SYS_AC_REQUEST_ATTESTATION: u64 = ath_abi::syscall::SYS_AC_REQUEST_ATTESTATION;
+pub const SYS_AC_VERIFY_ATTESTATION: u64 = ath_abi::syscall::SYS_AC_VERIFY_ATTESTATION;
+pub const SYS_AC_REGISTER_GAME: u64 = ath_abi::syscall::SYS_AC_REGISTER_GAME;
+pub const SYS_AC_UNREGISTER_GAME: u64 = ath_abi::syscall::SYS_AC_UNREGISTER_GAME;
+pub const SYS_AC_REPORT_VIOLATION: u64 = ath_abi::syscall::SYS_AC_REPORT_VIOLATION;
+pub const SYS_AC_QUERY_STATUS: u64 = ath_abi::syscall::SYS_AC_QUERY_STATUS;
+pub const SYS_AC_HEARTBEAT: u64 = ath_abi::syscall::SYS_AC_HEARTBEAT;
 
 const AC_OK: u64 = 0;
 const AC_ERR_NOT_INITIALIZED: u64 = 1;
@@ -1362,7 +1362,7 @@ impl KernelIntegrity {
     /// `syscall::init`, long before the anti-cheat baseline is captured.
     fn snapshot_syscall_table() -> [u8; 32] {
         let lstar = unsafe { crate::msr::rdmsr_safe(0xC000_0082).unwrap_or(0) };
-        rae_crypto::sha256::sha256(&lstar.to_le_bytes())
+        ath_crypto::sha256::sha256(&lstar.to_le_bytes())
     }
 
     /// Hash the LIVE IDT, read via `SIDT`. A rootkit that hooks an interrupt
@@ -1384,7 +1384,7 @@ impl KernelIntegrity {
         }
         // Safe: the IDT is resident kernel memory; `limit + 1` bytes.
         let bytes = unsafe { core::slice::from_raw_parts(base as *const u8, limit + 1) };
-        rae_crypto::sha256::sha256(bytes)
+        ath_crypto::sha256::sha256(bytes)
     }
 
     /// Hash a window of the SYSCALL entry code (at the LSTAR target). An inline
@@ -1399,7 +1399,7 @@ impl KernelIntegrity {
         }
         // 256 bytes of the syscall entry point — pure, stable kernel code.
         let bytes = unsafe { core::slice::from_raw_parts(lstar as *const u8, 256) };
-        rae_crypto::sha256::sha256(bytes)
+        ath_crypto::sha256::sha256(bytes)
     }
 }
 
@@ -1619,7 +1619,7 @@ pub fn init() {
     *ANTICHEAT.lock() = Some(mgr);
 }
 
-/// `/proc/raeen/anticheat` body — live attestation/integrity manager state.
+/// `/proc/athena/anticheat` body — live attestation/integrity manager state.
 pub fn dump_text() -> String {
     use core::fmt::Write;
     let mut s = String::new();

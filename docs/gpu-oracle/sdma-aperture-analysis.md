@@ -91,7 +91,7 @@ Neither boots the engine, but both are real gfx_resume steps.
 ## Reproduce (no flash; amdgpu live on Athena)
 
 ```
-ssh whoisraeen@192.168.1.244
+ssh whoisathena@192.168.1.244
 sudo umr -i 1 -lr phoenix.lsdma601                 # list LSDMA regs + offsets
 sudo umr -i 1 -O bits -r phoenix.lsdma601.regLSDMA_QUEUE0_RB_CNTL
 sudo umr -i 1 -r phoenix.gfx1101.regSDMA0_F32_CNTL # GC-aperture (unused, =0)

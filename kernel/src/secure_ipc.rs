@@ -1175,10 +1175,10 @@ fn run_cleanup_smoketest() {
         sys.create_channel(EndpointPolicy::open(), EndpointPolicy::open(), 8, synth);
     // (2) Register a namespace name owned by synth.
     let name_reg_ok = sys
-        .register_name("raeen.test.cleanup", &ep_a, 1, synth)
+        .register_name("athena.test.cleanup", &ep_a, 1, synth)
         .is_ok();
     // (3) Create + subscribe a broadcast as synth.
-    let bid = sys.create_broadcast("raeen.test.bcast", synth, 1);
+    let bid = sys.create_broadcast("athena.test.bcast", synth, 1);
     let sub_ok = sys
         .subscribe_broadcast(bid, synth, CapHandle::from_raw(0))
         .is_ok();

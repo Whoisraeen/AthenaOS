@@ -37,7 +37,7 @@ surface = backdrop                       (aurora or app content)
         → soft drop shadow (per elev)    neutral black, y-offset, wide blur
 ```
 
-Tier constants (rae_tokens `GLASS_*_DARK`, values re-baked):
+Tier constants (ath_tokens `GLASS_*_DARK`, values re-baked):
 
 | tier | tint (ARGB) | reads as |
 |---|---|---|
@@ -69,7 +69,7 @@ RaeBlue stays the only accent. Two new rules:
 Monochrome line icons remain the CHROME register (tray, toolbars, chevrons).
 CONTENT icons (folders, file types, app tiles) get the §4.4 ftype palette as
 **fills, not strokes** — a folder is a solid blue folder (macOS register),
-media is violet, archives amber. `raegfx::icon` gains filled primitives;
+media is violet, archives amber. `athgfx::icon` gains filled primitives;
 line variants stay for chrome.
 
 ## 5. Acceptance (visual-QA measures against THIS)

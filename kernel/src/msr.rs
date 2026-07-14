@@ -40,7 +40,7 @@ pub fn init() {
     );
 }
 
-/// `/proc/raeen/msr` — CPU vendor + fault-tolerant MSR access status.
+/// `/proc/athena/msr` — CPU vendor + fault-tolerant MSR access status.
 pub fn dump_text() -> alloc::string::String {
     let v = cpu_vendor();
     let tsc = unsafe { rdmsr_safe(0x10) }.is_some();

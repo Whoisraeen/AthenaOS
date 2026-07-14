@@ -4,7 +4,7 @@
  *
  * IRQ registration + deferred (tasklet) work. amdgpu registers its IH ring
  * handler via request_irq and defers bottom-half work to tasklets. In the AthenaOS
- * userspace-daemon model a device IRQ is delivered as IPC (raeen_linuxkpi's
+ * userspace-daemon model a device IRQ is delivered as IPC (ath_linuxkpi's
  * IRQ-doorbell facade, P2), so request_irq wires the handler to that delivery and
  * tasklets run on the daemon's deferred-work pump — both backed at M4, never
  * faked (a no-op request_irq would mean the GPU's interrupts never reach the
@@ -24,7 +24,7 @@ typedef irqreturn_t (*irq_handler_t)(int irq, void *dev_id);
 #define IRQF_NOBALANCING  0x00000800
 #define IRQF_TRIGGER_NONE 0x00000000
 
-/* IRQ registration — backed by raeen_linuxkpi's doorbell facade (M4) */
+/* IRQ registration — backed by ath_linuxkpi's doorbell facade (M4) */
 int  request_irq(unsigned int irq, irq_handler_t handler, unsigned long flags, const char *name, void *dev);
 int  request_threaded_irq(unsigned int irq, irq_handler_t handler, irq_handler_t thread_fn,
 			  unsigned long flags, const char *name, void *dev);

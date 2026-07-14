@@ -17,7 +17,7 @@ extent-B-tree + XTS-encrypt + LZ4-compress layout.
 
 ## Already in the tree (verify-before-implement)
 
-All paths are `kernel/src/raefs.rs` unless noted. Status is the real ladder ([x] iron / [~] QEMU / [ ] none).
+All paths are `kernel/src/athfs.rs` unless noted. Status is the real ladder ([x] iron / [~] QEMU / [ ] none).
 
 - **Data write path** `write_data_block(block_idx, data)` (line 4390) — compress (LZ4, header byte
   `BLOCK_HDR_COMPRESSED=0x01` at `raw[0]`, len in `raw[1..3]`) → **then** XTS-encrypt
@@ -43,8 +43,8 @@ All paths are `kernel/src/raefs.rs` unless noted. Status is the real ladder ([x]
 - **fsck** `fsck_integrity` (line 2436, bitmap↔refcount span-safe walk), `fsck_btree_integrity`
   (line 2570), `fsck_orphan_inode_cleanup` (line 2501). No data-checksum scrub exists. **[~]**.
 - **R10 smoketests** `AthFS::run_boot_smoketest` (line 1255), `run_cow_journal_crash_smoketest`
-  (line 665), `run_compression_flag_smoketest` (line 4452); all use `with_ram_raefs` (line 480) for a
-  throwaway RAM volume in safe-mode. `/proc/raeen/raefs` via `proc_dump_text` (line 215). **[x]**.
+  (line 665), `run_compression_flag_smoketest` (line 4452); all use `with_ram_athfs` (line 480) for a
+  throwaway RAM volume in safe-mode. `/proc/athena/athfs` via `proc_dump_text` (line 215). **[x]**.
 - **Checksum primitives already in-tree:** `fatfs_esp::crc32_ieee` (line 871) — IEEE CRC32, table-free,
   used for GPT. `crypto::Blake2b256/512` (lines 53-54) — strong but heavy. **No CRC32C, no xxHash.**
 - **A NON-integrity "checksum"** exists at line 5441 (versioned-config `DiskVersionEntry.checksum`) —
@@ -76,7 +76,7 @@ ciphertext*, written atomically with every block write, verified on every read (
   soft-float core. **Reserved as an opt-in "paranoid" mode** for metadata only (follow-up), not the
   default — see Design §Algorithm.
 
-**Verdict summary:** no new crate. Implement **CRC32C in software** as `raefs` internal logic
+**Verdict summary:** no new crate. Implement **CRC32C in software** as `athfs` internal logic
 (host-KAT against RFC 3720 / iSCSI CRC32C public vectors). Respects Concept §R7 (no Linux lineage —
 this is an independent CRC implementation, not a Btrfs port).
 
@@ -153,7 +153,7 @@ READ (extends read_data_block, line 4331):
     read_block(block_idx, &mut raw)                                     [unchanged]
     expected = checksum_table[block_idx]                                [NEW]
     if checksum_enabled && expected != 0:                               [NEW]
-        if crc32c(&raw) != low32(expected): return Err(E_RAEFS_CKSUM)   [NEW — fail loud]
+        if crc32c(&raw) != low32(expected): return Err(E_ATHFS_CKSUM)   [NEW — fail loud]
     decrypt(&mut raw); decompress(...)                                  [unchanged]
 ```
 
@@ -211,7 +211,7 @@ ordered so a crash leaves a state `replay_journal` already understands:
 ### Failure model
 
 - **Data read mismatch** → `read_data_block` returns `Err`; the VFS read syscall surfaces a new
-  `E_RAEFS_CKSUM` error constant (alongside `E_RAEFS_EXTENT_FAIL` at line 131). **Never** decrypt/serve.
+  `E_ATHFS_CKSUM` error constant (alongside `E_ATHFS_EXTENT_FAIL` at line 131). **Never** decrypt/serve.
 - **Metadata (B-tree node) read mismatch** → the node read returns `Err`, failing the operation loud
   rather than walking a corrupt tree (matches the existing "fail loud to protect snapshot integrity"
   stance, line 1720).
@@ -234,21 +234,21 @@ ordered so a crash leaves a state `replay_journal` already understands:
 ## Interface needs (NEEDS-INTERFACE)
 
 Verify-on-read is **internal** to the FS — no syscall required for the core feature. Two optional
-surfaces, both deferrable, flagged for raeen-architect (do **not** assign numbers here):
+surfaces, both deferrable, flagged for athena-architect (do **not** assign numbers here):
 
-- `NEEDS-INTERFACE:` (optional, follow-up) a `SYS_RAEFS_SCRUB` syscall so userspace (Settings /
+- `NEEDS-INTERFACE:` (optional, follow-up) a `SYS_ATHFS_SCRUB` syscall so userspace (Settings /
   a "Verify disk" UI) can trigger `fsck_scrub_checksums` and read back `ScrubReport`. Not needed for
   the R10 boot proof (the smoketest calls the function directly). Assign only if/when the UI lands.
 - `NEEDS-INTERFACE:` (optional) extend the existing AthFS VFS error surface so a userspace `read()`
-  that hits `E_RAEFS_CKSUM` gets a distinct errno rather than a generic EIO. `E_RAEFS_CKSUM` itself
-  is an internal `pub const` in `raefs.rs` (pattern of `E_RAEFS_EXTENT_FAIL`, line 131) and needs no
+  that hits `E_ATHFS_CKSUM` gets a distinct errno rather than a generic EIO. `E_ATHFS_CKSUM` itself
+  is an internal `pub const` in `athfs.rs` (pattern of `E_ATHFS_EXTENT_FAIL`, line 131) and needs no
   ABI number; only the errno *mapping* would touch the syscall surface.
 
-No `rae_abi` / `ABI_VERSION` change is required for the core detect+scrub feature.
+No `ath_abi` / `ABI_VERSION` change is required for the core detect+scrub feature.
 
 ## File-by-file plan
 
-- `kernel/src/raefs.rs`:
+- `kernel/src/athfs.rs`:
   - Add `CKSUM_ALG_NONE/CRC32C/BLAKE2S128` consts; a `const CRC32C_TABLE: [u32;256]` + `fn crc32c(&[u8])->u32`.
   - `Superblock`: add `checksum_block, checksum_blocks, checksum_alg, checksum_enabled, _pad_cksum`;
     update the `size == BLOCK_SIZE` const-assert and the `reserved` tail length; update every
@@ -256,37 +256,37 @@ No `rae_abi` / `ABI_VERSION` change is required for the core detect+scrub featur
     new fields.
   - Extend `normalise_region_counts` (or add `normalise_checksum_region`) — legacy `checksum_block==0`
     → `checksum_enabled=0` (verify is a no-op, scrub = unverified).
-  - mkfs/`format` + `mkfs_raefs` (line ~6027): allocate the checksum-table run in the reserved region,
+  - mkfs/`format` + `mkfs_athfs` (line ~6027): allocate the checksum-table run in the reserved region,
     zero it, set `checksum_enabled=1, checksum_alg=CRC32C`.
   - Add `read_block_checksum/write_block_checksum/checksum_index_limit` (mirror refcount accessors).
   - `write_data_block` (4390): after `write_block`, `write_block_checksum(block_idx, crc)`.
-  - `read_data_block` (4331): after `read_block`, verify; mismatch → `Err`/`E_RAEFS_CKSUM`.
+  - `read_data_block` (4331): after `read_block`, verify; mismatch → `Err`/`E_ATHFS_CKSUM`.
   - Add `fsck_scrub_checksums(&self) -> ScrubReport` + `ScrubReport` struct.
   - Add `run_integrity_smoketest()` (R10) + `INTEGRITY_SELFTEST: AtomicU8`.
   - `proc_dump_text` (215): add the integrity status line.
   - `cow_diverge_extent_journaled` (2090): no schema change; rely on `write_data_block` now writing the
     checksum pre-commit (add a comment asserting the invariant).
-- `kernel/src/main.rs`: add `raefs::run_integrity_smoketest();` in the AthFS smoketest cluster
+- `kernel/src/main.rs`: add `athfs::run_integrity_smoketest();` in the AthFS smoketest cluster
   (after line 1183, beside the cow-journal test).
-- Host KAT: `kernel/src/raefs.rs` `#[cfg(test)]` module (or `tools/`-side harness) for `crc32c`
+- Host KAT: `kernel/src/athfs.rs` `#[cfg(test)]` module (or `tools/`-side harness) for `crc32c`
   against public CRC32C vectors — see Host KAT plan.
-- `docs/SYSCALL_TABLE.md`: **only** if the optional `SYS_RAEFS_SCRUB` is later approved (not now).
+- `docs/SYSCALL_TABLE.md`: **only** if the optional `SYS_ATHFS_SCRUB` is later approved (not now).
 - `MasterChecklist.md`: add a Phase 5.x "AthFS data-integrity checksums" row (currently absent).
 
 ## Acceptance criteria (the exact proof)
 
-- **Boot log MUST show** a FAIL-able line. The smoketest, on a `with_ram_raefs` throwaway volume:
+- **Boot log MUST show** a FAIL-able line. The smoketest, on a `with_ram_athfs` throwaway volume:
   writes a known block (computing+storing its checksum), reads it back (`clean_verifies=true`),
   then **flips one byte of the raw on-disk block behind the FS** and asserts `read_data_block`
   returns `Err` (`checksum_detects_flip=true`), then runs `fsck_scrub_checksums` over the volume with
   the corrupt block present and asserts it counts the mismatch (`scrub_found=1`). Any false →
   the line prints `-> FAIL`:
   ```
-  [raefs] integrity selftest: checksum_detects_flip=true clean_verifies=true scrub_found=1 -> PASS
+  [athfs] integrity selftest: checksum_detects_flip=true clean_verifies=true scrub_found=1 -> PASS
   ```
   (It can print FAIL: if verify-on-read silently returned Ok on the flipped block, `checksum_detects_flip`
   is `false` → `-> FAIL`. The byte-flip is the can-this-test-fail guarantee per CLAUDE.md rule 16.)
-- **`/proc/raeen/raefs` MUST report** (added to `proc_dump_text`):
+- **`/proc/athena/athfs` MUST report** (added to `proc_dump_text`):
   ```
     Integrity:    Enabled (CRC32C, encrypt-then-checksum)
     Integrity Selftest: PASS
@@ -300,10 +300,10 @@ No `rae_abi` / `ABI_VERSION` change is required for the core detect+scrub featur
 ### Exact boot-log lines that prove detection + scrub in QEMU
 
 ```
-[raefs] Running boot smoketest...
-[raefs] integrity selftest: checksum_detects_flip=true clean_verifies=true scrub_found=1 -> PASS
+[athfs] Running boot smoketest...
+[athfs] integrity selftest: checksum_detects_flip=true clean_verifies=true scrub_found=1 -> PASS
 ```
-and in the end-of-boot `/proc/raeen/raefs` dump:
+and in the end-of-boot `/proc/athena/athfs` dump:
 ```
   Integrity:    Enabled (CRC32C, encrypt-then-checksum)
   Integrity Selftest: PASS
@@ -333,13 +333,13 @@ Layer order: ① host KAT (above) → ② boot smoketest (`run_integrity_smokete
 
 ## Handoff
 
-- **Implementer: raeen-fs.**
+- **Implementer: athena-fs.**
 - **On-disk-format change — FLAG:** new `Superblock` fields (`checksum_block`, `checksum_blocks`,
   `checksum_alg`, `checksum_enabled`, `_pad_cksum`) + a new **checksum-table region** in the reserved
   metadata area. This is a mkfs/format-compatibility change of the **same class** as the recent
   multi-block bitmap/refcount work ("Landmine-1"): **legacy volumes (fields == 0) MUST be normalised
   on mount** (`checksum_block==0` ⇒ checksum-absent ⇒ verify-on-read is a no-op, scrub = `unverified`,
-  never a false FAIL) so older images keep mounting. mkfs/`mkfs_raefs` lays the region down and enables
+  never a false FAIL) so older images keep mounting. mkfs/`mkfs_athfs` lays the region down and enables
   it. Update the `const _: assert size_of::<Superblock>() == BLOCK_SIZE` and the `reserved` tail length
   in the **same** commit as the field additions, or the superblock `ptr::write` overflows the stack
   (the documented Landmine at line 66-69).
@@ -349,8 +349,8 @@ Layer order: ① host KAT (above) → ② boot smoketest (`run_integrity_smokete
   "resists ransomware structurally" contracts in `Audit.md`.
 - **Sequencing:** (1) host-KAT `crc32c`; (2) superblock fields + const-assert + reserved tail + all
   literal initializers + `normalise_*` in ONE commit (format change, must be atomic); (3) accessors +
-  write/read-path wiring + `E_RAEFS_CKSUM`; (4) `fsck_scrub_checksums` + `run_integrity_smoketest` +
-  main.rs call + proc line. No `rae_abi`/interface commit needed unless the optional `SYS_RAEFS_SCRUB`
+  write/read-path wiring + `E_ATHFS_CKSUM`; (4) `fsck_scrub_checksums` + `run_integrity_smoketest` +
+  main.rs call + proc line. No `ath_abi`/interface commit needed unless the optional `SYS_ATHFS_SCRUB`
   is later approved (separate `[interface]` commit then).
 - **Follow-ups (explicitly NOT this spec):** self-healing / redundancy (mirror or parity copies +
   auto-repair-from-good-copy on mismatch); keyed-MAC tamper-*resistance* mode (`CKSUM_ALG_BLAKE2S128`

@@ -1,0 +1,22 @@
+[package]
+name = "ath_files"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+# AthenaOS File Manager logic engine — the pure, host-testable core behind the
+# bundled Files app (LEGACY_GAMING_CONCEPT.md §Windows Pain Points: "the modern file
+# manager"). Factored OUT of `apps/files` (a `#![no_std] #![no_main]` bin that
+# links athkit's `#[panic_handler]`, so `cargo test` inside it trips the
+# duplicate `panic_impl` lang-item gotcha — project memory: no-std-workspace
+# host-test hazard) so the logic is FAIL-ably host-KAT'd: `cargo test -p ath_files`.
+#
+# Holds: Trash-path computation (Trash as a CoW move into a session-home bucket
+# — AthFS "instant rollback / per-app data buckets"), batch-rename pattern
+# expansion (counter + extension preservation, collision-safe), and the tab /
+# back-forward history model. Zero dependencies, `no_std` in the shipped build,
+# `std` only under `cfg(test)` for the harness (the ath_tokens / ath_calc pattern).
+
+[dependencies]
