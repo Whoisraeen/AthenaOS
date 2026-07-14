@@ -97,6 +97,11 @@ athmedia = { path = "../components/athmedia" }
 # athlocale::keyboard::resolve_key so non-US layouts (AZERTY/QWERTZ/Dvorak) type
 # correctly (parity gap #5). #![no_std] crate.
 athlocale = { path = "../components/athlocale" }
+# athmind — the cognitive-tick crate (Concept: sense→update self→choose→act→
+# remember). The kernel links it for the affect-engine (Layer A) boot proof:
+# boot_selftest's deferred sweep runs its pure-compute smoketest and prints
+# the canonical `[affect] ...` line (spec 2026-07-14-athena-affect-arc P1).
+athmind = { path = "../components/athmind" }
 spinning_top = "0.2.5"
 # rangemap — no_std interval map. Backs the DMA coherent address-space pool
 # (BUG-28) and is the foundation for VMA / free-range tracking.

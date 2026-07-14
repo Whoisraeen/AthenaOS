@@ -115,6 +115,17 @@ pub fn run_deferred() {
         );
     }
     count += 1;
+    {
+        // AthMind affect engine (Layer A) P1 proof — pure compute (decay/
+        // event update law + bounds invariants), allocates only the dump
+        // line; no init, no I/O, so it is safe for the post-marker masked
+        // sweep per the ADR 0006 gates above. xtask's post-boot drain keeps
+        // the VM alive past the marker, so this line lands in the CI serial
+        // log (spec docs/superpowers/specs/2026-07-14-athena-affect-arc-design.md §8 P1).
+        let (pass, line) = athmind::affect::run_smoketest();
+        crate::serial_println!("{} -> {}", line, if pass { "PASS" } else { "FAIL" });
+    }
+    count += 1;
 
     // ── Tier 7 deferred: aer (pure counter read). ────────────────────────
     crate::aer::run_boot_smoketest(); // reads registration counters
